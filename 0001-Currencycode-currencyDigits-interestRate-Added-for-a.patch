@@ -1,0 +1,521 @@
+From f9d88ef0648214966651f22fedfda17342c3715b Mon Sep 17 00:00:00 2001
+From: madhukar <madhukar@hugotechnologies.com>
+Date: Fri, 3 Aug 2012 13:00:05 +0530
+Subject: [PATCH] Currencycode,currencyDigits,interestRate Added for a Saving Prdouct
+
+---
+ .../platform/api/SavingProductsApiResource.java    |    6 +-
+ .../api/commands/SavingProductCommand.java         |   38 +++++++++++++-
+ .../platform/api/data/SavingProductData.java       |   35 ++++++++++++-
+ .../ApiDataConversionServiceImpl.java              |   10 +++-
+ .../org/mifosng/platform/loan/domain/Loan.java     |    2 +-
+ .../platform/saving/domain/SavingProduct.java      |   36 +++++++++++--
+ .../saving/domain/SavingProductRelatedDetail.java  |   57 ++++++++++++++++++++
+ .../service/SavingProductCommandValidator.java     |    8 +++-
+ .../SavingProductReadPlatformServiceImpl.java      |   21 ++++++-
+ ...oductWritePlatformServiceJpaRepositoryImpl.java |    5 ++-
+ .../src/test/resources/META-INF/context.xml        |    2 +-
+ 11 files changed, 200 insertions(+), 20 deletions(-)
+ create mode 100644 mifosng-provider/src/main/java/org/mifosng/platform/saving/domain/SavingProductRelatedDetail.java
+
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/api/SavingProductsApiResource.java b/mifosng-provider/src/main/java/org/mifosng/platform/api/SavingProductsApiResource.java
+index 848b2d0..245f061 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/api/SavingProductsApiResource.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/api/SavingProductsApiResource.java
+@@ -70,7 +70,7 @@ public class SavingProductsApiResource {
+ 	@Produces({MediaType.APPLICATION_JSON})
+ 	public String retrieveAllSavingProducts(@Context final UriInfo uriInfo) {
+ 
+-		Set<String> typicalResponseParameters = new HashSet<String>(Arrays.asList("id", "name", "description", "createdOn", "lastModifedOn"));
++		Set<String> typicalResponseParameters = new HashSet<String>(Arrays.asList("id", "name", "description", "createdOn", "lastModifedOn","interestRate","currencyCode","digitsAfterDecimal"));
+ 		
+ 		Set<String> responseParameters = ApiParameterHelper.extractFieldsForResponseIfProvided(uriInfo.getQueryParameters());
+ 		if (responseParameters.isEmpty()) {
+@@ -89,7 +89,7 @@ public class SavingProductsApiResource {
+ 	@Produces({MediaType.APPLICATION_JSON})
+ 	public String retrieveSavingProductDetails(@PathParam("productId") final Long productId, @Context final UriInfo uriInfo) {
+ 
+-		Set<String> typicalResponseParameters = new HashSet<String>(Arrays.asList("id", "name", "description", "createdOn", "lastModifedOn"));
++		Set<String> typicalResponseParameters = new HashSet<String>(Arrays.asList("id", "name", "description", "createdOn", "lastModifedOn","interestRate","currencyCode","digitsAfterDecimal"));
+ 		
+ 		Set<String> responseParameters = ApiParameterHelper.extractFieldsForResponseIfProvided(uriInfo.getQueryParameters());
+ 		if (responseParameters.isEmpty()) {
+@@ -110,7 +110,7 @@ public class SavingProductsApiResource {
+ 	public String retrieveNewSavingProductDetails(@Context final UriInfo uriInfo) {
+ 		
+ 		Set<String> typicalResponseParameters = new HashSet<String>(
+-				Arrays.asList("id", "name", "description", "createdOn", "lastModifedOn"));
++				Arrays.asList("id", "name", "description", "createdOn", "lastModifedOn","interestRate","currencyCode","digitsAfterDecimal"));
+ 		
+ 		Set<String> responseParameters = ApiParameterHelper.extractFieldsForResponseIfProvided(uriInfo.getQueryParameters());
+ 		if (responseParameters.isEmpty()) {
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/api/commands/SavingProductCommand.java b/mifosng-provider/src/main/java/org/mifosng/platform/api/commands/SavingProductCommand.java
+index e394f29..f0fc7d5 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/api/commands/SavingProductCommand.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/api/commands/SavingProductCommand.java
+@@ -1,5 +1,6 @@
+ package org.mifosng.platform.api.commands;
+ 
++import java.math.BigDecimal;
+ import java.util.Set;
+ 
+ public class SavingProductCommand {
+@@ -7,12 +8,24 @@ public class SavingProductCommand {
+ 	private final String name;
+ 	private final String description;
+ 
++	private final String currencyCode;
++	private final Integer digitsAfterDecimal;
++	private final BigDecimal interestRate;
++
+ 	private final Set<String> modifiedParameters;
+ 
+-	public SavingProductCommand(final Set<String> modifiedParameters, final Long id, final String name, final String description) {
++	public SavingProductCommand(final Set<String> modifiedParameters,
++			final Long id, final String name, final String description,
++			final String currencyCode, final Integer digitsAfterDecimal,
++			final BigDecimal interestRate) {
+ 		this.id = id;
+ 		this.name = name;
+ 		this.description = description;
++
++		this.currencyCode = currencyCode;
++		this.digitsAfterDecimal = digitsAfterDecimal;
++		this.interestRate = interestRate;
++
+ 		this.modifiedParameters = modifiedParameters;
+ 	}
+ 
+@@ -27,6 +40,18 @@ public class SavingProductCommand {
+ 	public String getDescription() {
+ 		return description;
+ 	}
++
++	public String getCurrencyCode() {
++		return currencyCode;
++	}
++
++	public Integer getDigitsAfterDecimal() {
++		return digitsAfterDecimal;
++	}
++
++	public BigDecimal getInterestRate() {
++		return interestRate;
++	}
+ 	
+ 	public boolean isNameChanged() {
+ 		return this.modifiedParameters.contains("name");
+@@ -35,5 +60,16 @@ public class SavingProductCommand {
+ 	public boolean isDescriptionChanged() {
+ 		return this.modifiedParameters.contains("description");
+ 	}
++	
++	public boolean isCurrencyCodeChanged() {
++		return this.modifiedParameters.contains("currencyCode");
++	}
+ 
++	public boolean isDigitsAfterDecimalChanged() {
++		return this.modifiedParameters.contains("digitsAfterDecimal");
++	}
++	
++	public boolean isInterestRateChanged() {
++		return this.modifiedParameters.contains("interestRate");
++	}
+ }
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/api/data/SavingProductData.java b/mifosng-provider/src/main/java/org/mifosng/platform/api/data/SavingProductData.java
+index e746bcd..237ab70 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/api/data/SavingProductData.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/api/data/SavingProductData.java
+@@ -1,6 +1,7 @@
+ package org.mifosng.platform.api.data;
+ 
+ import java.io.Serializable;
++import java.math.BigDecimal;
+ 
+ import org.joda.time.DateTime;
+ 
+@@ -13,16 +14,24 @@ public class SavingProductData implements Serializable {
+ 	private DateTime createdOn;
+ 	private DateTime lastModifedOn;
+ 	
++	private String currencyCode;
++	private Integer digitsAfterDecimal;
++	
++	private BigDecimal interestRate = BigDecimal.ZERO;
++	
+ 	public SavingProductData(){
+ 		//
+ 	}
+ 
+-	public SavingProductData(DateTime createdOn, DateTime lastModifedOn, Long id,String name, String description) {
++	public SavingProductData(DateTime createdOn, DateTime lastModifedOn, Long id,String name, String description,BigDecimal interestRate,String currencyCode, Integer digitsAfterDecimal) {
+ 		this.createdOn=createdOn;
+ 		this.lastModifedOn=lastModifedOn;
+ 		this.id=id;
+ 		this.name=name;
+ 		this.description=description;
++		this.interestRate=interestRate;
++		this.currencyCode=currencyCode;
++		this.digitsAfterDecimal=digitsAfterDecimal;
+ 	}
+ 
+ 	public Long getId() {
+@@ -53,6 +62,14 @@ public class SavingProductData implements Serializable {
+ 		return createdOn;
+ 	}
+ 
++	public BigDecimal getInterestRate() {
++		return interestRate;
++	}
++
++	public void setInterestRate(BigDecimal interestRate) {
++		this.interestRate = interestRate;
++	}
++
+ 	public void setCreatedOn(DateTime createdOn) {
+ 		this.createdOn = createdOn;
+ 	}
+@@ -64,6 +81,22 @@ public class SavingProductData implements Serializable {
+ 	public void setLastModifedOn(DateTime lastModifedOn) {
+ 		this.lastModifedOn = lastModifedOn;
+ 	}
++
++	public String getCurrencyCode() {
++		return currencyCode;
++	}
++
++	public void setCurrencyCode(String currencyCode) {
++		this.currencyCode = currencyCode;
++	}
++
++	public Integer getDigitsAfterDecimal() {
++		return digitsAfterDecimal;
++	}
++
++	public void setDigitsAfterDecimal(Integer digitsAfterDecimal) {
++		this.digitsAfterDecimal = digitsAfterDecimal;
++	}
+ 	
+ 	
+ 	
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/api/infrastructure/ApiDataConversionServiceImpl.java b/mifosng-provider/src/main/java/org/mifosng/platform/api/infrastructure/ApiDataConversionServiceImpl.java
+index db004cc..395b73c 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/api/infrastructure/ApiDataConversionServiceImpl.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/api/infrastructure/ApiDataConversionServiceImpl.java
+@@ -1351,13 +1351,17 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
+ 		Type typeOfMap = new TypeToken<Map<String, String>>() {}.getType();
+ 		Map<String, String> requestMap = gsonConverter.fromJson(json, typeOfMap);
+ 
+-		Set<String> supportedParams = new HashSet<String>(Arrays.asList("name","description"));
++		Set<String> supportedParams = new HashSet<String>(Arrays.asList("name","description","currencyCode", "digitsAfterDecimal","interestRate","locale"));
+ 		checkForUnsupportedParameters(requestMap, supportedParams);
+ 		Set<String> modifiedParameters = new HashSet<String>();
+ 		String name = extractStringParameter("name", requestMap,modifiedParameters);
+ 		String description = extractStringParameter("description", requestMap,modifiedParameters);
++		String currencyCode=extractStringParameter("currencyCode", requestMap,modifiedParameters);
++		Integer digitsAfterDecimalValue = extractIntegerParameter("digitsAfterDecimal", requestMap, modifiedParameters);
++		BigDecimal interestRate = extractBigDecimalParameter("interestRate", requestMap, modifiedParameters);
++		
+ 
+-		return new SavingProductCommand(modifiedParameters, resourceIdentifier,name, description);
++		return new SavingProductCommand(modifiedParameters, resourceIdentifier,name, description,currencyCode,digitsAfterDecimalValue,interestRate);
+ 	}
+ 
+ 	@Override
+@@ -1365,7 +1369,7 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
+ 			Set<String> responseParameters, SavingProductData... products) {
+ 		
+ 		Set<String> supportedParameters = new HashSet<String>(
+-				Arrays.asList("id", "name", "description","createdOn", "lastModifedOn"));
++				Arrays.asList("id", "name", "description","createdOn", "lastModifedOn","interestRate","currencyCode","digitsAfterDecimal"));
+ 		
+ 		final Set<String> parameterNamesToSkip = new HashSet<String>();
+ 		
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/loan/domain/Loan.java b/mifosng-provider/src/main/java/org/mifosng/platform/loan/domain/Loan.java
+index 8a7fa34..3e06263 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/loan/domain/Loan.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/loan/domain/Loan.java
+@@ -478,7 +478,7 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
+ 		}
+ 	}
+ 
+-	private void handleLoanOverpayment(@SuppressWarnings("unused") final LoanTransaction loanTransaction, final LoanLifecycleStateMachine loanLifecycleStateMachine) {
++	private void handleLoanOverpayment(final LoanTransaction loanTransaction, final LoanLifecycleStateMachine loanLifecycleStateMachine) {
+ 		this.loanStatus = loanLifecycleStateMachine.transition(LoanEvent.LOAN_OVERPAYMENT, this.loanStatus);
+ 		this.closedOnDate = null;
+ 		this.maturedOnDate = null;
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/saving/domain/SavingProduct.java b/mifosng-provider/src/main/java/org/mifosng/platform/saving/domain/SavingProduct.java
+index 980f7d0..966ca29 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/saving/domain/SavingProduct.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/saving/domain/SavingProduct.java
+@@ -1,37 +1,61 @@
+ package org.mifosng.platform.saving.domain;
+ 
++import java.math.BigDecimal;
++
+ import javax.persistence.Column;
++import javax.persistence.Embedded;
+ import javax.persistence.Entity;
+ import javax.persistence.Table;
+ 
+ import org.apache.commons.lang.StringUtils;
+ import org.mifosng.platform.api.commands.SavingProductCommand;
++import org.mifosng.platform.currency.domain.MonetaryCurrency;
+ import org.mifosng.platform.infrastructure.AbstractAuditableCustom;
+ import org.mifosng.platform.user.domain.AppUser;
+ 
+ @Entity
+ @Table(name = "portfolio_product_savings")
+ public class SavingProduct extends AbstractAuditableCustom<AppUser, Long> {
+-
+-	@SuppressWarnings("unused")
++	
+ 	@Column(name = "name", nullable = false)
+ 	private String name;
+ 
+-	@SuppressWarnings("unused")
+ 	@Column(name = "description")
+ 	private String description;
++	
++	@Embedded
++	SavingProductRelatedDetail savingProductRelatedDetail;
+ 
+ 	protected SavingProduct() {
+-		//
++		this.name = null;
++        this.description = null;
++        this.savingProductRelatedDetail = null;
+ 	}
+ 
+-	public SavingProduct(final String name, final String description) {
++	public SavingProduct(final String name, final String description, final MonetaryCurrency currency,final BigDecimal interestRate) {
+ 		this.name = name.trim();
+ 		if (StringUtils.isNotBlank(description)) {
+ 			this.description = description.trim();
+ 		} else {
+ 			this.description = null;
+ 		}
++		this.savingProductRelatedDetail=new SavingProductRelatedDetail(currency, interestRate);
++	}
++	
++    public String getName() {
++        return this.name;
++    }
++
++    public String getDescription() {
++        return this.description;
++    }	
++	
++	public MonetaryCurrency getCurrency() {
++    	return this.savingProductRelatedDetail.getCurrency();
++    }
++	
++	public BigDecimal getInterestRate(){
++		return this.savingProductRelatedDetail.getInterestRate();
+ 	}
+ 
+ 	public void update(final SavingProductCommand command) {
+@@ -43,5 +67,7 @@ public class SavingProduct extends AbstractAuditableCustom<AppUser, Long> {
+ 		if (command.isDescriptionChanged()) {
+ 			this.description = command.getDescription();
+ 		}
++		
++		this.savingProductRelatedDetail.update(command);
+ 	}
+ }
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/saving/domain/SavingProductRelatedDetail.java b/mifosng-provider/src/main/java/org/mifosng/platform/saving/domain/SavingProductRelatedDetail.java
+new file mode 100644
+index 0000000..d2bc7cd
+--- /dev/null
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/saving/domain/SavingProductRelatedDetail.java
+@@ -0,0 +1,57 @@
++package org.mifosng.platform.saving.domain;
++
++import java.math.BigDecimal;
++
++import javax.persistence.Column;
++import javax.persistence.Embeddable;
++import javax.persistence.Embedded;
++
++import org.mifosng.platform.api.commands.SavingProductCommand;
++import org.mifosng.platform.currency.domain.MonetaryCurrency;
++
++@Embeddable
++public class SavingProductRelatedDetail {
++	
++	@Embedded
++	private MonetaryCurrency currency;
++	
++	@Column(name = "interest_rate", scale = 6, precision = 19, nullable = false)
++	private BigDecimal interestRate;
++	
++	public SavingProductRelatedDetail() {
++		this.interestRate=null;
++	}
++	
++	public SavingProductRelatedDetail(final MonetaryCurrency currency,final BigDecimal interestRate) {
++		this.currency=currency;
++		this.interestRate=interestRate;
++	}
++	
++	public MonetaryCurrency getCurrency() {
++		return this.currency.copy();
++	}
++
++	public BigDecimal getInterestRate() {
++		return BigDecimal.valueOf(Double.valueOf(this.interestRate.stripTrailingZeros().toString()));
++	}
++	
++	public void update(SavingProductCommand command){
++		Integer digitsAfterDecimalChanged = this.currency.getDigitsAfterDecimal();
++		if (command.isDigitsAfterDecimalChanged()) {
++			digitsAfterDecimalChanged = command.getDigitsAfterDecimal();
++		}
++		
++		String currencyCodeChanged = this.currency.getCode();
++		if (command.isCurrencyCodeChanged()) {
++			currencyCodeChanged = command.getCurrencyCode();
++		}
++		
++		if (command.isDigitsAfterDecimalChanged() || command.isCurrencyCodeChanged()) {
++			this.currency = new MonetaryCurrency(currencyCodeChanged, digitsAfterDecimalChanged);
++		}
++		
++		if (command.isInterestRateChanged()) {
++			this.interestRate = command.getInterestRate();
++		}
++	}
++}
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductCommandValidator.java b/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductCommandValidator.java
+index 9351881..64555ac 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductCommandValidator.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductCommandValidator.java
+@@ -24,7 +24,10 @@ public class SavingProductCommandValidator {
+ 		baseDataValidator.reset().parameter("id").value(command.getId()).notNull();
+ 		baseDataValidator.reset().parameter("name").value(command.getName()).ignoreIfNull().notBlank();
+ 		baseDataValidator.reset().parameter("description").value(command.getDescription()).ignoreIfNull().notExceedingLengthOf(500);
+-		baseDataValidator.reset().anyOfNotNull(command.getName(), command.getDescription());
++		baseDataValidator.reset().parameter("currencyCode").value(command.getCurrencyCode()).ignoreIfNull().notBlank();
++		baseDataValidator.reset().parameter("digitsAfterDecimal").value(command.getDigitsAfterDecimal()).ignoreIfNull().notNull().inMinMaxRange(0, 6);
++		baseDataValidator.reset().parameter("interestRate").value(command.getInterestRate()).ignoreIfNull().notBlank();
++		baseDataValidator.reset().anyOfNotNull(command.getName(), command.getDescription(),command.getCurrencyCode(),command.getDigitsAfterDecimal(),command.getInterestRate());
+ 		
+ 		if (!dataValidationErrors.isEmpty()) {
+ 			throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors);
+@@ -38,6 +41,9 @@ public class SavingProductCommandValidator {
+ 		DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("product");
+ 		baseDataValidator.reset().parameter("name").value(command.getName()).notBlank();
+ 		baseDataValidator.reset().parameter("description").value(command.getDescription()).notExceedingLengthOf(500);
++		baseDataValidator.reset().parameter("currencyCode").value(command.getCurrencyCode()).notBlank();
++		baseDataValidator.reset().parameter("digitsAfterDecimal").value(command.getDigitsAfterDecimal()).notNull().inMinMaxRange(0, 6);
++		baseDataValidator.reset().parameter("interestRate").value(command.getInterestRate()).notNull();
+ 		
+ 		if (!dataValidationErrors.isEmpty()) {
+ 			throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors);
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductReadPlatformServiceImpl.java b/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductReadPlatformServiceImpl.java
+index 1e5cfec..7f2f4ef 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductReadPlatformServiceImpl.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductReadPlatformServiceImpl.java
+@@ -1,5 +1,6 @@
+ package org.mifosng.platform.savingproduct.service;
+ 
++import java.math.BigDecimal;
+ import java.sql.ResultSet;
+ import java.sql.SQLException;
+ import java.util.Collection;
+@@ -7,6 +8,7 @@ import java.util.Collection;
+ import org.joda.time.DateTime;
+ import org.mifosng.platform.api.data.SavingProductData;
+ import org.mifosng.platform.api.data.SavingProductLookup;
++import org.mifosng.platform.currency.service.CurrencyReadPlatformService;
+ import org.mifosng.platform.exceptions.LoanProductNotFoundException;
+ import org.mifosng.platform.infrastructure.JdbcSupport;
+ import org.mifosng.platform.infrastructure.TenantAwareRoutingDataSource;
+@@ -23,12 +25,14 @@ public class SavingProductReadPlatformServiceImpl implements
+ 	
+ 	private final PlatformSecurityContext context;
+ 	private final JdbcTemplate jdbcTemplate;
++	private final CurrencyReadPlatformService currencyReadPlatformService;
+ 	
+ 	@Autowired
+-	public SavingProductReadPlatformServiceImpl(final PlatformSecurityContext context,final TenantAwareRoutingDataSource dataSource) {
++	public SavingProductReadPlatformServiceImpl(final PlatformSecurityContext context,final TenantAwareRoutingDataSource dataSource,final CurrencyReadPlatformService currencyReadPlatformService) {
+ 		
+ 		this.context=context;
+ 		jdbcTemplate=new JdbcTemplate(dataSource);
++		this.currencyReadPlatformService=currencyReadPlatformService;
+ 	}
+ 
+ 	@Override
+@@ -85,7 +89,9 @@ public class SavingProductReadPlatformServiceImpl implements
+ 		}
+ 		
+ 		public String savingProductSchema(){
+-			return "sp.id as id,sp.name as name, sp.description as description, sp.created_date as createdon, sp.lastmodified_date as modifiedon from portfolio_product_savings sp ";
++			return "sp.id as id,sp.name as name, sp.description as description,sp.currency_code as currencyCode, sp.currency_digits as currencyDigits,sp.interest_rate as interestRate,sp.created_date as createdon, sp.lastmodified_date as modifiedon,"
++				+  "curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, curr.display_symbol as currencyDisplaySymbol" 
++				+  "  from portfolio_product_savings sp join ref_currency curr on curr.code = sp.currency_code";
+ 		}
+ 
+ 		@Override
+@@ -96,10 +102,19 @@ public class SavingProductReadPlatformServiceImpl implements
+ 			String name = rs.getString("name");
+ 			String description = rs.getString("description");
+ 			
++			String currencyCode = rs.getString("currencyCode");
++			//String currencyName = rs.getString("currencyName");
++			//String currencyNameCode = rs.getString("currencyNameCode");
++			//String currencyDisplaySymbol = rs.getString("currencyDisplaySymbol");
++			Integer currencyDigits = JdbcSupport.getInteger(rs,"currencyDigits");
++			
++			//CurrencyData currencyData = new CurrencyData(currencyCode,currencyName, currencyDigits, currencyDisplaySymbol,currencyNameCode);*/
++			BigDecimal interestRate = rs.getBigDecimal("interestRate");
++			
+ 			DateTime createdOn = JdbcSupport.getDateTime(rs, "createdon");
+ 			DateTime lastModifedOn = JdbcSupport.getDateTime(rs, "modifiedon");
+ 			
+-			return new SavingProductData(createdOn, lastModifedOn, id, name,description);
++			return new SavingProductData(createdOn, lastModifedOn, id, name,description,interestRate,currencyCode,currencyDigits);
+ 		}
+ 	}
+ 	
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductWritePlatformServiceJpaRepositoryImpl.java b/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductWritePlatformServiceJpaRepositoryImpl.java
+index cddd89d..df72caa 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductWritePlatformServiceJpaRepositoryImpl.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/savingproduct/service/SavingProductWritePlatformServiceJpaRepositoryImpl.java
+@@ -2,6 +2,7 @@ package org.mifosng.platform.savingproduct.service;
+ 
+ import org.mifosng.platform.api.commands.SavingProductCommand;
+ import org.mifosng.platform.api.data.EntityIdentifier;
++import org.mifosng.platform.currency.domain.MonetaryCurrency;
+ import org.mifosng.platform.exceptions.SavingProductNotFoundException;
+ import org.mifosng.platform.saving.domain.SavingProduct;
+ import org.mifosng.platform.saving.domain.SavingProductRepository;
+@@ -30,7 +31,9 @@ public class SavingProductWritePlatformServiceJpaRepositoryImpl implements Savin
+ 		SavingProductCommandValidator validator=new SavingProductCommandValidator(command);
+ 		validator.validateForCreate();
+ 		
+-		SavingProduct product = new SavingProduct(command.getName(),command.getDescription());  
++		MonetaryCurrency currency = new MonetaryCurrency(command.getCurrencyCode(), command.getDigitsAfterDecimal());
++		
++		SavingProduct product = new SavingProduct(command.getName(),command.getDescription(),currency,command.getInterestRate());  
+ 		this.savingProductRepository.save(product);
+ 		return new EntityIdentifier(product.getId());
+ 	}
+diff --git a/mifosng-provider/src/test/resources/META-INF/context.xml b/mifosng-provider/src/test/resources/META-INF/context.xml
+index d955619..7c0a421 100644
+--- a/mifosng-provider/src/test/resources/META-INF/context.xml
++++ b/mifosng-provider/src/test/resources/META-INF/context.xml
+@@ -5,7 +5,7 @@
+             driverClassName="com.mysql.jdbc.Driver"
+             url="jdbc:mysql://localhost:3306/mifosplatform-tenants"
+             username="root"
+-            password="mysql"
++            password="mifos"
+             validationQuery="select 1"
+             maxActive="10"
+             maxIdle="4"
+-- 
+1.7.1
+
