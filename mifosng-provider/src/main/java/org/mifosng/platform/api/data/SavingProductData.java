@@ -18,6 +18,11 @@ public class SavingProductData implements Serializable {
 	private DateTime createdOn;
 	private DateTime lastModifedOn;
 	
+	private String currencyCode;
+	private Integer digitsAfterDecimal;
+	
+	private BigDecimal interestRate = BigDecimal.ZERO;
+	
 	public SavingProductData(){
 		//
 	}
