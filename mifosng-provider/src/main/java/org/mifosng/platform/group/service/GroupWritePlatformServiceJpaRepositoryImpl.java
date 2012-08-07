@@ -49,7 +49,7 @@ public class GroupWritePlatformServiceJpaRepositoryImpl implements GroupWritePla
         validator.validateForUpdate();
         
         Group groupForUpdate = this.groupRepository.findOne(command.getId());
-        if (groupForUpdate == null){
+        if (groupForUpdate == null || groupForUpdate.isDeleted()){
             throw new GroupNotFoundException(command.getId());
         }
         groupForUpdate.update(command);
@@ -57,6 +57,22 @@ public class GroupWritePlatformServiceJpaRepositoryImpl implements GroupWritePla
         groupRepository.save(groupForUpdate);
         
         return new EntityIdentifier(groupForUpdate.getId());
+    }
+
+    @Transactional
+    @Override
+    public EntityIdentifier deleteGroup(Long groupId) {
+        
+        context.authenticatedUser();
+        
+        Group groupForDelete = this.groupRepository.findOne(groupId);
+        if (groupForDelete == null || groupForDelete.isDeleted()){
+            throw new GroupNotFoundException(groupId);
+        }
+        groupForDelete.delete();
+        this.groupRepository.save(groupForDelete);
+        
+        return new EntityIdentifier(groupId);
     }
 
 }
