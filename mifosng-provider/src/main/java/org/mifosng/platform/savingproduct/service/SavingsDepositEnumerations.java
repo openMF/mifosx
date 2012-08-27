@@ -2,6 +2,7 @@ package org.mifosng.platform.savingproduct.service;
 
 import org.mifosng.platform.api.data.EnumOptionData;
 import org.mifosng.platform.loan.domain.PeriodFrequencyType;
+import org.mifosng.platform.saving.domain.DepositStatus;
 
 public class SavingsDepositEnumerations {
 	
@@ -28,4 +29,41 @@ public class SavingsDepositEnumerations {
 		}
 		return optionData;
 	}
+	
+	public static EnumOptionData depositStatusEnumType(final int id) {
+				return depositStatusEnum(DepositStatus.fromInt(id));
+			}
+	
+	public static EnumOptionData depositStatusEnum(final DepositStatus type){
+				final String codePrefix = "deposit.interest.compounding.period.";
+				EnumOptionData optionData=null;
+				
+				switch (type) {
+				case SUBMITED_AND_PENDING_APPROVAL:
+					 optionData = new EnumOptionData(DepositStatus.SUBMITED_AND_PENDING_APPROVAL.getValue().longValue(), codePrefix + DepositStatus.SUBMITED_AND_PENDING_APPROVAL.getCode(), "SUBMITED_AND_PENDING_APPROVAL");
+					break;
+				case ACTIVE:
+					optionData = new EnumOptionData(DepositStatus.ACTIVE.getValue().longValue(), codePrefix + DepositStatus.ACTIVE.getCode(), "ACTIVE");
+					break;
+				case APPROVED:
+					optionData = new EnumOptionData(DepositStatus.APPROVED.getValue().longValue(), codePrefix + DepositStatus.APPROVED.getCode(), "APPROVED");
+					break;
+				case CLOSED:
+					optionData = new EnumOptionData(DepositStatus.CLOSED.getValue().longValue(), codePrefix + DepositStatus.CLOSED.getCode(), "CLOSED");
+					break;
+				case INVALID:
+					optionData = new EnumOptionData(DepositStatus.INVALID.getValue().longValue(), codePrefix + DepositStatus.INVALID.getCode(), "INVALID");
+					break;
+				case MATURED:
+					optionData = new EnumOptionData(DepositStatus.MATURED.getValue().longValue(), codePrefix + DepositStatus.MATURED.getCode(), "MATURED");
+					break;
+				case REJECTED:
+					optionData = new EnumOptionData(DepositStatus.REJECTED.getValue().longValue(), codePrefix + DepositStatus.REJECTED.getCode(), "REJECTED");
+					break;
+				case WITHDRAWN_BY_CLIENT:
+					optionData = new EnumOptionData(DepositStatus.WITHDRAWN_BY_CLIENT.getValue().longValue(), codePrefix + DepositStatus.WITHDRAWN_BY_CLIENT.getCode(), "WITHDRAWN_BY_CLIENT");
+		 			break;
+		 		}
+		return optionData;
+	}	 		
 }
