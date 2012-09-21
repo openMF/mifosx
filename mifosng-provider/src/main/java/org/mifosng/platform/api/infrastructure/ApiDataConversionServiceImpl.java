@@ -22,6 +22,7 @@ import org.mifosng.platform.api.commands.BranchMoneyTransferCommand;
 import org.mifosng.platform.api.commands.ChargeCommand;
 import org.mifosng.platform.api.commands.ClientCommand;
 import org.mifosng.platform.api.commands.DepositAccountCommand;
+import org.mifosng.platform.api.commands.DepositAccountWithdrawInterestCommand;
 import org.mifosng.platform.api.commands.DepositAccountWithdrawalCommand;
 import org.mifosng.platform.api.commands.DepositProductCommand;
 import org.mifosng.platform.api.commands.DepositStateTransitionApprovalCommand;
@@ -1041,8 +1042,8 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 		Set<String> supportedParams = new HashSet<String>(
 				Arrays.asList("clientId", "productId", "externalId", "deposit", "maturityInterestRate", "preClosureInterestRate",
 						"tenureInMonths", "interestCompoundedEvery", "interestCompoundedEveryPeriodType", "commencementDate",
-						"renewalAllowed", "preClosureAllowed",
-						"locale", "dateFormat")
+						"renewalAllowed", "preClosureAllowed","interestCompoundingAllowed",
+						"locale", "dateFormat","isInterestWithdrawable")
 		);
 		checkForUnsupportedParameters(requestMap, supportedParams);
 		Set<String> modifiedParameters = new HashSet<String>();
@@ -1061,10 +1062,13 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 
 		boolean renewalAllowed = extractBooleanParameter("renewalAllowed", requestMap, modifiedParameters);
 		boolean preClosureAllowed = extractBooleanParameter("preClosureAllowed", requestMap, modifiedParameters);
+		boolean isInterestWithdrawable = extractBooleanParameter("isInterestWithdrawable", requestMap, modifiedParameters);
+		boolean interestCompoundingAllowed = extractBooleanParameter("interestCompoundingAllowed", requestMap, modifiedParameters);
 		
 		return new DepositAccountCommand(modifiedParameters, resourceIdentifier, clientId, productId, 
 				externalId, deposit, interestRate, preClosureInterestRate, tenureInMonths, 
-				interestCompoundedEvery, interestCompoundedEveryPeriodType, commencementDate, renewalAllowed, preClosureAllowed);
+				interestCompoundedEvery, interestCompoundedEveryPeriodType, commencementDate, renewalAllowed,
+				preClosureAllowed, isInterestWithdrawable, interestCompoundingAllowed);
 	}
 
 	@Override
@@ -1081,7 +1085,7 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 				Arrays.asList("locale", "name", "externalId", "description","currencyCode", "digitsAfterDecimal","minimumBalance","maximumBalance","tenureInMonths",
 						"maturityDefaultInterestRate","maturityMinInterestRate","maturityMaxInterestRate", 
 						"interestCompoundedEvery", "interestCompoundedEveryPeriodType",
-						"renewalAllowed","preClosureAllowed","preClosureInterestRate")
+						"renewalAllowed","preClosureAllowed","preClosureInterestRate","interestCompoundingAllowed")
 				);
 		checkForUnsupportedParameters(requestMap, supportedParams);
 		Set<String> modifiedParameters = new HashSet<String>();
@@ -1102,6 +1106,8 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 		Integer interestCompoundedEvery = extractIntegerParameter("interestCompoundedEvery", requestMap, modifiedParameters);
 		Integer interestCompoundedEveryPeriodType = extractIntegerParameter("interestCompoundedEveryPeriodType", requestMap, modifiedParameters);
 		
+		boolean interestCompoundingAllowed = extractBooleanParameter("interestCompoundingAllowed", requestMap, modifiedParameters);
+		
 	    boolean canRenew = extractBooleanParameter("renewalAllowed", requestMap, modifiedParameters);
 	    boolean canPreClose = extractBooleanParameter("preClosureAllowed", requestMap, modifiedParameters);
 	    BigDecimal preClosureInterestRate = extractBigDecimalParameter("preClosureInterestRate", requestMap, modifiedParameters);
@@ -1110,7 +1116,7 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 				name, description, currencyCode, digitsAfterDecimalValue, minimumBalance,maximumBalance, 
 				tenureMonths, maturityDefaultInterestRate, maturityMinInterestRate, maturityMaxInterestRate, 
 				interestCompoundedEvery, interestCompoundedEveryPeriodType,
-				canRenew, canPreClose, preClosureInterestRate);
+				canRenew, canPreClose, preClosureInterestRate, interestCompoundingAllowed);
 	}
 
 	@Override
@@ -1185,5 +1191,27 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 	    String note = extractStringParameter("note", requestMap, modifiedParameters);
 	    
 		return new DepositAccountWithdrawalCommand(resourceIdentifier,renewAccount, deposit, note);
+	}
+
+	@Override
+	public DepositAccountWithdrawInterestCommand convertJsonToDepositAccountWithdrawInterestCommand(final Long resourceIdentifier, final String json) {
+		
+		if (StringUtils.isBlank(json)) {
+			throw new InvalidJsonException();
+		}
+		
+		Type typeOfMap = new TypeToken<Map<String, String>>(){}.getType();
+	    Map<String, String> requestMap = gsonConverter.fromJson(json, typeOfMap);
+	    
+	    Set<String> supportedParams = new HashSet<String>(Arrays.asList("amount", "note", "locale"));
+	    
+	    checkForUnsupportedParameters(requestMap, supportedParams);
+	    
+	    Set<String> modifiedParameters = new HashSet<String>();
+	    
+	    BigDecimal amount=extractBigDecimalParameter("amount", requestMap, modifiedParameters);
+	    String note = extractStringParameter("note", requestMap, modifiedParameters);
+		
+		return new DepositAccountWithdrawInterestCommand(resourceIdentifier, amount, note);
 	}
 }
