@@ -307,6 +307,7 @@ public class DepositAccountData {
 		this.isInterestWithdrawable=false;
 		this.interestCompoundingAllowed=interestCompoundingAllowed;
 		this.availableInterestForWithdrawal= new BigDecimal(0);
+
 	}
 
 	public Long getId() {
