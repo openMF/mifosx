@@ -1,5 +1,6 @@
 package org.mifosng.platform.api;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -71,7 +72,7 @@ public class DepositAccountsApiResource {
 					"interestCompoundedEvery","interestCompoundingAllowed",
 					"interestCompoundedEveryPeriodType", "renewalAllowed",
 					"preClosureAllowed", "preClosureInterestRate", 
-					"withdrawnonDate","rejectedonDate","closedonDate","transactions","interestPaid","isInterestWithdrawable"));
+					"withdrawnonDate","rejectedonDate","closedonDate","transactions","interestPaid","isInterestWithdrawable","availableInterestForWithdrawal"));
 	
 	
 	@POST
