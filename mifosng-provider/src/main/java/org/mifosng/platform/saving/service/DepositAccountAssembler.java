@@ -190,7 +190,7 @@ public class DepositAccountAssembler {
 				deposit, 
 				maturityInterestRate, preClosureInterestRate, 
 				tenureInMonths, compoundingInterestEvery, compoundingInterestFrequency, 
-				account.maturesOnDate(), 
+				account.maturesOnDate().plusDays(1), 
 				renewalAllowed, preClosureAllowed, this.fixedTermDepositInterestCalculator, defaultDepositLifecycleStateMachine(),
 				isInterestWithdrawable,isInterestCompoundingAllowed);
 		

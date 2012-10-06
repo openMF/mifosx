@@ -22,6 +22,7 @@ import javax.persistence.UniqueConstraint;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
+import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.joda.time.Months;
 import org.mifosng.platform.api.commands.DepositStateTransitionApprovalCommand;
@@ -213,7 +214,7 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 		this.interestCompoundedFrequencyType = interestCompoundedFrequencyPeriodType.getValue();
 		if (commencementDate != null) {
 			this.projectedCommencementDate = commencementDate.toDate();
-			this.maturesOnDate = commencementDate.plusMonths(this.tenureInMonths).toDate();
+			this.maturesOnDate = commencementDate.plusMonths(this.tenureInMonths).minusDays(1).toDate();
 		}
 		
 		this.renewalAllowed = renewalAllowed;
@@ -280,7 +281,7 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 		}
 
 		this.actualCommencementDate = actualCommencementDate.toDate();
-		this.maturesOnDate = getActualCommencementDate().plusMonths(this.tenureInMonths).toDate();
+		this.maturesOnDate = getActualCommencementDate().plusMonths(this.tenureInMonths).minusDays(1).toDate();
 		
 		Money futureValueOnMaturity =null;
 		
@@ -425,7 +426,7 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 		this.actualCommencementDate = null;
 		this.projectedInterestAccruedOnMaturity=this.interestAccrued;
 		this.projectedTotalOnMaturity = this.depositAmount.add(this.projectedInterestAccruedOnMaturity);
-		this.maturesOnDate = getProjectedCommencementDate().plusMonths(this.tenureInMonths).toDate();
+		this.maturesOnDate = getProjectedCommencementDate().plusMonths(this.tenureInMonths).minusDays(1).toDate();
 		this.total=null;
 		this.interestAccrued=null;
 		this.depositaccountTransactions.clear();
@@ -546,20 +547,25 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 		LocalDate preClosedDate = new LocalDate();
 		
 		Integer tenure = Months.monthsBetween(commnencementDate, preClosedDate).getMonths();
+		LocalDate actualPrecloseCalculationDate = commnencementDate.plusMonths(tenure);
+		Integer missedDays = Days.daysBetween(actualPrecloseCalculationDate, preClosedDate).getDays();
 		
 		Money deposit = Money.of(account.getDeposit().getCurrency(), account.getDeposit().getAmount());
 		Money accuredtotalAmount = null;
+		Money remainDaysAmount = fixedTermDepositInterestCalculator.calculateRemainInterest(deposit, missedDays, preClosureInterestRate);
 		if (account.isInterestCompoundingAllowed()) {
 			accuredtotalAmount = fixedTermDepositInterestCalculator
 					.calculateInterestOnMaturityFor(deposit, tenure,
 							preClosureInterestRate, interestCompoundedEvery,
 							this.product.getInterestCompoundedEveryPeriodType());
+			accuredtotalAmount = accuredtotalAmount.plus(remainDaysAmount);
 		} else {
 			accuredtotalAmount = fixedTermDepositInterestCalculator
 					.calculateInterestOnMaturityForSimpleInterest(deposit,
 							tenure, preClosureInterestRate,
 							interestCompoundedEvery,
 							this.product.getInterestCompoundedEveryPeriodType());
+			accuredtotalAmount = accuredtotalAmount.plus(remainDaysAmount);
 		}
 		this.total = account.isInterestCompoundingAllowed()?accuredtotalAmount.getAmount():BigDecimal.valueOf(accuredtotalAmount.getAmount().doubleValue()-this.interstPaid.doubleValue());
 		this.interestAccrued = accuredtotalAmount.minus(deposit).getAmount();
@@ -614,7 +620,7 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 		setExternalId(externalId);
 		if (commencementDate != null) {
 			this.projectedCommencementDate = commencementDate.toDate();
-			this.maturesOnDate = commencementDate.plusMonths(this.tenureInMonths).toDate();
+			this.maturesOnDate = commencementDate.plusMonths(this.tenureInMonths).minusDays(1).toDate();
 		}
 		this.product = product;
 		this.depositAmount = deposit.getAmount();

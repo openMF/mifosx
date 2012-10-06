@@ -292,7 +292,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 			throw new DepositAccountNotFoundException(command.getAccountId());
 		}
 		
-		if(command.getMaturesOnDate().isBefore(account.maturesOnDate())){
+		if(new LocalDate().isBefore(account.maturesOnDate())){
 			this.depositAccountAssembler.adjustTotalAmountForPreclosureInterest(account);
 		}
 		account.withdrawDepositAccountMoney(defaultDepositLifecycleStateMachine());

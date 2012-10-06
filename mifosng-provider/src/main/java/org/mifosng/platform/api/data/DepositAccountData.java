@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.joda.time.Months;
 
@@ -56,6 +57,7 @@ public class DepositAccountData {
 	private final DepositPermissionData permissions;
 	private final BigDecimal availableInterestForWithdrawal;
 	private final BigDecimal availableWithdrawalAmount;
+	private final LocalDate todaysDate;
 	
 	/*
 	 * used when returning account template data but only a clientId is passed, no selected product.
@@ -106,6 +108,7 @@ public class DepositAccountData {
 		this.interestCompoundingAllowed = true;
 		this.availableInterestForWithdrawal = new BigDecimal(0);
 		this.availableWithdrawalAmount= new BigDecimal(0);
+		this.todaysDate = new LocalDate();
 	}
 
 	public DepositAccountData(
@@ -150,6 +153,7 @@ public class DepositAccountData {
 		this.interestCompoundingAllowed=account.isInterestCompoundingAllowed();
 		this.availableInterestForWithdrawal=determineAvailableInterestForWithdrawal(account);
 		this.availableWithdrawalAmount=determineAvalableWithdrawalAmount(account);
+		this.todaysDate = new LocalDate();
 	}
 	
 	public DepositAccountData(final DepositAccountData account, final DepositPermissionData permissions, final Collection<DepositAccountTransactionData> transactions) {
@@ -191,6 +195,7 @@ public class DepositAccountData {
 		this.interestCompoundingAllowed = account.isInterestCompoundingAllowed();
 		this.availableInterestForWithdrawal=determineAvailableInterestForWithdrawal(account);
 		this.availableWithdrawalAmount=determineAvalableWithdrawalAmount(account);
+		this.todaysDate = new LocalDate();
 	}
 	
 	public DepositAccountData(
@@ -261,6 +266,7 @@ public class DepositAccountData {
 		this.interestCompoundingAllowed = interestCompoundingAllowed;
 		this.availableInterestForWithdrawal = BigDecimal.ZERO;
 		this.availableWithdrawalAmount = BigDecimal.ZERO;
+		this.todaysDate = new LocalDate();
 	}
 	
 	public DepositAccountData(
@@ -315,6 +321,7 @@ public class DepositAccountData {
 		this.interestCompoundingAllowed=interestCompoundingAllowed;
 		this.availableInterestForWithdrawal= BigDecimal.ZERO;
 		this.availableWithdrawalAmount = BigDecimal.ZERO;
+		this.todaysDate = new LocalDate();
 	}
 
 	public Long getId() {
@@ -457,6 +464,10 @@ public class DepositAccountData {
 		return availableWithdrawalAmount;
 	}
 
+	public LocalDate getTodaysDate() {
+		return todaysDate;
+	}
+
 	private BigDecimal determineAvailableInterestForWithdrawal(final DepositAccountData account) {
 		BigDecimal availableInterestForWithdrawal = BigDecimal.ZERO;
 		
@@ -494,16 +505,28 @@ public class DepositAccountData {
 					BigDecimal interestRateAsFraction = account.getPreClosureInterestRate().divide(BigDecimal.valueOf(100), mc);
 					BigDecimal interestRateForOneMonth = interestRateAsFraction.divide(BigDecimal.valueOf(monthsInYear.doubleValue()), mc);
 					Integer noOfMonthsforInterestCal = Months.monthsBetween(account.getActualCommencementDate(), new LocalDate()).getMonths();
+					Integer days = Days.daysBetween(account.getActualCommencementDate().plusMonths(noOfMonthsforInterestCal), new LocalDate()).getDays();
 					BigDecimal interest = BigDecimal.valueOf(account.getDeposit().doubleValue()*new Double(noOfMonthsforInterestCal)*interestRateForOneMonth.doubleValue()); 
-					avalablePreclosureWithdrawalAmount = interest.add(account.getDeposit()).subtract(account.getInterestPaid());
+					avalablePreclosureWithdrawalAmount = interest.add(account.getDeposit()).subtract(account.getInterestPaid()).add(determineRemainInerestAmount(account.getDeposit(), account.getPreClosureInterestRate(), days));
 				}else if(new LocalDate().isAfter(account.getMaturedOn()) || new LocalDate().isEqual(account.getMaturedOn())){
-					avalablePreclosureWithdrawalAmount=determineAvailableInterestForWithdrawal(account).add(account.getDeposit());
+					Integer days = Days.daysBetween(account.getMaturedOn(), new LocalDate()).getDays();
+					avalablePreclosureWithdrawalAmount=determineAvailableInterestForWithdrawal(account).add(account.getDeposit()).add(determineRemainInerestAmount(account.getDeposit(), account.getPreClosureInterestRate(), days));
 				}
 			}else{
 				avalablePreclosureWithdrawalAmount=account.getDeposit();
 			}
 		}
 		return avalablePreclosureWithdrawalAmount;
+	}
+	
+	private BigDecimal determineRemainInerestAmount(final BigDecimal depsoitAmount, final BigDecimal interstRateApplicable, final Integer days){
+
+		MathContext mc = new MathContext(8, RoundingMode.HALF_EVEN);
+		Integer daysInYear = 365;
+		BigDecimal interestRateAsFraction = interstRateApplicable.divide(BigDecimal.valueOf(100), mc);
+		BigDecimal interestRateForOneDay = interestRateAsFraction.divide(BigDecimal.valueOf(daysInYear.doubleValue()), mc);
+		return BigDecimal.valueOf(depsoitAmount.doubleValue()*days.doubleValue()*interestRateForOneDay.doubleValue());
+		
 	}
 
 }

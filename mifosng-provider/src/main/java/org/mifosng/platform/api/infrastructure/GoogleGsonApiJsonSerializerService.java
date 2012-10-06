@@ -113,7 +113,7 @@ public class GoogleGsonApiJsonSerializerService implements ApiJsonSerializerServ
 					"renewalAllowed","preClosureAllowed","preClosureInterestRate", 
 					"withdrawnonDate","rejectedonDate","closedonDate","transactions",
 					"permissions","isInterestWithdrawable","interestPaid","interestCompoundingAllowed",
-					"availableInterestForWithdrawal","availableWithdrawalAmount")
+					"availableInterestForWithdrawal","availableWithdrawalAmount","todaysDate")
 			);
 	
 	private static final Set<String> CLIENT_DATA_PARAMETERS = new HashSet<String>(
