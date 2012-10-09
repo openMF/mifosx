@@ -107,17 +107,14 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 	@Column(name = "status_enum", nullable = false)
 	private Integer depositStatus;
 	
-	@SuppressWarnings("unused")
 	@Temporal(TemporalType.DATE)
 	@Column(name = "closedon_date")
 	private Date closedOnDate;
 	
-	@SuppressWarnings("unused")
 	@Temporal(TemporalType.DATE)
 	@Column(name = "rejectedon_date")
 	private Date rejectedOnDate;
 	
-	@SuppressWarnings("unused")
 	@Temporal(TemporalType.DATE)
 	@Column(name = "withdrawnon_date")
 	private Date withdrawnOnDate;	
@@ -138,10 +135,19 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "depositAccount", orphanRemoval = true)
 	private final List<DepositAccountTransaction> depositaccountTransactions = new ArrayList<DepositAccountTransaction>();
 	
-	@SuppressWarnings("unused")
 	@OneToOne(optional=true, cascade={CascadeType.PERSIST})
 	@JoinColumn(name = "renewed_account_id")
 	private DepositAccount renewdAccount;
+	
+	@Column(name = "is_lock_in_period_allowed", nullable=false)
+	private boolean isLockinPeriodAllowed = false;
+	
+	@Column(name = "lock_in_period", nullable=false)
+	private Integer lockinPeriod;
+	
+	@Column(name = "lock_in_period_type", nullable=false)
+	private PeriodFrequencyType lockinPeriodType;
+	
     
 	public DepositAccount openNew(
 			final Client client, final DepositProduct product,
@@ -153,7 +159,8 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 			final boolean preClosureAllowed, 
 			final FixedTermDepositInterestCalculator fixedTermDepositInterestCalculator, 
 			final DepositLifecycleStateMachine depositLifecycleStateMachine,
-			final boolean isInterstWithdrawable,final boolean interestCompoundingAllowed) {
+			final boolean isInterstWithdrawable,final boolean interestCompoundingAllowed,
+			final boolean isLockinPeriodAllowed, final Integer lockinPeriod, final PeriodFrequencyType lockinPeriodType) {
 		
 		Money futureValueOnMaturity =null;
 
@@ -180,7 +187,7 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 		
 		return new DepositAccount(client, product, externalId, deposit, maturityInterestRate, preClosureInterestRate, tenureInMonths, 
 				interestCompoundedEvery, interestCompoundedFrequencyPeriodType, commencementDate, renewalAllowed, preClosureAllowed, 
-				futureValueOnMaturity,depositStatus,isInterstWithdrawable, interestCompoundingAllowed);
+				futureValueOnMaturity,depositStatus,isInterstWithdrawable, interestCompoundingAllowed,isLockinPeriodAllowed,lockinPeriod,lockinPeriodType);
 	}
 	
 	public DepositAccount() {
@@ -198,7 +205,10 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 			final Money futureValueOnMaturity,
 			final Integer depositStatus,
 			final boolean isInterestWithdrawable,
-			final boolean interestCompoundingAllowed) {
+			final boolean interestCompoundingAllowed,
+			final boolean isLockinPeriodAllowed,
+			final Integer lockinPeriod,
+			final PeriodFrequencyType lockinPeriodType) {
 		this.client = client;
 		this.product = product;
 		setExternalId(externalId);
@@ -223,12 +233,15 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 		this.preClosureInterestRate = preClosureInterestRate;
 		this.isInterestWithdrawable = isInterestWithdrawable;
 		this.interestCompoundingAllowed = interestCompoundingAllowed;
+		this.isLockinPeriodAllowed = isLockinPeriodAllowed;
+		this.lockinPeriod = lockinPeriod;
+		this.lockinPeriodType = lockinPeriodType;
 		
 		// derived fields
 		this.projectedInterestAccruedOnMaturity = futureValueOnMaturity.minus(deposit).getAmount();
 		this.projectedTotalOnMaturity = futureValueOnMaturity.getAmount();
 		this.depositStatus=depositStatus;
-		this.interstPaid = new BigDecimal(0);
+		this.interstPaid = BigDecimal.ZERO;
 	}
 	
 	private void setExternalId(final String externalId) {
@@ -275,6 +288,8 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 			this.depositAmount = command.getDepositAmount();
 		}
 		this.product.validateDepositInRange(this.depositAmount);
+		
+		this.interestCompoundedEvery = command.getInterestCompoundedEvery();
 		
 		if (command.getInterestCompoundedEveryPeriodType() != null) {
 			this.interestCompoundedFrequencyType = PeriodFrequencyType.fromInt(command.getInterestCompoundedEveryPeriodType()).getValue();
@@ -354,6 +369,18 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 
 	public boolean isInterestCompoundingAllowed() {
 		return interestCompoundingAllowed;
+	}
+	
+	public boolean isLockinPeriodAllowed() {
+		return isLockinPeriodAllowed;
+	}
+
+	public Integer getLockinPeriod() {
+		return lockinPeriod;
+	}
+
+	public PeriodFrequencyType getLockinPeriodType() {
+		return lockinPeriodType;
 	}
 
 	public void reject(final LocalDate rejectedOn,
@@ -510,18 +537,22 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 		
 	}
 
-	public void withdrawDepositAccountMoney(DepositLifecycleStateMachine depositLifecycleStateMachine) {
+	public void withdrawDepositAccountMoney(DepositLifecycleStateMachine depositLifecycleStateMachine, FixedTermDepositInterestCalculator fixedTermDepositInterestCalculator,LocalDate eventDate) {
 		
-		if (new LocalDate().isAfter(maturesOnDate()) || new LocalDate().equals(maturesOnDate())) {
+		if (eventDate.isAfter(maturesOnDate()) || eventDate.equals(maturesOnDate())) {
 				
 			DepositAccountStatus statusEnum = depositLifecycleStateMachine.transition(DepositAccountEvent.DEPOSIT_CLOSED, DepositAccountStatus.fromInt(this.depositStatus));
 			this.depositStatus = statusEnum.getValue();
 			
-			DepositAccountTransaction depositaccountTransaction = DepositAccountTransaction.withdraw(getDeposit(), new LocalDate(),getAccuredInterest());
+			Integer days = Days.daysBetween(maturesOnDate(), eventDate).getDays();
+			Money accuredInterestAfterMaturityToTillDate = fixedTermDepositInterestCalculator.calculateRemainInterest(getDeposit(), days, preClosureInterestRate);
+			this.interestAccrued = this.interestAccrued.add(accuredInterestAfterMaturityToTillDate.getAmount());
+			
+			DepositAccountTransaction depositaccountTransaction = DepositAccountTransaction.withdraw(getDeposit(), eventDate,getAccuredInterest());
 			depositaccountTransaction.updateAccount(this);
 			this.depositaccountTransactions.add(depositaccountTransaction);
 			
-			this.closedOnDate = new LocalDate().toDate();
+			this.closedOnDate = eventDate.toDate();
 			this.withdrawnOnDate = null;
 			this.rejectedOnDate = null;
 				
@@ -530,21 +561,21 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 			DepositAccountStatus statusEnum = depositLifecycleStateMachine.transition(DepositAccountEvent.DEPOSIT_PRECLOSED, DepositAccountStatus.fromInt(this.depositStatus));
 			this.depositStatus = statusEnum.getValue();
 			
-			DepositAccountTransaction depositaccountTransaction = DepositAccountTransaction.withdraw(getDeposit(), new LocalDate(),getAccuredInterest());
+			DepositAccountTransaction depositaccountTransaction = DepositAccountTransaction.withdraw(getDeposit(), eventDate, getAccuredInterest());
 			depositaccountTransaction.updateAccount(this);
 			this.depositaccountTransactions.add(depositaccountTransaction);
 				
-			this.closedOnDate = new LocalDate().toDate();
+			this.closedOnDate = eventDate.toDate();
 			this.withdrawnOnDate = null;
 			this.rejectedOnDate = null;
 			
 		}
 	}
 
-	public void adjustTotalAmountForPreclosureInterest(DepositAccount account, FixedTermDepositInterestCalculator fixedTermDepositInterestCalculator) {
+	public void adjustTotalAmountForPreclosureInterest(DepositAccount account, FixedTermDepositInterestCalculator fixedTermDepositInterestCalculator,LocalDate eventDate) {
 		
-		LocalDate commnencementDate = new LocalDate(this.actualCommencementDate);
-		LocalDate preClosedDate = new LocalDate();
+		LocalDate commnencementDate = getActualCommencementDate();
+		LocalDate preClosedDate = eventDate;
 		
 		Integer tenure = Months.monthsBetween(commnencementDate, preClosedDate).getMonths();
 		LocalDate actualPrecloseCalculationDate = commnencementDate.plusMonths(tenure);
@@ -602,7 +633,10 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 			final boolean renewalAllowed, final boolean preClosureAllowed,
 			final boolean isInterestWithdrawable, final boolean isInterestCompoundingAllowed,
 			final FixedTermDepositInterestCalculator fixedTermDepositInterestCalculator, 
-			final DepositLifecycleStateMachine depositLifecycleStateMachine) {
+			final DepositLifecycleStateMachine depositLifecycleStateMachine,
+			final boolean isLockinPeriodAllowed,
+			final Integer lockinPeriod,
+			final PeriodFrequencyType lockinPeriodType) {
 		
 		Money futureValueOnMaturity =null;
 
@@ -636,6 +670,9 @@ public class DepositAccount extends AbstractAuditableCustom<AppUser, Long>  {
 		this.interestCompoundingAllowed=isInterestCompoundingAllowed;
 		this.projectedInterestAccruedOnMaturity = futureValueOnMaturity.minus(deposit).getAmount();
 		this.projectedTotalOnMaturity = futureValueOnMaturity.getAmount();
+		this.isLockinPeriodAllowed = isLockinPeriodAllowed;
+		this.lockinPeriod = lockinPeriod;
+		this.lockinPeriodType = lockinPeriodType;
 		
 	}
 

@@ -73,7 +73,8 @@ public class DepositAccountsApiResource {
 					"interestCompoundedEveryPeriodType", "renewalAllowed",
 					"preClosureAllowed", "preClosureInterestRate", 
 					"withdrawnonDate","rejectedonDate","closedonDate","transactions","interestPaid","isInterestWithdrawable",
-					"availableInterestForWithdrawal","availableWithdrawalAmount","todaysDate"));
+					"availableInterestForWithdrawal","availableWithdrawalAmount","todaysDate",
+					"isLockinPeriodAllowed","lockinPeriod","lockinPeriodType"));
 	
 	
 	@POST

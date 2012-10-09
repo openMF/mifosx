@@ -59,6 +59,10 @@ public class DepositAccountData {
 	private final BigDecimal availableWithdrawalAmount;
 	private final LocalDate todaysDate;
 	
+	private final boolean isLockinPeriodAllowed;
+	private final Integer lockinPeriod;
+	private final EnumOptionData lockinPeriodType;
+	
 	/*
 	 * used when returning account template data but only a clientId is passed, no selected product.
 	 */
@@ -109,6 +113,10 @@ public class DepositAccountData {
 		this.availableInterestForWithdrawal = new BigDecimal(0);
 		this.availableWithdrawalAmount= new BigDecimal(0);
 		this.todaysDate = new LocalDate();
+		
+		this.isLockinPeriodAllowed =true;
+		this.lockinPeriod = null;
+		this.lockinPeriodType = null;
 	}
 
 	public DepositAccountData(
@@ -154,6 +162,10 @@ public class DepositAccountData {
 		this.availableInterestForWithdrawal=determineAvailableInterestForWithdrawal(account);
 		this.availableWithdrawalAmount=determineAvalableWithdrawalAmount(account);
 		this.todaysDate = new LocalDate();
+		
+		this.lockinPeriod = account.getLockinPeriod();
+		this.lockinPeriodType = account.getLockinPeriodType();
+		this.isLockinPeriodAllowed = account.isLockinPeriodAllowed();
 	}
 	
 	public DepositAccountData(final DepositAccountData account, final DepositPermissionData permissions, final Collection<DepositAccountTransactionData> transactions) {
@@ -196,6 +208,10 @@ public class DepositAccountData {
 		this.availableInterestForWithdrawal=determineAvailableInterestForWithdrawal(account);
 		this.availableWithdrawalAmount=determineAvalableWithdrawalAmount(account);
 		this.todaysDate = new LocalDate();
+		
+		this.lockinPeriod = account.getLockinPeriod();
+		this.lockinPeriodType = account.getLockinPeriodType();
+		this.isLockinPeriodAllowed = account.isLockinPeriodAllowed();
 	}
 	
 	public DepositAccountData(
@@ -226,7 +242,10 @@ public class DepositAccountData {
 			final LocalDate closedonDate,
 			final boolean isInterestWithdrawable,
 			final BigDecimal interestPaid,
-			final boolean interestCompoundingAllowed) {
+			final boolean interestCompoundingAllowed,
+			final boolean isLockinPeriodAllowed,
+			final Integer lockinPeriod,
+			final EnumOptionData lockinPeriodType) {
 		this.id=id;
 		this.externalId = externalId;
 		this.status = status;
@@ -267,6 +286,10 @@ public class DepositAccountData {
 		this.availableInterestForWithdrawal = BigDecimal.ZERO;
 		this.availableWithdrawalAmount = BigDecimal.ZERO;
 		this.todaysDate = new LocalDate();
+		
+		this.isLockinPeriodAllowed = isLockinPeriodAllowed;
+		this.lockinPeriod =lockinPeriod;
+		this.lockinPeriodType = lockinPeriodType;
 	}
 	
 	public DepositAccountData(
@@ -322,6 +345,11 @@ public class DepositAccountData {
 		this.availableInterestForWithdrawal= BigDecimal.ZERO;
 		this.availableWithdrawalAmount = BigDecimal.ZERO;
 		this.todaysDate = new LocalDate();
+		
+		//need to update in constructor's call method and update it
+		this.lockinPeriod = Integer.valueOf(0);
+		this.isLockinPeriodAllowed =true;
+		this.lockinPeriodType = interestCompoundedEveryPeriodType;
 	}
 
 	public Long getId() {
@@ -468,26 +496,31 @@ public class DepositAccountData {
 		return todaysDate;
 	}
 
+	public boolean isLockinPeriodAllowed() {
+		return isLockinPeriodAllowed;
+	}
+
+	public Integer getLockinPeriod() {
+		return lockinPeriod;
+	}
+
+	public EnumOptionData getLockinPeriodType() {
+		return lockinPeriodType;
+	}
+
 	private BigDecimal determineAvailableInterestForWithdrawal(final DepositAccountData account) {
 		BigDecimal availableInterestForWithdrawal = BigDecimal.ZERO;
 		
 		if(this.status!=null){
 		if (account.getStatus().getId() == 300) {
-			BigDecimal interestGettingForPeriod = BigDecimal.valueOf(account
-					.getActualInterestAccrued().doubleValue()
-					/ new Double(account.getTenureInMonths()));
-			Integer noOfMonthsforInterestCal = Months.monthsBetween(
-					account.getActualCommencementDate(), new LocalDate())
-					.getMonths();
-			Integer noOfPeriods = noOfMonthsforInterestCal
-					/ account.getInterestCompoundedEvery();
+			BigDecimal interestGettingForPeriod = BigDecimal.valueOf(account.getActualInterestAccrued().doubleValue()/ new Double(account.getTenureInMonths()));
+			LocalDate interestWithdrawingDate= new LocalDate().isAfter(getMaturedOn())?getMaturedOn().plusDays(1):new LocalDate();
+			Integer noOfMonthsforInterestCal = Months.monthsBetween(account.getActualCommencementDate(), interestWithdrawingDate).getMonths();
+			Integer noOfPeriods = noOfMonthsforInterestCal/ account.getInterestCompoundedEvery();
 
-			availableInterestForWithdrawal = BigDecimal
-					.valueOf(interestGettingForPeriod.multiply(
-							new BigDecimal(noOfPeriods)).doubleValue()
-							- account.getInterestPaid().doubleValue());
+			availableInterestForWithdrawal = BigDecimal.valueOf(interestGettingForPeriod.multiply(new BigDecimal(noOfPeriods)).doubleValue()- account.getInterestPaid().doubleValue());
 		}else {
-			return new BigDecimal(0);
+			return BigDecimal.ZERO;
 		}
 		}else return BigDecimal.ZERO;
 		
