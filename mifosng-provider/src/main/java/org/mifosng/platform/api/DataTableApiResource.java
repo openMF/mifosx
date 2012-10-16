@@ -62,7 +62,7 @@ public class DataTableApiResource {
 
 	@Autowired
 	private ApiJsonSerializerService apiJsonSerializerService;
-
+//new test
 	@GET
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })

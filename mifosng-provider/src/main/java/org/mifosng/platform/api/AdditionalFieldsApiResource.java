@@ -60,7 +60,7 @@ public class AdditionalFieldsApiResource {
 
 	@Autowired
 	private ApiJsonSerializerService apiJsonSerializerService;
-
+//test 
 	@GET
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
