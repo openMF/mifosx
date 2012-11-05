@@ -26,12 +26,14 @@ import org.mifosng.platform.api.data.GroupData;
 import org.mifosng.platform.api.data.LoanAccountData;
 import org.mifosng.platform.api.data.LoanChargeData;
 import org.mifosng.platform.api.data.LoanProductData;
+import org.mifosng.platform.api.data.LoanReassignmentData;
 import org.mifosng.platform.api.data.LoanTransactionData;
 import org.mifosng.platform.api.data.NoteData;
 import org.mifosng.platform.api.data.OfficeData;
 import org.mifosng.platform.api.data.OfficeTransactionData;
 import org.mifosng.platform.api.data.PermissionData;
 import org.mifosng.platform.api.data.RoleData;
+import org.mifosng.platform.api.data.SavingAccountData;
 import org.mifosng.platform.api.data.SavingProductData;
 import org.mifosng.platform.api.data.StaffData;
 
@@ -107,6 +109,8 @@ public interface ApiJsonSerializerService {
 
 	String serializeLoanTransactionDataToJson(boolean prettyPrint, Set<String> responseParameters, LoanTransactionData newTransactionData);
 
+    String serializeLoanReassignmentDataToJson(boolean prettyPrint, Set<String> responseParameters, LoanReassignmentData loanReassignmentData);
+
 	String serializeChargeDataToJson(boolean prettyPrint, Set<String> responseParameters, Collection<ChargeData> charges);
 
 	String serializeChargeDataToJson(boolean prettyPrint, Set<String> responseParameters, ChargeData charge);
@@ -131,9 +135,13 @@ public interface ApiJsonSerializerService {
 
 	String serializeCodeDataToJson(boolean prettyPrint,Set<String> responseParameters, CodeData code);
 
-	//madhav
 	String serializeChartAccountDataToJson(boolean prettyPrint,Set<String> responseParameters, Collection<ChartAccountData> chartaccount);
 
     String serializeChartAccountDataToJson(boolean prettyPrint,Set<String> responseParameters, ChartAccountData chartaccount);
+
+	String serializeSavingAccountsDataToJson(boolean prettyPrint, Set<String> responseParameters, SavingAccountData account);
+
+	String serializeSavingAccountsDataToJson(boolean prettyPrint, Set<String> responseParameters, Collection<SavingAccountData> accounts);
+
 
 }

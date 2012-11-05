@@ -2,6 +2,7 @@ package org.mifosng.platform.api.infrastructure;
 
 import org.mifosng.platform.api.commands.AdjustLoanTransactionCommand;
 import org.mifosng.platform.api.commands.BranchMoneyTransferCommand;
+import org.mifosng.platform.api.commands.BulkLoanReassignmentCommand;
 import org.mifosng.platform.api.commands.ChargeCommand;
 import org.mifosng.platform.api.commands.ChartAccountCommand;
 import org.mifosng.platform.api.commands.ClientCommand;
@@ -24,6 +25,7 @@ import org.mifosng.platform.api.commands.NoteCommand;
 import org.mifosng.platform.api.commands.OfficeCommand;
 import org.mifosng.platform.api.commands.OrganisationCurrencyCommand;
 import org.mifosng.platform.api.commands.RoleCommand;
+import org.mifosng.platform.api.commands.SavingAccountCommand;
 import org.mifosng.platform.api.commands.SavingProductCommand;
 import org.mifosng.platform.api.commands.StaffCommand;
 import org.mifosng.platform.api.commands.UserCommand;
@@ -74,7 +76,9 @@ public interface ApiDataConversionService {
 	DepositStateTransitionApprovalCommand convertJsonToDepositStateTransitionApprovalCommand(Long resourceIdentifier, String jsonRequestBody);
 
 	StaffCommand convertJsonToStaffCommand(Long resourceIdentifier, String json);
-	
+
+    BulkLoanReassignmentCommand convertJsonToBulkLoanReassignmentCommand(String jsonRequestBody);
+
 	DepositAccountWithdrawalCommand convertJsonToDepositWithdrawalCommand(Long resourceIdentifier, String jsonRequestBody);
 	
 	DepositAccountWithdrawInterestCommand convertJsonToDepositAccountWithdrawInterestCommand(Long resourceIdentifier, String jsonRequestBody);
@@ -84,4 +88,7 @@ public interface ApiDataConversionService {
 	CodeCommand convertJsonToCodeCommand(Long resourceIdentifier, String json);
 	
 	ChartAccountCommand convertJsonToChartAccountCommand(Long resourceIdentifier, String jsonRequestBody);
+
+	SavingAccountCommand convertJsonToSavingAccountCommand(Long resourceIdentifier,String jsonRequestBody);
+
 }

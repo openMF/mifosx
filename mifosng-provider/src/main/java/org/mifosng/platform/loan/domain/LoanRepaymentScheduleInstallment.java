@@ -25,85 +25,89 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
     @JoinColumn(name = "loan_id")
     private Loan    loan;
 
-    @Column(name = "installment")
+    @Column(name = "installment", nullable=false)
     private final Integer installmentNumber;
     
-    @Column(name = "principal_amount", scale=6, precision=19)
+    @Temporal(TemporalType.DATE)
+    @Column(name = "fromdate", nullable=true)
+    private final Date    fromDate;
+    
+    @Temporal(TemporalType.DATE)
+    @Column(name = "duedate", nullable=false)
+    private final Date    dueDate;
+    
+    @Column(name = "principal_amount", scale=6, precision=19, nullable=true)
     private BigDecimal  principal;
     
-    @Column(name = "interest_amount", scale=6, precision=19)
-    private BigDecimal   interest;
-    
-    @Column(name = "fee_charges_amount", scale=6, precision=19)
-    private BigDecimal   feeCharges;
-    
-    @Column(name = "fee_charges_completed_derived", scale=6, precision=19)
-    private BigDecimal   feeChargesCompleted;
-    
-    @Column(name = "fee_charges_writtenoff_derived", scale=6, precision=19)
-    private BigDecimal   feeChargesWrittenOff;
-    
-    @Column(name = "fee_charges_waived_derived", scale=6, precision=19)
-    private BigDecimal   feeChargesWaived;
-    
-    @Column(name = "penalty_charges_amount", scale=6, precision=19)
-    private BigDecimal   penaltyCharges;
-    
-    @Column(name = "penalty_charges_completed_derived", scale=6, precision=19)
-    private BigDecimal   penaltyChargesCompleted;
-    
-    @Column(name = "penalty_charges_writtenoff_derived", scale=6, precision=19)
-    private BigDecimal   penaltyChargesWrittenOff;
-    
-    @Column(name = "penalty_charges_waived_derived", scale=6, precision=19)
-    private BigDecimal   penaltyChargesWaived;
-    
-    @Column(name = "principal_completed_derived", scale=6, precision=19)
+    @Column(name = "principal_completed_derived", scale=6, precision=19, nullable=true)
     private BigDecimal   principalCompleted;
     
-    @Column(name = "principal_writtenoff_derived", scale=6, precision=19)
+    @Column(name = "principal_writtenoff_derived", scale=6, precision=19, nullable=true)
     private BigDecimal   principalWrittenOff;
     
-	@Column(name = "interest_completed_derived", scale = 6, precision = 19)
+    @Column(name = "interest_amount", scale=6, precision=19, nullable=true)
+    private BigDecimal   interest;
+    
+	@Column(name = "interest_completed_derived", scale = 6, precision = 19, nullable=true)
 	private BigDecimal interestCompleted;
 	
-	@Column(name = "interest_waived_derived", scale = 6, precision = 19)
+	@Column(name = "interest_waived_derived", scale = 6, precision = 19, nullable=true)
 	private BigDecimal interestWaived;
 	
-	@Column(name = "interest_writtenoff_derived", scale=6, precision=19)
+	@Column(name = "interest_writtenoff_derived", scale=6, precision=19, nullable=true)
 	private BigDecimal   interestWrittenOff;
+	
+	@Column(name = "fee_charges_amount", scale=6, precision=19, nullable=true)
+    private BigDecimal   feeCharges;
     
-    @Column(name="completed_derived")
+    @Column(name = "fee_charges_completed_derived", scale=6, precision=19, nullable=true)
+    private BigDecimal   feeChargesCompleted;
+    
+    @Column(name = "fee_charges_writtenoff_derived", scale=6, precision=19, nullable=true)
+    private BigDecimal   feeChargesWrittenOff;
+    
+    @Column(name = "fee_charges_waived_derived", scale=6, precision=19, nullable=true)
+    private BigDecimal   feeChargesWaived;
+    
+    @Column(name = "penalty_charges_amount", scale=6, precision=19, nullable=true)
+    private BigDecimal   penaltyCharges;
+    
+    @Column(name = "penalty_charges_completed_derived", scale=6, precision=19, nullable=true)
+    private BigDecimal   penaltyChargesCompleted;
+    
+    @Column(name = "penalty_charges_writtenoff_derived", scale=6, precision=19, nullable=true)
+    private BigDecimal   penaltyChargesWrittenOff;
+    
+    @Column(name = "penalty_charges_waived_derived", scale=6, precision=19, nullable=true)
+    private BigDecimal   penaltyChargesWaived;
+    
+    @Column(name="completed_derived", nullable=false)
     private boolean completed;
 
-    @Temporal(TemporalType.DATE)
-    @Column(name = "duedate")
-    private final Date    dueDate;
-
     protected LoanRepaymentScheduleInstallment() {
-        this.loan = null;
-        this.installmentNumber = null;
-        this.dueDate = null;
-        this.principal = null;
-        this.interest = null;
-        this.principalCompleted = null;
-        this.interestCompleted = null;
+    	this.installmentNumber = null;
+    	this.fromDate = null;
+    	this.dueDate = null;
         this.completed = false;
     }
 
     public LoanRepaymentScheduleInstallment(
     		final Loan loan, 
     		final Integer installmentNumber,
+    		final LocalDate fromDate, 
             final LocalDate dueDate, 
             final BigDecimal principal, 
             final BigDecimal interest, 
-            final BigDecimal feeCharges) {
+            final BigDecimal feeCharges,
+            final BigDecimal penaltyCharges) {
         this.loan = loan;
         this.installmentNumber = installmentNumber;
+        this.fromDate = fromDate.toDateMidnight().toDate();
         this.dueDate = dueDate.toDateMidnight().toDate();
         this.principal = defaultToNullIfZero(principal);
         this.interest = defaultToNullIfZero(interest);
         this.feeCharges = defaultToNullIfZero(feeCharges);
+        this.penaltyCharges = defaultToNullIfZero(penaltyCharges);
         this.completed = false;
     }
 
@@ -123,6 +127,15 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
         return this.installmentNumber;
     }
 
+    public LocalDate getFromDate() {
+    	LocalDate fromLocalDate = null;
+    	if (this.fromDate != null) {
+    		fromLocalDate = new LocalDate(this.fromDate);
+    	}
+    	
+    	return fromLocalDate;
+    }
+    
     public LocalDate getDueDate() {
         return new LocalDate(this.dueDate);
     }
@@ -185,6 +198,27 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
 		final Money feeChargesAccountedFor = getFeeChargesCompleted(currency).plus(getFeeChargesWaived(currency)).plus(getFeeChargesWrittenOff(currency));
 		return getFeeCharges(currency).minus(feeChargesAccountedFor);
 	}
+	
+	public Money getPenaltyCharges(final MonetaryCurrency currency) {
+		return Money.of(currency, this.penaltyCharges);
+	}
+	
+	public Money getPenaltyChargesCompleted(final MonetaryCurrency currency) {
+		return Money.of(currency, this.penaltyChargesCompleted);
+	}
+	
+	public Money getPenaltyChargesWaived(final MonetaryCurrency currency) {
+		return Money.of(currency, this.penaltyChargesWaived);
+	}
+	
+	public Money getPenaltyChargesWrittenOff(final MonetaryCurrency currency) {
+		return Money.of(currency, this.penaltyChargesWrittenOff);
+	}
+	
+	public Money getPenaltyChargesOutstanding(final MonetaryCurrency currency) {
+		final Money feeChargesAccountedFor = getPenaltyChargesCompleted(currency).plus(getPenaltyChargesWaived(currency)).plus(getPenaltyChargesWrittenOff(currency));
+		return getPenaltyCharges(currency).minus(feeChargesAccountedFor);
+	}
 
 	public boolean isInterestDue(final MonetaryCurrency currency) {
 		return getInterestOutstanding(currency).isGreaterThanZero();
@@ -195,7 +229,7 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
 	}
 	
 	public Money getTotalOutstanding(final MonetaryCurrency currency) {
-		return getPrincipalOutstanding(currency).plus(getInterestOutstanding(currency));
+		return getPrincipalOutstanding(currency).plus(getInterestOutstanding(currency)).plus(getFeeChargesOutstanding(currency)).plus(getPenaltyChargesOutstanding(currency));
 	}
 	
 	public void updateLoan(final Loan loan) {
@@ -219,14 +253,63 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
 	}
 
 	public void resetDerivedComponents() {
-		this.principalCompleted = BigDecimal.ZERO;
-		this.principalWrittenOff = BigDecimal.ZERO;
-		this.interestCompleted = BigDecimal.ZERO;
-		this.interestWaived = BigDecimal.ZERO;
-		this.interestWrittenOff = BigDecimal.ZERO;
+		this.principalCompleted = null;
+		this.principalWrittenOff = null;
+		this.interestCompleted = null;
+		this.interestWaived = null;
+		this.interestWrittenOff = null;
+		this.feeChargesCompleted = null;
+		this.feeChargesWaived = null;
+		this.feeChargesWrittenOff = null;
+		this.penaltyChargesCompleted = null;
+		this.penaltyChargesWaived = null;
+		this.penaltyChargesWrittenOff = null;
+		
 		this.completed = false;
 	}
 
+	public Money payPenaltyChargesComponent(final Money transactionAmountRemaining) {
+		
+		final MonetaryCurrency currency = transactionAmountRemaining.getCurrency();
+		Money penaltyPortionOfTransaction = Money.zero(currency);
+		
+		final Money penaltyChargesDue = getPenaltyChargesOutstanding(currency);
+		if (transactionAmountRemaining.isGreaterThanOrEqualTo(penaltyChargesDue)) {
+			this.penaltyChargesCompleted = getPenaltyChargesCompleted(currency).plus(penaltyChargesDue).getAmount();
+			penaltyPortionOfTransaction = penaltyPortionOfTransaction.plus(penaltyChargesDue);
+		} else {
+			this.penaltyChargesCompleted = getPenaltyChargesCompleted(currency).plus(transactionAmountRemaining).getAmount();
+			penaltyPortionOfTransaction = penaltyPortionOfTransaction.plus(transactionAmountRemaining);
+		}
+		
+		this.penaltyChargesCompleted = defaultToNullIfZero(this.penaltyChargesCompleted);
+		
+		this.completed = getTotalOutstanding(currency).isZero();
+		
+		return penaltyPortionOfTransaction;
+	}
+	
+	public Money payFeeChargesComponent(final Money transactionAmountRemaining) {
+		
+		final MonetaryCurrency currency = transactionAmountRemaining.getCurrency();
+		Money feePortionOfTransaction = Money.zero(currency);
+		
+		final Money feeChargesDue = getFeeChargesOutstanding(currency);
+		if (transactionAmountRemaining.isGreaterThanOrEqualTo(feeChargesDue)) {
+			this.feeChargesCompleted = getFeeChargesCompleted(currency).plus(feeChargesDue).getAmount();
+			feePortionOfTransaction = feePortionOfTransaction.plus(feeChargesDue);
+		} else {
+			this.feeChargesCompleted = getFeeChargesCompleted(currency).plus(transactionAmountRemaining).getAmount();
+			feePortionOfTransaction = feePortionOfTransaction.plus(transactionAmountRemaining);
+		}
+		
+		this.feeChargesCompleted = defaultToNullIfZero(this.feeChargesCompleted);
+		
+		this.completed = getTotalOutstanding(currency).isZero();
+		
+		return feePortionOfTransaction;
+	}
+	
 	public Money payInterestComponent(final Money transactionAmountRemaining) {
 		
 		final MonetaryCurrency currency = transactionAmountRemaining.getCurrency();
@@ -240,6 +323,8 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
 			this.interestCompleted = getInterestCompleted(currency).plus(transactionAmountRemaining).getAmount();
 			interestPortionOfTransaction = interestPortionOfTransaction.plus(transactionAmountRemaining);
 		}
+		
+		this.interestCompleted = defaultToNullIfZero(this.interestCompleted);
 		
 		this.completed = getTotalOutstanding(currency).isZero();
 		
@@ -260,6 +345,8 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
 			principalPortionOfTransaction = principalPortionOfTransaction.plus(transactionAmountRemaining);
 		}
 		
+		this.principalCompleted = defaultToNullIfZero(this.principalCompleted);
+		
 		this.completed = getTotalOutstanding(currency).isZero();
 		
 		return principalPortionOfTransaction;
@@ -278,6 +365,8 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
 			waivedInterestPortionOfTransaction = waivedInterestPortionOfTransaction.plus(transactionAmountRemaining);
 		}
 		
+		this.interestWaived = defaultToNullIfZero(this.interestWaived);
+		
 		this.completed = getTotalOutstanding(currency).isZero();
 		
 		return waivedInterestPortionOfTransaction;
@@ -286,7 +375,7 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
 	public Money writeOffOutstandingPrincipal(final MonetaryCurrency currency) {
 		
 		final Money principalDue = getPrincipalOutstanding(currency);
-		this.principalWrittenOff = principalDue.getAmount();
+		this.principalWrittenOff = defaultToNullIfZero(principalDue.getAmount());
 		this.completed = getTotalOutstanding(currency).isZero();
 		
 		return principalDue;
@@ -295,7 +384,7 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
 	public Money writeOffOutstandingInterest(final MonetaryCurrency currency) {
 		
 		final Money interestDue = getInterestOutstanding(currency);
-		this.interestWrittenOff = interestDue.getAmount();
+		this.interestWrittenOff = defaultToNullIfZero(interestDue.getAmount());
 		this.completed = getTotalOutstanding(currency).isZero();
 		
 		return interestDue;
@@ -305,7 +394,8 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
 		return this.getDueDate().isBefore(transactionDate);
 	}
 
-	public void updateChargePortion(final Money feeChargesDue) {
+	public void updateChargePortion(final Money feeChargesDue, final Money penaltyChargesDue) {
 		this.feeCharges = defaultToNullIfZero(feeChargesDue.getAmount());
+		this.penaltyCharges = defaultToNullIfZero(penaltyChargesDue.getAmount());
 	}
 }

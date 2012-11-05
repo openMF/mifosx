@@ -10,6 +10,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.mifosng.platform.api.LoanScheduleData;
 import org.mifosng.platform.api.commands.AdjustLoanTransactionCommand;
+import org.mifosng.platform.api.commands.BulkLoanReassignmentCommand;
 import org.mifosng.platform.api.commands.CalculateLoanScheduleCommand;
 import org.mifosng.platform.api.commands.LoanApplicationCommand;
 import org.mifosng.platform.api.commands.LoanChargeCommand;
@@ -32,6 +33,7 @@ import org.mifosng.platform.exceptions.ClientNotFoundException;
 import org.mifosng.platform.exceptions.InvalidCurrencyException;
 import org.mifosng.platform.exceptions.LoanNotFoundException;
 import org.mifosng.platform.exceptions.LoanNotInSubmittedAndPendingApprovalStateCannotBeDeleted;
+import org.mifosng.platform.exceptions.LoanOfficerAssignmentException;
 import org.mifosng.platform.exceptions.LoanProductNotFoundException;
 import org.mifosng.platform.exceptions.LoanTransactionNotFoundException;
 import org.mifosng.platform.exceptions.NoAuthorizationException;
@@ -52,6 +54,7 @@ import org.mifosng.platform.loan.domain.LoanTransactionRepository;
 import org.mifosng.platform.loan.domain.PeriodFrequencyType;
 import org.mifosng.platform.security.PlatformSecurityContext;
 import org.mifosng.platform.staff.domain.Staff;
+import org.mifosng.platform.staff.service.BulkLoanReassignmentCommandValidator;
 import org.mifosng.platform.user.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -381,11 +384,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 			for (LoanSchedulePeriodData scheduledLoanPeriod : loanSchedule.getPeriods()) {
 				if (scheduledLoanPeriod.isRepaymentPeriod()) {
 					LoanRepaymentScheduleInstallment installment = new LoanRepaymentScheduleInstallment(
-							loan, scheduledLoanPeriod.periodNumber(),
+							loan, 
+							scheduledLoanPeriod.periodNumber(),
+							scheduledLoanPeriod.periodFromDate(),
 							scheduledLoanPeriod.periodDueDate(), 
 							scheduledLoanPeriod.principalDue(),
 							scheduledLoanPeriod.interestDue(),
-							scheduledLoanPeriod.chargesDue());
+							scheduledLoanPeriod.feeChargesDue(),
+							scheduledLoanPeriod.penaltyChargesDue());
 					
 					modifiedLoanRepaymentSchedule.add(installment);
 				}
@@ -414,10 +420,6 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 		Loan loan = this.loanRepository.findOne(command.getLoanId());
 		if (loan == null) {
 			throw new LoanNotFoundException(command.getLoanId());
-		}
-
-		if (loan.isActualDisbursedOnDateEarlierOrLaterThanExpected()) {
-			// FIXME - KW - handle this use case - recalculate loan schedule using original settings.
 		}
 
 		loan.undoDisbursal(defaultLoanLifecycleStateMachine());
@@ -628,7 +630,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
 	@Transactional
     @Override
-    public EntityIdentifier addLoanCharge(LoanChargeCommand command) {
+    public EntityIdentifier addLoanCharge(final LoanChargeCommand command) {
         this.context.authenticatedUser();
 
         LoanChargeCommandValidator validator = new LoanChargeCommandValidator(command);
@@ -720,5 +722,38 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.loanRepository.saveAndFlush(loan);
 
         return new EntityIdentifier(loanCharge.getId());
+    }
+
+	@Transactional
+    @Override
+    public EntityIdentifier bulkLoanReassignment(final BulkLoanReassignmentCommand command) {
+
+        this.context.authenticatedUser();
+
+        BulkLoanReassignmentCommandValidator validator = new BulkLoanReassignmentCommandValidator(command);
+        validator.validateLoanReassignment();
+
+        Staff fromLoanOfficer = loanAssembler.findLoanOfficerByIdIfProvided(command.getFromLoanOfficerId());
+        Staff toLoanOfficer = loanAssembler.findLoanOfficerByIdIfProvided(command.getToLoanOfficerId());
+
+        for (String loanIdString : command.getLoans()){
+            final Long loanId = Long.valueOf(loanIdString);
+
+            final Loan loan = this.loanRepository.findOne(loanId);
+            if (loan == null) {
+                throw new LoanNotFoundException(loanId);
+            }
+            
+            if (!loan.hasLoanOfficer(fromLoanOfficer)){
+                throw new LoanOfficerAssignmentException(loan.getId(), fromLoanOfficer.getId());
+            }
+
+            loan.updateLoanofficer(toLoanOfficer);
+            this.loanRepository.save(loan);
+        }
+
+        this.loanRepository.flush();
+
+        return new EntityIdentifier(toLoanOfficer.getId());
     }
 }

@@ -19,6 +19,7 @@ import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.mifosng.platform.api.commands.AdjustLoanTransactionCommand;
 import org.mifosng.platform.api.commands.BranchMoneyTransferCommand;
+import org.mifosng.platform.api.commands.BulkLoanReassignmentCommand;
 import org.mifosng.platform.api.commands.ChargeCommand;
 import org.mifosng.platform.api.commands.ChartAccountCommand;
 import org.mifosng.platform.api.commands.ClientCommand;
@@ -41,6 +42,7 @@ import org.mifosng.platform.api.commands.NoteCommand;
 import org.mifosng.platform.api.commands.OfficeCommand;
 import org.mifosng.platform.api.commands.OrganisationCurrencyCommand;
 import org.mifosng.platform.api.commands.RoleCommand;
+import org.mifosng.platform.api.commands.SavingAccountCommand;
 import org.mifosng.platform.api.commands.SavingProductCommand;
 import org.mifosng.platform.api.commands.StaffCommand;
 import org.mifosng.platform.api.commands.UserCommand;
@@ -73,31 +75,32 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
             throw new InvalidJsonException();
         }
 
-        Type typeOfMap = new TypeToken<Map<String, String>>(){}.getType();
-        Map<String, String> requestMap = gsonConverter.fromJson(json, typeOfMap);
+        final Type typeOfMap = new TypeToken<Map<String, String>>(){}.getType();
+        final Map<String, String> requestMap = gsonConverter.fromJson(json, typeOfMap);
 
-
-        Set<String> supportedParams = new HashSet<String>(Arrays.asList("name", "amount", "locale", "currencyCode",
+        final Set<String> supportedParams = new HashSet<String>(
+        		Arrays.asList("name", "amount", "locale", "currencyCode",
             "currencyOptions", "chargeAppliesTo", "chargeTimeType",
-            "chargeCalculationType", "chargeCalculationTypeOptions", "active"
+            "chargeCalculationType", "chargeCalculationTypeOptions", "penalty", "active"
         ));
 
         checkForUnsupportedParameters(requestMap, supportedParams);
 
         Set<String> modifiedParameters = new HashSet<String>();
 
-        String name = extractStringParameter("name", requestMap, modifiedParameters);
-        BigDecimal amount = extractBigDecimalParameter("amount", requestMap, modifiedParameters);
-        String currencyCode = extractStringParameter("currencyCode", requestMap, modifiedParameters);
+        final String name = extractStringParameter("name", requestMap, modifiedParameters);
+        final BigDecimal amount = extractBigDecimalParameter("amount", requestMap, modifiedParameters);
+        final String currencyCode = extractStringParameter("currencyCode", requestMap, modifiedParameters);
 
-        Integer chargeTimeType = extractIntegerParameter("chargeTimeType", requestMap, modifiedParameters);
-        Integer chargeAppliesTo = extractIntegerParameter("chargeAppliesTo", requestMap, modifiedParameters);
-        Integer chargeCalculationType = extractIntegerParameter("chargeCalculationType", requestMap, modifiedParameters);
+        final Integer chargeTimeType = extractIntegerParameter("chargeTimeType", requestMap, modifiedParameters);
+        final Integer chargeAppliesTo = extractIntegerParameter("chargeAppliesTo", requestMap, modifiedParameters);
+        final Integer chargeCalculationType = extractIntegerParameter("chargeCalculationType", requestMap, modifiedParameters);
 
-        boolean active = extractBooleanParameter("active", requestMap, modifiedParameters);
+        final boolean penalty = extractBooleanParameter("penalty", requestMap, modifiedParameters);
+        final boolean active = extractBooleanParameter("active", requestMap, modifiedParameters);
 
         return new ChargeCommand(modifiedParameters, resourceIdentifier, name, amount,
-                currencyCode, chargeTimeType, chargeAppliesTo, chargeCalculationType, active);
+                currencyCode, chargeTimeType, chargeAppliesTo, chargeCalculationType, penalty, active);
     }
 
     @Override
@@ -152,7 +155,49 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 	    
 		return new StaffCommand(modifiedParameters, resourceIdentifier, officeId,firstname, lastname, isLoanOfficer);
 	}
-	
+
+    @Override
+    public BulkLoanReassignmentCommand convertJsonToBulkLoanReassignmentCommand(final String json) {
+
+        if (StringUtils.isBlank(json)) {
+            throw new InvalidJsonException();
+        }
+
+        Type typeOfMap = new TypeToken<Map<String, Object>>(){}.getType();
+        Map<String, String> requestMap = gsonConverter.fromJson(json, typeOfMap);
+
+        Set<String> supportedParams = new HashSet<String>(
+                Arrays.asList("fromLoanOfficerId", "toLoanOfficerId","loans")
+        );
+
+        checkForUnsupportedParameters(requestMap, supportedParams);
+
+        Set<String> modifiedParameters = new HashSet<String>();
+
+        Long fromLoanOfficerId = extractLongParameter("fromLoanOfficerId", requestMap, modifiedParameters);
+        Long toLoanOfficerId = extractLongParameter("toLoanOfficerId", requestMap, modifiedParameters);
+
+        // check array
+        JsonParser parser = new JsonParser();
+
+        String[] loans = null;
+        JsonElement element = parser.parse(json);
+        if (element.isJsonObject()) {
+            JsonObject object = element.getAsJsonObject();
+            if (object.has("loans")) {
+                modifiedParameters.add("loans");
+                JsonArray array = object.get("loans").getAsJsonArray();
+                loans = new String[array.size()];
+                for (int i=0; i<array.size(); i++) {
+                    loans[i] = array.get(i).getAsString();
+                }
+            }
+        }
+        //
+
+        return new BulkLoanReassignmentCommand(fromLoanOfficerId, toLoanOfficerId, loans);
+	}
+
 	@Override
 	public OfficeCommand convertJsonToOfficeCommand(final Long resourceIdentifier, final String json) {
 		if (StringUtils.isBlank(json)) {
@@ -1246,7 +1291,10 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 		Type typeOfMap = new TypeToken<Map<String, String>>() {}.getType();
 		Map<String, String> requestMap = gsonConverter.fromJson(json, typeOfMap);
 
-		Set<String> supportedParams = new HashSet<String>(Arrays.asList("name","description","currencyCode", "digitsAfterDecimal","interestRate","locale","minimumBalance","maximumBalance"));
+		Set<String> supportedParams = new HashSet<String>(Arrays.asList("locale", "name", "description","currencyCode", "digitsAfterDecimal","interestRate", "minInterestRate",
+				"maxInterestRate","savingsDepositAmount","savingProductType","tenureType","tenure", "frequency","interestType","interestCalculationMethod",
+				"minimumBalanceForWithdrawal","isPartialDepositAllowed","isLockinPeriodAllowed","lockinPeriod","lockinPeriodType"));
+		
 		checkForUnsupportedParameters(requestMap, supportedParams);
 		Set<String> modifiedParameters = new HashSet<String>();
 		String name = extractStringParameter("name", requestMap,modifiedParameters);
@@ -1254,11 +1302,25 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 		String currencyCode=extractStringParameter("currencyCode", requestMap,modifiedParameters);
 		Integer digitsAfterDecimalValue = extractIntegerParameter("digitsAfterDecimal", requestMap, modifiedParameters);
 		BigDecimal interestRate = extractBigDecimalParameter("interestRate", requestMap, modifiedParameters);
-		BigDecimal minimumBalance=extractBigDecimalParameter("minimumBalance", requestMap, modifiedParameters);
-		BigDecimal maximumBalance=extractBigDecimalParameter("maximumBalance", requestMap, modifiedParameters);
+		BigDecimal minInterestRate = extractBigDecimalParameter("minInterestRate", requestMap, modifiedParameters);
+		BigDecimal maxInterestRate = extractBigDecimalParameter("maxInterestRate", requestMap, modifiedParameters);
+		BigDecimal savingsDepositAmount=extractBigDecimalParameter("savingsDepositAmount", requestMap, modifiedParameters);
+		Integer savingProductType = extractIntegerParameter("savingProductType", requestMap, modifiedParameters);
+		Integer tenureType = extractIntegerParameter("tenureType", requestMap, modifiedParameters);
+		Integer tenure = extractIntegerParameter("tenure", requestMap, modifiedParameters);
+		Integer frequency = extractIntegerParameter("frequency", requestMap, modifiedParameters);
+		Integer interestType = extractIntegerParameter("interestType", requestMap, modifiedParameters);
+		Integer interestCalculationMethod=extractIntegerParameter("interestCalculationMethod", requestMap, modifiedParameters);
+		BigDecimal minimumBalanceForWithdrawal=extractBigDecimalParameter("minimumBalanceForWithdrawal", requestMap, modifiedParameters);
+		boolean isPartialDepositAllowed = extractBooleanParameter("isPartialDepositAllowed", requestMap, modifiedParameters);
+		boolean isLockinPeriodAllowed = extractBooleanParameter("isLockinPeriodAllowed", requestMap, modifiedParameters);
+	    Integer lockinPeriod = extractIntegerParameter("lockinPeriod", requestMap, modifiedParameters);
+	    Integer lockinPeriodType = extractIntegerParameter("lockinPeriodType", requestMap, modifiedParameters);
 		
 
-		return new SavingProductCommand(modifiedParameters, resourceIdentifier,name, description,currencyCode,digitsAfterDecimalValue,interestRate,minimumBalance,maximumBalance);
+		return new SavingProductCommand(modifiedParameters, resourceIdentifier,name, description,currencyCode,digitsAfterDecimalValue,interestRate, minInterestRate,
+				maxInterestRate, savingsDepositAmount,savingProductType, tenureType,tenure,frequency,interestType,interestCalculationMethod,minimumBalanceForWithdrawal,
+				isPartialDepositAllowed,	isLockinPeriodAllowed,lockinPeriod,lockinPeriodType);
 	}
 	
 	@Override
@@ -1539,5 +1601,55 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 	}
 
 	
+
+	@Override
+	public SavingAccountCommand convertJsonToSavingAccountCommand(Long resourceIdentifier, String json) {
+
+		
+		if (StringUtils.isBlank(json)) {
+			throw new InvalidJsonException();
+		}
+		
+		Type typeOfMap = new TypeToken<Map<String, String>>() {}.getType();
+		Map<String, String> requestMap = gsonConverter.fromJson(json, typeOfMap);
+
+		// currencyCode, currencyDigits
+		Set<String> supportedParams = new HashSet<String>(
+				Arrays.asList("clientId", "productId", "externalId", "currencyCode", "digitsAfterDecimal", "savingsDepositAmountPerPeriod", "recurringInterestRate", "savingInterestRate",
+						"tenure", "commencementDate", "locale", "dateFormat","isLockinPeriodAllowed","lockinPeriod","lockinPeriodType",
+						"savingProductType","tenureType", "frequency","interestType","interestCalculationMethod",
+						"minimumBalanceForWithdrawal","isPartialDepositAllowed"	)
+		);
+		checkForUnsupportedParameters(requestMap, supportedParams);
+		Set<String> modifiedParameters = new HashSet<String>();
+		
+		Long clientId = extractLongParameter("clientId", requestMap, modifiedParameters);
+		Long productId = extractLongParameter("productId", requestMap, modifiedParameters);
+		String externalId = extractStringParameter("externalId", requestMap,modifiedParameters);
+		String currencyCode=extractStringParameter("currencyCode", requestMap,modifiedParameters);
+		Integer digitsAfterDecimalValue = extractIntegerParameter("digitsAfterDecimal", requestMap, modifiedParameters);
+		BigDecimal savingsDepositAmount=extractBigDecimalParameter("savingsDepositAmountPerPeriod", requestMap, modifiedParameters);
+		BigDecimal recurringInterestRate = extractBigDecimalParameter("recurringInterestRate", requestMap, modifiedParameters);
+		BigDecimal savingInterestRate = extractBigDecimalParameter("savingInterestRate", requestMap, modifiedParameters);
+		Integer tenure = extractIntegerParameter("tenure", requestMap, modifiedParameters);
+		
+		boolean isLockinPeriodAllowed = extractBooleanParameter("isLockinPeriodAllowed", requestMap, modifiedParameters);
+		Integer lockinPeriod = extractIntegerParameter("lockinPeriod", requestMap, modifiedParameters);
+		Integer lockinPeriodType = extractIntegerParameter("lockinPeriodType", requestMap, modifiedParameters);
+		
+		LocalDate commencementDate = extractLocalDateParameter("commencementDate", requestMap, modifiedParameters);
+		Integer savingProductType = extractIntegerParameter("savingProductType", requestMap, modifiedParameters);
+		Integer tenureType = extractIntegerParameter("tenureType", requestMap, modifiedParameters);
+		Integer frequency = extractIntegerParameter("frequency", requestMap, modifiedParameters);
+		Integer interestType = extractIntegerParameter("interestType", requestMap, modifiedParameters);
+		Integer interestCalculationMethod=extractIntegerParameter("interestCalculationMethod", requestMap, modifiedParameters);
+		BigDecimal minimumBalanceForWithdrawal=extractBigDecimalParameter("minimumBalanceForWithdrawal", requestMap, modifiedParameters);
+		boolean isPartialDepositAllowed = extractBooleanParameter("isPartialDepositAllowed", requestMap, modifiedParameters);
+		
+		return new SavingAccountCommand(modifiedParameters, resourceIdentifier, clientId, productId, externalId, currencyCode, digitsAfterDecimalValue,
+				savingsDepositAmount, recurringInterestRate,savingInterestRate, tenure, commencementDate, savingProductType, tenureType, frequency, 
+				interestType, minimumBalanceForWithdrawal, interestCalculationMethod, isLockinPeriodAllowed, isPartialDepositAllowed, lockinPeriod, lockinPeriodType);
+
+	}
 
 }
