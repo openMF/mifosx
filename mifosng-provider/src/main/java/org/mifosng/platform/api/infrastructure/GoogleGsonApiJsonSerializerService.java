@@ -10,6 +10,7 @@ import org.mifosng.platform.api.data.AdditionalFieldsSetData;
 import org.mifosng.platform.api.data.AppUserData;
 import org.mifosng.platform.api.data.AuthenticatedUserData;
 import org.mifosng.platform.api.data.ChargeData;
+import org.mifosng.platform.api.data.ChartAccountData;
 import org.mifosng.platform.api.data.ClientAccountSummaryCollectionData;
 import org.mifosng.platform.api.data.ClientData;
 import org.mifosng.platform.api.data.ClientIdentifierData;
@@ -200,6 +201,11 @@ public class GoogleGsonApiJsonSerializerService implements ApiJsonSerializerServ
 			Arrays.asList("id", "codename"));
 
 	private final GoogleGsonSerializerHelper helper;
+	
+//madhav
+	
+	private static final Set<String> CHARTACCOUNT_DATA_PARAMETERS = new HashSet<String>(
+			Arrays.asList("chartcode", "description", "type"));
 
 	@Autowired
 	public GoogleGsonApiJsonSerializerService(
@@ -684,6 +690,23 @@ public class GoogleGsonApiJsonSerializerService implements ApiJsonSerializerServ
 				.createGsonBuilderWithParameterExclusionSerializationStrategy(
 						CODE_DATA_PARAMETERS, prettyPrint, responseParameters);
 		return helper.serializedJsonFrom(gsonDeserializer, code);
+	}
+	//madhav
+	@Override
+	public String serializeChartAccountDataToJson(boolean prettyPrint,Set<String> responseParameters, Collection<ChartAccountData> chartaccount) {
+		final Gson gsonDeserializer = helper
+		.createGsonBuilderWithParameterExclusionSerializationStrategy(
+				CHARTACCOUNT_DATA_PARAMETERS, prettyPrint, responseParameters);
+return helper.serializedJsonFrom(gsonDeserializer,chartaccount.toArray(new ChartAccountData[chartaccount.size()]));
+	}
+	
+	
+	public String serializeChartAccountDataToJson(boolean prettyPrint,Set<String> responseParameters, ChartAccountData chartaccount)
+	{
+		final Gson gsonDeserializer = helper
+		.createGsonBuilderWithParameterExclusionSerializationStrategy(
+				CHARTACCOUNT_DATA_PARAMETERS, prettyPrint, responseParameters);
+return helper.serializedJsonFrom(gsonDeserializer,chartaccount );
 	}
 	
 }

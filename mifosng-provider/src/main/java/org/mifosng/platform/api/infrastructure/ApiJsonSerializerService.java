@@ -8,6 +8,7 @@ import org.mifosng.platform.api.data.AdditionalFieldsSetData;
 import org.mifosng.platform.api.data.AppUserData;
 import org.mifosng.platform.api.data.AuthenticatedUserData;
 import org.mifosng.platform.api.data.ChargeData;
+import org.mifosng.platform.api.data.ChartAccountData;
 import org.mifosng.platform.api.data.ClientAccountSummaryCollectionData;
 import org.mifosng.platform.api.data.ClientData;
 import org.mifosng.platform.api.data.ClientIdentifierData;
@@ -129,5 +130,10 @@ public interface ApiJsonSerializerService {
 	String serializeCodeDataToJson(boolean prettyPrint,Set<String> responseParameters, Collection<CodeData> codes);
 
 	String serializeCodeDataToJson(boolean prettyPrint,Set<String> responseParameters, CodeData code);
+
+	//madhav
+	String serializeChartAccountDataToJson(boolean prettyPrint,Set<String> responseParameters, Collection<ChartAccountData> chartaccount);
+
+    String serializeChartAccountDataToJson(boolean prettyPrint,Set<String> responseParameters, ChartAccountData chartaccount);
 
 }
