@@ -21,6 +21,7 @@ import org.mifosng.platform.api.commands.AdjustLoanTransactionCommand;
 import org.mifosng.platform.api.commands.BranchMoneyTransferCommand;
 import org.mifosng.platform.api.commands.BulkLoanReassignmentCommand;
 import org.mifosng.platform.api.commands.ChargeCommand;
+import org.mifosng.platform.api.commands.ChartAccountCommand;
 import org.mifosng.platform.api.commands.ClientCommand;
 import org.mifosng.platform.api.commands.ClientIdentifierCommand;
 import org.mifosng.platform.api.commands.CodeCommand;
@@ -1566,6 +1567,36 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
 	    
 		return new CodeCommand(modifiedParameters, resourceIdentifier, name);
 
+		
+	}
+
+
+	@Override
+	public ChartAccountCommand convertJsonToChartAccountCommand(Long resourceIdentifier, String json)
+	{
+		
+
+			if (StringUtils.isBlank(json)) {
+				throw new InvalidJsonException();
+			}
+			
+			Type typeOfMap = new TypeToken<Map<String, String>>(){}.getType();
+		    Map<String, String> requestMap = gsonConverter.fromJson(json, typeOfMap);
+		    
+		    
+		    Set<String> supportedParams = new HashSet<String>(
+		    		Arrays.asList("chartcode", "description","type")
+		    ); 
+		    
+		    checkForUnsupportedParameters(requestMap, supportedParams);
+		    
+		    Set<String> modifiedParameters = new HashSet<String>();
+		    
+		    Long chartcode= extractLongParameter("chartcode", requestMap, modifiedParameters);
+		    String description  = extractStringParameter("description", requestMap, modifiedParameters);
+		    String type = extractStringParameter("type", requestMap, modifiedParameters);
+		   
+			return new ChartAccountCommand(modifiedParameters, chartcode,description,type );
 		
 	}
 

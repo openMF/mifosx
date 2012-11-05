@@ -4,6 +4,7 @@ import org.mifosng.platform.api.commands.AdjustLoanTransactionCommand;
 import org.mifosng.platform.api.commands.BranchMoneyTransferCommand;
 import org.mifosng.platform.api.commands.BulkLoanReassignmentCommand;
 import org.mifosng.platform.api.commands.ChargeCommand;
+import org.mifosng.platform.api.commands.ChartAccountCommand;
 import org.mifosng.platform.api.commands.ClientCommand;
 import org.mifosng.platform.api.commands.ClientIdentifierCommand;
 import org.mifosng.platform.api.commands.CodeCommand;
@@ -85,6 +86,8 @@ public interface ApiDataConversionService {
 	ClientIdentifierCommand convertJsonToClientIdentifierCommand(Long resourceIdentifier, Long clientId, String jsonRequestBody);
 
 	CodeCommand convertJsonToCodeCommand(Long resourceIdentifier, String json);
+	
+	ChartAccountCommand convertJsonToChartAccountCommand(Long resourceIdentifier, String jsonRequestBody);
 
 	SavingAccountCommand convertJsonToSavingAccountCommand(Long resourceIdentifier,String jsonRequestBody);
 
