@@ -76,6 +76,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final ChargeRepository chargeRepository;
     private final LoanChargeRepository loanChargeRepository;
 	private final LoanChargeAssembler loanChargeAssembler;
+    private final LoanOfficerAssignmentHistoryWritePlatformService loanOfficerAssignmentHistoryWritePlatformService;
 	
 	@Autowired
 	public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, 
@@ -83,7 +84,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 			final LoanRepository loanRepository, final LoanTransactionRepository loanTransactionRepository,
 			final NoteRepository noteRepository, final CalculationPlatformService calculationPlatformService,
 			final ClientRepository clientRepository, final LoanProductRepository loanProductRepository,
-            final ChargeRepository chargeRepository, final LoanChargeRepository loanChargeRepository) {
+            final ChargeRepository chargeRepository, final LoanChargeRepository loanChargeRepository,
+            final LoanOfficerAssignmentHistoryWritePlatformService loanOfficerAssignmentHistoryWritePlatformService) {
 		this.context = context;
 		this.loanAssembler = loanAssembler;
 		this.loanChargeAssembler = loanChargeAssembler;
@@ -95,6 +97,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 		this.loanProductRepository = loanProductRepository;
         this.chargeRepository = chargeRepository;
         this.loanChargeRepository = loanChargeRepository;
+        this.loanOfficerAssignmentHistoryWritePlatformService = loanOfficerAssignmentHistoryWritePlatformService;;
 	}
 	
 	private boolean isBeforeToday(final LocalDate date) {
@@ -217,7 +220,10 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 		
 		loan.approve(eventDate, defaultLoanLifecycleStateMachine());
 		this.loanRepository.save(loan);
-		
+
+        this.loanOfficerAssignmentHistoryWritePlatformService.
+                trackLoanOfficerAssignmentHistory(loan, null, loan.getLoanofficer(), loan.getApprovedOnDate());
+
 		String noteText = command.getNote();
 		if (StringUtils.isNotBlank(noteText)) {
 			Note note = Note.loanNote(loan, noteText);
@@ -237,7 +243,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 		
 		loan.undoApproval(defaultLoanLifecycleStateMachine());
 		this.loanRepository.save(loan);
-		
+
+        this.loanOfficerAssignmentHistoryWritePlatformService.untrackNewLoanOfficerAssignmentHistory(loan);
+
 		String noteText = command.getNote();
 		if (StringUtils.isNotBlank(noteText)) {
 			Note note = Note.loanNote(loan, noteText);
@@ -755,6 +763,10 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             }
 
             loan.updateLoanofficer(toLoanOfficer);
+
+            this.loanOfficerAssignmentHistoryWritePlatformService.
+                    trackLoanOfficerAssignmentHistory(loan, fromLoanOfficer, toLoanOfficer, command.getAssignmentDate());
+
             this.loanRepository.save(loan);
         }
 

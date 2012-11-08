@@ -434,7 +434,15 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
 		return this.loanProduct;
 	}
 
-	public LoanProductRelatedDetail repaymentScheduleDetail() {
+    public Staff getLoanofficer() {
+        return loanofficer;
+    }
+
+    public void setLoanofficer(Staff loanofficer) {
+        this.loanofficer = loanofficer;
+    }
+
+    public LoanProductRelatedDetail repaymentScheduleDetail() {
 		return this.loanRepaymentScheduleDetail;
 	}
 	
@@ -1534,6 +1542,13 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
 		
 		return matchesCurrentLoanOfficer;
 	}
+
+    public boolean hasLoanOfficer(){
+
+        boolean hasLoanOfficerAssigned = this.loanofficer != null;
+
+        return hasLoanOfficerAssigned;
+    }
 
 	public LocalDate getInterestChargedFromDate() {
 		LocalDate interestChargedFrom = null;
