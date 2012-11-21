@@ -51,7 +51,7 @@ import org.mifosng.platform.currency.domain.MonetaryCurrency;
 import org.mifosng.platform.currency.domain.Money;
 import org.mifosng.platform.exceptions.UnrecognizedQueryParamException;
 import org.mifosng.platform.fund.service.FundReadPlatformService;
-import org.mifosng.platform.guarantor.GuarantorReadWritePlatformService;
+import org.mifosng.platform.guarantor.GuarantorReadPlatformService;
 import org.mifosng.platform.infrastructure.api.ApiParameterHelper;
 import org.mifosng.platform.loan.service.CalculationPlatformService;
 import org.mifosng.platform.loan.service.LoanReadPlatformService;
@@ -102,10 +102,9 @@ public class LoansApiResource {
 
     @Autowired
     private PlatformSecurityContext context;
-    
 	
 	@Autowired
-	private GuarantorReadWritePlatformService guarantorReadWritePlatformService;
+	private GuarantorReadPlatformService guarantorReadPlatformService;
 	
 	@GET
 	@Path("template")
@@ -195,8 +194,8 @@ public class LoansApiResource {
 			
 			boolean existsGuarantor = false;
 			if (associationParameters.contains("guarantor")) {
-				if(guarantorReadWritePlatformService.existsGuarantor(loanId)){
-					guarantorData = this.guarantorReadWritePlatformService.retrieveGuarantor(loanId);
+				if(guarantorReadPlatformService.existsGuarantor(loanId)){
+					guarantorData = this.guarantorReadPlatformService.retrieveGuarantor(loanId);
 					existsGuarantor = true;
 				}
 			}
