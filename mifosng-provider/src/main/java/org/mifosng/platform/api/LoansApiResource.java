@@ -33,6 +33,7 @@ import org.mifosng.platform.api.data.DisbursementData;
 import org.mifosng.platform.api.data.EntityIdentifier;
 import org.mifosng.platform.api.data.EnumOptionData;
 import org.mifosng.platform.api.data.FundData;
+import org.mifosng.platform.api.data.GuarantorData;
 import org.mifosng.platform.api.data.LoanAccountData;
 import org.mifosng.platform.api.data.LoanBasicDetailsData;
 import org.mifosng.platform.api.data.LoanChargeData;
@@ -50,6 +51,7 @@ import org.mifosng.platform.currency.domain.MonetaryCurrency;
 import org.mifosng.platform.currency.domain.Money;
 import org.mifosng.platform.exceptions.UnrecognizedQueryParamException;
 import org.mifosng.platform.fund.service.FundReadPlatformService;
+import org.mifosng.platform.guarantor.GuarantorReadWritePlatformService;
 import org.mifosng.platform.infrastructure.api.ApiParameterHelper;
 import org.mifosng.platform.loan.service.CalculationPlatformService;
 import org.mifosng.platform.loan.service.LoanReadPlatformService;
@@ -101,6 +103,10 @@ public class LoansApiResource {
     @Autowired
     private PlatformSecurityContext context;
     
+	
+	@Autowired
+	private GuarantorReadWritePlatformService guarantorReadWritePlatformService;
+	
 	@GET
 	@Path("template")
 	@Consumes({ MediaType.APPLICATION_JSON })
@@ -152,7 +158,7 @@ public class LoansApiResource {
 		final LoanAccountData newLoanAccount = new LoanAccountData(loanBasicDetails, convenienceDataRequired, null, null, null, charges,
 				productOptions, loanTermFrequencyTypeOptions, repaymentFrequencyTypeOptions, 
 				repaymentStrategyOptions, interestRateFrequencyTypeOptions, 
-				amortizationTypeOptions, interestTypeOptions, interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, allowedLoanOfficers);
+				amortizationTypeOptions, interestTypeOptions, interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, allowedLoanOfficers,null);
 
 		return this.apiJsonSerializerService.serializeLoanAccountDataToJson(prettyPrint, responseParameters, newLoanAccount);
 	}
@@ -177,13 +183,22 @@ public class LoansApiResource {
 		LoanScheduleData repaymentSchedule = null;
 		LoanPermissionData permissions = null;
         Collection<LoanChargeData> charges = null;
+        GuarantorData guarantorData = null;
 
         boolean convenienceDataRequired = false;
 		final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
 		if (!associationParameters.isEmpty()) {
 			
 			if (associationParameters.contains("all")) {
-				associationParameters.addAll(Arrays.asList("repaymentSchedule", "transactions", "permissions", "convenienceData", "charges"));
+				associationParameters.addAll(Arrays.asList("repaymentSchedule", "transactions", "permissions", "convenienceData", "charges", "guarantor"));
+			}
+			
+			boolean existsGuarantor = false;
+			if (associationParameters.contains("guarantor")) {
+				if(guarantorReadWritePlatformService.existsGuarantor(loanId)){
+					guarantorData = this.guarantorReadWritePlatformService.retrieveGuarantor(loanId);
+					existsGuarantor = true;
+				}
 			}
 			
 			if (associationParameters.contains("transactions")) {
@@ -208,7 +223,7 @@ public class LoansApiResource {
 
 				if (associationParameters.contains("permissions")) {
 					loanRepaymentsCount = retrieveNonDisbursementTransactions(loanRepayments);
-					permissions = this.loanReadPlatformService.retrieveLoanPermissions(loanBasicDetails, isWaiveAllowed, loanRepaymentsCount);
+					permissions = this.loanReadPlatformService.retrieveLoanPermissions(loanBasicDetails, isWaiveAllowed, loanRepaymentsCount, existsGuarantor);
 				}
 				convenienceDataRequired = true;
 			}
@@ -256,7 +271,7 @@ public class LoansApiResource {
 				productOptions, loanTermFrequencyTypeOptions, repaymentFrequencyTypeOptions, 
 				repaymentStrategyOptions, interestRateFrequencyTypeOptions, 
 				amortizationTypeOptions, interestTypeOptions, interestCalculationPeriodTypeOptions, 
-				fundOptions, chargeOptions, chargeTemplate, null);
+				fundOptions, chargeOptions, chargeTemplate, null, guarantorData);
 		
 		return this.apiJsonSerializerService.serializeLoanAccountDataToJson(prettyPrint, responseParameters, loanAccount);
 	}
