@@ -25,6 +25,7 @@ import org.mifosng.platform.api.data.FundData;
 import org.mifosng.platform.api.data.GenericResultsetData;
 import org.mifosng.platform.api.data.GroupAccountSummaryCollectionData;
 import org.mifosng.platform.api.data.GroupData;
+import org.mifosng.platform.api.data.GuarantorData;
 import org.mifosng.platform.api.data.LoanAccountData;
 import org.mifosng.platform.api.data.LoanChargeData;
 import org.mifosng.platform.api.data.LoanProductData;
@@ -226,6 +227,13 @@ public class GoogleGsonPortfolioApiJsonSerializerService implements PortfolioApi
 
 	// accounting
 	private static final Set<String> CHART_OF_ACCOUNTS_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("id", "name"));
+	
+	//guarantors
+	private static final Set<String> GUARANTOR_DATA_PARAMETERS = new HashSet<String>(
+			Arrays.asList("externalGuarantor", "existingClientId",
+					"firstname", "lastname", "addressLine1",
+					"addressLine2", "city", "state", "zip", "country",
+					"mobileNumber", "housePhoneNumber", "comment", "dob"));
 	
 	private final GoogleGsonSerializerHelper helper;
 
@@ -792,5 +800,14 @@ public class GoogleGsonPortfolioApiJsonSerializerService implements PortfolioApi
 				.createGsonBuilderWithParameterExclusionSerializationStrategy(
 						CHART_OF_ACCOUNTS_DATA_PARAMETERS, prettyPrint, responseParameters);
 		return helper.serializedJsonFrom(gsonDeserializer, chartOfAccounts);
+	}
+
+	@Override
+	public String serializeGuarantorDataToJson(boolean prettyPrint,
+			Set<String> responseParameters, GuarantorData guarantorData) {
+		final Gson gsonDeserializer = helper
+				.createGsonBuilderWithParameterExclusionSerializationStrategy(
+						GUARANTOR_DATA_PARAMETERS, prettyPrint, responseParameters);
+		return helper.serializedJsonFrom(gsonDeserializer, guarantorData);
 	}
 }
