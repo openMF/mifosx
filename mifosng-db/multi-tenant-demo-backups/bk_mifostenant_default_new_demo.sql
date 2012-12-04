@@ -49,7 +49,7 @@ LOCK TABLES `m_acc_coa` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `m_appuser`
+-- Table structure for table `m_appuser table`
 --
 
 DROP TABLE IF EXISTS `m_appuser`;
