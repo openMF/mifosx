@@ -29,6 +29,7 @@ import org.mifosplatform.portfolio.client.exception.ClientNotFoundException;
 import org.mifosplatform.portfolio.fund.domain.Fund;
 import org.mifosplatform.portfolio.loanaccount.command.AdjustLoanTransactionCommand;
 import org.mifosplatform.portfolio.loanaccount.command.AdjustLoanTransactionCommandValidator;
+import org.mifosplatform.portfolio.loanaccount.command.GroupLoanApplicationCommand;
 import org.mifosplatform.portfolio.loanaccount.command.LoanApplicationCommand;
 import org.mifosplatform.portfolio.loanaccount.command.LoanApplicationCommandValidator;
 import org.mifosplatform.portfolio.loanaccount.command.LoanChargeCommand;
@@ -39,6 +40,8 @@ import org.mifosplatform.portfolio.loanaccount.command.LoanTransactionCommand;
 import org.mifosplatform.portfolio.loanaccount.command.LoanTransactionCommandValidator;
 import org.mifosplatform.portfolio.loanaccount.command.UndoStateTransitionCommand;
 import org.mifosplatform.portfolio.loanaccount.domain.DefaultLoanLifecycleStateMachine;
+import org.mifosplatform.portfolio.loanaccount.domain.GroupLoan;
+import org.mifosplatform.portfolio.loanaccount.domain.GroupLoanRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanChargeRepository;
@@ -73,10 +76,12 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
 	private final PlatformSecurityContext context;
 	private final LoanRepository loanRepository;
+    private final GroupLoanRepository groupLoanRepository;
 	private final NoteRepository noteRepository;
 	private final CalculationPlatformService calculationPlatformService;	
 	private final LoanTransactionRepository loanTransactionRepository;
 	private final LoanAssembler loanAssembler;
+    private final GroupLoanAssembler groupLoanAssembler;
 	private final ClientRepository clientRepository;
 	private final LoanProductRepository loanProductRepository;
     private final ChargeRepository chargeRepository;
@@ -85,15 +90,17 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
 	@Autowired
 	public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, 
-			final LoanAssembler loanAssembler, final LoanChargeAssembler loanChargeAssembler,
-			final LoanRepository loanRepository, final LoanTransactionRepository loanTransactionRepository,
+			final LoanAssembler loanAssembler, final LoanChargeAssembler loanChargeAssembler, GroupLoanAssembler groupLoanAssembler,
+			final LoanRepository loanRepository, GroupLoanRepository groupLoanRepository, final LoanTransactionRepository loanTransactionRepository,
 			final NoteRepository noteRepository, final CalculationPlatformService calculationPlatformService,
 			final ClientRepository clientRepository, final LoanProductRepository loanProductRepository,
             final ChargeRepository chargeRepository, final LoanChargeRepository loanChargeRepository) {
 		this.context = context;
 		this.loanAssembler = loanAssembler;
 		this.loanChargeAssembler = loanChargeAssembler;
+        this.groupLoanAssembler = groupLoanAssembler;
 		this.loanRepository = loanRepository;
+        this.groupLoanRepository = groupLoanRepository;
 		this.loanTransactionRepository = loanTransactionRepository;
 		this.noteRepository = noteRepository;
 		this.calculationPlatformService = calculationPlatformService;
@@ -137,8 +144,26 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 		
 		return new EntityIdentifier(loan.getId());
 	}
-	
-	@Transactional
+
+    @Transactional
+    @Override
+    public EntityIdentifier submitGroupLoanApplication(GroupLoanApplicationCommand command) {
+
+        AppUser currentUser = context.authenticatedUser();
+
+        LocalDate submittedOn = command.getSubmittedOnDate();
+        if (this.isBeforeToday(submittedOn) && currentUser.hasNotPermissionForAnyOf("ALL_FUNCTIONS", "CREATEHISTORIC_LOAN", "PORTFOLIO_MANAGEMENT_SUPER_USER")) {
+            throw new NoAuthorizationException("Cannot add backdated loan.");
+        }
+
+        GroupLoan groupLoan = this.groupLoanAssembler.assembleFrom(command);
+
+        this.groupLoanRepository.save(groupLoan);
+
+        return new EntityIdentifier(groupLoan.getId());
+    }
+
+    @Transactional
 	@Override
 	public EntityIdentifier modifyLoanApplication(final LoanApplicationCommand command) {
 		AppUser currentUser = context.authenticatedUser();
