@@ -29,10 +29,14 @@ import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.serialization.ClientCommandFromApiJsonDeserializer;
 import org.mifosplatform.portfolio.group.command.GroupCommand;
 import org.mifosplatform.portfolio.loanaccount.command.AdjustLoanTransactionCommand;
+import org.mifosplatform.portfolio.loanaccount.command.GroupLoanApplicationCommand;
+import org.mifosplatform.portfolio.loanaccount.command.GroupLoanChargeCommand;
 import org.mifosplatform.portfolio.loanaccount.command.LoanApplicationCommand;
 import org.mifosplatform.portfolio.loanaccount.command.LoanChargeCommand;
 import org.mifosplatform.portfolio.loanaccount.command.LoanStateTransitionCommand;
 import org.mifosplatform.portfolio.loanaccount.command.LoanTransactionCommand;
+import org.mifosplatform.portfolio.loanaccount.command.MemberLoanChargeCommand;
+import org.mifosplatform.portfolio.loanaccount.command.MemberLoanCommand;
 import org.mifosplatform.portfolio.loanaccount.gaurantor.command.GuarantorCommand;
 import org.mifosplatform.portfolio.savingsaccount.command.SavingAccountCommand;
 import org.mifosplatform.portfolio.savingsaccountproduct.command.SavingProductCommand;
@@ -276,6 +280,145 @@ public class PortfolioApiDataConversionServiceImpl implements PortfolioApiDataCo
                 interestChargedFromDate, principal, interestRatePerPeriod, interestRateFrequencyType, interestType,
                 interestCalculationPeriodType, repaymentEvery, repaymentFrequencyType, numberOfRepayments, amortizationType,
                 loanTermFrequency, loanTermFrequencyType, inArrearsToleranceValue, charges, loanOfficerId);
+    }
+
+    @Override
+    public GroupLoanApplicationCommand convertJsonToGroupLoanApplicationCommand(Long resourceIdentifier, String json) {
+
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        final Map<String, Object> requestMap = gsonConverter.fromJson(json, typeOfMap);
+
+        final Set<String> supportedParams = new HashSet<String>(Arrays.asList("groupId", "productId", "externalId", "fundId",
+                "transactionProcessingStrategyId", "principal", "inArrearsTolerance", "interestRatePerPeriod", "repaymentEvery",
+                "numberOfRepayments", "loanTermFrequency", "loanTermFrequencyType", "charges", "repaymentFrequencyType",
+                "interestRateFrequencyType", "amortizationType", "interestType", "interestCalculationPeriodType",
+                "expectedDisbursementDate", "repaymentsStartingFromDate", "interestChargedFromDate", "submittedOnDate", "submittedOnNote",
+                "locale", "dateFormat", "loanOfficerId", "id", "memberLoans"));
+
+        checkForUnsupportedParameters(requestMap, supportedParams);
+
+        final Set<String> parametersPassedInCommand = new HashSet<String>();
+
+        final JsonParser parser = new JsonParser();
+        final JsonElement element = parser.parse(json);
+        final JsonParserHelper helper = new JsonParserHelper();
+
+        final Long groupId = helper.extractLongNamed("groupId", element, parametersPassedInCommand);
+        final Long productId = helper.extractLongNamed("productId", element, parametersPassedInCommand);
+        final Long fundId = helper.extractLongNamed("fundId", element, parametersPassedInCommand);
+        final Long loanOfficerId = helper.extractLongNamed("loanOfficerId", element, parametersPassedInCommand);
+        final Long transactionProcessingStrategyId = helper.extractLongNamed("transactionProcessingStrategyId", element,
+                parametersPassedInCommand);
+        final String externalId = helper.extractStringNamed("externalId", element, parametersPassedInCommand);
+        final BigDecimal principal = helper.extractBigDecimalWithLocaleNamed("principal", element, parametersPassedInCommand);
+        final BigDecimal inArrearsToleranceValue = helper.extractBigDecimalWithLocaleNamed("inArrearsTolerance", element,
+                parametersPassedInCommand);
+        final BigDecimal interestRatePerPeriod = helper.extractBigDecimalWithLocaleNamed("interestRatePerPeriod", element,
+                parametersPassedInCommand);
+
+        final Integer repaymentEvery = helper.extractIntegerWithLocaleNamed("repaymentEvery", element, parametersPassedInCommand);
+        final Integer numberOfRepayments = helper.extractIntegerWithLocaleNamed("numberOfRepayments", element, parametersPassedInCommand);
+        final Integer repaymentFrequencyType = helper.extractIntegerWithLocaleNamed("repaymentFrequencyType", element,
+                parametersPassedInCommand);
+        final Integer loanTermFrequency = helper.extractIntegerWithLocaleNamed("loanTermFrequency", element, parametersPassedInCommand);
+        final Integer loanTermFrequencyType = helper.extractIntegerWithLocaleNamed("loanTermFrequencyType", element,
+                parametersPassedInCommand);
+        final Integer interestRateFrequencyType = helper.extractIntegerWithLocaleNamed("interestRateFrequencyType", element,
+                parametersPassedInCommand);
+        final Integer amortizationType = helper.extractIntegerWithLocaleNamed("amortizationType", element, parametersPassedInCommand);
+        final Integer interestType = helper.extractIntegerWithLocaleNamed("interestType", element, parametersPassedInCommand);
+        final Integer interestCalculationPeriodType = helper.extractIntegerWithLocaleNamed("interestCalculationPeriodType", element,
+                parametersPassedInCommand);
+
+        final LocalDate expectedDisbursementDate = helper.extractLocalDateNamed("expectedDisbursementDate", element,
+                parametersPassedInCommand);
+        final LocalDate repaymentsStartingFromDate = helper.extractLocalDateNamed("repaymentsStartingFromDate", element,
+                parametersPassedInCommand);
+        final LocalDate interestChargedFromDate = helper.extractLocalDateNamed("interestChargedFromDate", element,
+                parametersPassedInCommand);
+        final LocalDate submittedOnDate = helper.extractLocalDateNamed("submittedOnDate", element, parametersPassedInCommand);
+
+        final String submittedOnNote = helper.extractStringNamed("submittedOnNote", element, parametersPassedInCommand);
+
+        MemberLoanCommand[] memberLoans = null;
+        GroupLoanChargeCommand[] charges = null;
+        if (element.isJsonObject()) {
+            final JsonObject topLevelJsonElement = element.getAsJsonObject();
+            final Locale locale = helper.extractLocaleParameter(topLevelJsonElement);
+            final String dateFormat = helper.extractDateFormatParameter(topLevelJsonElement);
+            if (topLevelJsonElement.has("memberLoans") && topLevelJsonElement.get("memberLoans").isJsonArray()) {
+
+                parametersPassedInCommand.add("memberLoans");
+                final JsonArray array = topLevelJsonElement.get("memberLoans").getAsJsonArray();
+                memberLoans = new MemberLoanCommand[array.size()];
+                for (int i = 0; i < array.size(); i++) {
+
+                    final JsonObject memberLoanElement = array.get(i).getAsJsonObject();
+                    final Set<String> parametersPassedInForMemberLoansCommand = new HashSet<String>();
+
+                    final Long loanId = helper.extractLongNamed("loanId", memberLoanElement, parametersPassedInForMemberLoansCommand);
+                    final Long clientId = helper.extractLongNamed("clientId", memberLoanElement, parametersPassedInForMemberLoansCommand);
+                    final String memberLoanExternalId = helper.extractStringNamed("externalId", memberLoanElement,
+                            parametersPassedInForMemberLoansCommand);
+                    final BigDecimal memberLoanPrincipal = helper.extractBigDecimalNamed("principal", memberLoanElement, locale,
+                            parametersPassedInForMemberLoansCommand);
+
+                    memberLoans[i] = new MemberLoanCommand(parametersPassedInForMemberLoansCommand, loanId, clientId, memberLoanExternalId,
+                            memberLoanPrincipal);
+                }
+            }
+
+            if (topLevelJsonElement.has("charges") && topLevelJsonElement.get("charges").isJsonArray()) {
+
+                parametersPassedInCommand.add("charges");
+                final JsonArray chargesArray = topLevelJsonElement.get("charges").getAsJsonArray();
+                charges = new GroupLoanChargeCommand[chargesArray.size()];
+                for (int i = 0; i < chargesArray.size(); i++) {
+
+                    final JsonObject loanChargeElement = chargesArray.get(i).getAsJsonObject();
+                    final Set<String> parametersPassedInForChargesCommand = new HashSet<String>();
+
+                    final Long id = helper.extractLongNamed("id", loanChargeElement, parametersPassedInForChargesCommand);
+                    final Long chargeId = helper.extractLongNamed("chargeId", loanChargeElement, parametersPassedInForChargesCommand);
+                    final BigDecimal amount = helper.extractBigDecimalNamed("amount", loanChargeElement, locale,
+                            parametersPassedInForChargesCommand);
+                    final Integer chargeTimeType = helper.extractIntegerNamed("chargeTimeType", loanChargeElement, locale,
+                            parametersPassedInForChargesCommand);
+                    final Integer chargeCalculationType = helper.extractIntegerNamed("chargeCalculationType", loanChargeElement, locale,
+                            parametersPassedInForChargesCommand);
+                    final LocalDate specifiedDueDate = helper.extractLocalDateNamed("specifiedDueDate", loanChargeElement, dateFormat,
+                            locale, parametersPassedInForChargesCommand);
+
+                    charges[i] = new GroupLoanChargeCommand(parametersPassedInForChargesCommand, id, null, chargeId, amount, chargeTimeType,
+                            chargeCalculationType, specifiedDueDate);
+
+                    if (loanChargeElement.has("memberCharges") && loanChargeElement.get("memberCharges").isJsonArray()) {
+
+                        parametersPassedInCommand.add("memberCharges");
+                        final JsonArray memberChargesArray = loanChargeElement.get("memberCharges").getAsJsonArray();
+                        final Set<String> parametersPassedInForMemberChargesCommand = new HashSet<String>();
+                        for (int j = 0; j < memberChargesArray.size(); j++) {
+                            final JsonObject memberChargeElement = memberChargesArray.get(j).getAsJsonObject();
+
+                            final Long memberChargeClientId = helper.extractLongNamed("clientId", memberChargeElement,
+                                    parametersPassedInForMemberChargesCommand);
+                            final BigDecimal memberChargeAmount = helper.extractBigDecimalNamed("amount", memberChargeElement, locale,
+                                    parametersPassedInForMemberChargesCommand);
+
+                            charges[i].addMemberCharge(parametersPassedInForMemberChargesCommand, memberChargeClientId, memberChargeAmount);
+                        }
+                    }
+                }
+            }
+        }
+
+        return new GroupLoanApplicationCommand(parametersPassedInCommand, resourceIdentifier, groupId, productId, externalId, fundId,
+                loanOfficerId, transactionProcessingStrategyId, principal, inArrearsToleranceValue, loanTermFrequency,
+                loanTermFrequencyType, numberOfRepayments, repaymentEvery, interestRatePerPeriod, repaymentFrequencyType,
+                interestRateFrequencyType, amortizationType, interestType, interestCalculationPeriodType, expectedDisbursementDate,
+                repaymentsStartingFromDate, interestChargedFromDate, submittedOnDate, submittedOnNote, memberLoans, charges);
     }
 
     @Override

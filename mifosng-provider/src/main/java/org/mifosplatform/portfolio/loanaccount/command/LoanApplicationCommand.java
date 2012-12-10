@@ -12,41 +12,41 @@ import org.mifosplatform.portfolio.loanproduct.command.LoanProductCommand;
  */
 public class LoanApplicationCommand {
 	
-	private final Long loanId;
-	private final Long clientId;
-	private final Long groupId;
-	private final Long productId;
-	private final String externalId;
+	protected final Long loanId;
+	protected final Long clientId;
+	protected final Long groupId;
+	protected final Long productId;
+	protected final String externalId;
 	
-	private final Long fundId;
-	private final Long loanOfficerId;
-	private final Long transactionProcessingStrategyId;
+	protected final Long fundId;
+	protected final Long loanOfficerId;
+	protected final Long transactionProcessingStrategyId;
 	
-	private final BigDecimal principal;
-	private final BigDecimal inArrearsTolerance;
+	protected final BigDecimal principal;
+	protected final BigDecimal inArrearsTolerance;
 	
-	private final Integer loanTermFrequency;
-	private final Integer loanTermFrequencyType;
+	protected final Integer loanTermFrequency;
+	protected final Integer loanTermFrequencyType;
 	
-	private final Integer numberOfRepayments;
-	private final Integer repaymentEvery;
+	protected final Integer numberOfRepayments;
+	protected final Integer repaymentEvery;
 	
-	private final BigDecimal interestRatePerPeriod;
-	private final Integer repaymentFrequencyType;
-	private final Integer interestRateFrequencyType;
-	private final Integer amortizationType;
-	private final Integer interestType;
-	private final Integer interestCalculationPeriodType;
+	protected final BigDecimal interestRatePerPeriod;
+	protected final Integer repaymentFrequencyType;
+	protected final Integer interestRateFrequencyType;
+	protected final Integer amortizationType;
+	protected final Integer interestType;
+	protected final Integer interestCalculationPeriodType;
 	
-	private final LocalDate expectedDisbursementDate;
-	private final LocalDate repaymentsStartingFromDate;
-	private final LocalDate interestChargedFromDate;
-	private final LocalDate submittedOnDate;
-	private final String submittedOnNote;
+	protected final LocalDate expectedDisbursementDate;
+	protected final LocalDate repaymentsStartingFromDate;
+	protected final LocalDate interestChargedFromDate;
+	protected final LocalDate submittedOnDate;
+	protected final String submittedOnNote;
 
     private final LoanChargeCommand[] charges;
 
-	private final Set<String> modifiedParameters;
+	protected final Set<String> modifiedParameters;
 
 	public LoanApplicationCommand(
 			final Set<String> modifiedParameters,

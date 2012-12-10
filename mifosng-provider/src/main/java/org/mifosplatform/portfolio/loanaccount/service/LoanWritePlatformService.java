@@ -3,6 +3,7 @@ package org.mifosplatform.portfolio.loanaccount.service;
 import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
 import org.mifosplatform.organisation.staff.command.BulkTransferLoanOfficerCommand;
 import org.mifosplatform.portfolio.loanaccount.command.AdjustLoanTransactionCommand;
+import org.mifosplatform.portfolio.loanaccount.command.GroupLoanApplicationCommand;
 import org.mifosplatform.portfolio.loanaccount.command.LoanApplicationCommand;
 import org.mifosplatform.portfolio.loanaccount.command.LoanChargeCommand;
 import org.mifosplatform.portfolio.loanaccount.command.LoanStateTransitionCommand;
@@ -14,7 +15,10 @@ public interface LoanWritePlatformService {
 	
 	@PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'PORTFOLIO_MANAGEMENT_SUPER_USER', 'CREATE_LOAN', 'CREATEHISTORIC_LOAN')")
 	EntityIdentifier submitLoanApplication(LoanApplicationCommand command);
-	
+
+    @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'PORTFOLIO_MANAGEMENT_SUPER_USER', 'CREATE_LOAN', 'CREATEHISTORIC_LOAN')")
+    EntityIdentifier submitGroupLoanApplication(GroupLoanApplicationCommand command);
+
 	@PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'PORTFOLIO_MANAGEMENT_SUPER_USER', 'UPDATE_LOAN', 'UPDATEHISTORIC_LOAN')")
 	EntityIdentifier modifyLoanApplication(LoanApplicationCommand command);
 	

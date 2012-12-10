@@ -11,25 +11,30 @@ import org.joda.time.LocalDate;
  */
 public class LoanChargeCommand {
 
-    private final Long id;
-    private final Long chargeId;
-    private final Long loanId;
-    private final BigDecimal amount;
+    protected final Long id;
+    protected final Long chargeId;
+    protected final Long loanId;
+    protected final BigDecimal amount;
 
-    private final Integer chargeTimeType;
-    private final LocalDate specifiedDueDate;
-    private final Integer chargeCalculationType;
+    protected final Integer chargeTimeType;
+    protected final LocalDate specifiedDueDate;
+    protected final Integer chargeCalculationType;
 
     /**
      * Used to capture what parameters were passed in the json api request. 
      * It does not indicate that these values are modified from their original values when tyring to update.
      */
-    private final Set<String> requestParameters;
+    protected final Set<String> requestParameters;
     
     public static LoanChargeCommand forWaiver(final Long id, final Long loanId) {
 		final Set<String> parametersPassedInCommand = new HashSet<String>();
 		return new LoanChargeCommand(parametersPassedInCommand, id, loanId, null, null, null, null, null);
 	}
+
+//    public static LoanChargeCommand memberLoanCharge(final Set<String> parametersPassedInCommand, final Long id, final Long chargeId,
+//                                                     final BigDecimal amount) {
+//        return new LoanChargeCommand(parametersPassedInCommand, id, null, chargeId, amount, null, null, null);
+//    }
 
     public LoanChargeCommand(
     		final Set<String> parametersPassedInCommand, 

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -63,6 +64,10 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
 	@ManyToOne(optional = true)
     @JoinColumn(name = "group_id")
     private Group group;
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "group_loan_id")
+    private GroupLoan groupLoan;
 
 	@ManyToOne
 	@JoinColumn(name = "product_id")
@@ -293,6 +298,10 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
 		validateChargeHasValidSpecifiedDateIfApplicable(loanCharge, getDisbursementDate(), getLastRepaymentPeriodDueDate());
 		
 		loanCharge.update(this);
+        if (this.charges == null){
+            this.charges = new HashSet<LoanCharge>();
+        }
+
 		this.charges.add(loanCharge);
 		
 		updateTotalChargesDueAtDisbursement();
@@ -564,6 +573,15 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
 			}
 		}
 	}
+
+    public void submitMemberApplication(GroupLoan groupLoan, final Integer loanTermFrequency,
+            final PeriodFrequencyType loanTermFrequencyType, final LocalDate submittedOn, final LocalDate expectedDisbursementDate,
+            final LocalDate repaymentsStartingFromDate, final LocalDate interestChargedFromDate,
+            final LoanLifecycleStateMachine lifecycleStateMachine) {
+        this.groupLoan = groupLoan;
+        this.submitApplication(loanTermFrequency, loanTermFrequencyType, submittedOn, expectedDisbursementDate, repaymentsStartingFromDate,
+                interestChargedFromDate, lifecycleStateMachine);
+    }
 
 	public void submitApplication(
 			final Integer loanTermFrequency, 
@@ -1649,5 +1667,5 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
 	public Client getClient() {
 		return client;
 	}
-	
+
 }
