@@ -20,6 +20,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.service.FileUtils;
+import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
 import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnHeader;
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetDataRow;
@@ -256,7 +257,9 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         // String reportPath =
         // "C:\\dev\\apache-tomcat-7.0.25\\webapps\\ROOT\\PentahoReports\\"
         // + reportName + ".prpt";
-        String reportPath = "/var/lib/tomcat7/webapps/ROOT/PentahoReports/" + reportName + ".prpt";
+        String reportPath = FileUtils.MIFOSX_BASE_DIR + File.separator
+                + ThreadLocalContextUtil.getTenant().getName().replaceAll(" ", "").trim() + File.separator + "reports" + File.separator
+                + reportName + ".prpt";
         logger.info("Report path: " + reportPath);
 
         // load report definition
