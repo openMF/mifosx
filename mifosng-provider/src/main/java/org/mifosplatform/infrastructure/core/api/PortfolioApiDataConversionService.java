@@ -1,5 +1,6 @@
 package org.mifosplatform.infrastructure.core.api;
 
+import org.mifosplatform.portfolio.loanaccount.command.GroupLoanApplicationCommand;
 import org.mifosplatform.organisation.staff.command.BulkTransferLoanOfficerCommand;
 import org.mifosplatform.portfolio.client.command.NoteCommand;
 import org.mifosplatform.portfolio.client.data.ClientData;
@@ -30,6 +31,8 @@ public interface PortfolioApiDataConversionService {
     GroupCommand convertJsonToGroupCommand(Long resourceIdentifier, String json);
 
     LoanApplicationCommand convertApiRequestJsonToLoanApplicationCommand(Long resourceIdentifier, String json);
+
+    GroupLoanApplicationCommand convertJsonToGroupLoanApplicationCommand(Long resourceIdentifier, String json);
 
     LoanChargeCommand convertJsonToLoanChargeCommand(Long loanChargeId, Long loanId, String json);
 

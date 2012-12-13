@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.portfolio.loanaccount.data.DisbursementData;
+import org.mifosplatform.portfolio.loanaccount.data.GroupLoanBasicDetailsData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanBasicDetailsData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanPermissionData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionData;
@@ -14,7 +15,13 @@ public interface LoanReadPlatformService {
 
 	LoanBasicDetailsData retrieveLoanAccountDetails(Long loanId);
 
+    GroupLoanBasicDetailsData retrieveGroupLoanAccountDetails(Long groupLoanId);
+
+    Collection<LoanBasicDetailsData> retrieveGroupLoanMembersAccountsDetails(Long groupLoanId);
+
 	LoanScheduleData retrieveRepaymentSchedule(Long loanId, CurrencyData currency, DisbursementData disbursement, BigDecimal totalChargesAtDisbursement, BigDecimal inArrearsTolerance);
+
+    LoanScheduleData retrieveGroupRepaymentSchedule(Long groupLoanId, CurrencyData currency, DisbursementData disbursement, BigDecimal inArrearsTolerance);
 
 	Collection<LoanTransactionData> retrieveLoanTransactions(Long loanId);
 

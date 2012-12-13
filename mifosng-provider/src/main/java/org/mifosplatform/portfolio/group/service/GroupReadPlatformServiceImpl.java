@@ -157,6 +157,11 @@ public class GroupReadPlatformServiceImpl implements GroupReadPlatformService {
             String sql = "select " + rm.loanAccountSummarySchema() + " where l.group_id = ?";
 
             List<GroupAccountSummaryData> results = this.jdbcTemplate.query(sql, rm, new Object[] {groupId});
+
+            sql = "select " + rm.groupLoanAccountSummarySchema() + " where gl.group_id = ?";
+
+            results.addAll(this.jdbcTemplate.query(sql, rm, new Object[] {groupId}));
+
             if (results != null) {
                 for (GroupAccountSummaryData row : results) {
 
@@ -206,9 +211,23 @@ public class GroupReadPlatformServiceImpl implements GroupReadPlatformService {
             StringBuilder accountsSummary = new StringBuilder("l.id as id, l.external_id as externalId,");
             accountsSummary
                     .append("l.product_id as productId, lp.name as productName,")
-                    .append("l.loan_status_id as statusId ")
+                    .append("l.loan_status_id as statusId, ")
+                    .append("0 as is_group_account ")
                     .append("from m_loan l ")
                     .append("LEFT JOIN m_product_loan AS lp ON lp.id = l.product_id ");
+
+            return accountsSummary.toString();
+        }
+
+        public String groupLoanAccountSummarySchema() {
+
+            StringBuilder accountsSummary = new StringBuilder("gl.id as id, gl.external_id as externalId,");
+            accountsSummary
+                    .append("gl.product_id as productId, lp.name as productName,")
+                    .append("gl.loan_status_id as statusId, ")
+                    .append("1 as is_group_account ")
+                    .append("from m_group_loan gl ")
+                    .append("LEFT JOIN m_product_loan AS lp ON lp.id = gl.product_id ");
 
             return accountsSummary.toString();
         }
@@ -223,7 +242,9 @@ public class GroupReadPlatformServiceImpl implements GroupReadPlatformService {
             String loanProductName = rs.getString("productName");
             Integer loanStatusId = JdbcSupport.getInteger(rs, "statusId");
 
-            return new GroupAccountSummaryData(id, externalId, productId, loanProductName, loanStatusId);
+            final Boolean isGroupAccount = rs.getBoolean("is_group_account");
+
+            return new GroupAccountSummaryData(id, externalId, productId, loanProductName, loanStatusId, isGroupAccount);
         }
     }
 }

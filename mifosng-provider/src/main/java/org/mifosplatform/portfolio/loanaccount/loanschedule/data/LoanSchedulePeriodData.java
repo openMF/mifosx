@@ -446,4 +446,32 @@ public class LoanSchedulePeriodData {
 	public BigDecimal totalOverdue() {
 		return defaultToZeroIfNull(this.totalOverdue);
 	}
+
+    public BigDecimal totalDueForPeriod() {
+        return defaultToZeroIfNull(this.totalDueForPeriod);
+    }
+
+    public BigDecimal totalPaidForPeriod() {
+        return defaultToZeroIfNull(this.totalPaidForPeriod);
+    }
+
+    public BigDecimal totalWaivedForPeriod() {
+        return defaultToZeroIfNull(this.totalWaivedForPeriod);
+    }
+
+    public BigDecimal totalWrittenOffForPeriod() {
+        return defaultToZeroIfNull(this.totalWrittenOffForPeriod);
+    }
+
+    public BigDecimal totalOutstandingForPeriod() {
+        return defaultToZeroIfNull(this.totalOutstandingForPeriod);
+    }
+
+    public BigDecimal totalActualCostOfLoanForPeriod() {
+        return defaultToZeroIfNull(totalActualCostOfLoanForPeriod);
+    }
+
+    public BigDecimal principalLoanBalanceOutstanding() {
+        return defaultToZeroIfNull(principalLoanBalanceOutstanding);
+    }
 }
