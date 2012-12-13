@@ -4,8 +4,11 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
+import com.google.gson.JsonNull;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
@@ -22,10 +25,13 @@ import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
 import org.mifosplatform.portfolio.group.data.GroupData;
 import org.mifosplatform.portfolio.group.service.GroupReadPlatformService;
 import org.mifosplatform.portfolio.loanaccount.data.DisbursementData;
+import org.mifosplatform.portfolio.loanaccount.data.GroupLoanBasicDetailsData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanBasicDetailsData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanChargeData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanPermissionData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionData;
+import org.mifosplatform.portfolio.loanaccount.domain.GroupLoan;
+import org.mifosplatform.portfolio.loanaccount.domain.GroupLoanRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
@@ -50,6 +56,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 	private final JdbcTemplate jdbcTemplate;
 	private final PlatformSecurityContext context;
 	private final LoanRepository loanRepository;
+    private final GroupLoanRepository groupLoanRepository;
 	private final ApplicationCurrencyRepository applicationCurrencyRepository;
 	private final LoanProductReadPlatformService loanProductReadPlatformService;
 	private final ClientReadPlatformService clientReadPlatformService;
@@ -60,6 +67,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 	public LoanReadPlatformServiceImpl(
 			final PlatformSecurityContext context,
 			final LoanRepository loanRepository,
+            final GroupLoanRepository groupLoanRepository,
 			final LoanTransactionRepository loanTransactionRepository,
 			final ApplicationCurrencyRepository applicationCurrencyRepository,
 			final LoanProductReadPlatformService loanProductReadPlatformService,
@@ -68,6 +76,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 			final TenantAwareRoutingDataSource dataSource) {
 		this.context = context;
 		this.loanRepository = loanRepository;
+        this.groupLoanRepository = groupLoanRepository;
 		this.loanTransactionRepository = loanTransactionRepository;
 		this.applicationCurrencyRepository = applicationCurrencyRepository;
 		this.loanProductReadPlatformService = loanProductReadPlatformService;
@@ -94,7 +103,37 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
 	}
 
-	@Override
+    @Override
+    public GroupLoanBasicDetailsData retrieveGroupLoanAccountDetails(Long groupLoanId) {
+
+        try {
+
+            context.authenticatedUser();
+
+            GroupLoanMapper rm = new GroupLoanMapper();
+
+            String sql = "select " + rm.groupLoanSchema() + " where gl.id = ?";
+
+            return this.jdbcTemplate.queryForObject(sql, rm, new Object[] { groupLoanId });
+        } catch (EmptyResultDataAccessException e) {
+            throw new LoanNotFoundException(groupLoanId);
+        }
+
+    }
+
+    @Override
+    public Collection<LoanBasicDetailsData> retrieveGroupLoanMembersAccountsDetails(Long groupLoanId) {
+
+        this.context.authenticatedUser();
+
+        LoanMapper rm = new LoanMapper();
+
+        String sql = "select " + rm.loanSchema() + " where l.group_loan_id = ?";
+
+        return this.jdbcTemplate.query(sql, rm, new Object[] {groupLoanId});
+    }
+
+    @Override
 	public LoanScheduleData retrieveRepaymentSchedule(final Long loanId, 
 			final CurrencyData currency, 
 			final DisbursementData disbursement,
@@ -175,7 +214,257 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 		}
 	}
 
-	@Override
+    /**
+     *  Currently, just aggregate member loan accounts schedule into one.
+     */
+    @Override
+    public LoanScheduleData retrieveGroupRepaymentSchedule(Long groupLoanId, CurrencyData currency, DisbursementData disbursement,
+            BigDecimal inArrearsTolerance) {
+
+        try {
+            this.context.authenticatedUser();
+            GroupLoan groupLoan = this.groupLoanRepository.findOne(groupLoanId);
+
+            final LoanScheduleMapper rm = new LoanScheduleMapper(disbursement);
+            final String sql = "select " + rm.loanScheduleSchema() + " where l.id = ? order by ls.loan_id, ls.installment";
+
+            final List<LoanSchedulePeriodData> groupPeriods = new ArrayList<LoanSchedulePeriodData>();
+            final List<LoanSchedulePeriodData> membersDisbursementPeriods = new ArrayList<LoanSchedulePeriodData>();
+            final List<List<LoanSchedulePeriodData>> membersPeriods = new ArrayList<List<LoanSchedulePeriodData>>();
+
+            Integer groupPeriodsSize = null;
+
+            for (Loan member : groupLoan.getMemberLoans()) {
+
+                final LoanSchedulePeriodData memberDisbursementPeriod = LoanSchedulePeriodData.disbursementOnlyPeriod(
+                        disbursement.disbursementDate(), member.getPrincpal().getAmount(), member.getTotalChargesDueAtDisbursement().getAmount(),
+                        disbursement.isDisbursed());
+
+                rm.updateDisbursementData(new DisbursementData(member.getExpectedDisbursedOnLocalDate(), member.getDisbursementDate(), member.getPrincpal().getAmount()));
+                final Collection<LoanSchedulePeriodData> memberRepaymentSchedulePeriods = this.jdbcTemplate.query(sql, rm, new Object[] { member.getId() });
+
+                final List<LoanSchedulePeriodData> memberPeriods = new ArrayList<LoanSchedulePeriodData>(memberRepaymentSchedulePeriods.size());
+
+                memberPeriods.addAll(memberRepaymentSchedulePeriods);
+                membersDisbursementPeriods.add(memberDisbursementPeriod);
+                membersPeriods.add(memberPeriods);
+
+                if (groupPeriodsSize == null){
+                    groupPeriodsSize = memberPeriods.size();
+                }
+            }
+
+            BigDecimal groupDisbursementAmount = BigDecimal.ZERO;
+            BigDecimal groupFeeChargesAtDisbursement = BigDecimal.ZERO;
+
+            for (LoanSchedulePeriodData memberDisbursementPeriod : membersDisbursementPeriods) {
+                groupDisbursementAmount = groupDisbursementAmount.add(memberDisbursementPeriod.principalDisbursed());
+                groupFeeChargesAtDisbursement = groupFeeChargesAtDisbursement.add(memberDisbursementPeriod.feeChargesOutstanding());
+            }
+
+            LoanSchedulePeriodData groupDisbursementPeriod = LoanSchedulePeriodData.disbursementOnlyPeriod(disbursement.disbursementDate(),
+                    groupDisbursementAmount, groupFeeChargesAtDisbursement, disbursement.isDisbursed());
+
+            groupPeriods.add(groupDisbursementPeriod);
+
+            Integer period[] = new Integer[groupPeriodsSize];
+            LocalDate fromDate[] = new LocalDate[groupPeriodsSize];
+            LocalDate dueDate[] = new LocalDate[groupPeriodsSize];
+
+            final BigDecimal principalDue[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal principalPaid[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal principalWrittenOff[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(principalDue, BigDecimal.ZERO);
+            Arrays.fill(principalPaid, BigDecimal.ZERO);
+            Arrays.fill(principalWrittenOff, BigDecimal.ZERO);
+
+            final BigDecimal principalOutstanding[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(principalOutstanding, BigDecimal.ZERO);
+
+            final BigDecimal interestExpectedDue[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal interestPaid[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal interestWaived[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal interestWrittenOff[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(interestExpectedDue, BigDecimal.ZERO);
+            Arrays.fill(interestPaid, BigDecimal.ZERO);
+            Arrays.fill(interestWaived, BigDecimal.ZERO);
+            Arrays.fill(interestWrittenOff, BigDecimal.ZERO);
+
+            final BigDecimal interestOutstanding[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(interestOutstanding, BigDecimal.ZERO);
+
+            final BigDecimal feeChargesExpectedDue[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal feeChargesPaid[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal feeChargesWaived[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal feeChargesWrittenOff[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(feeChargesExpectedDue, BigDecimal.ZERO);
+            Arrays.fill(feeChargesPaid, BigDecimal.ZERO);
+            Arrays.fill(feeChargesWaived, BigDecimal.ZERO);
+            Arrays.fill(feeChargesWrittenOff, BigDecimal.ZERO);
+
+            final BigDecimal feeChargesOutstanding[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(feeChargesOutstanding, BigDecimal.ZERO);
+
+            final BigDecimal penaltyChargesExpectedDue[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal penaltyChargesPaid[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal penaltyChargesWaived[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal penaltyChargesWrittenOff[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(penaltyChargesExpectedDue, BigDecimal.ZERO);
+            Arrays.fill(penaltyChargesPaid, BigDecimal.ZERO);
+            Arrays.fill(penaltyChargesWaived, BigDecimal.ZERO);
+            Arrays.fill(penaltyChargesWrittenOff, BigDecimal.ZERO);
+
+            final BigDecimal penaltyChargesOutstanding[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(penaltyChargesOutstanding, BigDecimal.ZERO);
+
+            final BigDecimal totalDueForPeriod[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal totalPaidForPeriod[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal totalWaivedForPeriod[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal totalWrittenOffForPeriod[] = new BigDecimal[groupPeriodsSize];
+            final BigDecimal totalOutstandingForPeriod[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(totalDueForPeriod, BigDecimal.ZERO);
+            Arrays.fill(totalPaidForPeriod, BigDecimal.ZERO);
+            Arrays.fill(totalWaivedForPeriod, BigDecimal.ZERO);
+            Arrays.fill(totalWrittenOffForPeriod, BigDecimal.ZERO);
+            Arrays.fill(totalOutstandingForPeriod, BigDecimal.ZERO);
+
+            final BigDecimal totalActualCostOfLoanForPeriod[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(totalActualCostOfLoanForPeriod, BigDecimal.ZERO);
+
+            final BigDecimal outstandingPrincipleBalanceOfLoan[] = new BigDecimal[groupPeriodsSize];
+            Arrays.fill(outstandingPrincipleBalanceOfLoan, BigDecimal.ZERO);
+
+
+            for (List<LoanSchedulePeriodData> memberPeriods : membersPeriods) {
+                for (LoanSchedulePeriodData memberPeriod : memberPeriods) {
+                    Integer i = memberPeriods.indexOf(memberPeriod);
+                    if (period[i] == null) {
+                        period[i] = memberPeriod.periodNumber();
+                    }
+                    if (fromDate[i] == null) {
+                        fromDate[i] = memberPeriod.periodFromDate();
+                    }
+                    if (dueDate[i] == null) {
+                        dueDate[i] = memberPeriod.periodDueDate();
+                    }
+                    principalDue[i] = principalDue[i].add(memberPeriod.principalDue());
+                    principalPaid[i] = principalPaid[i].add(memberPeriod.principalPaid());
+                    principalWrittenOff[i] = principalWrittenOff[i].add(memberPeriod.principalWrittenOff());
+
+                    principalOutstanding[i] = principalOutstanding[i].add(memberPeriod.principalOutstanding());
+
+                    interestExpectedDue[i] = interestExpectedDue[i].add(memberPeriod.interestDue());
+                    interestPaid[i] = interestPaid[i].add(memberPeriod.interestPaid());
+                    interestWaived[i] = interestWaived[i].add(memberPeriod.interestWaived());
+                    interestWrittenOff[i] = interestWrittenOff[i].add(memberPeriod.interestWrittenOff());
+
+                    interestOutstanding[i] = interestOutstanding[i].add(memberPeriod.interestOutstanding());
+
+                    feeChargesExpectedDue[i] = feeChargesExpectedDue[i].add(memberPeriod.feeChargesDue());
+                    feeChargesPaid[i] = feeChargesPaid[i].add(memberPeriod.feeChargesPaid());
+                    feeChargesWaived[i] = feeChargesWaived[i].add(memberPeriod.feeChargesWaived());
+                    feeChargesWrittenOff[i] = feeChargesWrittenOff[i].add(memberPeriod.feeChargesWrittenOff());
+
+                    feeChargesOutstanding[i] = feeChargesOutstanding[i].add(memberPeriod.feeChargesOutstanding());
+
+                    penaltyChargesExpectedDue[i] = penaltyChargesExpectedDue[i].add(memberPeriod.penaltyChargesDue());
+                    penaltyChargesPaid[i] = penaltyChargesPaid[i].add(memberPeriod.penaltyChargesPaid());
+                    penaltyChargesWaived[i] = penaltyChargesWaived[i].add(memberPeriod.penaltyChargesWaived());
+                    penaltyChargesWrittenOff[i] = penaltyChargesWrittenOff[i].add(memberPeriod.penaltyChargesWrittenOff());
+
+                    penaltyChargesOutstanding[i] = penaltyChargesOutstanding[i].add(memberPeriod.penaltyChargesOutstanding());
+
+                    totalDueForPeriod[i] = totalDueForPeriod[i].add(memberPeriod.totalDueForPeriod());
+                    totalPaidForPeriod[i] = totalPaidForPeriod[i].add(memberPeriod.totalPaidForPeriod());
+                    totalWaivedForPeriod[i] = totalWaivedForPeriod[i].add(memberPeriod.totalWaivedForPeriod());
+                    totalWrittenOffForPeriod[i] = totalWrittenOffForPeriod[i].add(memberPeriod.totalWrittenOffForPeriod());
+                    totalOutstandingForPeriod[i] = totalOutstandingForPeriod[i].add(memberPeriod.totalOutstandingForPeriod());
+
+                    totalActualCostOfLoanForPeriod[i] = totalActualCostOfLoanForPeriod[i].add(memberPeriod.totalActualCostOfLoanForPeriod());
+
+                    outstandingPrincipleBalanceOfLoan[i] = outstandingPrincipleBalanceOfLoan[i].add(memberPeriod.principalLoanBalanceOutstanding());
+                }
+            }
+
+            for (int i = 0; i < groupPeriodsSize; i++){
+                groupPeriods.add(LoanSchedulePeriodData.repaymentPeriodWithPayments(groupLoanId, period[i], fromDate[i], dueDate[i], principalDue[i],
+                        principalPaid[i], principalWrittenOff[i], principalOutstanding[i], outstandingPrincipleBalanceOfLoan[i], interestExpectedDue[i],
+                        interestPaid[i], interestWaived[i], interestWrittenOff[i], interestOutstanding[i], feeChargesExpectedDue[i], feeChargesPaid[i],
+                        feeChargesWaived[i], feeChargesWrittenOff[i], feeChargesOutstanding[i], penaltyChargesExpectedDue[i], penaltyChargesPaid[i],
+                        penaltyChargesWaived[i], penaltyChargesWrittenOff[i], penaltyChargesOutstanding[i], totalDueForPeriod[i], totalPaidForPeriod[i],
+                        totalWaivedForPeriod[i], totalWrittenOffForPeriod[i], totalOutstandingForPeriod[i], totalActualCostOfLoanForPeriod[i]));
+            }
+
+            LoanSchedulePeriodDataWrapper wrapper = new LoanSchedulePeriodDataWrapper(groupPeriods);
+
+            final Integer loanTermInDays = wrapper.deriveCumulativeLoanTermInDays();
+
+            final BigDecimal cumulativePrincipalDisbursed = wrapper.deriveCumulativePrincipalDisbursed();
+            final BigDecimal cumulativePrincipalDue = wrapper.deriveCumulativePrincipalDue();
+            final BigDecimal cumulativePrincipalPaid = wrapper.deriveCumulativePrincipalPaid();
+            final BigDecimal cumulativePrincipalWrittenOff = wrapper.deriveCumulativePrincipalWrittenOff();
+            final BigDecimal cumulativePrincipalOutstanding = wrapper.deriveCumulativePrincipalOutstanding();
+
+            final BigDecimal cumulativeInterestExpected = wrapper.deriveCumulativeInterestExpected();
+            final BigDecimal cumulativeInterestPaid = wrapper.deriveCumulativeInterestPaid();
+            final BigDecimal cumulativeInterestWaived = wrapper.deriveCumulativeInterestWaived();
+            final BigDecimal cumulativeInterestWrittenOff = wrapper.deriveCumulativeInterestWrittenOff();
+            final BigDecimal cumulativeInterestOutstanding = wrapper.deriveCumulativeInterestOutstanding();
+
+            final BigDecimal cumulativeFeeChargesExpected = wrapper.deriveCumulativeFeeChargesToDate();
+            final BigDecimal cumulativeFeeChargesPaid = wrapper.deriveCumulativeFeeChargesPaid();
+            final BigDecimal cumulativeFeeChargesWaived = wrapper.deriveCumulativeFeeChargesWaived();
+            final BigDecimal cumulativeFeeChargesWrittenOff = wrapper.deriveCumulativeFeeChargesWrittenOff();
+            final BigDecimal cumulativeFeeChargesOutstanding = wrapper.deriveCumulativeFeeChargesOutstanding();
+
+            final BigDecimal cumulativePenaltyChargesExpected = wrapper.deriveCumulativePenaltyChargesToDate();
+            final BigDecimal cumulativePenaltyChargesPaid = wrapper.deriveCumulativePenaltyChargesPaid();
+            final BigDecimal cumulativePenaltyChargesWaived = wrapper.deriveCumulativePenaltyChargesWaived();
+            final BigDecimal cumulativePenaltyChargesWrittenOff = wrapper.deriveCumulativePenaltyChargesWrittenOff();
+            final BigDecimal cumulativePenaltyChargesOutstanding = wrapper.deriveCumulativePenaltyChargesOutstanding();
+
+            final BigDecimal totalExpectedCostOfLoan = cumulativeInterestExpected.add(cumulativeFeeChargesExpected).add(
+                    cumulativePenaltyChargesExpected);
+            final BigDecimal totalExpectedRepayment = cumulativePrincipalDisbursed.add(totalExpectedCostOfLoan);
+
+            final BigDecimal totalPaidToDate = cumulativePrincipalPaid.add(cumulativeInterestPaid).add(cumulativeFeeChargesPaid)
+                    .add(cumulativePenaltyChargesPaid);
+            final BigDecimal totalWaivedToDate = cumulativeInterestWaived.add(cumulativeFeeChargesWaived).add(
+                    cumulativePenaltyChargesWaived);
+            final BigDecimal totalWrittenOffToDate = cumulativePrincipalWrittenOff.add(cumulativeInterestWrittenOff)
+                    .add(cumulativeFeeChargesWrittenOff).add(cumulativePenaltyChargesWrittenOff);
+
+            final BigDecimal totalOutstanding = cumulativePrincipalOutstanding.add(cumulativeInterestOutstanding)
+                    .add(cumulativeFeeChargesOutstanding).add(cumulativePenaltyChargesOutstanding);
+
+            final BigDecimal totalOverdue = wrapper.deriveCumulativeTotalOverdue();
+
+            final MonetaryCurrency monetaryCurrency = new MonetaryCurrency(currency.code(), currency.decimalPlaces());
+            final Money tolerance = Money.of(monetaryCurrency, inArrearsTolerance);
+            final Money totalOverdueMoney = Money.of(monetaryCurrency, totalOverdue);
+            boolean isWaiveAllowed = totalOverdueMoney.isGreaterThanZero()
+                    && (tolerance.isGreaterThan(totalOverdueMoney) || tolerance.isEqualTo(totalOverdueMoney));
+
+            BigDecimal totalInArrears = null;
+            if (!isWaiveAllowed) {
+                totalInArrears = totalOverdueMoney.getAmount();
+            }
+
+            return new LoanScheduleData(currency, groupPeriods, loanTermInDays, cumulativePrincipalDisbursed, cumulativePrincipalDue,
+                    cumulativePrincipalPaid, cumulativePrincipalWrittenOff, cumulativePrincipalOutstanding, cumulativeInterestExpected,
+                    cumulativeInterestPaid, cumulativeInterestWaived, cumulativeInterestWrittenOff, cumulativeInterestOutstanding,
+                    cumulativeFeeChargesExpected, cumulativeFeeChargesPaid, cumulativeFeeChargesWaived, cumulativeFeeChargesWrittenOff,
+                    cumulativeFeeChargesOutstanding, cumulativePenaltyChargesExpected, cumulativePenaltyChargesPaid,
+                    cumulativePenaltyChargesWaived, cumulativePenaltyChargesWrittenOff, cumulativePenaltyChargesOutstanding,
+                    totalExpectedCostOfLoan, totalExpectedRepayment, totalPaidToDate, totalWaivedToDate, totalWrittenOffToDate,
+                    totalOutstanding, totalInArrears);
+
+        } catch (EmptyResultDataAccessException e) {
+            throw new LoanNotFoundException(groupLoanId);
+        }
+    }
+
+    @Override
 	public Collection<LoanTransactionData> retrieveLoanTransactions(final Long loanId) {
 		try {
 			context.authenticatedUser();
@@ -412,7 +701,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 					+ " join m_product_loan lp on lp.id = l.product_id"
 					+ " join m_currency rc on rc.`code` = l.currency_code"
 					+ " left join m_fund f on f.id = l.fund_id"
-					+ " left join m_staff s on s.id = l.loan_officer_id";
+					+ " left join m_staff s on s.id = l.loan_officer_id ";
 		}
 
 		@Override
@@ -529,6 +818,97 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 		}
 	}
 
+    private static final class GroupLoanMapper implements
+            RowMapper<GroupLoanBasicDetailsData> {
+
+        public String groupLoanSchema() {
+            return " gl.id as id, gl.external_id as externalId, gl.fund_id as fundId, f.name as fundName,  " +
+                    "lp.id as loanProductId, lp.name as loanProductName, lp.description as loanProductDescription, " +
+                    "g.id as groupId, g.name as groupName, g.office_id as groupOfficeId, " +
+                    "SUM(l.principal_amount) as principal, gl.arrearstolerance_amount as inArrearsTolerance, " +
+                    "gl.submittedon_date as submittedOnDate, gl.approvedon_date as approvedOnDate, " +
+                    "gl.expected_disbursedon_date as expectedDisbursementDate, gl.disbursedon_date as actualDisbursementDate, " +
+                    "gl.expected_firstrepaymenton_date as expectedFirstRepaymentOnDate, " +
+                    "gl.interest_calculated_from_date as interestChargedFromDate, gl.closedon_date as closedOnDate, " +
+                    "gl.expected_maturedon_date as expectedMaturityDate, gl.loan_status_id as lifeCycleStatusId, " +
+                    "gl.loan_officer_id as loanOfficerId, s.display_name as loanOfficerName, " +
+                    "l.currency_code as currencyCode, l.currency_digits as currencyDigits, rc.`name` as currencyName, " +
+                    "rc.display_symbol as currencyDisplaySymbol, rc.internationalized_name_code as currencyNameCode "  +
+                    "from m_group_loan gl left join m_loan l on l.group_loan_id = gl.id " +
+                    "left join m_group g on g.id = gl.group_id join m_product_loan lp on lp.id = gl.product_id " +
+                    "join m_currency rc on rc.`code` = l.currency_code " +
+                    "left join m_fund f on f.id = gl.fund_id left join m_staff s on s.id = gl.loan_officer_id ";
+        }
+
+        @Override
+        public GroupLoanBasicDetailsData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum)
+                throws SQLException {
+
+            String currencyCode = rs.getString("currencyCode");
+            String currencyName = rs.getString("currencyName");
+            String currencyNameCode = rs.getString("currencyNameCode");
+            String currencyDisplaySymbol = rs.getString("currencyDisplaySymbol");
+            Integer currencyDigits = JdbcSupport.getInteger(rs,"currencyDigits");
+            CurrencyData currencyData = new CurrencyData(currencyCode,
+                    currencyName, currencyDigits, currencyDisplaySymbol,
+                    currencyNameCode);
+
+            Long id = rs.getLong("id");
+            String externalId = rs.getString("externalId");
+
+            Long groupId = JdbcSupport.getLong(rs, "groupId");
+            Long groupOfficeId = JdbcSupport.getLong(rs, "groupOfficeId");;
+            String groupName = rs.getString("groupName");
+
+            Long fundId = JdbcSupport.getLong(rs, "fundId");
+            String fundName = rs.getString("fundName");
+            Long loanOfficerId = JdbcSupport.getLong(rs, "loanOfficerId");
+            String loanOfficerName = rs.getString("loanOfficerName");
+            Long loanProductId = JdbcSupport.getLong(rs, "loanProductId");
+            String loanProductName = rs.getString("loanProductName");
+            String loanProductDescription = rs.getString("loanProductDescription");
+
+            LocalDate submittedOnDate = JdbcSupport.getLocalDate(rs,
+                    "submittedOnDate");
+            LocalDate approvedOnDate = JdbcSupport.getLocalDate(rs,
+                    "approvedOnDate");
+            LocalDate expectedDisbursementDate = JdbcSupport.getLocalDate(rs,
+                    "expectedDisbursementDate");
+            LocalDate actualDisbursementDate = JdbcSupport.getLocalDate(rs,
+                    "actualDisbursementDate");
+            LocalDate expectedFirstRepaymentOnDate = JdbcSupport.getLocalDate(
+                    rs, "expectedFirstRepaymentOnDate");
+            LocalDate interestChargedFromDate = JdbcSupport.getLocalDate(rs,
+                    "interestChargedFromDate");
+            LocalDate closedOnDate = JdbcSupport.getLocalDate(rs,
+                    "closedOnDate");
+            LocalDate expectedMaturityDate = JdbcSupport.getLocalDate(rs,
+                    "expectedMaturityDate");
+
+            BigDecimal principal = rs.getBigDecimal("principal");
+            BigDecimal inArrearsTolerance = rs.getBigDecimal("inArrearsTolerance");
+
+            Integer lifeCycleStatusId = JdbcSupport.getInteger(rs, "lifeCycleStatusId");
+            EnumOptionData status = LoanEnumerations.status(lifeCycleStatusId);
+
+            LocalDate lifeCycleStatusDate = submittedOnDate;
+            if (approvedOnDate != null) {
+                lifeCycleStatusDate = approvedOnDate;
+            }
+            if (actualDisbursementDate != null) {
+                lifeCycleStatusDate = actualDisbursementDate;
+            }
+            if (closedOnDate != null) {
+                lifeCycleStatusDate = closedOnDate;
+            }
+
+            return new GroupLoanBasicDetailsData(id, externalId, groupId, groupOfficeId, groupName, loanProductId, loanProductName,
+                    loanProductDescription, status, fundId, fundName, loanOfficerId, loanOfficerName, principal, inArrearsTolerance,
+                    submittedOnDate, approvedOnDate, expectedDisbursementDate, actualDisbursementDate,
+                    expectedFirstRepaymentOnDate, interestChargedFromDate, closedOnDate, expectedMaturityDate, lifeCycleStatusDate, currencyData);
+        }
+    }
+
 	private static final class LoanScheduleMapper implements RowMapper<LoanSchedulePeriodData> {
 
 		private LocalDate lastDueDate;
@@ -538,6 +918,11 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 			this.lastDueDate = disbursement.disbursementDate();
 			this.outstandingLoanPrincipalBalance = disbursement.amount();
 		}
+
+        public void updateDisbursementData(final DisbursementData disbursement){
+            this.lastDueDate = disbursement.disbursementDate();
+            this.outstandingLoanPrincipalBalance = disbursement.amount();
+        }
 
 		public String loanScheduleSchema() {
 

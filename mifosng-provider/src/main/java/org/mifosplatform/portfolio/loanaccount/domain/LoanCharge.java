@@ -37,6 +37,10 @@ public class LoanCharge extends AbstractPersistable<Long> {
     @JoinColumn(name = "charge_id", referencedColumnName = "id", nullable=false)
     private Charge charge;
 
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "group_loan_charge_id", referencedColumnName = "id", nullable=false)
+    private GroupLoanCharge groupLoanCharge;
+
     @Column(name = "charge_time_enum", nullable = false)
     private Integer chargeTime;
     
@@ -268,6 +272,10 @@ public class LoanCharge extends AbstractPersistable<Long> {
 		this.loan = loan;
 	}
 
+    public void updateGroupCharge(final GroupLoanCharge groupLoanCharge) {
+        this.groupLoanCharge = groupLoanCharge;
+    }
+
     public void update(final LoanChargeCommand command, final BigDecimal loanPrincipal){
 
         if (command.isChargeTimeTypeChanged()){
@@ -473,4 +481,8 @@ public class LoanCharge extends AbstractPersistable<Long> {
 	public String name() {
 		return this.charge.getName();
 	}
+
+    public Loan getLoan() {
+        return loan;
+    }
 }

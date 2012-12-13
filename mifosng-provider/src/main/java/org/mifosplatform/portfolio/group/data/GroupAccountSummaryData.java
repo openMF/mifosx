@@ -11,15 +11,19 @@ public class GroupAccountSummaryData {
     private final String productName;
     private final Integer accountStatusId;
 
+    private final Boolean groupLoan;
+
     public GroupAccountSummaryData(Long id, String externalId,
                                    Long productId,
                                    String productName,
-                                   Integer accountStatusId) {
+                                   Integer accountStatusId,
+                                   Boolean groupLoan) {
         this.id = id;
         this.externalId = externalId;
         this.productId = productId;
         this.productName = productName;
         this.accountStatusId = accountStatusId;
+        this.groupLoan = groupLoan;
     }
 
     public Long getId() {
@@ -40,5 +44,9 @@ public class GroupAccountSummaryData {
 
     public Integer getAccountStatusId() {
         return accountStatusId;
+    }
+
+    public Boolean isGroupLoan() {
+        return groupLoan;
     }
 }

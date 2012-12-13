@@ -8,6 +8,7 @@ import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.portfolio.charge.data.ChargeData;
+import org.mifosplatform.portfolio.client.data.ClientLookup;
 import org.mifosplatform.portfolio.fund.data.FundData;
 import org.mifosplatform.portfolio.loanaccount.gaurantor.data.GuarantorData;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
@@ -83,7 +84,8 @@ public class LoanAccountData {
 	private final Collection<FundData> fundOptions;
 	private final Collection<ChargeData> chargeOptions;
 	private final ChargeData chargeTemplate;
-	
+    private final Collection<ClientLookup> allowedClients;
+
 	public LoanAccountData(
 			final LoanBasicDetailsData basicDetails,
 			final boolean convenienceDataRequired, 
@@ -103,7 +105,8 @@ public class LoanAccountData {
 			final Collection<ChargeData> chargeOptions,
             final ChargeData chargeTemplate,
 			final Collection<StaffData> loanOfficerOptions,
-			final GuarantorData guarantorData) {
+			final GuarantorData guarantorData,
+            final Collection<ClientLookup> allowedClients) {
 		this.repaymentSchedule = repaymentSchedule;
 		this.transactions = transactions;
 		this.permissions = permissions;
@@ -121,6 +124,7 @@ public class LoanAccountData {
         this.chargeTemplate = chargeTemplate;
 		this.loanOfficerOptions = loanOfficerOptions;
 		this.guarantorData = guarantorData;
+        this.allowedClients = allowedClients;
 
 		if (convenienceDataRequired) {
 			int maxSubmittedOnOffsetFromToday = basicDetails

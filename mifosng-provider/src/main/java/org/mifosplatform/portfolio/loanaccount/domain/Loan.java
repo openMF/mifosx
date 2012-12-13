@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -67,6 +68,10 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
     @ManyToOne
     @JoinColumn(name = "product_id")
     private LoanProduct loanProduct;
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "group_loan_id")
+    private GroupLoan groupLoan;
 
     @SuppressWarnings("unused")
     @ManyToOne
@@ -150,7 +155,6 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
     @Temporal(TemporalType.DATE)
     @Column(name = "maturedon_date")
     private Date maturedOnDate;
-
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true)
     private Set<LoanCharge> charges;
@@ -294,6 +298,10 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
         validateChargeHasValidSpecifiedDateIfApplicable(loanCharge, getDisbursementDate(), getLastRepaymentPeriodDueDate());
 
         loanCharge.update(this);
+        if (this.charges == null){
+            this.charges = new HashSet<LoanCharge>();
+        }
+
         this.charges.add(loanCharge);
 
         updateTotalChargesDueAtDisbursement();
@@ -463,7 +471,6 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
     public Client client() {
         return this.client;
     }
-
     public LoanProduct loanProduct() {
         return this.loanProduct;
     }
@@ -587,6 +594,15 @@ public class Loan extends AbstractAuditableCustom<AppUser, Long> {
                 break;
             }
         }
+    }
+
+    public void submitMemberApplication(GroupLoan groupLoan, final Integer loanTermFrequency,
+                                        final PeriodFrequencyType loanTermFrequencyType, final LocalDate submittedOn, final LocalDate expectedDisbursementDate,
+                                        final LocalDate repaymentsStartingFromDate, final LocalDate interestChargedFromDate,
+                                        final LoanLifecycleStateMachine lifecycleStateMachine) {
+        this.groupLoan = groupLoan;
+        this.submitApplication(loanTermFrequency, loanTermFrequencyType, submittedOn, expectedDisbursementDate, repaymentsStartingFromDate,
+                interestChargedFromDate, lifecycleStateMachine);
     }
 
     public void submitApplication(final Integer loanTermFrequency, final PeriodFrequencyType loanTermFrequencyType,
