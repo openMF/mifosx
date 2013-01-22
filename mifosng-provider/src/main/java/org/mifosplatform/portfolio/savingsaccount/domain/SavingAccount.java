@@ -1,6 +1,8 @@
 package org.mifosplatform.portfolio.savingsaccount.domain;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -12,6 +14,7 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -20,11 +23,13 @@ import javax.persistence.UniqueConstraint;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.joda.time.LocalDate;
+import org.joda.time.Months;
 import org.mifosplatform.infrastructure.core.domain.AbstractAuditableCustom;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.loanproduct.domain.PeriodFrequencyType;
+import org.mifosplatform.portfolio.savingsaccount.command.SavingAccountDepositCommand;
 import org.mifosplatform.portfolio.savingsaccountproduct.domain.SavingFrequencyType;
 import org.mifosplatform.portfolio.savingsaccountproduct.domain.SavingInterestCalculationMethod;
 import org.mifosplatform.portfolio.savingsaccountproduct.domain.SavingProduct;
@@ -33,6 +38,7 @@ import org.mifosplatform.portfolio.savingsaccountproduct.domain.SavingsInterestT
 import org.mifosplatform.portfolio.savingsdepositaccount.domain.DepositAccountEvent;
 import org.mifosplatform.portfolio.savingsdepositaccount.domain.DepositAccountStatus;
 import org.mifosplatform.portfolio.savingsdepositaccount.domain.DepositLifecycleStateMachine;
+import org.mifosplatform.portfolio.savingsdepositaccount.exception.InvalidDepositStateTransitionException;
 import org.mifosplatform.portfolio.savingsdepositproduct.domain.TenureTypeEnum;
 import org.mifosplatform.useradministration.domain.AppUser;
 
@@ -48,10 +54,8 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
     @JoinColumn(name = "product_id")
     private SavingProduct product;
 
-    // FIXME - MADHUKAR - Do not use the actual enum type here but instead use
-    // Integer e.g. private Integer savingProductType;
     @Column(name = "savings_product_type", nullable = false)
-    private SavingProductType savingProductType;
+    private Integer savingProductType;
 
     @Column(name = "external_id")
     private String externalId;
@@ -76,24 +80,17 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
     @Column(name = "tenure", nullable = false)
     private Integer tenure;
 
-    // FIXME - MADHUKAR - Do not use the actual enum type here use integer representation
     @Column(name = "tenure_type", nullable = false)
-    private TenureTypeEnum tenureType;
+    private Integer tenureType;
 
-    // FIXME - MADHUKAR - Do not use the actual enum type here but instead use
-    // Integer e.g. private Integer savingProductType;
     @Column(name = "frequency", nullable = false)
-    private SavingFrequencyType frequency;
+    private Integer frequency;
 
-    // FIXME - MADHUKAR - Do not use the actual enum type here but instead use
-    // Integer e.g. private Integer savingProductType;
     @Column(name = "interest_type", nullable = false)
-    private SavingsInterestType interestType;
+    private Integer interestType;
 
-    // FIXME - MADHUKAR - Do not use the actual enum type here but instead use
-    // Integer e.g. private Integer savingProductType;
     @Column(name = "interest_calculation_method")
-    private SavingInterestCalculationMethod interestCalculationMethod;
+    private Integer interestCalculationMethod;
 
     @Temporal(TemporalType.DATE)
     @Column(name = "projected_commencement_date")
@@ -127,6 +124,9 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
 
     @Column(name = "pre_closure_interest_rate", scale = 6, precision = 19, nullable = false)
     private BigDecimal preClosureInterestRate;
+    
+    @Column(name = "outstanding_amount", scale = 6, precision = 19, nullable = false)
+    private BigDecimal outstandingAmount;
 
     @Column(name = "is_preclosure_allowed", nullable = false)
     private boolean preClosureAllowed = false;
@@ -158,16 +158,42 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
     private Integer lockinPeriod;
 
     @Column(name = "lock_in_period_type", nullable = false)
-    private PeriodFrequencyType lockinPeriodType;
+    private Integer lockinPeriodType;
     
     @Column(name = "deposit_every", nullable = false)
     private Integer payEvery;
+    
+    @Column(name = "interest_posting_every", nullable = false)
+    private Integer interestPostEvery;
+    
+    @Column(name = "interest_posting_frequency", nullable = false)
+    private Integer interestPostFrequency;
+    
+    @Column(name = "interest_posted_amount", scale = 6, precision = 19)
+    private BigDecimal interestPostedAmount;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "last_interest_posted_date")
+    private Date lastInterestPostedDate;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "next_interest_posting_date")
+    private Date nextInterestPostingDate;
 
     // see
     // http://stackoverflow.com/questions/4334970/hibernate-cannot-simultaneously-fetch-multiple-bags
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingAccount", orphanRemoval = true)
     private final List<SavingScheduleInstallments> savingScheduleInstallments = new ArrayList<SavingScheduleInstallments>();
+    
+    @OrderBy(value = "id")
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingAccount", orphanRemoval = true)
+    private final List<SavingAccountTransaction> savingAccountTransactions = new ArrayList<SavingAccountTransaction>();
+    
+    public SavingAccount() {
+		// TODO Auto-generated constructor stub
+	}
 
     public static SavingAccount openNew(Client client, SavingProduct product, String externalId, Money savingsDeposit,
             BigDecimal reccuringInterestRate, BigDecimal savingInterestRate, Integer tenure, LocalDate commencementDate,
@@ -175,27 +201,29 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
             SavingsInterestType interestType, SavingInterestCalculationMethod savingInterestCalculationMethod,
             boolean isLockinPeriodAllowed, Integer lockinPeriod, PeriodFrequencyType lockinPeriodType,
             ReccuringDepositInterestCalculator reccuringDepositInterestCalculator, final DepositLifecycleStateMachine lifecycleStateMachine,
-            Integer payEvery) {
+            Integer depositEvery, Integer interestPostEvery, Integer interestPostFrequency) {
 
         Money futureValueOnMaturity = null;
-        if (savingProductType.isReccuring()) {
+        if (savingProductType.isReccuring() && tenureTypeEnum.isFixedPeriod()) {
             futureValueOnMaturity = reccuringDepositInterestCalculator.calculateInterestOnMaturityFor(savingsDeposit, tenure,
-                    reccuringInterestRate, commencementDate, tenureTypeEnum, savingFrequencyType, savingInterestCalculationMethod);
-        } else if (savingProductType.isRegular()) {
-            futureValueOnMaturity = reccuringDepositInterestCalculator.calculateInterestOnMaturityFor(savingsDeposit, tenure,
-                    savingInterestRate, commencementDate, tenureTypeEnum, savingFrequencyType, savingInterestCalculationMethod);
+                    reccuringInterestRate, commencementDate, tenureTypeEnum, savingFrequencyType, savingInterestCalculationMethod,depositEvery);
+        } else if (savingProductType.isReccuring() && tenureTypeEnum.isPerpetual()) {
+            futureValueOnMaturity = savingsDeposit;
+        } else {
+        	futureValueOnMaturity = savingsDeposit;
         }
 
         return new SavingAccount(client, externalId, product, savingsDeposit, reccuringInterestRate, savingInterestRate, tenure,
                 commencementDate, tenureTypeEnum, savingProductType, savingFrequencyType, interestType, savingInterestCalculationMethod,
-                isLockinPeriodAllowed, lockinPeriod, lockinPeriodType, futureValueOnMaturity, lifecycleStateMachine,payEvery);
+                isLockinPeriodAllowed, lockinPeriod, lockinPeriodType, futureValueOnMaturity, lifecycleStateMachine,depositEvery,interestPostEvery, interestPostFrequency);
     }
 
     public SavingAccount(Client client, String externalId, SavingProduct product, Money savingsDeposit, BigDecimal reccuringInterestRate,
             BigDecimal savingInterestRate, Integer tenure, LocalDate commencementDate, TenureTypeEnum tenureTypeEnum,
             SavingProductType savingProductType, SavingFrequencyType savingFrequencyType, SavingsInterestType interestType,
             SavingInterestCalculationMethod savingInterestCalculationMethod, boolean isLockinPeriodAllowed, Integer lockinPeriod,
-            PeriodFrequencyType lockinPeriodType, Money futureValueOnMaturity, final DepositLifecycleStateMachine lifecycleStateMachine,Integer payEvery) {
+            PeriodFrequencyType lockinPeriodType, Money futureValueOnMaturity, final DepositLifecycleStateMachine lifecycleStateMachine,Integer payEvery,
+            Integer interestPostEvery, Integer interestPostFrequency) {
 
         DepositAccountStatus from = null;
         if (accountStatus != null) {
@@ -219,33 +247,38 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
         this.savingInterestRate = savingInterestRate;
         this.tenure = tenure;
         this.projectedCommencementDate = commencementDate.toDate();
-        this.tenureType = tenureTypeEnum;
-        this.savingProductType = savingProductType;
-        this.frequency = savingFrequencyType;
-        this.interestType = interestType;
-        this.interestCalculationMethod = savingInterestCalculationMethod;
+        this.tenureType = tenureTypeEnum.getValue();
+        this.savingProductType = savingProductType.getValue();
+        this.frequency = savingFrequencyType.getValue();
+        this.interestType = interestType.getValue();
+        this.interestCalculationMethod = savingInterestCalculationMethod.getValue();
         this.isLockinPeriodAllowed = isLockinPeriodAllowed;
         this.lockinPeriod = lockinPeriod;
-        this.lockinPeriodType = lockinPeriodType;
+        this.lockinPeriodType = lockinPeriodType.getValue();
         this.projectedTotalOnMaturity = futureValueOnMaturity.getAmount();
-        this.projectedInterestAccruedOnMaturity = futureValueOnMaturity.getAmount().subtract(
-                BigDecimal.valueOf(savingsDeposit.getAmount().doubleValue() * tenure.doubleValue()));
+        BigDecimal projectedInterestForReccuring = futureValueOnMaturity.getAmount().subtract(BigDecimal.valueOf(savingsDeposit.getAmount().doubleValue() * tenure.doubleValue() / payEvery)); //presently only for months
+        this.projectedInterestAccruedOnMaturity = savingProductType.isReccuring() && tenureTypeEnum.isFixedPeriod() ? projectedInterestForReccuring : BigDecimal.ZERO;
         this.payEvery = payEvery;
+        this.outstandingAmount = BigDecimal.ZERO;
+        this.interestPostEvery = interestPostEvery;
+        this.interestPostFrequency=interestPostFrequency;
     }
 
     public void modifyAccount(SavingProduct product, String externalId, Money savingsDeposit, BigDecimal reccuringInterestRate,
             BigDecimal savingInterestRate, Integer tenure, LocalDate commencementDate, TenureTypeEnum tenureTypeEnum,
             SavingProductType savingProductType, SavingFrequencyType savingFrequencyType,
             SavingInterestCalculationMethod savingInterestCalculationMethod, boolean isLockinPeriodAllowed, Integer lockinPeriod,
-            PeriodFrequencyType lockinPeriodType, ReccuringDepositInterestCalculator reccuringDepositInterestCalculator,Integer payEvery) {
+            PeriodFrequencyType lockinPeriodType, ReccuringDepositInterestCalculator reccuringDepositInterestCalculator,Integer payEvery,
+            SavingsInterestType interestType, Integer interestPostEvery, Integer interestPostFrequency) {
 
-        Money futureValueOnMaturity = null;
-        if (savingProductType.isReccuring()) {
+    	Money futureValueOnMaturity = null;
+        if (savingProductType.isReccuring() && tenureTypeEnum.isFixedPeriod()) {
             futureValueOnMaturity = reccuringDepositInterestCalculator.calculateInterestOnMaturityFor(savingsDeposit, tenure,
-                    reccuringInterestRate, commencementDate, tenureTypeEnum, savingFrequencyType, savingInterestCalculationMethod);
-        } else if (savingProductType.isRegular()) {
-            futureValueOnMaturity = reccuringDepositInterestCalculator.calculateInterestOnMaturityFor(savingsDeposit, tenure,
-                    savingInterestRate, commencementDate, tenureTypeEnum, savingFrequencyType, savingInterestCalculationMethod);
+                    reccuringInterestRate, commencementDate, tenureTypeEnum, savingFrequencyType, savingInterestCalculationMethod,payEvery);
+        } else if (savingProductType.isReccuring() && tenureTypeEnum.isPerpetual()) {
+            futureValueOnMaturity = savingsDeposit;
+        } else {
+        	futureValueOnMaturity = savingsDeposit;
         }
 
         this.product = product;
@@ -255,19 +288,23 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
         this.savingInterestRate = savingInterestRate;
         this.tenure = tenure;
         this.projectedCommencementDate = commencementDate.toDate();
-        this.tenureType = tenureTypeEnum;
-        this.savingProductType = savingProductType;
-        this.frequency = savingFrequencyType;
-        this.interestCalculationMethod = savingInterestCalculationMethod;
+        this.tenureType = tenureTypeEnum.getValue();
+        this.savingProductType = savingProductType.getValue();
+        this.frequency = savingFrequencyType.getValue();
+        this.interestType = interestType.getValue();
+        this.interestCalculationMethod = savingInterestCalculationMethod.getValue();
         this.isLockinPeriodAllowed = isLockinPeriodAllowed;
         this.lockinPeriod = lockinPeriod;
-        this.lockinPeriodType = lockinPeriodType;
+        this.lockinPeriodType = lockinPeriodType.getValue();
         this.payEvery = payEvery;
+        this.outstandingAmount = BigDecimal.ZERO;
+        this.interestPostEvery = interestPostEvery;
+        this.interestPostFrequency=interestPostFrequency;
+        this.savingScheduleInstallments.clear();
 
-        // FIXME - MADHUKAR - futureValueOnMaturity is possibly null
         this.projectedTotalOnMaturity = futureValueOnMaturity.getAmount();
-        this.projectedInterestAccruedOnMaturity = futureValueOnMaturity.getAmount().subtract(
-                BigDecimal.valueOf(savingsDeposit.getAmount().doubleValue() * tenure.doubleValue()));
+        BigDecimal projectedInterestForReccuring = futureValueOnMaturity.getAmount().subtract(BigDecimal.valueOf(savingsDeposit.getAmount().doubleValue() * tenure.doubleValue() / payEvery)); //presently only for months
+        this.projectedInterestAccruedOnMaturity = savingProductType.isReccuring() && tenureTypeEnum.isFixedPeriod() ? projectedInterestForReccuring : BigDecimal.ZERO;
     }
 
     public boolean isDeleted() {
@@ -286,7 +323,7 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
         return product;
     }
 
-    public SavingProductType getSavingProductType() {
+    public Integer getSavingProductType() {
         return savingProductType;
     }
 
@@ -310,19 +347,19 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
         return tenure;
     }
 
-    public TenureTypeEnum getTenureType() {
+    public Integer getTenureType() {
         return tenureType;
     }
 
-    public SavingFrequencyType getFrequency() {
+    public Integer getFrequency() {
         return frequency;
     }
 
-    public SavingsInterestType getInterestType() {
+    public Integer getInterestType() {
         return interestType;
     }
 
-    public SavingInterestCalculationMethod getInterestCalculationMethod() {
+    public Integer getInterestCalculationMethod() {
         return interestCalculationMethod;
     }
 
@@ -350,7 +387,7 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
         return lockinPeriod;
     }
 
-    public PeriodFrequencyType getLockinPeriodType() {
+    public Integer getLockinPeriodType() {
         return lockinPeriodType;
     }
 
@@ -358,9 +395,316 @@ public class SavingAccount extends AbstractAuditableCustom<AppUser, Long> {
 		return this.payEvery;
 	}
 
+	public BigDecimal getOutstandingAmount() {
+		return this.outstandingAmount;
+	}
+
+	public Integer getInterestPostEvery() {
+		return this.interestPostEvery;
+	}
+
+	public Integer getInterestPostFrequency() {
+		return this.interestPostFrequency;
+	}
+
+	public List<SavingAccountTransaction> getSavingAccountTransactions() {
+		return this.savingAccountTransactions;
+	}
+
 	public void addSavingScheduleInstallment(final SavingScheduleInstallments installment) {
         installment.updateAccount(this);
         this.savingScheduleInstallments.add(installment);
     }
 
+	public void reject(LocalDate rejectedOn, DepositLifecycleStateMachine depositLifecycleStateMachine) {
+
+
+        DepositAccountStatus statusEnum = depositLifecycleStateMachine.transition(DepositAccountEvent.DEPOSIT_REJECTED,
+                DepositAccountStatus.fromInt(this.accountStatus));
+        this.accountStatus = statusEnum.getValue();
+
+        this.maturesOnDate = null;
+        this.rejectedOnDate = rejectedOn.toDateTimeAtCurrentTime().toDate();
+        this.closedOnDate = rejectedOn.toDateTimeAtCurrentTime().toDate();
+
+        if (rejectedOn.isBefore(projectedCommencementDate())) {
+
+            final String errorMessage = "The date on which a saving account is rejected cannot be before its submittal date: "
+                    + projectedCommencementDate().toString();
+            throw new InvalidDepositStateTransitionException("reject", "cannot.be.before.submittal.date", errorMessage, rejectedOn,
+            		projectedCommencementDate());
+
+        }
+        if (rejectedOn.isAfter(new LocalDate())) {
+
+            final String errorMessage = "The date on which a saving account is rejected cannot be in the future.";
+            throw new InvalidDepositStateTransitionException("reject", "cannot.be.a.future.date", errorMessage, rejectedOn);
+
+        }
+
+    
+	}
+	
+	public LocalDate projectedCommencementDate() {
+        LocalDate date = null;
+        if (this.projectedCommencementDate != null) {
+            date = new LocalDate(this.projectedCommencementDate);
+        }
+        return date;
+    }
+
+	public void withdrawnByApplicant(LocalDate withdrawnOn, DepositLifecycleStateMachine depositLifecycleStateMachine) {
+		
+		DepositAccountStatus statusEnum = depositLifecycleStateMachine.transition(DepositAccountEvent.DEPOSIT_WITHDRAWN,
+                DepositAccountStatus.fromInt(this.accountStatus));
+        this.accountStatus = statusEnum.getValue();
+
+        this.maturesOnDate = null;
+        this.withdrawnOnDate = withdrawnOn.toDateTimeAtCurrentTime().toDate();
+        this.closedOnDate = withdrawnOn.toDateTimeAtCurrentTime().toDate();
+        this.savingScheduleInstallments.clear();
+
+        if (withdrawnOn.isBefore(projectedCommencementDate())) {
+
+            final String errorMessage = "The date on which a deposit is rejected cannot be before its submittal date: "
+                    + projectedCommencementDate().toString();
+            throw new InvalidDepositStateTransitionException("withdrawnbyclient", "cannot.be.before.submittal.date", errorMessage, withdrawnOn,
+            		projectedCommencementDate());
+
+        }
+
+        if (withdrawnOn.isAfter(new LocalDate())) {
+            final String errorMessage = "The date on which a deposit is rejected cannot be in the future.";
+            throw new InvalidDepositStateTransitionException("withdrawnbyclient", "cannot.be.a.future.date", errorMessage, withdrawnOn);
+        }
+	}
+
+	public void undoSavingAccountApproval(DepositLifecycleStateMachine depositLifecycleStateMachine) {
+		DepositAccountStatus statusEnum = depositLifecycleStateMachine.transition(DepositAccountEvent.DEPOSIT_APPROVAL_UNDO,
+                DepositAccountStatus.fromInt(this.accountStatus));
+        this.accountStatus = statusEnum.getValue();
+        this.savingScheduleInstallments.clear();
+        this.closedOnDate = new Date();
+	}
+
+	public void approveSavingAccount(LocalDate approvalDate, BigDecimal savingsDepositAmountPerPeriod, BigDecimal recurringInterestRate,
+			BigDecimal savingInterestRate, Integer interestType, Integer tenure, Integer tenureType, Integer frequency, Integer payEvery, 
+			DepositLifecycleStateMachine depositLifecycleStateMachine, ReccuringDepositInterestCalculator reccuringDepositInterestCalculator,
+			Integer interestPostEvery, Integer interestPostFrequency) {
+		
+		DepositAccountStatus statusEnum = depositLifecycleStateMachine.transition(DepositAccountEvent.DEPOSIT_APPROVED,
+                DepositAccountStatus.fromInt(this.accountStatus));
+        this.accountStatus = statusEnum.getValue();
+        
+        Money savingsAmountPerPeriod = Money.of(currency, savingsDepositAmountPerPeriod);
+        TenureTypeEnum tenureTypeEnum = TenureTypeEnum.fromInt(tenureType); 
+        SavingFrequencyType savingFrequencyType = SavingFrequencyType.fromInt(frequency);
+        SavingInterestCalculationMethod interestCalculationMethod = SavingInterestCalculationMethod.fromInt(this.interestCalculationMethod); 
+        
+        Money futureValueOnMaturity = null;
+        if (SavingProductType.fromInt(this.savingProductType).isReccuring() && tenureTypeEnum.isFixedPeriod()) {
+            futureValueOnMaturity = reccuringDepositInterestCalculator.calculateInterestOnMaturityFor(savingsAmountPerPeriod, tenure,
+            		recurringInterestRate, approvalDate, tenureTypeEnum, savingFrequencyType, interestCalculationMethod,payEvery);
+        }  else if (SavingProductType.fromInt(this.savingProductType).isReccuring() && tenureTypeEnum.isPerpetual()) {
+            futureValueOnMaturity = savingsAmountPerPeriod;
+        } else {
+        	futureValueOnMaturity = savingsAmountPerPeriod;
+        }
+		
+		this.actualCommencementDate = approvalDate.toDate();
+		this.savingsDepositAmountPerPeriod = savingsDepositAmountPerPeriod;
+		this.reccuringInterestRate = recurringInterestRate;
+		this.savingInterestRate = savingInterestRate;
+		this.interestType = interestType;
+		this.tenure = tenure;
+		this.tenureType = tenureType;
+		this.frequency = frequency;
+		this.payEvery = payEvery;
+		this.savingScheduleInstallments.clear();
+		this.total=futureValueOnMaturity.getAmount();
+		BigDecimal interestForReccuring = futureValueOnMaturity.getAmount().subtract(BigDecimal.valueOf(savingsDepositAmountPerPeriod.doubleValue() * tenure.doubleValue()/payEvery.doubleValue())); //presently only for months
+		this.interestAccrued = SavingProductType.fromInt(this.savingProductType).isReccuring() && tenureTypeEnum.isFixedPeriod() ? interestForReccuring : BigDecimal.ZERO;
+		this.interestPostEvery = interestPostEvery;
+		this.interestPostFrequency = interestPostFrequency;
+		
+		// for interest posting initializing
+        this.lastInterestPostedDate = this.actualCommencementDate;
+        this.nextInterestPostingDate = new LocalDate(this.lastInterestPostedDate).plusMonths(this.interestPostEvery).toDate();
+        this.interestPostedAmount = BigDecimal.ZERO;
+	}
+
+	public void depositMoney(SavingAccountDepositCommand command) {
+		
+		BigDecimal depositAmount = BigDecimal.ZERO;
+		BigDecimal remainAmountToBePaid = BigDecimal.ZERO;
+		BigDecimal commandRemainDepositAmount = command.getSavingsDepostiAmountPerPeriod();
+		
+		SavingAccountTransaction savingAccountTransaction = SavingAccountTransaction.deposit(command.getSavingsDepostiAmountPerPeriod(),command.getDepositDate());
+		savingAccountTransaction.updateAccount(this);
+		this.savingAccountTransactions.add(savingAccountTransaction);
+		this.outstandingAmount = this.outstandingAmount.add(command.getSavingsDepostiAmountPerPeriod()); 
+		this.totalSavingsAmount = this.totalSavingsAmount.add(command.getSavingsDepostiAmountPerPeriod());
+		
+		if(SavingProductType.fromInt(this.savingProductType).isReccuring() && TenureTypeEnum.fromInt(tenureType).isFixedPeriod()) {
+			for(SavingScheduleInstallments savingScheduleInstallment : this.savingScheduleInstallments){
+				if(!savingScheduleInstallment.isCompleted()){
+					depositAmount = savingScheduleInstallment.getDeposit();
+					remainAmountToBePaid = depositAmount.subtract(savingScheduleInstallment.getDepositPaid());
+					if (remainAmountToBePaid.doubleValue() > 0) {
+						if (commandRemainDepositAmount.doubleValue() > 0) {
+							if (commandRemainDepositAmount.doubleValue() >= remainAmountToBePaid.doubleValue()) {
+								savingScheduleInstallment.setDepositPaid(remainAmountToBePaid.add(savingScheduleInstallment.getDepositPaid()));
+								savingScheduleInstallment.setPaymentDate(command.getDepositDate().toDate());
+								savingScheduleInstallment.setCompleted(true);
+								commandRemainDepositAmount = commandRemainDepositAmount.subtract(remainAmountToBePaid);
+							} else if(commandRemainDepositAmount.doubleValue() < remainAmountToBePaid.doubleValue()){
+								savingScheduleInstallment.setDepositPaid(commandRemainDepositAmount.add(savingScheduleInstallment.getDepositPaid()));
+								savingScheduleInstallment.setPaymentDate(command.getDepositDate().toDate());
+								commandRemainDepositAmount = BigDecimal.ZERO;
+							}
+						}
+					}
+				}
+			}
+		} else {
+			for(SavingScheduleInstallments savingScheduleInstallment : this.savingScheduleInstallments){
+			savingScheduleInstallment.setDepositPaid(remainAmountToBePaid.add(savingScheduleInstallment.getDepositPaid()));
+			savingScheduleInstallment.setPaymentDate(command.getDepositDate().toDate());
+			}
+		}
+	}
+
+	public boolean isActive() {
+		return DepositAccountStatus.fromInt(this.accountStatus).isActive();
+	}
+
+	public void withdrawAmount(BigDecimal amount, LocalDate transactionDate) {
+		this.outstandingAmount = this.outstandingAmount.subtract(amount);
+		SavingAccountTransaction savingAccountTransaction = SavingAccountTransaction.withdraw(amount,transactionDate);
+		savingAccountTransaction.updateAccount(this);
+		this.savingAccountTransactions.add(savingAccountTransaction);
+	}
+	
+	
+	 /**
+     * Delete is a <i>soft delete</i>. Updates flag on account so it wont appear
+     * in query/report results.
+     * 
+     * Any fields with unique constraints and prepended with id of record.
+     */
+	public void delete() {
+		this.deleted = true;
+        this.externalId = this.getId() + "_" + this.externalId;
+	}
+
+	public void postInterest() {
+		
+		LocalDate lastInterestPostedDate = getLastInterestPostedDate();
+        @SuppressWarnings("unused")
+		LocalDate nextInterestPostingDate = getNextInterestPostedDate();
+        @SuppressWarnings("unused")
+		SavingInterestCalculationMethod savingInterestCalculationMethod = SavingInterestCalculationMethod.fromInt(this.interestCalculationMethod);
+        
+        Integer monthsForInterestCalculation = Months.monthsBetween(lastInterestPostedDate, new LocalDate()).getMonths();
+        Integer postInterestItereations = monthsForInterestCalculation / this.interestPostEvery;
+        MathContext mc = new MathContext(8, RoundingMode.HALF_EVEN);
+        BigDecimal interestRateAsFraction = reccuringInterestRate.divide(BigDecimal.valueOf(100), mc);
+        final Integer monthsInYear = 12;
+        
+        BigDecimal totalDepositedAmount = BigDecimal.ZERO;
+		BigDecimal totalWithdrawableAmount = BigDecimal.ZERO;
+		BigDecimal totalOutstandingAmount = BigDecimal.ZERO;
+		boolean isOutstandingAmountCalculated = false;
+        
+        while (postInterestItereations > 0 ) {
+        	lastInterestPostedDate = getLastInterestPostedDate();
+			nextInterestPostingDate = getNextInterestPostedDate();
+			LocalDate transactionStartDate = lastInterestPostedDate;
+			
+			BigDecimal termTotalAmount = BigDecimal.ZERO;
+			BigDecimal averageBalanceForTerm = BigDecimal.ZERO;
+			
+			for (int i=0; i< interestPostEvery; i++){
+				//default for months here
+				LocalDate transactionEndDate = transactionStartDate.plusMonths(1);
+				BigDecimal depositedAmount = BigDecimal.ZERO;
+				BigDecimal withdrawableAmount = BigDecimal.ZERO;
+				BigDecimal outstandingAmount = BigDecimal.ZERO;
+				
+				for(SavingAccountTransaction savingAccountTransaction : this.savingAccountTransactions){
+					LocalDate actualTransactionDate = savingAccountTransaction.getTransactionDate();
+					if (actualTransactionDate != null && (actualTransactionDate.isAfter(transactionStartDate) || actualTransactionDate.isEqual(transactionStartDate))) {
+						if (actualTransactionDate.isBefore(transactionEndDate)) {
+							if(savingAccountTransaction.getTypeOf().isDeposit()){
+								depositedAmount = depositedAmount.add(savingAccountTransaction.getAmount());
+							} else if (savingAccountTransaction.getTypeOf().isWithdraw()) {
+								withdrawableAmount = withdrawableAmount.add(savingAccountTransaction.getAmount());
+							}
+						}
+					} else if (actualTransactionDate != null && (actualTransactionDate.isBefore(transactionStartDate))) {
+						if(!isOutstandingAmountCalculated){
+							if(savingAccountTransaction.getTypeOf().isDeposit()){
+								depositedAmount = depositedAmount.add(savingAccountTransaction.getAmount());
+							} else if (savingAccountTransaction.getTypeOf().isWithdraw()) {
+								withdrawableAmount = withdrawableAmount.add(savingAccountTransaction.getAmount());
+							}
+						}
+					}
+				}
+				outstandingAmount = depositedAmount.subtract(withdrawableAmount);
+				totalDepositedAmount = totalDepositedAmount.add(depositedAmount);
+				totalWithdrawableAmount = totalWithdrawableAmount.add(withdrawableAmount);
+				totalOutstandingAmount = totalOutstandingAmount.add(outstandingAmount);
+				termTotalAmount = termTotalAmount.add(totalOutstandingAmount);
+				transactionStartDate = transactionEndDate;
+				isOutstandingAmountCalculated = true;
+				
+			}
+		//	TODO- calculate interest on calculation method 
+			
+		//	if (savingInterestCalculationMethod.isAverageBalance()) {
+				averageBalanceForTerm =BigDecimal.valueOf(termTotalAmount.doubleValue()/this.interestPostEvery);
+				BigDecimal interestRatePerTerm = BigDecimal.valueOf(interestRateAsFraction.doubleValue()/monthsInYear.doubleValue()*this.interestPostEvery.doubleValue());
+				BigDecimal interestPerTerm = averageBalanceForTerm.multiply(interestRatePerTerm);
+				this.interestPostedAmount = this.interestPostedAmount.add(interestPerTerm);
+				totalOutstandingAmount = totalOutstandingAmount.add(interestPerTerm);
+		//	} else if(savingInterestCalculationMethod.isMonthlyCollection()){
+				
+			//}
+			this.outstandingAmount = this.outstandingAmount . add(interestPerTerm);
+			this.lastInterestPostedDate = getNextInterestPostedDate().toDate();
+			this.nextInterestPostingDate = getNextInterestPostedDate().plusMonths(this.interestPostEvery).toDate();
+			postInterestItereations--;
+        }
+	}
+	
+	private final LocalDate getLastInterestPostedDate() {
+        LocalDate lastInterestPostedDate;
+        if (this.lastInterestPostedDate == null) {
+            lastInterestPostedDate = new LocalDate(this.actualCommencementDate);
+        } else {
+            lastInterestPostedDate = new LocalDate(this.lastInterestPostedDate);
+        }
+        return lastInterestPostedDate;
+    }
+
+    private final LocalDate getNextInterestPostedDate() {
+        LocalDate nextInterestPostingDate;
+        if (this.nextInterestPostingDate == null) {
+            nextInterestPostingDate = new LocalDate(this.nextInterestPostingDate).plusMonths(this.interestPostEvery);
+        } else {
+            nextInterestPostingDate = new LocalDate(this.nextInterestPostingDate);
+        }
+        return nextInterestPostingDate;
+    }
+    
+    private final LocalDate getMaturityDate(){
+    	LocalDate commencementDate;
+    	if (this.actualCommencementDate == null) {
+			commencementDate = new LocalDate(this.projectedCommencementDate).plusMonths(this.tenure);
+		} else {
+			commencementDate = new LocalDate(this.actualCommencementDate).plusMonths(this.tenure);
+		}
+    	return commencementDate;
+    }
 }

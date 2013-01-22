@@ -22,7 +22,7 @@ public class SavingAccountCommandValidator {
 
         baseDataValidator.reset().parameter("clientId").value(command.getClientId()).notNull();
         baseDataValidator.reset().parameter("productId").value(command.getProductId()).notNull();
-        baseDataValidator.reset().parameter("externalId").value(command.getExternalId()).ignoreIfNull().notExceedingLengthOf(100);
+        baseDataValidator.reset().parameter("externalId").value(command.getExternalId()).notNull().notExceedingLengthOf(100);
         baseDataValidator.reset().parameter("currencyCode").value(command.getCurrencyCode()).notBlank();
         baseDataValidator.reset().parameter("digitsAfterDecimal").value(command.getDigitsAfterDecimal()).notNull().inMinMaxRange(0, 6);
         baseDataValidator.reset().parameter("savingsDepositAmountPerPeriod").value(command.getSavingsDepositAmount()).notNull()
@@ -32,7 +32,6 @@ public class SavingAccountCommandValidator {
         baseDataValidator.reset().parameter("savingInterestRate").value(command.getSavingInterestRate()).notNull().zeroOrPositiveAmount();
         baseDataValidator.reset().parameter("savingInterestRate")
                 .comapareMinAndMaxOfTwoBigDecmimalNos(command.getSavingInterestRate(), command.getRecurringInterestRate());
-        baseDataValidator.reset().parameter("savingProductType").value(command.getSavingProductType()).notNull();
         baseDataValidator.reset().parameter("tenureType").value(command.getTenureType()).notNull();
         baseDataValidator.reset().parameter("tenure").value(command.getTenure()).notNull();
         baseDataValidator.reset().parameter("frequency").value(command.getFrequency()).notNull();
@@ -72,7 +71,6 @@ public class SavingAccountCommandValidator {
                 .zeroOrPositiveAmount();
         baseDataValidator.reset().parameter("savingInterestRate")
                 .comapareMinAndMaxOfTwoBigDecmimalNos(command.getSavingInterestRate(), command.getRecurringInterestRate());
-        baseDataValidator.reset().parameter("savingProductType").value(command.getSavingProductType()).ignoreIfNull();
         baseDataValidator.reset().parameter("tenureType").value(command.getTenureType()).ignoreIfNull();
         baseDataValidator.reset().parameter("tenure").value(command.getTenure()).ignoreIfNull();
         baseDataValidator.reset().parameter("frequency").value(command.getFrequency()).ignoreIfNull();
