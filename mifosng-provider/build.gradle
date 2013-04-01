@@ -259,14 +259,14 @@ configurations.driver.each {File file ->
 
 task createDatabase<<{
     description= "Creates the Database mifosplatform-tenants and mifostenant-default"
-    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', 'root', 'mysql', 'com.mysql.jdbc.Driver' )
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', 'root', '', 'com.mysql.jdbc.Driver' )
     sql.execute( 'create database `mifosplatform-tenants`' )
     sql.execute( 'create database `mifostenant-default`' )
 
 }
 task dropDatabase<<{
     description= "Drops the created Databases mifosplatform-tenants and mifostenant-default"
-    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', 'root', 'mysql', 'com.mysql.jdbc.Driver' )
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', 'root', '', 'com.mysql.jdbc.Driver' )
     sql.execute( 'DROP DATABASE `mifosplatform-tenants`' )
     sql.execute( 'DROP DATABASE `mifostenant-default`' )
 
@@ -289,7 +289,7 @@ buildscript {
 flyway {
     url = "jdbc:mysql://localhost:3306/mifostenant-default"
     user = 'root'
-    password = 'mysql'
+    password = ''
     locations = [
             'filesystem:../mifosng-db/migrations',
     ]
