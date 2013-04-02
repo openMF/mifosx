@@ -200,7 +200,7 @@ tomcatRun {
     httpPort = 8080
     httpsPort = 8443
     stopPort = 8081
-    stopKey=   'stopKey'
+    stopKey =   'stopKey'
     enableSSL = true
     configFile = file('src/test/resources/META-INF/context.xml')
 }
@@ -209,7 +209,7 @@ tomcatRunWar {
     httpPort = 8080
     httpsPort = 8443
     stopPort = 8081
-    stopKey=   'stopKey'
+    stopKey =   'stopKey'
     enableSSL = true
     configFile = file('src/test/resources/META-INF/context.xml')
 }
@@ -271,6 +271,11 @@ task dropDatabase<<{
     sql.execute( 'DROP DATABASE `mifostenant-default`' )
 
 }
+task setBlankPassword<<{
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', 'root', '', 'com.mysql.jdbc.Driver' )
+    sql.execute('USE `mifosplatform-tenants`')
+    sql.execute('UPDATE mifosplatform-tenants.tenants SET schema_server = \'localhost\', schema_server_port = \'3306\', schema_username = \'mifos\', schema_password = \'\' WHERE id=1;')
+}
 
 
 apply plugin: 'flyway'
@@ -291,7 +296,7 @@ flyway {
     user = 'root'
     password = ''
     locations = [
-            'filesystem:mifosx/mifosng-db/migrations',
+            'filesystem:../mifosng-db/migrations',
     ]
 
     //$dbName    $dbUser   $dbPassword
