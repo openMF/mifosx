@@ -49,10 +49,10 @@ sourceCompatibility = JavaVersion.VERSION_1_6
 /* define binary compatiblity version */
 targetCompatibility = JavaVersion.VERSION_1_6
 
-project.ext.springVersion = '3.2.1.RELEASE'
+project.ext.springVersion = '3.2.2.RELEASE'
 project.ext.springSecurityVersion = '3.1.3.RELEASE'
 project.ext.hibernateValidatorVersion = '4.3.1.Final'
-project.ext.hibernateCoreVersion = '4.1.9.Final'
+project.ext.hibernateCoreVersion = '4.2.0.Final'
 project.ext.jerseyVersion = '1.17'
 project.ext.springDataJpaVersion = '1.2.1.RELEASE'
 
@@ -162,9 +162,8 @@ dependencies {
                 [group: 'com.googlecode.flyway', name: 'flyway-maven-plugin', version: '2.1.1']
  	        )
  	        
- 	 testCompile 'junit:junit:4.10', 
-                 'org.mockito:mockito-all:1.9.0',
-                 'org.hamcrest:hamcrest-all:1.1',
+ 	 testCompile 'junit:junit:4.11', 
+                 'org.mockito:mockito-all:1.9.5',
                  'com.jayway.restassured:rest-assured:1.7.2'
  	 
 }
@@ -183,10 +182,13 @@ task dist(type:Zip){
 
 task deployPentahoReports() {
 	def pentahoReportDir = System.properties['user.home'] + System.properties['file.separator'] + '.mifosx' + System.properties['file.separator'] + 'pentahoReports'
-	println ":deployPentahoReports - moving pentaho reports under: " + pentahoReportDir
 	copy {
         from "src/main/pentahoReports"
         into pentahoReportDir
+    }
+    
+    doLast {
+        println ':deployPentahoReports - moving pentaho reports under: ' + pentahoReportDir
     }
 }
 
@@ -214,6 +216,8 @@ tomcatRunWar {
     stopPort = 8081
     stopKey =   'stopKey'
     enableSSL = true
+    keystoreFile = file('../keystore.jks')
+    keystorePass = 'openmf'
     configFile = file('src/test/resources/META-INF/context.xml')
 }
 

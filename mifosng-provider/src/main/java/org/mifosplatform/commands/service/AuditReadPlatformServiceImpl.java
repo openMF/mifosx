@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.mifosplatform.audit.service;
+package org.mifosplatform.commands.service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,13 +12,15 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.mifosplatform.audit.api.ProcessingResultLookup;
-import org.mifosplatform.audit.data.AuditData;
-import org.mifosplatform.audit.data.AuditSearchData;
+import org.mifosplatform.commands.data.AuditData;
+import org.mifosplatform.commands.data.AuditSearchData;
+import org.mifosplatform.commands.data.ProcessingResultLookup;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
+import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.useradministration.data.AppUserData;
+import org.mifosplatform.useradministration.domain.AppUser;
 import org.mifosplatform.useradministration.service.AppUserReadPlatformService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,14 +48,14 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
 	}
 
 	private static final class AuditMapper implements RowMapper<AuditData> {
-//TODO - jpw need to break this down, also data scope etc.
-		public String schema(boolean includeJson) {
+
+		public String schema(boolean includeJson, String hierarchy) {
 
 			String commandAsJsonString = "";
 			if (includeJson)
 				commandAsJsonString = ", aud.command_as_json as commandAsJson ";
 
-			return " aud.id as id, aud.action_name as actionName, aud.entity_name as entityName,"
+			String partSql = " aud.id as id, aud.action_name as actionName, aud.entity_name as entityName,"
 					+ " aud.resource_id as resourceId, aud.subresource_id as subresourceId,"
 					+ " mk.username as maker, aud.made_on_date as madeOnDate, "
 					+ "ck.username as checker, aud.checked_on_date as checkedOnDate, ev.enum_message_property as processingResult "
@@ -71,6 +73,15 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
 					+ " left join m_loan l on l.id = aud.loan_id"
 					+ " left join m_savings_account s on s.id = aud.savings_account_id"
 					+ " left join r_enum_value ev on ev.enum_name = 'processing_result_enum' and ev.enum_id = aud.processing_result_enum";
+
+			// data scoping: head office (hierarchy = ".") can see all audit
+			// entries
+			if (!(hierarchy.equals("."))) {
+				partSql += " join m_office o2 on o2.id = aud.office_id and o2.hierarchy like '"
+						+ hierarchy + "%' ";
+			}
+
+			return partSql;
 		}
 
 		@Override
@@ -116,32 +127,69 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
 	@Override
 	public Collection<AuditData> retrieveAuditEntries(String extraCriteria,
 			boolean includeJson) {
-		context.authenticatedUser();
+
+		String updatedExtraCriteria = "";
+		if (StringUtils.isNotBlank(extraCriteria))
+			updatedExtraCriteria = " where (" + extraCriteria + ")";
+
+		updatedExtraCriteria += " order by aud.id DESC";
+		return retrieveEntries(updatedExtraCriteria, includeJson);
+	}
+
+	@Override
+	public Collection<AuditData> retrieveAllEntriesToBeChecked(
+			String extraCriteria, boolean includeJson) {
+
+		String updatedExtraCriteria = "";
+		if (StringUtils.isNotBlank(extraCriteria))
+			updatedExtraCriteria = " where (" + extraCriteria + ")"
+					+ " and aud.processing_result_enum = 2";
+		else
+			updatedExtraCriteria = " where aud.processing_result_enum = 2";
+
+		updatedExtraCriteria += " order by aud.id";
+		//TODO - should only be pulling back makerchecker entries that the user has maker-checker permissions for
+		return retrieveEntries(updatedExtraCriteria, includeJson);
+	}
+
+	public Collection<AuditData> retrieveEntries(String extraCriteria,
+			boolean includeJson) {
+
+		AppUser currentUser = context.authenticatedUser();
+		String hierarchy = currentUser.getOffice().getHierarchy();
 
 		final AuditMapper rm = new AuditMapper();
 
-		String sql = "select " + rm.schema(includeJson);
-		if (StringUtils.isNotBlank(extraCriteria))
-			sql += " where (" + extraCriteria + ")";
-		sql += " order by aud.id DESC";
+		String sql = "select " + rm.schema(includeJson, hierarchy)
+				+ extraCriteria;
 		logger.info("sql: " + sql);
+
 		return this.jdbcTemplate.query(sql, rm, new Object[] {});
 	}
 
 	@Override
 	public AuditData retrieveAuditEntry(Long auditId) {
-		context.authenticatedUser();
+
+		AppUser currentUser = context.authenticatedUser();
+		String hierarchy = currentUser.getOffice().getHierarchy();
 
 		final AuditMapper rm = new AuditMapper();
 
-		String sql = "select " + rm.schema(true);
+		String sql = "select " + rm.schema(true, hierarchy);
 		sql += " where aud.id = " + auditId;
 
 		return this.jdbcTemplate.queryForObject(sql, rm, new Object[] {});
 	}
 
 	@Override
-	public AuditSearchData retrieveSearchTemplate() {
+	public AuditSearchData retrieveSearchTemplate(String useType) {
+
+		if (!(useType.equals("audit") || useType.equals("makerchecker"))) {
+			throw new PlatformDataIntegrityException(
+					"error.msg.invalid.auditSearchTemplate.useType",
+					"Invalid Audit Search Template UseType: " + useType);
+		}
+
 		final Collection<AppUserData> appUsers = appUserReadPlatformService
 				.retrieveSearchTemplate();
 
@@ -153,28 +201,17 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
 		List<String> entityNames = this.jdbcTemplate.query(mapper2.schema(),
 				mapper2, new Object[] {});
 
-		ProcessingResultsMapper mapper3 = new ProcessingResultsMapper();
-		Collection<ProcessingResultLookup> processingResults = this.jdbcTemplate
-				.query(mapper3.schema(), mapper3, new Object[] {});
+		Collection<ProcessingResultLookup> processingResults = null;
+		if (useType.equals("audit")) {
+			ProcessingResultsMapper mapper3 = new ProcessingResultsMapper();
+			processingResults = this.jdbcTemplate.query(mapper3.schema(),
+					mapper3, new Object[] {});
+		}
 
 		return new AuditSearchData(appUsers, actionNames, entityNames,
 				processingResults);
 	}
 
-    @Override
-    public Collection<AuditData> retrieveAllEntriesToBeChecked() {
-        context.authenticatedUser();
-
-        final AuditMapper rm = new AuditMapper();
-		
-        final String sql = "select " + rm.schema(false)
-                + " where aud.checker_id is null and aud.processing_result_enum = 2 order by aud.id";
-        //+ " where mc.checker_id is null and mc.processing_result_enum = 2 order by mc.made_on_date DESC, mc.entity_name ASC, mc.action_name ASC";
-		logger.info("sql: " + sql);
-
-        return this.jdbcTemplate.query(sql, rm, new Object[] {});
-    }
-    
 	private static final class ActionNamesMapper implements RowMapper<String> {
 
 		@Override
