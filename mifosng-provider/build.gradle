@@ -56,6 +56,9 @@ project.ext.hibernateCoreVersion = '4.1.9.Final'
 project.ext.jerseyVersion = '1.17'
 project.ext.springDataJpaVersion = '1.2.1.RELEASE'
 
+project.ext.mysqlUser='root'
+project.ext.mysqlPassword='mysql'
+
 group = 'org.mifosplatform'
 
 repositories {
@@ -232,9 +235,7 @@ task integrationTest(type:Test){
         tomcatRunWar.execute()
     }
 
-    doLast {
-        tomcatStop.execute()
-    }
+
     testClassesDir = project.sourceSets.integrationTest.output.classesDir
     classpath = project.sourceSets.integrationTest.runtimeClasspath
 }
@@ -257,24 +258,22 @@ configurations.driver.each {File file ->
     loader.addURL(file.toURL())
 }
 
-task createDatabase<<{
-    description= "Creates the Database mifosplatform-tenants and mifostenant-default"
-    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', 'root', '', 'com.mysql.jdbc.Driver' )
-    sql.execute( 'create database `mifosplatform-tenants`' )
-    sql.execute( 'create database `mifostenant-default`' )
-
+task createDB<<{
+    description= "Creates the Database. Needs database name to be passed (like: -PdbName=someDBname)"
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', mysqlUser, mysqlPassword, 'com.mysql.jdbc.Driver' )
+    sql.execute( 'create database '+"`$dbName`" )
 }
-task dropDatabase<<{
-    description= "Drops the created Databases mifosplatform-tenants and mifostenant-default"
-    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', 'root', '', 'com.mysql.jdbc.Driver' )
-    sql.execute( 'DROP DATABASE `mifosplatform-tenants`' )
-    sql.execute( 'DROP DATABASE `mifostenant-default`' )
 
+task dropDB<<{
+    description= "Drops the specified database. The database name has to be passed (like: -PdbName=someDBname)"
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', mysqlUser, mysqlPassword, 'com.mysql.jdbc.Driver' )
+    sql.execute( 'DROP DATABASE '+"`$dbName`")
 }
+
 task setBlankPassword<<{
-    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', 'root', '', 'com.mysql.jdbc.Driver' )
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', mysqlUser, mysqlPassword, 'com.mysql.jdbc.Driver' )
     sql.execute('USE `mifosplatform-tenants`')
-    sql.execute('UPDATE mifosplatform-tenants.tenants SET schema_server = \'localhost\', schema_server_port = \'3306\', schema_username = \'mifos\', schema_password = \'\' WHERE id=1;')
+    sql.execute('UPDATE mifosplatform-tenants.tenants SET schema_server = \'localhost\', schema_server_port = \'3306\', schema_username = \'mifos\', schema_password = \'mysql\' WHERE id=1;')
 }
 
 
@@ -293,15 +292,34 @@ buildscript {
 
 flyway {
     url = "jdbc:mysql://localhost:3306/mifostenant-default"
-    user = 'root'
-    password = ''
+    user = mysqlUser
+    password = mysqlPassword
     locations = [
-            'filesystem:../mifosng-db/migrations',
+            "filesystem:../mifosng-db/migrations",
+    ]
+}
+
+
+task migrateDB<<{
+    description="Migrates the DB. Have to pass dbName and folder name where the .sql file are kept for that DB. (Example: -PdbName=someDBname -PmigrationScriptFolder=someFolderName). "
+
+    flyway.url= "jdbc:mysql://localhost:3306/$dbName"
+    flyway.locations= [
+             "filesystem:../mifosng-db/migrations/$migrationScriptFolder",
     ]
 
-    //$dbName    $dbUser   $dbPassword
-
+    flywayMigrate.execute()
 }
+
+task showDBInfo<<{
+    description="Shows the migration info for a DB. Have to pass dbName and folder name where the .sql file are kept for that DB. (Example: -PdbName=someDBname -PmigrationScriptFolder=someFolderName)"
+    flyway.url= "jdbc:mysql://localhost:3306/$dbName"
+    flyway.locations= [
+            "filesystem:../mifosng-db/migrations/$migrationScriptFolder",
+    ]
+    flywayInfo.execute()
+}
+
 
 
 /*
