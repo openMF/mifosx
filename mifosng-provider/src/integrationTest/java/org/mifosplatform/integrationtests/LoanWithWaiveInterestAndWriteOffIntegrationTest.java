@@ -57,8 +57,8 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         Integer loanProductID = createLoanProduct();
         // APPLY FOR LOAN
         Integer loanID = applyForLoanApplication(clientID, loanProductID);
-        HashMap loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(requestSpec, responseSpec, loanID);
 
+        HashMap loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(requestSpec, responseSpec, loanID);
         LoanStatusChecker.verifyLoanIsPending(loanStatusHashMap);
 
         System.out.println("-----------------------------------APPROVE LOAN-----------------------------------------");

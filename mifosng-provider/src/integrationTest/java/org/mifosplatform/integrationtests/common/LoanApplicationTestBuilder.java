@@ -19,7 +19,6 @@ public class LoanApplicationTestBuilder {
 
     private String principal = "10,000";
     private String loanTermFrequency = "";
-    // FIXME - unused variable?
     private String loanTermFrequencyType = "";
     private String numberOfRepayment = "0";
     private String repaymentPeriod = "0";
@@ -43,8 +42,7 @@ public class LoanApplicationTestBuilder {
         map.put("productId", loanProductId);
         map.put("principal", principal);
         map.put("loanTermFrequency", loanTermFrequency);
-        map.put("loanTermFrequencyType", "2"); // FIXME - Should this be using
-                                               // loanTermFrequencyType value?
+        map.put("loanTermFrequencyType", loanTermFrequencyType); // FIXME - Should this be using
         map.put("numberOfRepayments", numberOfRepayment);
         map.put("repaymentEvery", repaymentPeriod);
         map.put("repaymentFrequencyType", repaymentFrequencyType);
