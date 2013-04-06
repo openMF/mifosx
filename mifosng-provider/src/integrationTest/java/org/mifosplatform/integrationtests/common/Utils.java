@@ -27,8 +27,7 @@ public class Utils {
         try {
             System.out.println("-----------------------------------LOGIN-----------------------------------------");
             String json = RestAssured.post(LOGIN_URL).asString();
-            System.out.println("JSON:****************"+json);
-//            assertThat("Failed to login into mifosx platform",StringUtils.isBlank(json),is(false));
+            assertThat("Failed to login into mifosx platform",StringUtils.isBlank(json),is(false));
             return JsonPath.with(json).get("base64EncodedAuthenticationKey");
         }
         catch (Exception e) {
@@ -51,6 +50,7 @@ public class Utils {
             final String postURL, final String jsonBodyToSend, final String jsonAttributeToGetBack) {
         String json = given().spec(requestSpec).body(jsonBodyToSend).expect().spec(responseSpec).log().ifError().when().post(postURL)
                 .andReturn().asString();
+//        System.out.println("JSON****************************: "+json);
         return (T) from(json).get(jsonAttributeToGetBack);
     }
 
