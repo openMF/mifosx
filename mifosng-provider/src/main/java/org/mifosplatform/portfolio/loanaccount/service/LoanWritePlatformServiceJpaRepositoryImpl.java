@@ -20,7 +20,8 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
-import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepository;
+import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
+import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.charge.domain.Charge;
@@ -75,7 +76,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final LoanAssembler loanAssembler;
     private final ChargeRepositoryWrapper chargeRepository;
     private final LoanChargeRepository loanChargeRepository;
-    private final ApplicationCurrencyRepository applicationCurrencyRepository;
+    private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository;
     private final JournalEntryWritePlatformService journalEntryWritePlatformService;
     private final LoanSummaryWrapper loanSummaryWrapper;
     private final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory;
@@ -86,7 +87,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final LoanUpdateCommandFromApiJsonDeserializer loanUpdateCommandFromApiJsonDeserializer, final LoanAssembler loanAssembler,
             final LoanRepository loanRepository, final LoanTransactionRepository loanTransactionRepository,
             final NoteRepository noteRepository, final ChargeRepositoryWrapper chargeRepository,
-            final LoanChargeRepository loanChargeRepository, final ApplicationCurrencyRepository applicationCurrencyRepository,
+            final LoanChargeRepository loanChargeRepository, final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository,
             final JournalEntryWritePlatformService journalEntryWritePlatformService, final LoanSummaryWrapper loanSummaryWrapper,
             final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory) {
         this.context = context;
@@ -118,12 +119,12 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.loanEventApiJsonValidator.validateDisbursement(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
-
-        final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(loan.getCurrencyCode());
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
 
         final List<Long> existingTransactionIds = new ArrayList<Long>();
         final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
-        final Map<String, Object> changes = loan.disburse(currentUser, command, currency, existingTransactionIds,
+        final Map<String, Object> changes = loan.disburse(currentUser, command, applicationCurrency, existingTransactionIds,
                 existingReversedTransactionIds);
         if (!changes.isEmpty()) {
             this.loanRepository.save(loan);
@@ -150,7 +151,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
     @Transactional
     @Override
-    public Map<String, Object> bulkLoanDisbursal(JsonCommand command, CollectionSheetBulkDisbursalCommand bulkDisbursalCommand) {
+    public Map<String, Object> bulkLoanDisbursal(final JsonCommand command, final CollectionSheetBulkDisbursalCommand bulkDisbursalCommand) {
         final AppUser currentUser = context.authenticatedUser();
 
         SingleDisbursalCommand[] disbursalCommand = bulkDisbursalCommand.getDisburseTransactions();
@@ -161,13 +162,13 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             SingleDisbursalCommand singleLoanDisbursalCommand = disbursalCommand[i];
 
             final Loan loan = retrieveLoanBy(singleLoanDisbursalCommand.getLoanId());
-
-            final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(loan.getCurrencyCode());
+            final MonetaryCurrency currency = loan.getCurrency();
+            final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
 
             final List<Long> existingTransactionIds = new ArrayList<Long>();
             final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
 
-            changes.putAll(loan.disburse(currentUser, command, currency, existingTransactionIds, existingReversedTransactionIds));
+            changes.putAll(loan.disburse(currentUser, command, applicationCurrency, existingTransactionIds, existingReversedTransactionIds));
             if (!changes.isEmpty()) {
                 this.loanRepository.save(loan);
 
@@ -204,9 +205,11 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 this.noteRepository.save(note);
             }
 
-            final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(loan.getCurrencyCode());
-            final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(currency.toData(), existingTransactionIds,
-                    existingReversedTransactionIds);
+            final MonetaryCurrency currency = loan.getCurrency();
+            final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+
+            final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(applicationCurrency.toData(),
+                    existingTransactionIds, existingReversedTransactionIds);
             // add the previously calculated net charged interest back to
             // accountingBridgedate, this would not work if interest
             // recalculation in introduced
@@ -870,16 +873,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 .build();
     }
 
-    /**
-     * @param loan
-     * @param existingTransactionIds
-     * @param existingReversedTransactionIds
-     */
     private void postJournalEntries(final Loan loan, final List<Long> existingTransactionIds,
             final List<Long> existingReversedTransactionIds) {
-        final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(loan.getCurrencyCode());
-        final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(currency.toData(), existingTransactionIds,
-                existingReversedTransactionIds);
+
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+
+        final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(applicationCurrency.toData(),
+                existingTransactionIds, existingReversedTransactionIds);
         journalEntryWritePlatformService.createJournalEntriesForLoan(accountingBridgeData);
     }
 }

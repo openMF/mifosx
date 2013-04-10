@@ -20,10 +20,9 @@ import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSourc
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
-import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepository;
+import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
-import org.mifosplatform.organisation.monetary.exception.CurrencyNotFoundException;
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
 import org.mifosplatform.portfolio.group.data.GroupData;
@@ -62,7 +61,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     private final JdbcTemplate jdbcTemplate;
     private final PlatformSecurityContext context;
     private final LoanRepository loanRepository;
-    private final ApplicationCurrencyRepository applicationCurrencyRepository;
+    private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository;
     private final LoanProductReadPlatformService loanProductReadPlatformService;
     private final ClientReadPlatformService clientReadPlatformService;
     private final GroupReadPlatformService groupReadPlatformService;
@@ -70,7 +69,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
     @Autowired
     public LoanReadPlatformServiceImpl(final PlatformSecurityContext context, final LoanRepository loanRepository,
-            final LoanTransactionRepository loanTransactionRepository, final ApplicationCurrencyRepository applicationCurrencyRepository,
+            final LoanTransactionRepository loanTransactionRepository,
+            final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository,
             final LoanProductReadPlatformService loanProductReadPlatformService, final ClientReadPlatformService clientReadPlatformService,
             final GroupReadPlatformService groupReadPlatformService, final TenantAwareRoutingDataSource dataSource) {
         this.context = context;
@@ -171,7 +171,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     }
     
     @Override
-    public LoanAccountData retrieveTemplateWithCompleteGroupAndProductDetails(Long groupId, Long productId){
+    public LoanAccountData retrieveTemplateWithCompleteGroupAndProductDetails(final Long groupId, final Long productId){
         
         context.authenticatedUser();
 
@@ -198,12 +198,10 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         Loan loan = this.loanRepository.findOne(loanId);
         if (loan == null) { throw new LoanNotFoundException(loanId); }
 
-        final String currencyCode = loan.repaymentScheduleDetail().getPrincipal().getCurrencyCode();
-        ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(currencyCode);
-        if (currency == null) { throw new CurrencyNotFoundException(currencyCode); }
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
 
-        final CurrencyData currencyData = new CurrencyData(currency.getCode(), currency.getName(), currency.getDecimalPlaces(),
-                currency.getDisplaySymbol(), currency.getNameCode());
+        final CurrencyData currencyData = applicationCurrency.toData();
 
         final LocalDate earliestUnpaidInstallmentDate = loan.possibleNextRepaymentDate();
 
@@ -224,19 +222,15 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final Loan loan = this.loanRepository.findOne(loanId);
         if (loan == null) { throw new LoanNotFoundException(loanId); }
 
-        final String currencyCode = loan.repaymentScheduleDetail().getPrincipal().getCurrencyCode();
-        final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(currencyCode);
-        if (currency == null) { throw new CurrencyNotFoundException(currencyCode); }
-
-        final CurrencyData currencyData = new CurrencyData(currency.getCode(), currency.getName(), currency.getDecimalPlaces(),
-                currency.getDisplaySymbol(), currency.getNameCode());
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+        final CurrencyData currencyData = applicationCurrency.toData();
 
         final LoanTransaction waiveOfInterest = loan.deriveDefaultInterestWaiverTransaction();
 
         final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.WAIVE_INTEREST);
 
-        final MonetaryCurrency monetaryCurrency = new MonetaryCurrency(currency.getCode(), currency.getDecimalPlaces());
-        final BigDecimal amount = waiveOfInterest.getAmount(monetaryCurrency).getAmount();
+        final BigDecimal amount = waiveOfInterest.getAmount(currency).getAmount();
         return new LoanTransactionData(null, transactionType, currencyData, waiveOfInterest.getTransactionDate(), amount, null, null, null,
                 null);
     }
@@ -258,17 +252,14 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final Loan loan = this.loanRepository.findOne(loanId);
         if (loan == null) { throw new LoanNotFoundException(loanId); }
 
-        final String currencyCode = loan.repaymentScheduleDetail().getPrincipal().getCurrencyCode();
-        final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(currencyCode);
-        if (currency == null) { throw new CurrencyNotFoundException(currencyCode); }
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+        final CurrencyData currencyData = applicationCurrency.toData();
 
         final LoanTransaction transaction = this.loanTransactionRepository.findOne(transactionId);
         if (transaction == null) { throw new LoanTransactionNotFoundException(transactionId); }
 
         if (transaction.isNotBelongingToLoanOf(loan)) { throw new LoanTransactionNotFoundException(transactionId, loanId); }
-
-        final CurrencyData currencyData = new CurrencyData(currency.getCode(), currency.getName(), currency.getDecimalPlaces(),
-                currency.getDisplaySymbol(), currency.getNameCode());
 
         return transaction.toData(currencyData);
     }
