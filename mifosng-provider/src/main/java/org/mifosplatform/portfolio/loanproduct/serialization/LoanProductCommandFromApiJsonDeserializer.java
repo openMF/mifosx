@@ -454,9 +454,11 @@ public final class LoanProductCommandFromApiJsonDeserializer {
         
         validatePrincipalMinMaxConstraint(element, loanProductRelatedDetail, baseDataValidator);
         
-        validateNumberOfRepaymentsMinMaxConstraint(element, loanProductRelatedDetail, baseDataValidator);
+        // validateNumberOfRepaymentsMinMaxConstraint(element,
+        // loanProductRelatedDetail, baseDataValidator);
         
-        validateNominalInterestRatePerPeriodMinMaxConstraint(element, loanProductRelatedDetail, baseDataValidator);
+        // validateNominalInterestRatePerPeriodMinMaxConstraint(element,
+        // loanProductRelatedDetail, baseDataValidator);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
