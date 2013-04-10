@@ -37,6 +37,7 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
             DISBURSEMENT_DATE = "30 October 2010", LOAN_APPLICATION_SUBMISSION_DATE = "23 September 2010",
             EXPECTED_DISBURSAL_DATE = "28 October 2010", RATE_OF_INTEREST_PER_PERIOD = "2", DATE_OF_JOINING = "04 March 2009",
             INTEREST_VALUE_AMOUNT = "40.00";
+    LoanTransactionHelper loanTransactionHelper;
 
     @Before
     public void setup() {
@@ -44,6 +45,8 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         requestSpec = new RequestSpecBuilder().setContentType(ContentType.JSON).build();
         requestSpec.header("Authorization", "Basic " + Utils.loginIntoServerAndGetBase64EncodedAuthenticationKey());
         responseSpec = new ResponseSpecBuilder().expectStatusCode(200).build();
+
+        loanTransactionHelper = new LoanTransactionHelper(requestSpec,responseSpec);
     }
 
     @Test
@@ -61,41 +64,41 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         LoanStatusChecker.verifyLoanIsPending(loanStatusHashMap);
 
         System.out.println("-----------------------------------APPROVE LOAN-----------------------------------------");
-        loanStatusHashMap = LoanTransactionHelper.approveLoan(requestSpec, responseSpec, "28 September 2010", loanID);
+        loanStatusHashMap = loanTransactionHelper.approveLoan("28 September 2010", loanID);
         LoanStatusChecker.verifyLoanIsApproved(loanStatusHashMap);
         LoanStatusChecker.verifyLoanIsWaitingForDisbursal(loanStatusHashMap);
 
         // UNDO APPROVAL
-        loanStatusHashMap = LoanTransactionHelper.undoApproval(requestSpec, responseSpec, loanID);
+        loanStatusHashMap = loanTransactionHelper.undoApproval(loanID);
         LoanStatusChecker.verifyLoanIsPending(loanStatusHashMap);
 
         System.out.println("-----------------------------------RE-APPROVE LOAN-----------------------------------------");
-        loanStatusHashMap = LoanTransactionHelper.approveLoan(requestSpec, responseSpec, "1 October 2010", loanID);
+        loanStatusHashMap = loanTransactionHelper.approveLoan("1 October 2010", loanID);
         LoanStatusChecker.verifyLoanIsApproved(loanStatusHashMap);
         LoanStatusChecker.verifyLoanIsWaitingForDisbursal(loanStatusHashMap);
 
         // DISBURSE
-        loanStatusHashMap = LoanTransactionHelper.disburseLoan(requestSpec, responseSpec, DISBURSEMENT_DATE, loanID);
+        loanStatusHashMap = loanTransactionHelper.disburseLoan(DISBURSEMENT_DATE, loanID);
         System.out.println("DISBURSE " + loanStatusHashMap);
         LoanStatusChecker.verifyLoanIsActive(loanStatusHashMap);
 
         // PERFORM REPAYMENTS AND CHECK LOAN STATUS
-        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec, responseSpec, 1, 4000.0F, loanID);
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, "1 January 2011", 540.0f, loanID);
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, "1 March 2011", 540.0f, loanID);
-        LoanTransactionHelper.waiveInterest(requestSpec, responseSpec, "1 May 2011", INTEREST_VALUE_AMOUNT, loanID);
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, "1 May 2011", 500.0f, loanID);
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, "1 July 2011", 540.0f, loanID);
-        LoanTransactionHelper.waiveInterest(requestSpec, responseSpec, "1 September 2011", INTEREST_VALUE_AMOUNT, loanID);
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, "1 September 2011", 500.0f, loanID);
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, "1 November 2011", 540.0f, loanID);
-        LoanTransactionHelper.waiveInterest(requestSpec, responseSpec, "1 January 2012", INTEREST_VALUE_AMOUNT, loanID);
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, "1 January 2012", 500.0f, loanID);
+        loanTransactionHelper.verifyRepaymentScheduleEntryFor(1, 4000.0F, loanID);
+        loanTransactionHelper.makeRepayment("1 January 2011", 540.0f, loanID);
+        loanTransactionHelper.makeRepayment("1 March 2011", 540.0f, loanID);
+        loanTransactionHelper.waiveInterest("1 May 2011", INTEREST_VALUE_AMOUNT, loanID);
+        loanTransactionHelper.makeRepayment("1 May 2011", 500.0f, loanID);
+        loanTransactionHelper.makeRepayment("1 July 2011", 540.0f, loanID);
+        loanTransactionHelper.waiveInterest("1 September 2011", INTEREST_VALUE_AMOUNT, loanID);
+        loanTransactionHelper.makeRepayment("1 September 2011", 500.0f, loanID);
+        loanTransactionHelper.makeRepayment("1 November 2011", 540.0f, loanID);
+        loanTransactionHelper.waiveInterest("1 January 2012", INTEREST_VALUE_AMOUNT, loanID);
+        loanTransactionHelper.makeRepayment("1 January 2012", 500.0f, loanID);
 
-        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec, responseSpec, 7, 1000.0f, loanID);
+        loanTransactionHelper.verifyRepaymentScheduleEntryFor(7, 1000.0f, loanID);
 
         // WRITE OFF LOAN AND CHECK ACCOUNT IS CLOSED
-        LoanStatusChecker.verifyLoanAccountIsClosed(LoanTransactionHelper.writeOffLoan(requestSpec, responseSpec, "1 March 2012", loanID));
+        LoanStatusChecker.verifyLoanAccountIsClosed(loanTransactionHelper.writeOffLoan("1 March 2012", loanID));
 
     }
 
@@ -105,7 +108,7 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
                 .withRepaymentAfterEvery(LP_REPAYMENT_PERIOD).withNumberOfRepayments(LP_REPAYMENTS).withRepaymentTypeAsMonth()
                 .withinterestRatePerPeriod(LP_INTEREST_RATE).withInterestRateFrequencyTypeAsMonths()
                 .withAmortizationTypeAsEqualPrinciplePayment().withInterestTypeAsFlat().build();
-        return LoanTransactionHelper.getLoanProductId(requestSpec, responseSpec, loanProductJSON);
+        return loanTransactionHelper.getLoanProductId(requestSpec, responseSpec, loanProductJSON);
     }
 
     private Integer applyForLoanApplication(final Integer clientID, final Integer loanProductID) {
@@ -117,6 +120,6 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
                 .withAmortizationTypeAsEqualInstallments().withInterestCalculationPeriodTypeSameAsRepaymentPeriod()
                 .withExpectedDisbursementDate(EXPECTED_DISBURSAL_DATE).withSubmittedOnDate(LOAN_APPLICATION_SUBMISSION_DATE)
                 .build(clientID.toString(), loanProductID.toString());
-        return LoanTransactionHelper.getLoanId(requestSpec, responseSpec, loanApplicationJSON);
+        return loanTransactionHelper.getLoanId(requestSpec, responseSpec, loanApplicationJSON);
     }
 }

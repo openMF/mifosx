@@ -37,22 +37,26 @@ public class AccountingScenario {
     Float REPAYMENT_AMOUNT [] = {.0f,2200.0f,3000.0f,900.0f,2000.0f,2500.0f};
 
     Float amount_to_be_waive = 400.0f;
+
+    LoanTransactionHelper loanTransactionHelper;
+
     @Before
     public void setup() {
         Utils.initializeRESTAssured();
         requestSpec = new RequestSpecBuilder().setContentType(ContentType.JSON).build();
         requestSpec.header("Authorization", "Basic " + Utils.loginIntoServerAndGetBase64EncodedAuthenticationKey());
         responseSpec = new ResponseSpecBuilder().expectStatusCode(200).build();
+
+        loanTransactionHelper = new LoanTransactionHelper(requestSpec,responseSpec);
     }
 
     @Test
     public void checkAccountingFlow() {
-        Account assetAccount  = createAssetAccount(requestSpec, responseSpec);
-        Account incomeAccount = createIncomeAccount(requestSpec,responseSpec);
-        Account expenseAccount= createExpenseAccount(requestSpec,responseSpec);
+        Account assetAccount  = createAssetAccount();
+        Account incomeAccount = createIncomeAccount();
+        Account expenseAccount= createExpenseAccount();
 
         Integer loanProductID = createLoanProduct(assetAccount,incomeAccount,expenseAccount);
-        System.out.println("********* LOAN PROD ID :"+loanProductID);
 
         Integer clientID = ClientHelper.createClient(requestSpec, responseSpec, DATE_OF_JOINING);
         Integer loanID = applyForLoanApplication(clientID, loanProductID);
@@ -60,11 +64,11 @@ public class AccountingScenario {
         HashMap loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(requestSpec, responseSpec, loanID);
         LoanStatusChecker.verifyLoanIsPending(loanStatusHashMap);
 
-        loanStatusHashMap = LoanTransactionHelper.approveLoan(requestSpec, responseSpec,EXPECTED_DISBURSAL_DATE, loanID);
+        loanStatusHashMap = loanTransactionHelper.approveLoan(EXPECTED_DISBURSAL_DATE, loanID);
         LoanStatusChecker.verifyLoanIsApproved(loanStatusHashMap);
         LoanStatusChecker.verifyLoanIsWaitingForDisbursal(loanStatusHashMap);
 
-        loanStatusHashMap = LoanTransactionHelper.disburseLoan(requestSpec, responseSpec, EXPECTED_DISBURSAL_DATE, loanID);
+        loanStatusHashMap = loanTransactionHelper.disburseLoan(EXPECTED_DISBURSAL_DATE, loanID);
         LoanStatusChecker.verifyLoanIsActive(loanStatusHashMap);
 
         JournalEntryHelper journalEntryHelper = new JournalEntryHelper(requestSpec, responseSpec);
@@ -77,13 +81,13 @@ public class AccountingScenario {
         };
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, EXPECTED_DISBURSAL_DATE, assetAccountInitialEntry);
         System.out.println("CHECKING INCOME: ******************************************");
-        AccountEntry incomeAccountEntry = new AccountEntry(1000.0f,AccountEntry.TransactionType.CREDIT);
+        AccountEntry incomeAccountEntry = new AccountEntry(1000.0f, AccountEntry.TransactionType.CREDIT);
         journalEntryHelper.checkJournalEntryForIncomeAccount(incomeAccount,EXPECTED_DISBURSAL_DATE, incomeAccountEntry);
 
         //MAKE 1
         System.out.println("Repayment 1 ......");
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[1], REPAYMENT_AMOUNT[1], loanID);
-        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec,responseSpec,1,8000.0f,loanID);
+        loanTransactionHelper.makeRepayment(REPAYMENT_DATE[1], REPAYMENT_AMOUNT[1], loanID);
+        loanTransactionHelper.verifyRepaymentScheduleEntryFor(1,8000.0f,loanID);
         AccountEntry[] assetAccountFirstEntry=  { new AccountEntry(2200.0f,AccountEntry.TransactionType.DEBIT),
                                new AccountEntry(200.0f,AccountEntry.TransactionType.CREDIT),
                                 new AccountEntry(2000.0f,AccountEntry.TransactionType.CREDIT),
@@ -93,8 +97,8 @@ public class AccountingScenario {
 
         //REPAYMENT 2
         System.out.println("Repayment 2 ......");
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[2], REPAYMENT_AMOUNT[2], loanID);
-        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec,responseSpec,2,6000.0f,loanID);
+        loanTransactionHelper.makeRepayment(REPAYMENT_DATE[2], REPAYMENT_AMOUNT[2], loanID);
+        loanTransactionHelper.verifyRepaymentScheduleEntryFor(2,6000.0f,loanID);
 
         AccountEntry[] assetAccountSecondEntry = { new AccountEntry(REPAYMENT_AMOUNT[2],AccountEntry.TransactionType.DEBIT),
                                                    new AccountEntry(400.0f,AccountEntry.TransactionType.CREDIT),
@@ -105,7 +109,7 @@ public class AccountingScenario {
 
         //WAIVE INTEREST
         System.out.println("Waive Interest  ......");
-        LoanTransactionHelper.waiveInterest(requestSpec,responseSpec,REPAYMENT_DATE[4],amount_to_be_waive.toString(),loanID);
+        loanTransactionHelper.waiveInterest(REPAYMENT_DATE[4],amount_to_be_waive.toString(),loanID);
 
         AccountEntry waivedEntry = new  AccountEntry(amount_to_be_waive,AccountEntry.TransactionType.CREDIT);
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[4],waivedEntry);
@@ -115,19 +119,19 @@ public class AccountingScenario {
         System.out.println("Waive Interest Done......");
 
         //REPAYMENT 3
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[3], REPAYMENT_AMOUNT[3], loanID);
+        loanTransactionHelper.makeRepayment(REPAYMENT_DATE[3], REPAYMENT_AMOUNT[3], loanID);
         AccountEntry[] assetAccountThirdEntry = {
                 new AccountEntry(REPAYMENT_AMOUNT[3],AccountEntry.TransactionType.DEBIT),
                 new AccountEntry(REPAYMENT_AMOUNT[3],AccountEntry.TransactionType.CREDIT)
         };
-        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec, responseSpec, 3, 4000.0f, loanID);
+        loanTransactionHelper.verifyRepaymentScheduleEntryFor(3, 4000.0f, loanID);
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[3], assetAccountThirdEntry);
 
         //REPAYMENT 4
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[4], REPAYMENT_AMOUNT[4], loanID);
-        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec,responseSpec,4,2000.0f,loanID);
+        loanTransactionHelper.makeRepayment(REPAYMENT_DATE[4], REPAYMENT_AMOUNT[4], loanID);
+        loanTransactionHelper.verifyRepaymentScheduleEntryFor(4,2000.0f,loanID);
         AccountEntry[] assetAccountFourthEntry = { new AccountEntry(2000.0f,AccountEntry.TransactionType.DEBIT),
-                                   new AccountEntry(2000.0f,AccountEntry.TransactionType.CREDIT)
+                                                   new AccountEntry(2000.0f,AccountEntry.TransactionType.CREDIT)
         };
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount,REPAYMENT_DATE[4],assetAccountFourthEntry);
         System.out.println("Repayment 4 Done  ......");
@@ -137,28 +141,28 @@ public class AccountingScenario {
         AccountEntry[] assetAccountFifthEntry = { new AccountEntry(REPAYMENT_AMOUNT[5],AccountEntry.TransactionType.DEBIT),
                                                   new AccountEntry(REPAYMENT_AMOUNT[5],AccountEntry.TransactionType.CREDIT)
         };
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[5], REPAYMENT_AMOUNT[5], loanID);
-        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec,responseSpec,5,0.0f,loanID);
+        loanTransactionHelper.makeRepayment(REPAYMENT_DATE[5], REPAYMENT_AMOUNT[5], loanID);
+        loanTransactionHelper.verifyRepaymentScheduleEntryFor(5,0.0f,loanID);
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[5], assetAccountFifthEntry);
         System.out.println("Repayment 5 Done  ......");
     }
 
 
-    public Account createAssetAccount(RequestSpecification requestSpec, ResponseSpecification responseSpec){
+    public Account createAssetAccount(){
         String assetAccountJSON= new GLAccountBuilder()
                 .withAccountTypeAsAsset()
                 .build();
         Integer accountID = Utils.performServerPost(requestSpec, responseSpec, CREATE_GL_ACCOUNT_URL, assetAccountJSON, GL_ACCOUNT_ID_RESPONSE);
         return new Account(accountID, Account.AccountType.ASSET);
     }
-    public Account createIncomeAccount(RequestSpecification requestSpec, ResponseSpecification responseSpec){
+    public Account createIncomeAccount(){
         String assetAccountJSON= new GLAccountBuilder()
                 .withAccountTypeAsIncome()
                 .build();
         Integer accountID = Utils.performServerPost(requestSpec, responseSpec, CREATE_GL_ACCOUNT_URL, assetAccountJSON, GL_ACCOUNT_ID_RESPONSE);
         return new Account(accountID, Account.AccountType.INCOME);
     }
-    public Account createExpenseAccount(RequestSpecification requestSpec, ResponseSpecification responseSpec){
+    public Account createExpenseAccount(){
         String assetAccountJSON= new GLAccountBuilder()
                 .withAccountTypeAsExpense()
                 .build();
@@ -174,7 +178,7 @@ public class AccountingScenario {
                 .withAmortizationTypeAsEqualPrinciplePayment().withInterestTypeAsFlat()
                 .withAccountingRuleAsAccrualBased(accounts)
                 .build();
-        return LoanTransactionHelper.getLoanProductId(requestSpec, responseSpec, loanProductJSON);
+        return loanTransactionHelper.getLoanProductId(requestSpec, responseSpec, loanProductJSON);
     }
 
     private Integer applyForLoanApplication(final Integer clientID, final Integer loanProductID) {
@@ -186,7 +190,7 @@ public class AccountingScenario {
                 .withAmortizationTypeAsEqualPrincipalPayments().withInterestCalculationPeriodTypeSameAsRepaymentPeriod()
                 .withExpectedDisbursementDate(EXPECTED_DISBURSAL_DATE).withSubmittedOnDate(LOAN_APPLICATION_SUBMISSION_DATE)
                 .build(clientID.toString(), loanProductID.toString());
-        return LoanTransactionHelper.getLoanId(requestSpec, responseSpec, loanApplicationJSON);
+        return loanTransactionHelper.getLoanId(requestSpec, responseSpec, loanApplicationJSON);
     }
 
 
