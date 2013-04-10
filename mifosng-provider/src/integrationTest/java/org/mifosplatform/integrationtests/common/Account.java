@@ -2,9 +2,18 @@ package org.mifosplatform.integrationtests.common;
 
 public class Account {
 
-
     public enum AccountType {
-        ASSET, INCOME, EXPENSE, LIABILITY,EQUITY;
+        ASSET("1"), INCOME("4"), EXPENSE("5"), LIABILITY("2"),EQUITY("3");
+
+        private final String accountValue ;
+
+        AccountType(final String accountValue){
+          this.accountValue=accountValue;
+        }
+        @Override
+        public String toString() {
+            return accountValue;
+        }
     }
 
     private final AccountType accountType;

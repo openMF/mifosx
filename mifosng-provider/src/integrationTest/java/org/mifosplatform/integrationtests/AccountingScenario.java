@@ -12,12 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mifosplatform.integrationtests.common.*;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
 public class AccountingScenario {
@@ -29,7 +25,7 @@ public class AccountingScenario {
 
     String DATE_OF_JOINING = "01 January 2011";
 
-    String LP_PRINCIPAL="10,000.00";
+    Float LP_PRINCIPAL=10000.0f;
     String LP_REPAYMENTS = "5";
     String LP_REPAYMENT_PERIOD = "2";
     String LP_INTEREST_RATE="1";
@@ -39,6 +35,8 @@ public class AccountingScenario {
 
     String REPAYMENT_DATE[]={"","04 May 2011","04 July 2011","04 September 2011","04 November 2011","04 January 2012"};
     Float REPAYMENT_AMOUNT [] = {.0f,2200.0f,3000.0f,900.0f,2000.0f,2500.0f};
+
+    Float amount_to_be_waive = 400.0f;
     @Before
     public void setup() {
         Utils.initializeRESTAssured();
@@ -69,55 +67,80 @@ public class AccountingScenario {
         loanStatusHashMap = LoanTransactionHelper.disburseLoan(requestSpec, responseSpec, EXPECTED_DISBURSAL_DATE, loanID);
         LoanStatusChecker.verifyLoanIsActive(loanStatusHashMap);
 
+        JournalEntryHelper journalEntryHelper = new JournalEntryHelper(requestSpec, responseSpec);
+        
         //CHECK ACCOUNT ENTRIES
         System.out.println("Entries ......");
-        checkJournalEntryForAsset(assetAccount.getAccountID(),convertDateToURLFormat(EXPECTED_DISBURSAL_DATE),buildAccountEntry());
+        AccountEntry[] assetAccountInitialEntry = { new AccountEntry(1000.0f,AccountEntry.TransactionType.DEBIT),
+                                   new AccountEntry(LP_PRINCIPAL,AccountEntry.TransactionType.CREDIT),
+                                   new AccountEntry(LP_PRINCIPAL,AccountEntry.TransactionType.DEBIT),
+        };
+        journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, EXPECTED_DISBURSAL_DATE, assetAccountInitialEntry);
         System.out.println("CHECKING INCOME: ******************************************");
-        checkJournalEntryForIncome(incomeAccount.getAccountID(), buildAccountEntry_two());
+        AccountEntry incomeAccountEntry = new AccountEntry(1000.0f,AccountEntry.TransactionType.CREDIT);
+        journalEntryHelper.checkJournalEntryForIncomeAccount(incomeAccount,EXPECTED_DISBURSAL_DATE, incomeAccountEntry);
 
         //MAKE 1
         System.out.println("Repayment 1 ......");
         LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[1], REPAYMENT_AMOUNT[1], loanID);
         LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec,responseSpec,1,8000.0f,loanID);
-        checkJournalEntryForAsset(assetAccount.getAccountID(),convertDateToURLFormat(REPAYMENT_DATE[1]),buildAccountEntry_three());
+        AccountEntry[] assetAccountFirstEntry=  { new AccountEntry(2200.0f,AccountEntry.TransactionType.DEBIT),
+                               new AccountEntry(200.0f,AccountEntry.TransactionType.CREDIT),
+                                new AccountEntry(2000.0f,AccountEntry.TransactionType.CREDIT),
+        };
+        journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[1],assetAccountFirstEntry);
         System.out.println("Repayment 1 Done......");
 
         //REPAYMENT 2
         System.out.println("Repayment 2 ......");
         LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[2], REPAYMENT_AMOUNT[2], loanID);
         LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec,responseSpec,2,6000.0f,loanID);
-        checkJournalEntryForAsset(assetAccount.getAccountID(),convertDateToURLFormat(REPAYMENT_DATE[2]),buildAccountEntry_four());
+
+        AccountEntry[] assetAccountSecondEntry = { new AccountEntry(REPAYMENT_AMOUNT[2],AccountEntry.TransactionType.DEBIT),
+                                                   new AccountEntry(400.0f,AccountEntry.TransactionType.CREDIT),
+                                                   new AccountEntry(2600.0f,AccountEntry.TransactionType.CREDIT),
+        };
+        journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[2], assetAccountSecondEntry);
         System.out.println("Repayment 2 Done ......");
 
-        //REPAYMENt 3
-        System.out.println("Repayment 3 ......");
-        LoanTransactionHelper.waiveInterest(requestSpec,responseSpec,REPAYMENT_DATE[4],"400.0",loanID);
-        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[3], REPAYMENT_AMOUNT[3], loanID);
-        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec,responseSpec,3,4000.0f,loanID);
+        //WAIVE INTEREST
+        System.out.println("Waive Interest  ......");
+        LoanTransactionHelper.waiveInterest(requestSpec,responseSpec,REPAYMENT_DATE[4],amount_to_be_waive.toString(),loanID);
 
-        //For Waived amount
-        System.out.println("Waive Interest ......");
-        checkJournalEntryForAsset(assetAccount.getAccountID(), convertDateToURLFormat(REPAYMENT_DATE[4]), buildAccountEntry_five());
-        System.out.println("Waive checking entry for asset account done  ......");
-        checkJournalEntryForSpecificType(expenseAccount.getAccountID(),GLAccountBuilder.EXPENSE_ACCOUNT,convertDateToURLFormat(REPAYMENT_DATE[4]),buildAccountEntry_seven());
+        AccountEntry waivedEntry = new  AccountEntry(amount_to_be_waive,AccountEntry.TransactionType.CREDIT);
+        journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[4],waivedEntry);
+
+        AccountEntry expenseAccountEntry = new AccountEntry(amount_to_be_waive, AccountEntry.TransactionType.DEBIT);
+        journalEntryHelper.checkJournalEntryForExpenseAccount(expenseAccount, REPAYMENT_DATE[4], expenseAccountEntry);
         System.out.println("Waive Interest Done......");
-        //FOr Paid Amount
-        checkJournalEntryForAsset(assetAccount.getAccountID(), convertDateToURLFormat(REPAYMENT_DATE[3]), buildAccountEntry_six());
-        System.out.println("Repayment 3 Done ......");
 
-        //Repayment 4
+        //REPAYMENT 3
+        LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[3], REPAYMENT_AMOUNT[3], loanID);
+        AccountEntry[] assetAccountThirdEntry = {
+                new AccountEntry(REPAYMENT_AMOUNT[3],AccountEntry.TransactionType.DEBIT),
+                new AccountEntry(REPAYMENT_AMOUNT[3],AccountEntry.TransactionType.CREDIT)
+        };
+        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec, responseSpec, 3, 4000.0f, loanID);
+        journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[3], assetAccountThirdEntry);
+
+        //REPAYMENT 4
         LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[4], REPAYMENT_AMOUNT[4], loanID);
         LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec,responseSpec,4,2000.0f,loanID);
-        checkJournalEntryForAsset(assetAccount.getAccountID(),convertDateToURLFormat(REPAYMENT_DATE[4]),buildAccountEntry_eight());
+        AccountEntry[] assetAccountFourthEntry = { new AccountEntry(2000.0f,AccountEntry.TransactionType.DEBIT),
+                                   new AccountEntry(2000.0f,AccountEntry.TransactionType.CREDIT)
+        };
+        journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount,REPAYMENT_DATE[4],assetAccountFourthEntry);
         System.out.println("Repayment 4 Done  ......");
 
         //Repayment 5
+
+        AccountEntry[] assetAccountFifthEntry = { new AccountEntry(REPAYMENT_AMOUNT[5],AccountEntry.TransactionType.DEBIT),
+                                                  new AccountEntry(REPAYMENT_AMOUNT[5],AccountEntry.TransactionType.CREDIT)
+        };
         LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, REPAYMENT_DATE[5], REPAYMENT_AMOUNT[5], loanID);
         LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec,responseSpec,5,0.0f,loanID);
-        checkJournalEntryForAsset(assetAccount.getAccountID(),convertDateToURLFormat(REPAYMENT_DATE[5]),buildAccountEntry_nine());
+        journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[5], assetAccountFifthEntry);
         System.out.println("Repayment 5 Done  ......");
-
-
     }
 
 
@@ -145,7 +168,7 @@ public class AccountingScenario {
 
     private Integer createLoanProduct(Account ... accounts) {
         System.out.println("------------------------------CREATING NEW LOAN PRODUCT ---------------------------------------");
-        String loanProductJSON = new LoanProductTestBuilder().withPrincipal(LP_PRINCIPAL).withRepaymentTypeAsMonth()
+        String loanProductJSON = new LoanProductTestBuilder().withPrincipal(LP_PRINCIPAL.toString()).withRepaymentTypeAsMonth()
                 .withRepaymentAfterEvery(LP_REPAYMENT_PERIOD).withNumberOfRepayments(LP_REPAYMENTS).withRepaymentTypeAsMonth()
                 .withinterestRatePerPeriod(LP_INTEREST_RATE).withInterestRateFrequencyTypeAsMonths()
                 .withAmortizationTypeAsEqualPrinciplePayment().withInterestTypeAsFlat()
@@ -156,7 +179,7 @@ public class AccountingScenario {
 
     private Integer applyForLoanApplication(final Integer clientID, final Integer loanProductID) {
         System.out.println("--------------------------------APPLYING FOR LOAN APPLICATION--------------------------------");
-        String loanApplicationJSON = new LoanApplicationTestBuilder().withPrincipal(LP_PRINCIPAL).withLoanTermFrequency(LOAN_TERM_FREQUENCY)
+        String loanApplicationJSON = new LoanApplicationTestBuilder().withPrincipal(LP_PRINCIPAL.toString()).withLoanTermFrequency(LOAN_TERM_FREQUENCY)
                 .withLoanTermFrequencyAsMonths().withNumberOfRepayments(LP_REPAYMENTS).withRepaymentEveryAfter(LP_REPAYMENT_PERIOD)
                 .withRepaymentFrequencyTypeAsMonths().withInterestRateFrequencyTypeAsMonths()
                 .withInterestRatePerPeriod(LP_INTEREST_RATE).withInterestTypeAsFlatBalance()
@@ -166,113 +189,12 @@ public class AccountingScenario {
         return LoanTransactionHelper.getLoanId(requestSpec, responseSpec, loanApplicationJSON);
     }
 
-    private void checkJournalEntryForAsset(Integer assetAccountID, String date, AccountEntry... accountEntries){
-                checkJournalEntryForAsset(assetAccountID, date,date, accountEntries);
-    }
-    private void checkJournalEntryForAsset(Integer assetAccountID, String fromDate, String toDate, AccountEntry... accountEntries){
-         String getAssetEntryURL= "/mifosng-provider/api/v1/journalentries?glAccountId="+assetAccountID+"&type="+
-                 GLAccountBuilder.ASSET_ACCOUNT +"&fromDate="+fromDate+"&toDate="+toDate+"&tenantIdentifier=default";
-         ArrayList <HashMap> response = Utils.performServerGet(requestSpec,responseSpec,getAssetEntryURL,"");
-         for(int i=0;i<accountEntries.length;i++)
-         {
-           assertThat(getEntryValueFromJournalEntry(response,i),equalTo(accountEntries[i].getTransactionType()));
-           assertThat(getTransactionAmountFromJournalEntry(response,i),equalTo(accountEntries[i].getTransactionAmount()));
-         }
-    }
-
-    private void checkJournalEntryForSpecificType(Integer accountID, String accountType, String date, AccountEntry... accountEntries){
-        String getAssetEntryURL= "/mifosng-provider/api/v1/journalentries?glAccountId="+accountID+"&type="+
-                                  accountType+"&fromDate="+date+"&toDate="+date+"&tenantIdentifier=default";
-        ArrayList <HashMap> response = Utils.performServerGet(requestSpec,responseSpec,getAssetEntryURL,"");
-        for(int i=0;i<accountEntries.length;i++)
-        {
-            assertThat(getEntryValueFromJournalEntry(response,i),equalTo(accountEntries[i].getTransactionType()));
-            assertThat(getTransactionAmountFromJournalEntry(response,i),equalTo(accountEntries[i].getTransactionAmount()));
-        }
-
-    }
-
-    private void checkJournalEntryForIncome(Integer incomeAccountID, AccountEntry ... accountEntries) {
-        String getIncomeEntryURL= "/mifosng-provider/api/v1/journalentries?glAccountId="+incomeAccountID+"&type="+ GLAccountBuilder.INCOME_ACCOUNT +"&tenantIdentifier=default";
-        ArrayList <HashMap> response = Utils.performServerGet(requestSpec,responseSpec,getIncomeEntryURL,"");
-        assertThat(getEntryValueFromJournalEntry(response,0),equalTo(accountEntries[0].getTransactionType()));
-        assertThat(getTransactionAmountFromJournalEntry(response,0),equalTo(accountEntries[0].getTransactionAmount()));
-    }
 
 
-    private AccountEntry[] buildAccountEntry(){
-       AccountEntry[] entries = { new AccountEntry(1000.0f,AccountEntry.TransactionType.DEBIT),
-                                  new AccountEntry(10000.0f,AccountEntry.TransactionType.CREDIT),
-                                  new AccountEntry(10000.0f,AccountEntry.TransactionType.DEBIT),
-                                };
-       return entries;
-    }
 
-    private AccountEntry buildAccountEntry_two(){
-        return new AccountEntry(1000.0f,AccountEntry.TransactionType.CREDIT);
-    }
 
-    private AccountEntry[] buildAccountEntry_three(){
-        AccountEntry[] entries = { new AccountEntry(2200.0f,AccountEntry.TransactionType.DEBIT),
-                                   new AccountEntry(200.0f,AccountEntry.TransactionType.CREDIT),
-                                   new AccountEntry(2000.0f,AccountEntry.TransactionType.CREDIT),
-        };
-        return entries;
-    }
 
-    private AccountEntry[] buildAccountEntry_four(){
-        AccountEntry[] entries = { new AccountEntry(3000.0f,AccountEntry.TransactionType.DEBIT),
-                                   new AccountEntry(400.0f,AccountEntry.TransactionType.CREDIT),
-                                   new AccountEntry(2600.0f,AccountEntry.TransactionType.CREDIT),
-        };
-        return entries;
-    }
-    private AccountEntry buildAccountEntry_five(){
-        return new AccountEntry(400.0f,AccountEntry.TransactionType.CREDIT);
-    }
 
-    private AccountEntry[] buildAccountEntry_six(){
-        AccountEntry[] entries = { new AccountEntry(900.0f,AccountEntry.TransactionType.DEBIT),
-                                   new AccountEntry(900.0f,AccountEntry.TransactionType.CREDIT)
-        };
-        return entries;
-    }
 
-    private AccountEntry buildAccountEntry_seven(){
-        return  new AccountEntry(400.0f,AccountEntry.TransactionType.DEBIT) ;
-    }
-    private AccountEntry[] buildAccountEntry_eight(){
-        AccountEntry[] entries = { new AccountEntry(2000.0f,AccountEntry.TransactionType.DEBIT),
-                                   new AccountEntry(2000.0f,AccountEntry.TransactionType.CREDIT)
-        };
-        return entries;
-    }
-     private AccountEntry[] buildAccountEntry_nine(){
-        AccountEntry[] entries = { new AccountEntry(2500.0f,AccountEntry.TransactionType.DEBIT),
-                                   new AccountEntry(2500.0f,AccountEntry.TransactionType.CREDIT)
-        };
-        return entries;
-    }
-
-    private String getEntryValueFromJournalEntry(ArrayList <HashMap> entryResponse,int entryNumber){
-        HashMap map = (HashMap) entryResponse.get(entryNumber).get("entryType");
-        return (String) map.get("value");
-    }
-
-    private Float getTransactionAmountFromJournalEntry(ArrayList<HashMap> entryResponse, int entryNumber){
-        return (Float)entryResponse.get(entryNumber).get("amount");
-    }
-
-    private String convertDateToURLFormat(String dateToBeConvert){
-        SimpleDateFormat oldFormat = new SimpleDateFormat("dd MMMMMM yyyy");
-        SimpleDateFormat newFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String reformattedStr="";
-        try {
-            reformattedStr = newFormat.format(oldFormat.parse(dateToBeConvert));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return reformattedStr;
-    }
 }
 
