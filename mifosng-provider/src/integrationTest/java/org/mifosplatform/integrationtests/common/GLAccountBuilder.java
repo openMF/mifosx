@@ -5,11 +5,12 @@ import java.util.HashMap;
 
 public class GLAccountBuilder {
 
-    private static final String ASSET_ACCOUNT="1";
-    private static final String LIABILITY_ACCOUNT="2";
-    private static final String EQUITY_ACCOUNT="3";
-    private static final String INCOME_ACCOUNT="4";
-    private static final String EXPENSE_ACCOUNT="5";
+    public static String ASSET_ACCOUNT="1";
+    public static final String LIABILITY_ACCOUNT="2";
+    public static final String EQUITY_ACCOUNT="3";
+    public static final String INCOME_ACCOUNT="4";
+    public static final String EXPENSE_ACCOUNT="5";
+
     private static final String ACCOUNT_USAGE_DETAIL="1";
     private static final String ACCOUNT_USAGE_HEADER="2";
     private  static final String MANUAL_ENTRIES_ALLOW="true";
