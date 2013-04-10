@@ -7,6 +7,8 @@ import com.google.gson.Gson;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.jayway.restassured.specification.ResponseSpecification;
 
+import static org.junit.Assert.assertEquals;
+
 @SuppressWarnings("rawtypes")
 public class LoanTransactionHelper {
 
@@ -33,6 +35,7 @@ public class LoanTransactionHelper {
             final Integer loanID) {
         String URL = "/mifosng-provider/api/v1/loans/" + loanID + "?associations=repaymentSchedule&tenantIdentifier=default";
         HashMap response = Utils.performServerGet(requestSpec, responseSpec, URL, "repaymentSchedule");
+        System.out.println("RESPONSE:*************************************"+response);
         return (ArrayList) response.get("periods");
     }
 
@@ -153,5 +156,11 @@ public class LoanTransactionHelper {
 
         HashMap response = Utils.performServerPost(requestSpec, responseSpec, postURLForLoanTransaction, jsonToBeSent, "changes");
         return (HashMap) response.get("status");
+    }
+
+    public static void verifyRepaymentScheduleEntryFor(RequestSpecification requestSpec, ResponseSpecification responseSpec, final int repaymentNumber, final float expectedPrincipalOutstanding, final Integer loanID) {
+        System.out.println("---------------------------GETTING LOAN REPAYMENT SCHEDULE--------------------------------");
+        ArrayList<HashMap> repaymentPeriods = getLoanRepaymentSchedule(requestSpec, responseSpec, loanID);
+        assertEquals("Mismatch in Principal Loan Balance Outstanding ", expectedPrincipalOutstanding, repaymentPeriods.get(repaymentNumber).get("principalLoanBalanceOutstanding"));
     }
 }

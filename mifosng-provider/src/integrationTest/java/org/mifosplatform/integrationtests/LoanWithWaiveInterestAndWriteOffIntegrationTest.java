@@ -2,7 +2,6 @@ package org.mifosplatform.integrationtests;
 
 //import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.junit.Before;
@@ -81,7 +80,7 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         LoanStatusChecker.verifyLoanIsActive(loanStatusHashMap);
 
         // PERFORM REPAYMENTS AND CHECK LOAN STATUS
-        verifyRepaymentScheduleEntryFor(1, 4000.0F, loanID);
+        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec, responseSpec, 1, 4000.0F, loanID);
         LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, "1 January 2011", 540.0f, loanID);
         LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, "1 March 2011", 540.0f, loanID);
         LoanTransactionHelper.waiveInterest(requestSpec, responseSpec, "1 May 2011", INTEREST_VALUE_AMOUNT, loanID);
@@ -93,17 +92,11 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         LoanTransactionHelper.waiveInterest(requestSpec, responseSpec, "1 January 2012", INTEREST_VALUE_AMOUNT, loanID);
         LoanTransactionHelper.makeRepayment(requestSpec, responseSpec, "1 January 2012", 500.0f, loanID);
 
-        verifyRepaymentScheduleEntryFor(7, 1000.0f, loanID);
+        LoanTransactionHelper.verifyRepaymentScheduleEntryFor(requestSpec, responseSpec, 7, 1000.0f, loanID);
 
         // WRITE OFF LOAN AND CHECK ACCOUNT IS CLOSED
         LoanStatusChecker.verifyLoanAccountIsClosed(LoanTransactionHelper.writeOffLoan(requestSpec, responseSpec, "1 March 2012", loanID));
 
-    }
-
-    private void verifyRepaymentScheduleEntryFor(final int repaymentNumber, final float expectedPrincipalOutstanding, final Integer loanID) {
-        System.out.println("---------------------------GETTING LOAN REPAYMENT SCHEDULE--------------------------------");
-        ArrayList<HashMap> repaymentPeriods = LoanTransactionHelper.getLoanRepaymentSchedule(requestSpec, responseSpec, loanID);
-        assertEquals("Mismatch in Principal Loan Balance Outstanding ", expectedPrincipalOutstanding, repaymentPeriods.get(repaymentNumber).get("principalLoanBalanceOutstanding"));
     }
 
     private Integer createLoanProduct() {
