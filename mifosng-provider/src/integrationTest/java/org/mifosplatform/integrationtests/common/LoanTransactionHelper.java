@@ -87,7 +87,7 @@ public class LoanTransactionHelper {
     }
 
     public HashMap withdrawLoanApplicationByClient(final String date, final Integer loanID) {
-        return performLoanTransaction(createLoanTransactionURL(WITHDRAW_LOAN_APPLICATION_COMMAND,loanID),
+        return performLoanTransaction(createLoanOperationURL(WITHDRAW_LOAN_APPLICATION_COMMAND,loanID),
                 getWithdrawLoanApplicationBodyAsJSON(date));
     }
 
