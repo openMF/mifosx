@@ -20,6 +20,7 @@ public class LoanTransactionHelper {
     private static final String APPROVE_LOAN_COMMAND = "approve";
     private static final String UNDO_APPROVAL_LOAN_COMMAND = "undoApproval";
     private static final String DISBURSE_LOAN_COMMAND = "disburse";
+    private static final String UNDO_DISBURSE_LOAN_COMMAND = "undoDisbursal";
     private static final String WRITE_OFF_LOAN_COMMAND = "writeoff";
     private static final String WAIVE_INTEREST_COMMAND = "waiveinterest";
     private static final String MAKE_REPAYMENT_COMMAND = "repayment";
@@ -62,6 +63,10 @@ public class LoanTransactionHelper {
                 getDisburseLoanAsJSON(date));
     }
 
+    public HashMap undoDisbursal(final Integer loanID){
+        String undoDisburseJson = "{'note' : 'UNDO DISBURSAL'}";
+        return performLoanTransaction(requestSpec,responseSpec,createLoanTransactionURL(UNDO_DISBURSE_LOAN_COMMAND,loanID),undoDisburseJson);
+    }
     public HashMap writeOffLoan(final String date,
                                 final Integer loanID) {
         return performLoanTransaction(requestSpec, responseSpec, createLoanTransactionURL(WRITE_OFF_LOAN_COMMAND, loanID),

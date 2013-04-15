@@ -85,6 +85,19 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         // PERFORM REPAYMENTS AND CHECK LOAN STATUS
         loanTransactionHelper.verifyRepaymentScheduleEntryFor(1, 4000.0F, loanID);
         loanTransactionHelper.makeRepayment("1 January 2011", 540.0f, loanID);
+
+        //UNDO DISBURSE LOAN
+        loanStatusHashMap=loanTransactionHelper.undoDisbursal(loanID);
+        LoanStatusChecker.verifyLoanIsWaitingForDisbursal(loanStatusHashMap);
+
+        //DIBURSE AGAIN
+        loanStatusHashMap = loanTransactionHelper.disburseLoan(DISBURSEMENT_DATE, loanID);
+        System.out.println("DISBURSE " + loanStatusHashMap);
+        LoanStatusChecker.verifyLoanIsActive(loanStatusHashMap);
+
+//MAKE REPAYMENTS
+        loanTransactionHelper.verifyRepaymentScheduleEntryFor(1, 4000.0F, loanID);
+        loanTransactionHelper.makeRepayment("1 January 2011", 540.0f, loanID);
         loanTransactionHelper.makeRepayment("1 March 2011", 540.0f, loanID);
         loanTransactionHelper.waiveInterest("1 May 2011", INTEREST_VALUE_AMOUNT, loanID);
         loanTransactionHelper.makeRepayment("1 May 2011", 500.0f, loanID);
