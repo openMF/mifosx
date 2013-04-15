@@ -35,6 +35,10 @@ public class LoanStatusChecker {
         assertTrue(getStatus(loanStatusHashMap, "closed"));
     }
 
+    public  static void verifyLoanAccountIsNotActive(final HashMap loanStatusHashMap) {
+        assertFalse(getStatus(loanStatusHashMap, "active"));
+    }
+
     public static HashMap getStatusOfLoan(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
             final Integer loanID) {
         String url = "/mifosng-provider/api/v1/loans/" + loanID + "?tenantIdentifier=default";
