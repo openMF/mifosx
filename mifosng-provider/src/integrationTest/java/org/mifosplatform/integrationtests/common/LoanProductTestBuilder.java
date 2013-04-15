@@ -29,9 +29,9 @@ public class LoanProductTestBuilder {
 
     private String nameOfLoanProduct = ClientHelper.randomNameGenerator("LOAN_PRODUCT_", 6);
     private String principal = "10000.00";
-    private String numberOfRepayments = "0";
-    private String repaymentFrequency = WEEK;
-    private String repaymentPeriod = "0";
+    private String numberOfRepayments = "5";
+    private String repaymentFrequency = MONTHS;
+    private String repaymentPeriod = "1";
     private String interestRatePerPeriod= "2";
     private String interestRateFrequencyType = MONTHS;
     private String interestType = FLAT_BALANCE;
@@ -237,6 +237,5 @@ public class LoanProductTestBuilder {
 
         return map;
     }
-
 
 }
