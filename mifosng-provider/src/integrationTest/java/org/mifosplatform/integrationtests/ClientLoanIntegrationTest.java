@@ -60,7 +60,7 @@ public class ClientLoanIntegrationTest {
                 .withRepaymentAfterEvery("1").withRepaymentTypeAsMonth().withinterestRatePerPeriod("2")
                 .withInterestRateFrequencyTypeAsMonths().withAmortizationTypeAsEqualInstallments().withInterestTypeAsDecliningBalance()
                 .withinterestRatePerPeriod("1").build();
-        return loanTransactionHelper.getLoanProductId(requestSpec, responseSpec, loanProductJSON);
+        return loanTransactionHelper.getLoanProductId(loanProductJSON);
     }
 
     private Integer applyForLoanApplication(final Integer clientID, final Integer loanProductID) {
@@ -71,7 +71,7 @@ public class ClientLoanIntegrationTest {
                 .withAmortizationTypeAsEqualInstallments().withInterestTypeAsDecliningBalance()
                 .withInterestCalculationPeriodTypeSameAsRepaymentPeriod().withExpectedDisbursementDate("20 September 2011")
                 .withSubmittedOnDate("20 September 2011").build(clientID.toString(), loanProductID.toString());
-        return loanTransactionHelper.getLoanId(requestSpec, responseSpec, loanApplicationJSON);
+        return loanTransactionHelper.getLoanId(loanApplicationJSON);
     }
 
     private void verifyLoanRepaymentSchedule(final ArrayList<HashMap> loanSchedule) {

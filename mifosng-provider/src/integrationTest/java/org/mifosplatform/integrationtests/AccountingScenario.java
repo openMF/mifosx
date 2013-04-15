@@ -178,7 +178,7 @@ public class AccountingScenario {
                 .withAmortizationTypeAsEqualPrinciplePayment().withInterestTypeAsFlat()
                 .withAccountingRuleAsAccrualBased(accounts)
                 .build();
-        return loanTransactionHelper.getLoanProductId(requestSpec, responseSpec, loanProductJSON);
+        return loanTransactionHelper.getLoanProductId(loanProductJSON);
     }
 
     private Integer applyForLoanApplication(final Integer clientID, final Integer loanProductID) {
@@ -190,7 +190,7 @@ public class AccountingScenario {
                 .withAmortizationTypeAsEqualPrincipalPayments().withInterestCalculationPeriodTypeSameAsRepaymentPeriod()
                 .withExpectedDisbursementDate(EXPECTED_DISBURSAL_DATE).withSubmittedOnDate(LOAN_APPLICATION_SUBMISSION_DATE)
                 .build(clientID.toString(), loanProductID.toString());
-        return loanTransactionHelper.getLoanId(requestSpec, responseSpec, loanApplicationJSON);
+        return loanTransactionHelper.getLoanId(loanApplicationJSON);
     }
 
 
