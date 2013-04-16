@@ -25,9 +25,8 @@ public class LoanApplicationTestBuilder {
     private String repaymentFrequencyType = "";
 
     private String interestRate = "2";
-    private String interestRateFrequencyType = "0";
-    private String interestType = "";
-    private String amortizationType = "";
+    private String interestType = FLAT_BALANCE;
+    private String amortizationType = EQUAL_PRINCIPLE_PAYMENTS;
     private String interestCalculationPeriodType = CALCULATION_PERIOD_SAME_AS_REPAYMENT_PERIOD;
     private final String transactionProcessingID = MIFOS_STANDARD_STRATEGY;
     private String expectedDisbursmentDate = "";
@@ -46,7 +45,6 @@ public class LoanApplicationTestBuilder {
         map.put("numberOfRepayments", numberOfRepayment);
         map.put("repaymentEvery", repaymentPeriod);
         map.put("repaymentFrequencyType", repaymentFrequencyType);
-        map.put("interestRateFrequencyType", interestRateFrequencyType);
         map.put("interestRatePerPeriod", interestRate);
         map.put("amortizationType", amortizationType);
         map.put("interestType", interestType);
@@ -117,16 +115,6 @@ public class LoanApplicationTestBuilder {
         return this;
     }
 
-    public LoanApplicationTestBuilder withInterestRateFrequencyTypeAsMonths() {
-        this.interestRateFrequencyType = MONTHS;
-        return this;
-    }
-
-    public LoanApplicationTestBuilder withInterestRateFrequencyTypeAsYears() {
-        this.interestRateFrequencyType = YEARS;
-        return this;
-    }
-
     public LoanApplicationTestBuilder withInterestTypeAsFlatBalance() {
         this.interestType = FLAT_BALANCE;
         return this;
@@ -166,4 +154,6 @@ public class LoanApplicationTestBuilder {
         this.submittedOndate = loanApplicationSubmittedDate;
         return this;
     }
+
+
 }

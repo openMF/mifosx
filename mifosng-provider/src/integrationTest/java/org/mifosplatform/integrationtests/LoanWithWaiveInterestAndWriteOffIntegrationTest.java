@@ -95,7 +95,7 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         System.out.println("DISBURSE " + loanStatusHashMap);
         LoanStatusChecker.verifyLoanIsActive(loanStatusHashMap);
 
-//MAKE REPAYMENTS
+        //MAKE REPAYMENTS
         loanTransactionHelper.verifyRepaymentScheduleEntryFor(1, 4000.0F, loanID);
         loanTransactionHelper.makeRepayment("1 January 2011", 540.0f, loanID);
         loanTransactionHelper.makeRepayment("1 March 2011", 540.0f, loanID);
@@ -128,8 +128,7 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         System.out.println("--------------------------------APPLYING FOR LOAN APPLICATION--------------------------------");
         String loanApplicationJSON = new LoanApplicationTestBuilder().withPrincipal(PRINCIPAL).withLoanTermFrequency(LOAN_TERM_FREQUENCY)
                 .withLoanTermFrequencyAsMonths().withNumberOfRepayments(NUMBER_OF_REPAYMENTS).withRepaymentEveryAfter(REPAYMENT_PERIOD)
-                .withRepaymentFrequencyTypeAsMonths().withInterestRateFrequencyTypeAsMonths()
-                .withInterestRatePerPeriod(RATE_OF_INTEREST_PER_PERIOD).withInterestTypeAsFlatBalance()
+                .withRepaymentFrequencyTypeAsMonths().withInterestRatePerPeriod(RATE_OF_INTEREST_PER_PERIOD).withInterestTypeAsFlatBalance()
                 .withAmortizationTypeAsEqualInstallments().withInterestCalculationPeriodTypeSameAsRepaymentPeriod()
                 .withExpectedDisbursementDate(EXPECTED_DISBURSAL_DATE).withSubmittedOnDate(LOAN_APPLICATION_SUBMISSION_DATE)
                 .build(clientID.toString(), loanProductID.toString());

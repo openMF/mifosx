@@ -67,7 +67,7 @@ public class ClientLoanIntegrationTest {
         System.out.println("--------------------------------APPLYING FOR LOAN APPLICATION--------------------------------");
         String loanApplicationJSON = new LoanApplicationTestBuilder().withPrincipal("12,000.00").withLoanTermFrequency("4")
                 .withLoanTermFrequencyAsMonths().withNumberOfRepayments("4").withRepaymentEveryAfter("1")
-                .withRepaymentFrequencyTypeAsMonths().withInterestRatePerPeriod("2").withInterestRateFrequencyTypeAsMonths()
+                .withRepaymentFrequencyTypeAsMonths().withInterestRatePerPeriod("2")
                 .withAmortizationTypeAsEqualInstallments().withInterestTypeAsDecliningBalance()
                 .withInterestCalculationPeriodTypeSameAsRepaymentPeriod().withExpectedDisbursementDate("20 September 2011")
                 .withSubmittedOnDate("20 September 2011").build(clientID.toString(), loanProductID.toString());
