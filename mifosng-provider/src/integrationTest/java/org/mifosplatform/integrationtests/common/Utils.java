@@ -56,7 +56,6 @@ public class Utils {
             final String postURL, final String jsonBodyToSend, final String jsonAttributeToGetBack) {
         String json = given().spec(requestSpec).body(jsonBodyToSend).expect().spec(responseSpec).log().ifError().when().post(postURL)
                 .andReturn().asString();
-//        System.out.println("JSON****************************: "+json);
         return (T) from(json).get(jsonAttributeToGetBack);
     }
 
