@@ -28,9 +28,9 @@ public class LoanWithdrawnByApplicant {
     }
 
     @Test
-    public void LoanWithdrawnByApplicant(){
+    public void loanWithdrawnByApplicant(){
        Integer clientID = ClientHelper.createClient(requestSpec,responseSpec,"01 January 2012");
-       Integer loanProductID = createLoanProduct();
+        Integer loanProductID = loanTransactionHelper.getLoanProductId(new LoanProductTestBuilder().build());
        Integer loanID = applyForLoanApplication(clientID, loanProductID);
 
        HashMap loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(requestSpec, responseSpec, loanID);
@@ -40,11 +40,6 @@ public class LoanWithdrawnByApplicant {
        loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(requestSpec,responseSpec,loanID);
        LoanStatusChecker.verifyLoanAccountIsNotActive(loanStatusHashMap);
 
-    }
-
-    private Integer createLoanProduct(){
-       String loanProduct = new LoanProductTestBuilder().build();
-       return loanTransactionHelper.getLoanProductId(loanProduct);
     }
 
     private Integer applyForLoanApplication(Integer clientID, Integer loanProductID){

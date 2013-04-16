@@ -12,8 +12,8 @@ import static org.junit.Assert.assertEquals;
 @SuppressWarnings("rawtypes")
 public class LoanTransactionHelper {
 
-    private static RequestSpecification requestSpec;
-    private static ResponseSpecification responseSpec;
+    private RequestSpecification requestSpec;
+    private ResponseSpecification responseSpec;
 
     private static final String CREATE_LOAN_PRODUCT_URL = "/mifosng-provider/api/v1/loanproducts?tenantIdentifier=default";
     private static final String APPLY_LOAN_URL = "/mifosng-provider/api/v1/loans?tenantIdentifier=default";
@@ -43,7 +43,6 @@ public class LoanTransactionHelper {
             final Integer loanID) {
         String URL = "/mifosng-provider/api/v1/loans/" + loanID + "?associations=repaymentSchedule&tenantIdentifier=default";
         HashMap response = Utils.performServerGet(requestSpec, responseSpec, URL, "repaymentSchedule");
-        System.out.println("RESPONSE:*************************************"+response);
         return (ArrayList) response.get("periods");
     }
 
@@ -147,7 +146,7 @@ public class LoanTransactionHelper {
         return new Gson().toJson(map);
 
     }
-    public static String getLoanCalculationBodyAsJSON(final String productID) {
+    public String getLoanCalculationBodyAsJSON(final String productID) {
         HashMap<String, String> map = new HashMap<String, String>();
         map.put("dateFormat", "dd MMMM yyyy");
         map.put("locale", "en_GB");
@@ -168,15 +167,15 @@ public class LoanTransactionHelper {
         return new Gson().toJson(map);
     }
 
-    private static String createLoanOperationURL(final String command, final Integer loanID) {
+    private  String createLoanOperationURL(final String command, final Integer loanID) {
         return "/mifosng-provider/api/v1/loans/" + loanID + "?command=" + command + "&tenantIdentifier=default";
     }
 
-    private static String createLoanTransactionURL(final String command, final Integer loanID) {
+    private  String createLoanTransactionURL(final String command, final Integer loanID) {
         return "/mifosng-provider/api/v1/loans/" + loanID + "/transactions?command=" + command + "&tenantIdentifier=default";
     }
 
-    private static HashMap performLoanTransaction(final String postURLForLoanTransaction, final String jsonToBeSent) {
+    private  HashMap performLoanTransaction(final String postURLForLoanTransaction, final String jsonToBeSent) {
 
         HashMap response = Utils.performServerPost(requestSpec, responseSpec, postURLForLoanTransaction, jsonToBeSent, "changes");
         return (HashMap) response.get("status");
