@@ -11,6 +11,14 @@ import org.junit.Before;
 
 import org.junit.Test;
 import org.mifosplatform.integrationtests.common.*;
+import org.mifosplatform.integrationtests.common.accounting.Account;
+import org.mifosplatform.integrationtests.common.accounting.JournalEntry;
+import org.mifosplatform.integrationtests.common.accounting.AccountHelper;
+import org.mifosplatform.integrationtests.common.accounting.JournalEntryHelper;
+import org.mifosplatform.integrationtests.common.loans.LoanApplicationTestBuilder;
+import org.mifosplatform.integrationtests.common.loans.LoanProductTestBuilder;
+import org.mifosplatform.integrationtests.common.loans.LoanStatusChecker;
+import org.mifosplatform.integrationtests.common.loans.LoanTransactionHelper;
 
 import java.util.HashMap;
 
@@ -20,20 +28,20 @@ public class AccountingScenario {
     private RequestSpecification requestSpec;
     private ResponseSpecification responseSpec;
 
-    private String DATE_OF_JOINING = "01 January 2011";
+    private final String DATE_OF_JOINING = "01 January 2011";
 
-    private Float LP_PRINCIPAL=10000.0f;
-    private String LP_REPAYMENTS = "5";
-    private String LP_REPAYMENT_PERIOD = "2";
-    private String LP_INTEREST_RATE="1";
-    private String EXPECTED_DISBURSAL_DATE="04 March 2011";
-    private String LOAN_APPLICATION_SUBMISSION_DATE= "3 March 2011";
-    private String LOAN_TERM_FREQUENCY= "10";
+    private final Float LP_PRINCIPAL=10000.0f;
+    private final String LP_REPAYMENTS = "5";
+    private final String LP_REPAYMENT_PERIOD = "2";
+    private final String LP_INTEREST_RATE="1";
+    private final String EXPECTED_DISBURSAL_DATE="04 March 2011";
+    private final String LOAN_APPLICATION_SUBMISSION_DATE= "3 March 2011";
+    private final String LOAN_TERM_FREQUENCY= "10";
 
-    private String REPAYMENT_DATE[]={"","04 May 2011","04 July 2011","04 September 2011","04 November 2011","04 January 2012"};
-    private Float REPAYMENT_AMOUNT [] = {.0f,2200.0f,3000.0f,900.0f,2000.0f,2500.0f};
+    private final String REPAYMENT_DATE[]={"","04 May 2011","04 July 2011","04 September 2011","04 November 2011","04 January 2012"};
+    private final Float REPAYMENT_AMOUNT [] = {.0f,2200.0f,3000.0f,900.0f,2000.0f,2500.0f};
 
-    private Float amount_to_be_waive = 400.0f;
+    private final Float AMOUNT_TO_BE_WAIVE = 400.0f;
     private LoanTransactionHelper loanTransactionHelper;
     private AccountHelper accountHelper;
     private JournalEntryHelper journalEntryHelper;
@@ -75,29 +83,29 @@ public class AccountingScenario {
 
         //CHECK ACCOUNT ENTRIES
         System.out.println("Entries ......");
-        float PRINCIPAL_VALUE_FOR_EACH_PERIOD = 2000.0f;
-        float  TOTAL_INTEREST =1000.0f;
-        AccountEntry[] assetAccountInitialEntry =
-                                 { new AccountEntry(TOTAL_INTEREST,AccountEntry.TransactionType.DEBIT),
-                                   new AccountEntry(LP_PRINCIPAL,AccountEntry.TransactionType.CREDIT),
-                                   new AccountEntry(LP_PRINCIPAL,AccountEntry.TransactionType.DEBIT),
+        final float PRINCIPAL_VALUE_FOR_EACH_PERIOD = 2000.0f;
+        final float TOTAL_INTEREST =1000.0f;
+        JournalEntry[] assetAccountInitialEntry =
+                                 { new JournalEntry(TOTAL_INTEREST, JournalEntry.TransactionType.DEBIT),
+                                   new JournalEntry(LP_PRINCIPAL, JournalEntry.TransactionType.CREDIT),
+                                   new JournalEntry(LP_PRINCIPAL, JournalEntry.TransactionType.DEBIT),
         };
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, EXPECTED_DISBURSAL_DATE, assetAccountInitialEntry);
         System.out.println("CHECKING INCOME: ******************************************");
-        AccountEntry incomeAccountEntry = new AccountEntry(TOTAL_INTEREST, AccountEntry.TransactionType.CREDIT);
-        journalEntryHelper.checkJournalEntryForIncomeAccount(incomeAccount,EXPECTED_DISBURSAL_DATE, incomeAccountEntry);
+        JournalEntry incomeJournalEntry = new JournalEntry(TOTAL_INTEREST, JournalEntry.TransactionType.CREDIT);
+        journalEntryHelper.checkJournalEntryForIncomeAccount(incomeAccount,EXPECTED_DISBURSAL_DATE, incomeJournalEntry);
 
         //MAKE 1
         System.out.println("Repayment 1 ......");
         loanTransactionHelper.makeRepayment(REPAYMENT_DATE[1], REPAYMENT_AMOUNT[1], loanID);
         float FIRST_INTEREST = 200.0f;
-        float FIRST_PRINCIPLE = 2000.0f;
+        float FIRST_PRINCIPAL = 2000.0f;
         float expected_value = LP_PRINCIPAL- PRINCIPAL_VALUE_FOR_EACH_PERIOD;
         loanTransactionHelper.verifyRepaymentScheduleEntryFor(1, expected_value, loanID);
-        AccountEntry[] assetAccountFirstEntry=
-                              { new AccountEntry(REPAYMENT_AMOUNT[1],AccountEntry.TransactionType.DEBIT),
-                                new AccountEntry(FIRST_INTEREST,AccountEntry.TransactionType.CREDIT),
-                                new AccountEntry(FIRST_PRINCIPLE,AccountEntry.TransactionType.CREDIT),
+        JournalEntry[] assetAccountFirstEntry=
+                              { new JournalEntry(REPAYMENT_AMOUNT[1], JournalEntry.TransactionType.DEBIT),
+                                new JournalEntry(FIRST_INTEREST, JournalEntry.TransactionType.CREDIT),
+                                new JournalEntry(FIRST_PRINCIPAL, JournalEntry.TransactionType.CREDIT),
         };
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[1],assetAccountFirstEntry);
         System.out.println("Repayment 1 Done......");
@@ -105,35 +113,35 @@ public class AccountingScenario {
         //REPAYMENT 2
         System.out.println("Repayment 2 ......");
         loanTransactionHelper.makeRepayment(REPAYMENT_DATE[2], REPAYMENT_AMOUNT[2], loanID);
-        float SECOND_THIRD_INTEREST = 400.0f;
-        float SECOND_PRINCIPLE = REPAYMENT_AMOUNT[2]-SECOND_THIRD_INTEREST;
+        float SECOND_AND_THIRD_INTEREST = 400.0f;
+        float SECOND_PRINCIPAL = REPAYMENT_AMOUNT[2]-SECOND_AND_THIRD_INTEREST;
         expected_value = expected_value - PRINCIPAL_VALUE_FOR_EACH_PERIOD;
         loanTransactionHelper.verifyRepaymentScheduleEntryFor(2,expected_value,loanID);
-        AccountEntry[] assetAccountSecondEntry = { new AccountEntry(REPAYMENT_AMOUNT[2],AccountEntry.TransactionType.DEBIT),
-                                                   new AccountEntry(SECOND_THIRD_INTEREST,AccountEntry.TransactionType.CREDIT),
-                                                   new AccountEntry(SECOND_PRINCIPLE,AccountEntry.TransactionType.CREDIT),
+        JournalEntry[] assetAccountSecondEntry = { new JournalEntry(REPAYMENT_AMOUNT[2], JournalEntry.TransactionType.DEBIT),
+                                                   new JournalEntry(SECOND_AND_THIRD_INTEREST, JournalEntry.TransactionType.CREDIT),
+                                                   new JournalEntry(SECOND_PRINCIPAL, JournalEntry.TransactionType.CREDIT),
         };
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[2], assetAccountSecondEntry);
         System.out.println("Repayment 2 Done ......");
 
         //WAIVE INTEREST
         System.out.println("Waive Interest  ......");
-        loanTransactionHelper.waiveInterest(REPAYMENT_DATE[4], amount_to_be_waive.toString(), loanID);
+        loanTransactionHelper.waiveInterest(REPAYMENT_DATE[4], AMOUNT_TO_BE_WAIVE.toString(), loanID);
 
-        AccountEntry waivedEntry = new  AccountEntry(amount_to_be_waive,AccountEntry.TransactionType.CREDIT);
+        JournalEntry waivedEntry = new JournalEntry(AMOUNT_TO_BE_WAIVE, JournalEntry.TransactionType.CREDIT);
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[4],waivedEntry);
 
-        AccountEntry expenseAccountEntry = new AccountEntry(amount_to_be_waive, AccountEntry.TransactionType.DEBIT);
-        journalEntryHelper.checkJournalEntryForExpenseAccount(expenseAccount, REPAYMENT_DATE[4], expenseAccountEntry);
+        JournalEntry expenseJournalEntry = new JournalEntry(AMOUNT_TO_BE_WAIVE, JournalEntry.TransactionType.DEBIT);
+        journalEntryHelper.checkJournalEntryForExpenseAccount(expenseAccount, REPAYMENT_DATE[4], expenseJournalEntry);
         System.out.println("Waive Interest Done......");
 
         //REPAYMENT 3
         System.out.println("Repayment 3 ......");
         loanTransactionHelper.makeRepayment(REPAYMENT_DATE[3], REPAYMENT_AMOUNT[3], loanID);
         expected_value = expected_value - PRINCIPAL_VALUE_FOR_EACH_PERIOD;
-        AccountEntry[] assetAccountThirdEntry = {
-                new AccountEntry(REPAYMENT_AMOUNT[3],AccountEntry.TransactionType.DEBIT),
-                new AccountEntry(REPAYMENT_AMOUNT[3],AccountEntry.TransactionType.CREDIT)
+        JournalEntry[] assetAccountThirdEntry = {
+                new JournalEntry(REPAYMENT_AMOUNT[3], JournalEntry.TransactionType.DEBIT),
+                new JournalEntry(REPAYMENT_AMOUNT[3], JournalEntry.TransactionType.CREDIT)
         };
         loanTransactionHelper.verifyRepaymentScheduleEntryFor(3, expected_value, loanID);
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, REPAYMENT_DATE[3], assetAccountThirdEntry);
@@ -144,16 +152,16 @@ public class AccountingScenario {
         loanTransactionHelper.makeRepayment(REPAYMENT_DATE[4], REPAYMENT_AMOUNT[4], loanID);
         expected_value = expected_value - PRINCIPAL_VALUE_FOR_EACH_PERIOD;
         loanTransactionHelper.verifyRepaymentScheduleEntryFor(4, expected_value, loanID);
-        AccountEntry[] assetAccountFourthEntry = { new AccountEntry(REPAYMENT_AMOUNT[4],AccountEntry.TransactionType.DEBIT),
-                                                   new AccountEntry(REPAYMENT_AMOUNT[4],AccountEntry.TransactionType.CREDIT)
+        JournalEntry[] assetAccountFourthEntry = { new JournalEntry(REPAYMENT_AMOUNT[4], JournalEntry.TransactionType.DEBIT),
+                                                   new JournalEntry(REPAYMENT_AMOUNT[4], JournalEntry.TransactionType.CREDIT)
         };
         journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount,REPAYMENT_DATE[4],assetAccountFourthEntry);
         System.out.println("Repayment 4 Done  ......");
 
         //Repayment 5
         System.out.println("Repayment 5 ......");
-        AccountEntry[] assetAccountFifthEntry = { new AccountEntry(REPAYMENT_AMOUNT[5],AccountEntry.TransactionType.DEBIT),
-                                                  new AccountEntry(REPAYMENT_AMOUNT[5],AccountEntry.TransactionType.CREDIT)
+        JournalEntry[] assetAccountFifthEntry = { new JournalEntry(REPAYMENT_AMOUNT[5], JournalEntry.TransactionType.DEBIT),
+                                                  new JournalEntry(REPAYMENT_AMOUNT[5], JournalEntry.TransactionType.CREDIT)
         };
         expected_value = expected_value - PRINCIPAL_VALUE_FOR_EACH_PERIOD;
         loanTransactionHelper.makeRepayment(REPAYMENT_DATE[5], REPAYMENT_AMOUNT[5], loanID);
