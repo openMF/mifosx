@@ -16,6 +16,7 @@ import com.jayway.restassured.specification.ResponseSpecification;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Random;
 
 @SuppressWarnings("unchecked")
 public class Utils {
@@ -48,13 +49,17 @@ public class Utils {
 
     public static <T> T performServerGet(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
             final String getURL, final String jsonAttributeToGetBack) {
-        String json = given().spec(requestSpec).expect().spec(responseSpec).log().ifError().when().get(getURL).andReturn().asString();
+        String json = given().spec(requestSpec)
+                .expect().spec(responseSpec).log().ifError()
+                .when().get(getURL).andReturn().asString();
         return (T) from(json).get(jsonAttributeToGetBack);
     }
 
     public static <T> T performServerPost(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
             final String postURL, final String jsonBodyToSend, final String jsonAttributeToGetBack) {
-        String json = given().spec(requestSpec).body(jsonBodyToSend).expect().spec(responseSpec).log().ifError().when().post(postURL)
+        String json = given().spec(requestSpec).body(jsonBodyToSend)
+                .expect().spec(responseSpec).log().ifError()
+                .when().post(postURL)
                 .andReturn().asString();
         return (T) from(json).get(jsonAttributeToGetBack);
     }
@@ -72,4 +77,16 @@ public class Utils {
         return reformattedStr;
     }
 
+    public static String randomStringGenerator(final String prefix, final int len, final String sourceSetString) {
+        int lengthOfSource = sourceSetString.length();
+        Random rnd = new Random();
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++)
+            sb.append((sourceSetString).charAt(rnd.nextInt(lengthOfSource)));
+        return (prefix + (sb.toString()));
+    }
+
+    public static String randomStringGenerator(final String prefix, final int len) {
+        return randomStringGenerator(prefix, len, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    }
 }
