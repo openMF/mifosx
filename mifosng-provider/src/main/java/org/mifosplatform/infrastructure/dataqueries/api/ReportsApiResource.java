@@ -14,8 +14,10 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -97,6 +99,25 @@ public class ReportsApiResource {
 				RESPONSE_DATA_PARAMETERS);
 	}
 
+	@GET
+	@Path("wip/{id}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String retrieveReport(@PathParam("id") final Long id,
+			@Context final UriInfo uriInfo) {
+
+		context.authenticatedUser().validateHasReadPermission(
+				resourceNameForPermissions);
+
+		final ReportData result = this.readExtraDataAndReportingService
+				.retrieveReport(id);
+
+		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper
+				.process(uriInfo.getQueryParameters());
+		return this.toApiJsonSerializer.serialize(settings, result,
+				RESPONSE_DATA_PARAMETERS);
+	}
+
 	@POST
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
@@ -111,12 +132,43 @@ public class ReportsApiResource {
 		return this.toApiJsonSerializer.serialize(result);
 	}
 
+	@PUT
+	@Path("{id}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String updateReport(@PathParam("id") final Long id,
+			final String apiRequestBodyAsJson) {
+
+		final CommandWrapper commandRequest = new CommandWrapperBuilder()
+				.updateReport(id).withJson(apiRequestBodyAsJson).build();
+
+		final CommandProcessingResult result = this.commandsSourceWritePlatformService
+				.logCommandSource(commandRequest);
+
+		return this.toApiJsonSerializer.serialize(result);
+	}
+
+	@DELETE
+	@Path("{id}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String deleteReport(@PathParam("id") final Long id) {
+
+		final CommandWrapper commandRequest = new CommandWrapperBuilder()
+				.deleteReport(id).build();
+
+		final CommandProcessingResult result = this.commandsSourceWritePlatformService
+				.logCommandSource(commandRequest);
+
+		return this.toApiJsonSerializer.serialize(result);
+	}
+
 	@GET
 	@Path("{reportName}")
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON, "application/x-msdownload",
 			"application/vnd.ms-excel", "application/pdf", "text/html" })
-	public Response retrieveReport(
+	public Response runReport(
 			@PathParam("reportName") final String reportName,
 			@Context final UriInfo uriInfo) {
 
