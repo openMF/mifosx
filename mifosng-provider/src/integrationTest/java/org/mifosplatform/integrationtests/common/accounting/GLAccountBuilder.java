@@ -1,6 +1,10 @@
-package org.mifosplatform.integrationtests.common;
+package org.mifosplatform.integrationtests.common.accounting;
 
 import com.google.gson.Gson;
+import org.mifosplatform.integrationtests.common.ClientHelper;
+import org.mifosplatform.integrationtests.common.Utils;
+
+import java.util.Calendar;
 import java.util.HashMap;
 
 public class GLAccountBuilder {
@@ -16,7 +20,8 @@ public class GLAccountBuilder {
     private  static final String MANUAL_ENTRIES_ALLOW="true";
     private  static final String MANUAL_ENTRIES_NOT_ALLOW="false";
 
-    private static String name = ClientHelper.randomNameGenerator("ACCOUNT_NAME_",5);
+    private static String name = Utils.randomStringGenerator("ACCOUNT_NAME_", 5);
+
     private static String GLCode="";
     private static String accountType="";
     private static String accountUsage=ACCOUNT_USAGE_DETAIL;
@@ -35,28 +40,33 @@ public class GLAccountBuilder {
     }
 
     public GLAccountBuilder withAccountTypeAsAsset(){
-        this.accountType=ASSET_ACCOUNT;
-        this.GLCode=ClientHelper.randomNameGenerator("ASSET_",2);
+        this.accountType= ASSET_ACCOUNT;
+        this.GLCode= Utils.randomStringGenerator("ASSET_",2);
+        this.GLCode+= Calendar.getInstance().getTimeInMillis()+""; //Added unique timestamp for avoiding random collisions
         return this;
     }
     public GLAccountBuilder withAccountTypeAsLiability(){
         this.accountType=LIABILITY_ACCOUNT;
-        this.GLCode=ClientHelper.randomNameGenerator("LIABILITY_",2);
+        this.GLCode=Utils.randomStringGenerator("LIABILITY_",2);
+        this.GLCode+= Calendar.getInstance().getTimeInMillis()+"";
         return this;
     }
     public GLAccountBuilder withAccountTypeAsAsEquity(){
         this.accountType=EQUITY_ACCOUNT;
-        this.GLCode=ClientHelper.randomNameGenerator("EQUITY_",2);
+        this.GLCode=Utils.randomStringGenerator("EQUITY_",2);
+        this.GLCode+= Calendar.getInstance().getTimeInMillis()+"";
         return this;
     }
     public GLAccountBuilder withAccountTypeAsIncome(){
         this.accountType=INCOME_ACCOUNT;
-        this.GLCode=ClientHelper.randomNameGenerator("INCOME_",2);
+        this.GLCode=Utils.randomStringGenerator("INCOME_",2);
+        this.GLCode+= Calendar.getInstance().getTimeInMillis()+"";
         return this;
     }
     public GLAccountBuilder withAccountTypeAsExpense(){
         this.accountType=EXPENSE_ACCOUNT;
-        this.GLCode=ClientHelper.randomNameGenerator("EXPENSE_",2);
+        this.GLCode=Utils.randomStringGenerator("EXPENSE_",2);
+        this.GLCode+= Calendar.getInstance().getTimeInMillis()+"";
         return this;
     }
     public GLAccountBuilder withAccountUsageAsHeader(){

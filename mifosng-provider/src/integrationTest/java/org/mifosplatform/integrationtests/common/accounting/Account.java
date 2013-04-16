@@ -1,4 +1,4 @@
-package org.mifosplatform.integrationtests.common;
+package org.mifosplatform.integrationtests.common.accounting;
 
 public class Account {
 

@@ -1,4 +1,4 @@
-package org.mifosplatform.integrationtests.common;
+package org.mifosplatform.integrationtests.common.loans;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,6 +6,7 @@ import java.util.HashMap;
 import com.google.gson.Gson;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.jayway.restassured.specification.ResponseSpecification;
+import org.mifosplatform.integrationtests.common.Utils;
 
 import static org.junit.Assert.assertEquals;
 
@@ -66,8 +67,8 @@ public class LoanTransactionHelper {
         String undoDisburseJson = "{'note' : 'UNDO DISBURSAL'}";
         System.out.println("IN DISBURSE LOAN");
         String url =createLoanOperationURL(UNDO_DISBURSE_LOAN_COMMAND,loanID);
-        System.out.println("IN DISBURSE LOAN URL "+url);
-        return performLoanTransaction(createLoanOperationURL(UNDO_DISBURSE_LOAN_COMMAND,loanID),undoDisburseJson);
+        System.out.println("IN DISBURSE LOAN URL " + url);
+        return performLoanTransaction(createLoanOperationURL(UNDO_DISBURSE_LOAN_COMMAND, loanID), undoDisburseJson);
     }
     public HashMap writeOffLoan(final String date,
                                 final Integer loanID) {

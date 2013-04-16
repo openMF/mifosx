@@ -1,7 +1,8 @@
-package org.mifosplatform.integrationtests.common;
+package org.mifosplatform.integrationtests.common.accounting;
 
 import com.jayway.restassured.specification.RequestSpecification;
 import com.jayway.restassured.specification.ResponseSpecification;
+import org.mifosplatform.integrationtests.common.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,16 +20,16 @@ public class JournalEntryHelper {
         this.responseSpec = responseSpec;
     }
 
-    public  void checkJournalEntryForExpenseAccount(Account expenseAccount, String date, AccountEntry accountEntries) {
-       checkJournalEntry(expenseAccount,Utils.convertDateToURLFormat(date),accountEntries);
+    public  void checkJournalEntryForExpenseAccount(Account expenseAccount, String date, JournalEntry accountEntries) {
+       checkJournalEntry(expenseAccount, Utils.convertDateToURLFormat(date),accountEntries);
     }
 
 
-    public  void checkJournalEntryForAssetAccount(Account assetAccount, String date, AccountEntry... accountEntries) {
+    public  void checkJournalEntryForAssetAccount(Account assetAccount, String date, JournalEntry... accountEntries) {
          checkJournalEntry(assetAccount,Utils.convertDateToURLFormat(date),accountEntries);
     }
 
-    public void checkJournalEntryForIncomeAccount(Account incomeAccount, String date, AccountEntry accountEntries) {
+    public void checkJournalEntryForIncomeAccount(Account incomeAccount, String date, JournalEntry accountEntries) {
          checkJournalEntry(incomeAccount, Utils.convertDateToURLFormat(date), accountEntries);
     }
 
@@ -41,7 +42,7 @@ public class JournalEntryHelper {
         return (Float) entryResponse.get(entryNumber).get("amount");
     }
 
-    private void checkJournalEntry(Account account, String date, AccountEntry... accountEntries){
+    private void checkJournalEntry(Account account, String date, JournalEntry... accountEntries){
         String url = createURLForGettingAccountEntries(account,date);
         ArrayList<HashMap> response = Utils.performServerGet(requestSpec, responseSpec, url, "");
         for (int i = 0; i < accountEntries.length; i++) {

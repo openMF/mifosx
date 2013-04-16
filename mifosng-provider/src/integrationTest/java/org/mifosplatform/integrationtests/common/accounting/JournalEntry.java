@@ -1,7 +1,7 @@
-package org.mifosplatform.integrationtests.common;
+package org.mifosplatform.integrationtests.common.accounting;
 
 
-public class AccountEntry {
+public class JournalEntry {
 
     public enum TransactionType {
         CREDIT("CREDIT"),
@@ -21,7 +21,7 @@ public class AccountEntry {
     private final Float transactionAmount;
     private final TransactionType transactionType;
 
-    public  AccountEntry(float transactionAmount, TransactionType type){
+    public JournalEntry(float transactionAmount, TransactionType type){
         this.transactionAmount=transactionAmount;
         this.transactionType = type;
     }

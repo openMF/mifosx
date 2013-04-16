@@ -1,7 +1,8 @@
-package org.mifosplatform.integrationtests.common;
+package org.mifosplatform.integrationtests.common.accounting;
 
 import com.jayway.restassured.specification.RequestSpecification;
 import com.jayway.restassured.specification.ResponseSpecification;
+import org.mifosplatform.integrationtests.common.Utils;
 
 public class AccountHelper {
 

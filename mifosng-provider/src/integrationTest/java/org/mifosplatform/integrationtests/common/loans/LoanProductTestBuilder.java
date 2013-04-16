@@ -1,9 +1,11 @@
-package org.mifosplatform.integrationtests.common;
+package org.mifosplatform.integrationtests.common.loans;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.Gson;
+import org.mifosplatform.integrationtests.common.ClientHelper;
+import org.mifosplatform.integrationtests.common.accounting.Account;
 
 public class LoanProductTestBuilder {
     private static final String LOCALE = "en_GB";
