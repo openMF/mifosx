@@ -9,6 +9,10 @@ import com.jayway.restassured.specification.ResponseSpecification;
 import org.junit.Before;
 import org.junit.Test;
 import org.mifosplatform.integrationtests.common.*;
+import org.mifosplatform.integrationtests.common.loans.LoanApplicationTestBuilder;
+import org.mifosplatform.integrationtests.common.loans.LoanProductTestBuilder;
+import org.mifosplatform.integrationtests.common.loans.LoanStatusChecker;
+import org.mifosplatform.integrationtests.common.loans.LoanTransactionHelper;
 
 import java.util.HashMap;
 

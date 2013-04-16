@@ -7,10 +7,10 @@ import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mifosplatform.integrationtests.common.ClientHelper;
-import org.mifosplatform.integrationtests.common.LoanApplicationTestBuilder;
-import org.mifosplatform.integrationtests.common.LoanProductTestBuilder;
-import org.mifosplatform.integrationtests.common.LoanStatusChecker;
-import org.mifosplatform.integrationtests.common.LoanTransactionHelper;
+import org.mifosplatform.integrationtests.common.loans.LoanApplicationTestBuilder;
+import org.mifosplatform.integrationtests.common.loans.LoanProductTestBuilder;
+import org.mifosplatform.integrationtests.common.loans.LoanStatusChecker;
+import org.mifosplatform.integrationtests.common.loans.LoanTransactionHelper;
 import org.mifosplatform.integrationtests.common.Utils;
 
 import com.jayway.restassured.builder.RequestSpecBuilder;
