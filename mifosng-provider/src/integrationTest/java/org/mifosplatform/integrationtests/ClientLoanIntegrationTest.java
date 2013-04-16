@@ -27,9 +27,9 @@ import com.jayway.restassured.specification.ResponseSpecification;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ClientLoanIntegrationTest {
 
-    ResponseSpecification responseSpec;
-    RequestSpecification requestSpec;
-    LoanTransactionHelper loanTransactionHelper;
+    private ResponseSpecification responseSpec;
+    private RequestSpecification requestSpec;
+    private LoanTransactionHelper loanTransactionHelper;
     @Before
     public void setup() {
         Utils.initializeRESTAssured();

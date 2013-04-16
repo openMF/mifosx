@@ -13,9 +13,9 @@ import org.mifosplatform.integrationtests.common.*;
 import java.util.HashMap;
 
 public class LoanWithdrawnByApplicant {
-    ResponseSpecification responseSpec;
-    RequestSpecification requestSpec;
-    LoanTransactionHelper loanTransactionHelper;
+    private ResponseSpecification responseSpec;
+    private RequestSpecification requestSpec;
+    private LoanTransactionHelper loanTransactionHelper;
 
     @Before
     public void setup() {

@@ -28,16 +28,15 @@ import static org.junit.Assert.assertEquals;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
 
-    ResponseSpecification responseSpec;
-    RequestSpecification requestSpec;
+    private ResponseSpecification responseSpec;
+    private RequestSpecification requestSpec;
 
-    final String LP_PRINCIPAL = "12,000.00", LP_REPAYMENTS = "2", LP_REPAYMENT_PERIOD = "6", LP_INTEREST_RATE = "1",
-
-    PRINCIPAL = "4,500.00", LOAN_TERM_FREQUENCY = "18", NUMBER_OF_REPAYMENTS = "9", REPAYMENT_PERIOD = "2",
-            DISBURSEMENT_DATE = "30 October 2010", LOAN_APPLICATION_SUBMISSION_DATE = "23 September 2010",
-            EXPECTED_DISBURSAL_DATE = "28 October 2010", RATE_OF_INTEREST_PER_PERIOD = "2", DATE_OF_JOINING = "04 March 2009",
-            INTEREST_VALUE_AMOUNT = "40.00";
-    LoanTransactionHelper loanTransactionHelper;
+    private final String LP_PRINCIPAL = "12,000.00", LP_REPAYMENTS = "2", LP_REPAYMENT_PERIOD = "6", LP_INTEREST_RATE = "1",
+                         PRINCIPAL = "4,500.00", LOAN_TERM_FREQUENCY = "18", NUMBER_OF_REPAYMENTS = "9", REPAYMENT_PERIOD = "2",
+                         DISBURSEMENT_DATE = "30 October 2010", LOAN_APPLICATION_SUBMISSION_DATE = "23 September 2010",
+                         EXPECTED_DISBURSAL_DATE = "28 October 2010", RATE_OF_INTEREST_PER_PERIOD = "2",
+                         DATE_OF_JOINING = "04 March 2009",INTEREST_VALUE_AMOUNT = "40.00";
+    private LoanTransactionHelper loanTransactionHelper;
 
     @Before
     public void setup() {
@@ -45,7 +44,6 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         requestSpec = new RequestSpecBuilder().setContentType(ContentType.JSON).build();
         requestSpec.header("Authorization", "Basic " + Utils.loginIntoServerAndGetBase64EncodedAuthenticationKey());
         responseSpec = new ResponseSpecBuilder().expectStatusCode(200).build();
-
         loanTransactionHelper = new LoanTransactionHelper(requestSpec,responseSpec);
     }
 
