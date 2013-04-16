@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 public class GLAccountBuilder {
 
-    public static String ASSET_ACCOUNT="1";
+    public static final String ASSET_ACCOUNT="1";
     public static final String LIABILITY_ACCOUNT="2";
     public static final String EQUITY_ACCOUNT="3";
     public static final String INCOME_ACCOUNT="4";

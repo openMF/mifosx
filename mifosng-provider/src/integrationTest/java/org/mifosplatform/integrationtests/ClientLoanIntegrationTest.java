@@ -32,13 +32,10 @@ public class ClientLoanIntegrationTest {
     LoanTransactionHelper loanTransactionHelper;
     @Before
     public void setup() {
-        System.out.println(" In SETUP !!! ");
         Utils.initializeRESTAssured();
         requestSpec = new RequestSpecBuilder().setContentType(ContentType.JSON).build();
         requestSpec.header("Authorization", "Basic " + Utils.loginIntoServerAndGetBase64EncodedAuthenticationKey());
         responseSpec = new ResponseSpecBuilder().expectStatusCode(200).build();
-
-        System.out.println("SETUP COMPLT ");
     }
 
     @Test

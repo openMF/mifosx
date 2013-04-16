@@ -27,10 +27,6 @@ public class LoanStatusChecker {
         assertTrue(getStatus(loanStatusHashMap, "active"));
     }
 
-    public static void verifyLoanNeedsApproval(final HashMap loanStatusHashMap) {
-        assertTrue(getStatus(loanStatusHashMap, "pendingApproval"));
-    }
-
     public static void verifyLoanAccountIsClosed(final HashMap loanStatusHashMap) {
         assertTrue(getStatus(loanStatusHashMap, "closed"));
     }

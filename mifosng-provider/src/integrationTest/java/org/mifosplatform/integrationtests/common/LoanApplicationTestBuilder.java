@@ -30,7 +30,7 @@ public class LoanApplicationTestBuilder {
     private String interestCalculationPeriodType = CALCULATION_PERIOD_SAME_AS_REPAYMENT_PERIOD;
     private final String transactionProcessingID = MIFOS_STANDARD_STRATEGY;
     private String expectedDisbursmentDate = "";
-    private String submittedOndate = "";
+    private String submittedOnDate = "";
 
     public String build(final String clientID, final String loanProductId) {
 
@@ -51,7 +51,7 @@ public class LoanApplicationTestBuilder {
         map.put("interestCalculationPeriodType", interestCalculationPeriodType);
         map.put("transactionProcessingStrategyId", transactionProcessingID);
         map.put("expectedDisbursementDate", expectedDisbursmentDate);
-        map.put("submittedOnDate", submittedOndate);
+        map.put("submittedOnDate", submittedOnDate);
         return new Gson().toJson(map);
     }
 
@@ -151,7 +151,7 @@ public class LoanApplicationTestBuilder {
     }
 
     public LoanApplicationTestBuilder withSubmittedOnDate(final String loanApplicationSubmittedDate) {
-        this.submittedOndate = loanApplicationSubmittedDate;
+        this.submittedOnDate = loanApplicationSubmittedDate;
         return this;
     }
 
