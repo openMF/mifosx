@@ -89,7 +89,6 @@ public class AccountingScenario {
 
         //MAKE 1
         System.out.println("Repayment 1 ......");
-
         loanTransactionHelper.makeRepayment(REPAYMENT_DATE[1], REPAYMENT_AMOUNT[1], loanID);
         float FIRST_INTEREST = 200.0f;
         float FIRST_PRINCIPLE = 2000.0f;
@@ -131,7 +130,6 @@ public class AccountingScenario {
         //REPAYMENT 3
         System.out.println("Repayment 3 ......");
         loanTransactionHelper.makeRepayment(REPAYMENT_DATE[3], REPAYMENT_AMOUNT[3], loanID);
-        System.out.println("In  Repayment 3 ......");
         expected_value = expected_value - PRINCIPAL_VALUE_FOR_EACH_PERIOD;
         AccountEntry[] assetAccountThirdEntry = {
                 new AccountEntry(REPAYMENT_AMOUNT[3],AccountEntry.TransactionType.DEBIT),
@@ -164,7 +162,6 @@ public class AccountingScenario {
         System.out.println("Repayment 5 Done  ......");
     }
 
-
     private Integer createLoanProduct(Account ... accounts) {
         System.out.println("------------------------------CREATING NEW LOAN PRODUCT ---------------------------------------");
         String loanProductJSON = new LoanProductTestBuilder().withPrincipal(LP_PRINCIPAL.toString()).withRepaymentTypeAsMonth()
@@ -186,13 +183,5 @@ public class AccountingScenario {
                 .build(clientID.toString(), loanProductID.toString());
         return loanTransactionHelper.getLoanId(loanApplicationJSON);
     }
-
-
-
-
-
-
-
-
 }
 
