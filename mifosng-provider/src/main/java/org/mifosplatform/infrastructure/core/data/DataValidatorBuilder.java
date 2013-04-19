@@ -14,6 +14,7 @@ import net.fortuna.ical4j.model.ValidationException;
 import net.fortuna.ical4j.model.property.RRule;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.LocalDate;
 import org.springframework.util.ObjectUtils;
 
 public class DataValidatorBuilder {
@@ -383,14 +384,14 @@ public class DataValidatorBuilder {
         dataValidationErrors.add(error);
         return this;
     }
-    
+
     public DataValidatorBuilder cantBeBlankWhenParameterProvidedIs(final String parameterName, final Object parameterValue) {
         if (value != null) { return this; }
 
         StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                 .append(".must.be.provided.when.").append(parameterName).append(".is.").append(parameterValue);
-        StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter)
-                .append(" must be provided when ").append(parameterName).append(" is ").append(parameterValue);
+        StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter).append(" must be provided when ")
+                .append(parameterName).append(" is ").append(parameterValue);
         ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultEnglishMessage.toString(),
                 parameter, value, parameterName, parameterValue);
         dataValidationErrors.add(error);
@@ -413,12 +414,12 @@ public class DataValidatorBuilder {
     }
 
     public DataValidatorBuilder inMinAndMaxAmountRange(final BigDecimal minimumAmount, final BigDecimal maximumAmount) {
-        if (minimumAmount != null && maximumAmount != null && value != null){
+        if (minimumAmount != null && maximumAmount != null && value != null) {
             BigDecimal amount = BigDecimal.valueOf(Double.valueOf(value.toString()));
             if (amount.compareTo(minimumAmount) == -1 || amount.compareTo(maximumAmount) == 1) {
                 StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                         .append(".amount.is.not.within.min.max.range");
-                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter) .append(" amount ").append(amount)
+                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter).append(" amount ").append(amount)
                         .append(" must be between ").append(minimumAmount).append(" and ").append(maximumAmount).append(" .");
                 ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
                         defaultEnglishMessage.toString(), parameter, amount, minimumAmount, maximumAmount);
@@ -428,14 +429,14 @@ public class DataValidatorBuilder {
         }
         return this;
     }
-    
+
     public DataValidatorBuilder notLessThanMin(final BigDecimal min) {
-        if (min != null && value != null){
+        if (min != null && value != null) {
             BigDecimal amount = BigDecimal.valueOf(Double.valueOf(value.toString()));
             if (amount.compareTo(min) == -1) {
                 StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                         .append(".is.less.than.min");
-                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter) .append(" value ").append(amount)
+                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter).append(" value ").append(amount)
                         .append(" must not be less than minimum value ").append(min);
                 ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
                         defaultEnglishMessage.toString(), parameter, amount, min);
@@ -445,14 +446,14 @@ public class DataValidatorBuilder {
         }
         return this;
     }
-    
+
     public DataValidatorBuilder notGreaterThanMax(final BigDecimal max) {
-        if (max != null && value != null){
+        if (max != null && value != null) {
             BigDecimal amount = BigDecimal.valueOf(Double.valueOf(value.toString()));
             if (amount.compareTo(max) == 1) {
                 StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                         .append(".is.greater.than.max");
-                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter) .append(" value ").append(amount)
+                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter).append(" value ").append(amount)
                         .append(" must not be more than maximum value ").append(max);
                 ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
                         defaultEnglishMessage.toString(), parameter, amount, max);
@@ -497,7 +498,7 @@ public class DataValidatorBuilder {
         }
         return this;
     }
-    
+
     public DataValidatorBuilder notLessThanMin(final Integer min) {
         if (value == null && ignoreNullValue) { return this; }
 
@@ -515,7 +516,7 @@ public class DataValidatorBuilder {
         }
         return this;
     }
-    
+
     public DataValidatorBuilder notGreaterThanMax(final Integer max) {
         if (value == null && ignoreNullValue) { return this; }
 
@@ -528,6 +529,23 @@ public class DataValidatorBuilder {
                         .append(" must be less than maximum value ").append(max);
                 ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
                         defaultEnglishMessage.toString(), parameter, number, max);
+                dataValidationErrors.add(error);
+            }
+        }
+        return this;
+    }
+
+    public DataValidatorBuilder isBefore(final LocalDate baseDate) {
+        if (value == null && ignoreNullValue) { return this; }
+        if (value != null && baseDate != null) {
+            LocalDate date = (LocalDate) value;
+            if (date.isBefore(baseDate)) {
+                StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
+                        .append(".is.before.basedate");
+                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter).append(" must be a date aftre ")
+                        .append(baseDate);
+                ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                        defaultEnglishMessage.toString(), parameter, date, baseDate);
                 dataValidationErrors.add(error);
             }
         }
