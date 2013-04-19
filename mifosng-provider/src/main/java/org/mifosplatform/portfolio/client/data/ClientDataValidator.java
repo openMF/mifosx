@@ -20,6 +20,7 @@ import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
 import org.mifosplatform.portfolio.client.api.ClientApiConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,10 +32,12 @@ import com.google.gson.reflect.TypeToken;
 public final class ClientDataValidator {
 
     private final FromJsonHelper fromApiJsonHelper;
+    private final OfficeReadPlatformService officeReadPlatformService;
 
     @Autowired
-    public ClientDataValidator(final FromJsonHelper fromApiJsonHelper) {
+    public ClientDataValidator(final FromJsonHelper fromApiJsonHelper, final OfficeReadPlatformService officeReadPlatformService) {
         this.fromApiJsonHelper = fromApiJsonHelper;
+        this.officeReadPlatformService = officeReadPlatformService;
     }
 
     public void validateForCreate(final String json) {
@@ -73,6 +76,8 @@ public final class ClientDataValidator {
         if (active != null) {
             if (active.booleanValue()) {
                 final LocalDate joinedDate = fromApiJsonHelper.extractLocalDateNamed(ClientApiConstants.activationDateParamName, element);
+                final LocalDate openingDate = officeReadPlatformService.retrieveOffice(officeId).getOpeningDate();
+                baseDataValidator.reset().parameter(ClientApiConstants.activationDateParamName).value(joinedDate).isBefore(openingDate);
                 baseDataValidator.reset().parameter(ClientApiConstants.activationDateParamName).value(joinedDate).notNull();
             }
         } else {
