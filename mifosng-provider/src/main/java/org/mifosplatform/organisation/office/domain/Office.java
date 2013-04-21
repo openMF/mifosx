@@ -45,7 +45,7 @@ public class Office extends AbstractPersistable<Long> {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "hierarchy", nullable = false, length = 50)
+    @Column(name = "hierarchy", nullable = true, length = 50)
     private String hierarchy;
 
     @Column(name = "opening_date", nullable = false)
@@ -141,6 +141,14 @@ public class Office extends AbstractPersistable<Long> {
         return actualChanges;
     }
 
+    public boolean isOpeningDateBefore(final LocalDate baseDate) {
+        return getOpeningLocalDate().isBefore(baseDate);
+    }
+
+    public boolean isOpeningDateAfter(final LocalDate activationLocalDate) {
+        return getOpeningLocalDate().isAfter(activationLocalDate);
+    }
+
     private LocalDate getOpeningLocalDate() {
         LocalDate openingLocalDate = null;
         if (this.openingDate != null) {
@@ -172,7 +180,7 @@ public class Office extends AbstractPersistable<Long> {
         }
     }
 
-    private String hierarchyOf(Long id) {
+    private String hierarchyOf(final Long id) {
         return this.hierarchy + id.toString() + ".";
     }
 
@@ -192,11 +200,11 @@ public class Office extends AbstractPersistable<Long> {
         return isParent;
     }
 
-    public boolean doesNotHaveAnOfficeInHierarchyWithId(Long officeId) {
+    public boolean doesNotHaveAnOfficeInHierarchyWithId(final Long officeId) {
         return !this.hasAnOfficeInHierarchyWithId(officeId);
     }
 
-    private boolean hasAnOfficeInHierarchyWithId(Long officeId) {
+    private boolean hasAnOfficeInHierarchyWithId(final Long officeId) {
 
         boolean match = false;
 

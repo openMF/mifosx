@@ -5,12 +5,14 @@
  */
 package org.mifosplatform.infrastructure.dataqueries.service;
 
+import java.util.Collection;
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
+import org.mifosplatform.infrastructure.dataqueries.data.ReportData;
 
 public interface ReadReportingService {
 
@@ -23,4 +25,8 @@ public interface ReadReportingService {
     String retrieveReportPDF(String name, String type, Map<String, String> extractedQueryParams);
 
     String getReportType(String reportName);
+
+    Collection<ReportData> retrieveReportList();
+
+    ReportData retrieveReport(final Long id);
 }

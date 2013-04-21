@@ -20,7 +20,8 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
-import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepository;
+import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
+import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.charge.domain.Charge;
@@ -49,6 +50,8 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanSummaryWrapper;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionRepository;
+import org.mifosplatform.portfolio.loanaccount.domain.PaymentDetail;
+import org.mifosplatform.portfolio.loanaccount.domain.PaymentDetailRepository;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanNotFoundException;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanOfficerAssignmentException;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanOfficerUnassignmentException;
@@ -75,10 +78,11 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final LoanAssembler loanAssembler;
     private final ChargeRepositoryWrapper chargeRepository;
     private final LoanChargeRepository loanChargeRepository;
-    private final ApplicationCurrencyRepository applicationCurrencyRepository;
+    private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository;
     private final JournalEntryWritePlatformService journalEntryWritePlatformService;
     private final LoanSummaryWrapper loanSummaryWrapper;
     private final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory;
+    private final PaymentDetailRepository paymentDetailRepository;
 
     @Autowired
     public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -86,9 +90,10 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final LoanUpdateCommandFromApiJsonDeserializer loanUpdateCommandFromApiJsonDeserializer, final LoanAssembler loanAssembler,
             final LoanRepository loanRepository, final LoanTransactionRepository loanTransactionRepository,
             final NoteRepository noteRepository, final ChargeRepositoryWrapper chargeRepository,
-            final LoanChargeRepository loanChargeRepository, final ApplicationCurrencyRepository applicationCurrencyRepository,
+            final LoanChargeRepository loanChargeRepository, final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository,
             final JournalEntryWritePlatformService journalEntryWritePlatformService, final LoanSummaryWrapper loanSummaryWrapper,
-            final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory) {
+            final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory,
+            final PaymentDetailRepository paymentDetailRepository) {
         this.context = context;
         this.loanEventApiJsonValidator = loanEventApiJsonValidator;
         this.loanAssembler = loanAssembler;
@@ -102,6 +107,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.loanUpdateCommandFromApiJsonDeserializer = loanUpdateCommandFromApiJsonDeserializer;
         this.loanSummaryWrapper = loanSummaryWrapper;
         this.loanRepaymentScheduleTransactionProcessorFactory = loanRepaymentScheduleTransactionProcessorFactory;
+        this.paymentDetailRepository = paymentDetailRepository;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -118,13 +124,21 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.loanEventApiJsonValidator.validateDisbursement(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
-
-        final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(loan.getCurrencyCode());
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
 
         final List<Long> existingTransactionIds = new ArrayList<Long>();
         final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
-        final Map<String, Object> changes = loan.disburse(currentUser, command, currency, existingTransactionIds,
-                existingReversedTransactionIds);
+
+        final Map<String, Object> changes = new LinkedHashMap<String, Object>();
+        PaymentDetail paymentDetail = PaymentDetail.generatePaymentDetail(command, changes);
+        if (paymentDetail != null) {
+            paymentDetailRepository.save(paymentDetail);
+        }
+
+        loan.disburse(currentUser, command, applicationCurrency, existingTransactionIds, existingReversedTransactionIds, changes,
+                paymentDetail);
+
         if (!changes.isEmpty()) {
             this.loanRepository.save(loan);
 
@@ -150,8 +164,13 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
     @Transactional
     @Override
-    public Map<String, Object> bulkLoanDisbursal(JsonCommand command, CollectionSheetBulkDisbursalCommand bulkDisbursalCommand) {
+    public Map<String, Object> bulkLoanDisbursal(final JsonCommand command, final CollectionSheetBulkDisbursalCommand bulkDisbursalCommand) {
         final AppUser currentUser = context.authenticatedUser();
+
+        /****
+         * TODO Vishwas: Pair with Ashok and re-factor collection sheet
+         * code-base
+         *****/
 
         SingleDisbursalCommand[] disbursalCommand = bulkDisbursalCommand.getDisburseTransactions();
         Map<String, Object> changes = new LinkedHashMap<String, Object>();
@@ -161,13 +180,20 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             SingleDisbursalCommand singleLoanDisbursalCommand = disbursalCommand[i];
 
             final Loan loan = retrieveLoanBy(singleLoanDisbursalCommand.getLoanId());
-
-            final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(loan.getCurrencyCode());
+            final MonetaryCurrency currency = loan.getCurrency();
+            final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
 
             final List<Long> existingTransactionIds = new ArrayList<Long>();
             final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
 
-            changes.putAll(loan.disburse(currentUser, command, currency, existingTransactionIds, existingReversedTransactionIds));
+            PaymentDetail paymentDetail = PaymentDetail.generatePaymentDetail(command, changes);
+            if (paymentDetail != null) {
+                paymentDetailRepository.save(paymentDetail);
+            }
+
+            loan.disburse(currentUser, command, applicationCurrency, existingTransactionIds, existingReversedTransactionIds, changes,
+                    paymentDetail);
+
             if (!changes.isEmpty()) {
                 this.loanRepository.save(loan);
 
@@ -190,8 +216,6 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         context.authenticatedUser();
 
         final Loan loan = retrieveLoanBy(loanId);
-        final BigDecimal totalInterestCharged = loan.getSummary().getTotalInterestCharged();
-
         final List<Long> existingTransactionIds = new ArrayList<Long>();
         final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
         final Map<String, Object> changes = loan.undoDisbursal(existingTransactionIds, existingReversedTransactionIds);
@@ -204,14 +228,11 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 this.noteRepository.save(note);
             }
 
-            final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(loan.getCurrencyCode());
-            final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(currency.toData(), existingTransactionIds,
-                    existingReversedTransactionIds);
-            // add the previously calculated net charged interest back to
-            // accountingBridgedate, this would not work if interest
-            // recalculation in introduced
-            accountingBridgeData.put("calculatedInterest", totalInterestCharged);
+            final MonetaryCurrency currency = loan.getCurrency();
+            final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
 
+            final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(applicationCurrency.toData(),
+                    existingTransactionIds, existingReversedTransactionIds);
             journalEntryWritePlatformService.createJournalEntriesForLoan(accountingBridgeData);
         }
 
@@ -248,8 +269,12 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             changes.put("note", noteText);
         }
 
-        CommandProcessingResultBuilder commandProcessingResultBuilder = saveLoanRepayment(loanId, transactionAmount, transactionDate,
-                noteText);
+        PaymentDetail paymentDetail = PaymentDetail.generatePaymentDetail(command, changes);
+        if (paymentDetail != null) {
+            paymentDetailRepository.save(paymentDetail);
+        }
+        CommandProcessingResultBuilder commandProcessingResultBuilder = saveLoanRepayment(loanId, paymentDetail, transactionAmount,
+                transactionDate, noteText);
 
         return commandProcessingResultBuilder.withCommandId(command.commandId()) //
                 .withLoanId(loanId) //
@@ -257,15 +282,15 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 .build();
     }
 
-    private CommandProcessingResultBuilder saveLoanRepayment(final Long loanId, final BigDecimal transactionAmount,
-            final LocalDate transactionDate, final String noteText) {
+    private CommandProcessingResultBuilder saveLoanRepayment(final Long loanId, final PaymentDetail paymentDetail,
+            final BigDecimal transactionAmount, final LocalDate transactionDate, final String noteText) {
         final Loan loan = retrieveLoanBy(loanId);
 
         final List<Long> existingTransactionIds = new ArrayList<Long>();
         final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
 
         final Money repaymentAmount = Money.of(loan.getCurrency(), transactionAmount);
-        final LoanTransaction newRepaymentTransaction = LoanTransaction.repayment(repaymentAmount, transactionDate);
+        final LoanTransaction newRepaymentTransaction = LoanTransaction.repayment(repaymentAmount, paymentDetail, transactionDate);
 
         final ChangedTransactionDetail changedTransactionDetail = loan.makeRepayment(newRepaymentTransaction,
                 defaultLoanLifecycleStateMachine(), existingTransactionIds, existingReversedTransactionIds);
@@ -310,7 +335,12 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         if (repaymentCommand == null) return changes;
 
         for (SingleRepaymentCommand singleLoanRepaymentCommand : repaymentCommand) {
-            saveLoanRepayment(singleLoanRepaymentCommand.getLoanId(), singleLoanRepaymentCommand.getTransactionAmount(),
+            /****
+             * TODO Vishwas, have a re-look at this implementation, defaulting
+             * it to null for now
+             ***/
+            PaymentDetail paymentDetail = null;
+            saveLoanRepayment(singleLoanRepaymentCommand.getLoanId(), paymentDetail, singleLoanRepaymentCommand.getTransactionAmount(),
                     bulkRepaymentCommand.getTransactionDate(), bulkRepaymentCommand.getNote());
             changes.put("bulkTransations", singleLoanRepaymentCommand);
         }
@@ -343,7 +373,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
 
         final Money transactionAmountAsMoney = Money.of(loan.getCurrency(), transactionAmount);
-        LoanTransaction newTransactionDetail = LoanTransaction.repayment(transactionAmountAsMoney, transactionDate);
+        PaymentDetail paymentDetail = PaymentDetail.generatePaymentDetail(command, changes);
+        LoanTransaction newTransactionDetail = LoanTransaction.repayment(transactionAmountAsMoney, paymentDetail, transactionDate);
         if (transactionToAdjust.isInterestWaiver()) {
             newTransactionDetail = LoanTransaction.waiver(loan, transactionAmountAsMoney, transactionDate);
         }
@@ -352,6 +383,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 defaultLoanLifecycleStateMachine(), transactionToAdjust, existingTransactionIds, existingReversedTransactionIds);
 
         if (newTransactionDetail.isGreaterThanZero(loan.getPrincpal().getCurrency())) {
+            if (paymentDetail != null) {
+                paymentDetailRepository.save(paymentDetail);
+            }
             this.loanTransactionRepository.save(newTransactionDetail);
         }
 
@@ -870,16 +904,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 .build();
     }
 
-    /**
-     * @param loan
-     * @param existingTransactionIds
-     * @param existingReversedTransactionIds
-     */
     private void postJournalEntries(final Loan loan, final List<Long> existingTransactionIds,
             final List<Long> existingReversedTransactionIds) {
-        final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(loan.getCurrencyCode());
-        final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(currency.toData(), existingTransactionIds,
-                existingReversedTransactionIds);
+
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+
+        final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(applicationCurrency.toData(),
+                existingTransactionIds, existingReversedTransactionIds);
         journalEntryWritePlatformService.createJournalEntriesForLoan(accountingBridgeData);
     }
 }

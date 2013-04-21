@@ -37,12 +37,16 @@ public class LoanProductData {
     // terms
     private final CurrencyData currency;
     private final BigDecimal principal;
-    private BigDecimal minPrincipal;
-    private BigDecimal maxPrincipal;
+    private final BigDecimal minPrincipal;
+    private final BigDecimal maxPrincipal;
     private final Integer numberOfRepayments;
+    private final Integer minNumberOfRepayments;
+    private final Integer maxNumberOfRepayments;
     private final Integer repaymentEvery;
     private final EnumOptionData repaymentFrequencyType;
     private final BigDecimal interestRatePerPeriod;
+    private final BigDecimal minInterestRatePerPeriod;
+    private final BigDecimal maxInterestRatePerPeriod;
     private final EnumOptionData interestRateFrequencyType;
     private final BigDecimal annualInterestRate;
 
@@ -86,8 +90,12 @@ public class LoanProductData {
         final BigDecimal maxPrincipal = null;
         final BigDecimal tolerance = null;
         final Integer numberOfRepayments = null;
+        final Integer minNumberOfRepayments = null;
+        final Integer maxNumberOfRepayments = null;
         final Integer repaymentEvery = null;
         final BigDecimal interestRatePerPeriod = null;
+        final BigDecimal minInterestRatePerPeriod = null;
+        final BigDecimal maxInterestRatePerPeriod = null;
         final BigDecimal annualInterestRate = null;
         final EnumOptionData repaymentFrequencyType = null;
         final EnumOptionData interestRateFrequencyType = null;
@@ -101,12 +109,13 @@ public class LoanProductData {
         final Collection<ChargeData> charges = null;
         final EnumOptionData accountingType = null;
 
-        return new LoanProductData(id, name, description, currency, principal, minPrincipal, maxPrincipal, tolerance, numberOfRepayments, repaymentEvery,
-                interestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType, amortizationType,
+        return new LoanProductData(id, name, description, currency, principal, minPrincipal, maxPrincipal, tolerance, numberOfRepayments,
+                minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod, minInterestRatePerPeriod,
+                maxInterestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType, amortizationType,
                 interestType, interestCalculationPeriodType, fundId, fundName, transactionProcessingStrategyId,
                 transactionProcessingStrategyName, charges, accountingType);
     }
-    
+
     public static LoanProductData lookupWithCurrency(final Long id, final String name, final CurrencyData currency) {
         final String description = null;
         final BigDecimal principal = null;
@@ -114,8 +123,12 @@ public class LoanProductData {
         final BigDecimal maxPrincipal = null;
         final BigDecimal tolerance = null;
         final Integer numberOfRepayments = null;
+        final Integer minNumberOfRepayments = null;
+        final Integer maxNumberOfRepayments = null;
         final Integer repaymentEvery = null;
         final BigDecimal interestRatePerPeriod = null;
+        final BigDecimal minInterestRatePerPeriod = null;
+        final BigDecimal maxInterestRatePerPeriod = null;
         final BigDecimal annualInterestRate = null;
         final EnumOptionData repaymentFrequencyType = null;
         final EnumOptionData interestRateFrequencyType = null;
@@ -129,24 +142,29 @@ public class LoanProductData {
         final Collection<ChargeData> charges = null;
         final EnumOptionData accountingType = null;
 
-        return new LoanProductData(id, name, description, currency, principal, minPrincipal, maxPrincipal, tolerance, numberOfRepayments, repaymentEvery,
-                interestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType, amortizationType,
+        return new LoanProductData(id, name, description, currency, principal, minPrincipal, maxPrincipal, tolerance, numberOfRepayments,
+                minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod, minInterestRatePerPeriod,
+                maxInterestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType, amortizationType,
                 interestType, interestCalculationPeriodType, fundId, fundName, transactionProcessingStrategyId,
                 transactionProcessingStrategyName, charges, accountingType);
-    }    
+    }
 
     public static LoanProductData sensibleDefaultsForNewLoanProductCreation() {
         final Long id = null;
         final String name = null;
         final String description = null;
-        final CurrencyData currency = CurrencyData.blank();
+        final CurrencyData currency = null;
         final BigDecimal principal = null;
         final BigDecimal minPrincipal = null;
         final BigDecimal maxPrincipal = null;
         final BigDecimal tolerance = null;
         final Integer numberOfRepayments = null;
+        final Integer minNumberOfRepayments = null;
+        final Integer maxNumberOfRepayments = null;
         final Integer repaymentEvery = null;
         final BigDecimal interestRatePerPeriod = null;
+        final BigDecimal minInterestRatePerPeriod = null;
+        final BigDecimal maxInterestRatePerPeriod = null;
         final BigDecimal annualInterestRate = null;
         final EnumOptionData repaymentFrequencyType = LoanEnumerations.repaymentFrequencyType(PeriodFrequencyType.MONTHS);
         final EnumOptionData interestRateFrequencyType = LoanEnumerations.interestRateFrequencyType(PeriodFrequencyType.MONTHS);
@@ -161,8 +179,9 @@ public class LoanProductData {
         final Collection<ChargeData> charges = null;
         final EnumOptionData accountingType = LoanEnumerations.accountingRuleType(AccountingRuleType.NONE);
 
-        return new LoanProductData(id, name, description, currency, principal, minPrincipal, maxPrincipal, tolerance, numberOfRepayments, repaymentEvery,
-                interestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType, amortizationType,
+        return new LoanProductData(id, name, description, currency, principal, minPrincipal, maxPrincipal, tolerance, numberOfRepayments,
+                minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod, minInterestRatePerPeriod,
+                maxInterestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType, amortizationType,
                 interestType, interestCalculationPeriodType, fundId, fundName, transactionProcessingStrategyId,
                 transactionProcessingStrategyName, charges, accountingType);
     }
@@ -178,23 +197,37 @@ public class LoanProductData {
 
     public LoanProductData(final Long id, final String name, final String description, final CurrencyData currency,
             final BigDecimal principal, final BigDecimal minPrincipal, final BigDecimal maxPrincipal, final BigDecimal tolerance,
-            final Integer numberOfRepayments, final Integer repaymentEvery, final BigDecimal interestRatePerPeriod,
-            final BigDecimal annualInterestRate, final EnumOptionData repaymentFrequencyType,
+            final Integer numberOfRepayments, final Integer minNumberOfRepayments, final Integer maxNumberOfRepayments,
+            final Integer repaymentEvery, final BigDecimal interestRatePerPeriod, final BigDecimal minInterestRatePerPeriod,
+            final BigDecimal maxInterestRatePerPeriod, final BigDecimal annualInterestRate, final EnumOptionData repaymentFrequencyType,
             final EnumOptionData interestRateFrequencyType, final EnumOptionData amortizationType, final EnumOptionData interestType,
             final EnumOptionData interestCalculationPeriodType, final Long fundId, final String fundName,
             final Long transactionProcessingStrategyId, final String transactionProcessingStrategyName,
             final Collection<ChargeData> charges, final EnumOptionData accountingType) {
+
         this.id = id;
         this.name = name;
         this.description = description;
-        this.currency = currency;
+        if (currency == null) {
+            if (this.currencyOptions != null && this.currencyOptions.size() == 1) {
+                this.currency = new ArrayList<CurrencyData>(this.currencyOptions).get(0);
+            } else {
+                this.currency = CurrencyData.blank();
+            }
+        } else {
+            this.currency = currency;
+        }
         this.principal = principal;
         this.minPrincipal = minPrincipal;
         this.maxPrincipal = maxPrincipal;
         this.inArrearsTolerance = tolerance;
         this.numberOfRepayments = numberOfRepayments;
+        this.minNumberOfRepayments = minNumberOfRepayments;
+        this.maxNumberOfRepayments = maxNumberOfRepayments;
         this.repaymentEvery = repaymentEvery;
         this.interestRatePerPeriod = interestRatePerPeriod;
+        this.minInterestRatePerPeriod = minInterestRatePerPeriod;
+        this.maxInterestRatePerPeriod = maxInterestRatePerPeriod;
         this.annualInterestRate = annualInterestRate;
         this.repaymentFrequencyType = repaymentFrequencyType;
         this.interestRateFrequencyType = interestRateFrequencyType;
@@ -227,8 +260,7 @@ public class LoanProductData {
             final Collection<CurrencyData> currencyOptions, final List<EnumOptionData> amortizationTypeOptions,
             final List<EnumOptionData> interestTypeOptions, final List<EnumOptionData> interestCalculationPeriodTypeOptions,
             final List<EnumOptionData> repaymentFrequencyTypeOptions, final List<EnumOptionData> interestRateFrequencyTypeOptions,
-            final Collection<FundData> fundOptions,
-            final Collection<TransactionProcessingStrategyData> transactionStrategyOptions,
+            final Collection<FundData> fundOptions, final Collection<TransactionProcessingStrategyData> transactionStrategyOptions,
             final Map<String, List<GLAccountData>> accountingMappingOptions, final List<EnumOptionData> accountingRuleOptions,
             final Map<String, Object> accountingMappings) {
         this.id = productData.id;
@@ -242,8 +274,12 @@ public class LoanProductData {
         this.maxPrincipal = productData.maxPrincipal;
         this.inArrearsTolerance = productData.inArrearsTolerance;
         this.numberOfRepayments = productData.numberOfRepayments;
+        this.minNumberOfRepayments = productData.minNumberOfRepayments;
+        this.maxNumberOfRepayments = productData.maxNumberOfRepayments;
         this.repaymentEvery = productData.repaymentEvery;
         this.interestRatePerPeriod = productData.interestRatePerPeriod;
+        this.minInterestRatePerPeriod = productData.minInterestRatePerPeriod;
+        this.maxInterestRatePerPeriod = productData.maxInterestRatePerPeriod;
         this.annualInterestRate = productData.annualInterestRate;
         this.repaymentFrequencyType = productData.repaymentFrequencyType;
         this.interestRateFrequencyType = productData.interestRateFrequencyType;
@@ -256,17 +292,13 @@ public class LoanProductData {
 
         this.chargeOptions = chargeOptions;
         this.currencyOptions = currencyOptions;
-        if (this.currencyOptions != null && this.currencyOptions.size() == 1) {
-            this.currency = new ArrayList<CurrencyData>(this.currencyOptions).get(0);
-        } else {
-            this.currency = productData.currency;
-        }
+        this.currency = productData.currency;
         this.fundOptions = fundOptions;
         this.transactionProcessingStrategyOptions = transactionStrategyOptions;
         if (this.transactionProcessingStrategyOptions != null && this.transactionProcessingStrategyOptions.size() == 1) {
             final List<TransactionProcessingStrategyData> listOfOptions = new ArrayList<TransactionProcessingStrategyData>(
                     this.transactionProcessingStrategyOptions);
-            
+
             this.transactionProcessingStrategyId = listOfOptions.get(0).id();
             this.transactionProcessingStrategyName = listOfOptions.get(0).name();
         } else {
@@ -353,7 +385,7 @@ public class LoanProductData {
     public BigDecimal getMinPrincipal() {
         return this.minPrincipal;
     }
-    
+
     public BigDecimal getMaxPrincipal() {
         return this.maxPrincipal;
     }
@@ -425,8 +457,9 @@ public class LoanProductData {
     public Collection<ChargeData> getChargeOptions() {
         return chargeOptions;
     }
+
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         LoanProductData loanProductData = (LoanProductData) obj;
         return loanProductData.id.equals(this.id);
     }

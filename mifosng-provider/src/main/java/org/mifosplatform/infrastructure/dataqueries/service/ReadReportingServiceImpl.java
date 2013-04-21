@@ -13,6 +13,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,10 +26,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.apache.commons.lang.StringUtils;
+import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.service.FileUtils;
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
+import org.mifosplatform.infrastructure.dataqueries.data.ReportData;
+import org.mifosplatform.infrastructure.dataqueries.data.ReportParameterData;
+import org.mifosplatform.infrastructure.dataqueries.data.ReportParameterJoinData;
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnHeaderData;
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetRowData;
 import org.mifosplatform.infrastructure.dataqueries.exception.ReportNotFoundException;
@@ -48,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Service;
 
@@ -162,24 +171,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         long startTime = System.currentTimeMillis();
         logger.info("STARTING REPORT: " + name + "   Type: " + type);
 
-        String sql;
-        if (name.equals(".")) {
-            // this is to support api /reports - which isn't an important
-            // call. It isn't used in the default reporting UI. But there is a
-            // need to provide an api that does bring back 'permitted' reports
-            // PERMITTED REPORTS SQL
-            sql = "select r.report_id, r.report_name, r.report_type, r.report_subtype, r.report_category,"
-                    + " rp.parameter_id, rp.report_parameter_name, p.parameter_name" + " from stretchy_report r"
-                    + " left join stretchy_report_parameter rp on rp.report_id = r.report_id"
-                    + " left join stretchy_parameter p on p.parameter_id = rp.parameter_id" + " where exists" + " (select 'f'"
-                    + " from m_appuser_role ur " + " join m_role r on r.id = ur.role_id"
-                    + " left join m_role_permission rp on rp.role_id = r.id" + " left join m_permission p on p.id = rp.permission_id"
-                    + " where ur.appuser_id = " + context.authenticatedUser().getId()
-                    + " and (p.code in ('ALL_FUNCTIONS', 'ALL_FUNCTIONS_READ') or p.code = concat('READ_', r.report_name))) "
-                    + " order by r.report_name, rp.parameter_id";
-        } else {
-            sql = getSQLtoRun(name, type, queryParams);
-        }
+        String sql = getSQLtoRun(name, type, queryParams);
 
         GenericResultsetData result = genericDataService.fillGenericResultSet(sql);
 
@@ -250,16 +242,6 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         if (noPentaho) { throw new PlatformDataIntegrityException("error.msg.no.pentaho", "Pentaho is not enabled",
                 "Pentaho is not enabled"); }
 
-        // TODO - JW - use pentaho location finder like Pawel does in Mifos
-        // String reportPath =
-        // "C:\\dev\\apache-tomcat-7.0.25\\webapps\\ROOT\\PentahoReports\\"
-        // + reportName + ".prpt";
-        /*
-         * String reportPath = FileUtils.MIFOSX_BASE_DIR + File.separator +
-         * ThreadLocalContextUtil.getTenant().getName() .replaceAll(" ",
-         * "").trim() + File.separator + "reports" + File.separator + reportName
-         * + ".prpt";
-         */
         final String reportPath = FileUtils.MIFOSX_BASE_DIR + File.separator + "pentahoReports" + File.separator + reportName + ".prpt";
         logger.info("Report path: " + reportPath);
 
@@ -425,6 +407,157 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         } catch (Exception e) {
             logger.error("error.msg.reporting.error:" + e.getMessage());
             throw new PlatformDataIntegrityException("error.msg.exception.error", e.getMessage());
+        }
+    }
+
+    @Override
+    public ReportData retrieveReport(final Long id) {
+        Collection<ReportData> reports = retrieveReports(id);
+
+        for (ReportData report : reports) {
+            return report;
+        }
+        return null;
+    }
+
+    @Override
+    public Collection<ReportData> retrieveReportList() {
+        return retrieveReports(null);
+    }
+
+    private Collection<ReportData> retrieveReports(final Long id) {
+
+        ReportParameterJoinMapper rm = new ReportParameterJoinMapper();
+
+        String sql = rm.schema(id);
+
+        Collection<ReportParameterJoinData> rpJoins = this.jdbcTemplate.query(sql, rm, new Object[] {});
+
+        Collection<ReportData> reportList = new ArrayList<ReportData>();
+        if (rpJoins == null || rpJoins.size() == 0) return reportList;
+
+        Collection<ReportParameterData> reportParameters = null;
+
+        Long reportId = null;
+        String reportName = null;
+        String reportType = null;
+        String reportSubType = null;
+        String reportCategory = null;
+        String description = null;
+        Boolean coreReport = null;
+        Boolean useReport = null;
+        String reportSql = null;
+
+        Long prevReportId = (long) -1234;
+        Boolean firstReport = true;
+        for (ReportParameterJoinData rpJoin : rpJoins) {
+
+            if (rpJoin.getReportId().equals(prevReportId)) {
+                // more than one parameter for report
+                if (reportParameters == null) {
+                    reportParameters = new ArrayList<ReportParameterData>();
+                }
+                reportParameters.add(new ReportParameterData(rpJoin.getReportParameterId(), rpJoin.getReportParameterName(), rpJoin
+                        .getParameterName()));
+
+            } else {
+                if (firstReport) {
+                    firstReport = false;
+                } else {
+                    // write report entry
+                    reportList.add(new ReportData(reportId, reportName, reportType, reportSubType, reportCategory, description, reportSql,
+                            coreReport, useReport, reportParameters));
+                }
+
+                prevReportId = rpJoin.getReportId();
+
+                reportId = rpJoin.getReportId();
+                reportName = rpJoin.getReportName();
+                reportType = rpJoin.getReportType();
+                reportSubType = rpJoin.getReportSubType();
+                reportCategory = rpJoin.getReportCategory();
+                description = rpJoin.getDescription();
+                reportSql = rpJoin.getReportSql();
+                coreReport = rpJoin.getCoreReport();
+                useReport = rpJoin.getUseReport();
+
+                if (rpJoin.getReportParameterId() != null) {
+                    // report has at least one parameter
+                    reportParameters = new ArrayList<ReportParameterData>();
+                    reportParameters.add(new ReportParameterData(rpJoin.getReportParameterId(), rpJoin.getReportParameterName(), rpJoin
+                            .getParameterName()));
+                } else {
+                    reportParameters = null;
+                }
+            }
+
+        }
+        // write last report
+        reportList.add(new ReportData(reportId, reportName, reportType, reportSubType, reportCategory, description, reportSql, coreReport,
+                useReport, reportParameters));
+
+        return reportList;
+    }
+
+    private static final class ReportParameterJoinMapper implements RowMapper<ReportParameterJoinData> {
+
+        public String schema(final Long reportId) {
+
+            String sql = "select r.id as reportId, r.report_name as reportName, r.report_type as reportType, "
+                    + " r.report_subtype as reportSubType, r.report_category as reportCategory, r.description, r.core_report as coreReport, r.use_report as useReport, "
+                    + " rp.parameter_id as reportParameterId, rp.report_parameter_name as reportParameterName, p.parameter_name as parameterName";
+
+            if (reportId != null) sql += ", r.report_sql as reportSql ";
+
+            sql += " from stretchy_report r" + " left join stretchy_report_parameter rp on rp.report_id = r.id"
+                    + " left join stretchy_parameter p on p.id = rp.parameter_id";
+            if (reportId != null)
+                sql += " where r.id = " + reportId;
+            else
+                sql += " order by r.id, rp.parameter_id";
+
+            return sql;
+
+            /*
+             * used to only return reports that the use can run as done in
+             * report UI but not necessary as there is a read_report permission
+             * which should give user access to look all reports +
+             * " where exists" + " (select 'f'" + " from m_appuser_role ur " +
+             * " join m_role r on r.id = ur.role_id" +
+             * " left join m_role_permission rp on rp.role_id = r.id" +
+             * " left join m_permission p on p.id = rp.permission_id" +
+             * " where ur.appuser_id = " + userId +
+             * " and (p.code in ('ALL_FUNCTIONS', 'ALL_FUNCTIONS_READ') or p.code = concat('READ_', r.report_name))) "
+             * ;
+             */
+        }
+
+        @Override
+        public ReportParameterJoinData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+
+            final Long reportId = rs.getLong("reportId");
+            final String reportName = rs.getString("reportName");
+            final String reportType = rs.getString("reportType");
+            final String reportSubType = rs.getString("reportSubType");
+            final String reportCategory = rs.getString("reportCategory");
+            final String description = rs.getString("description");
+            final Boolean coreReport = rs.getBoolean("coreReport");
+            final Boolean useReport = rs.getBoolean("useReport");
+
+            String reportSql;
+            // reportSql might not be on the select list of columns
+            try {
+                reportSql = rs.getString("reportSql");
+            } catch (SQLException e) {
+                reportSql = null;
+            }
+
+            final Long reportParameterId = JdbcSupport.getLong(rs, "reportParameterId");
+            final String reportParameterName = rs.getString("reportParameterName");
+            final String parameterName = rs.getString("parameterName");
+
+            return new ReportParameterJoinData(reportId, reportName, reportType, reportSubType, reportCategory, description, reportSql,
+                    coreReport, useReport, reportParameterId, reportParameterName, parameterName);
         }
     }
 }

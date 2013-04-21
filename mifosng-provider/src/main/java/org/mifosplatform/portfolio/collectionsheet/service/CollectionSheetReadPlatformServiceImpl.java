@@ -3,6 +3,8 @@ package org.mifosplatform.portfolio.collectionsheet.service;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -19,9 +21,8 @@ import org.mifosplatform.portfolio.collectionsheet.data.JLGClientsData;
 import org.mifosplatform.portfolio.collectionsheet.data.JLGCollectionSheetData;
 import org.mifosplatform.portfolio.collectionsheet.data.JLGCollectionSheetFlatData;
 import org.mifosplatform.portfolio.collectionsheet.data.LoanDueData;
-import org.mifosplatform.portfolio.group.data.GroupData;
-import org.mifosplatform.portfolio.group.exception.GroupNotFoundException;
-import org.mifosplatform.portfolio.group.service.GroupReadPlatformServiceImpl;
+import org.mifosplatform.portfolio.group.data.CenterData;
+import org.mifosplatform.portfolio.group.service.CenterReadPlatformService;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,43 +37,35 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
 
     private final PlatformSecurityContext context;
     private final NamedParameterJdbcTemplate namedParameterjdbcTemplate;
-    private final GroupReadPlatformServiceImpl groupReadPlatformServiceImpl;
+    private final CenterReadPlatformService centerReadPlatformService;
 
     @Autowired
     public CollectionSheetReadPlatformServiceImpl(final PlatformSecurityContext context, final TenantAwareRoutingDataSource dataSource,
-            final GroupReadPlatformServiceImpl groupReadPlatformServiceImpl) {
+            final CenterReadPlatformService centerReadPlatformService) {
         this.context = context;
+        this.centerReadPlatformService = centerReadPlatformService;
         this.namedParameterjdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
-        this.groupReadPlatformServiceImpl = groupReadPlatformServiceImpl;
     }
 
     @Override
-    public JLGCollectionSheetData retriveCollectionSheet(final LocalDate dueDate, final Long groupId) {
+    public JLGCollectionSheetData retriveCollectionSheet(final LocalDate dueDate, final Long centerId) {
 
         final AppUser currentUser = this.context.authenticatedUser();
         final String hierarchy = currentUser.getOffice().getHierarchy();
         final String officeHierarchy = hierarchy + "%";
 
-        final GroupData groupData = this.groupReadPlatformServiceImpl.retrieveGroup(groupId);
-        if (groupData == null) { throw new GroupNotFoundException(groupId); }
-
-        final String groupHierarchy = groupData.getHierarchy() + "%";
+        final CenterData center = this.centerReadPlatformService.retrieveOne(centerId);
+        final String groupHierarchy = center.getHierarchy() + "%";
 
         final JLGCollectionSheetData jlgCollectionSheetData = buildJLGCollectionSheet(groupHierarchy, officeHierarchy, dueDate);
 
         return jlgCollectionSheetData;
     }
 
-    /**
-     * @param groupHierarchy
-     * @param officeHierarchy
-     * @param dueDate
-     * @return
-     * 
-     *         Reads all the loans which are due for disbursement or collection
-     *         and builds hierarchical data structure for collections sheet with
-     *         hierarchy Groups >> Clients >> Loans.
-     *         
+    /*
+     * Reads all the loans which are due for disbursement or collection and
+     * builds hierarchical data structure for collections sheet with hierarchy
+     * Groups >> Clients >> Loans.
      */
     @SuppressWarnings("null")
     private JLGCollectionSheetData buildJLGCollectionSheet(final String groupHierarchy, final String officeHierarchy,
@@ -96,8 +89,9 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
         if (jlgCollectionSheetFlatData != null) {
 
             for (final JLGCollectionSheetFlatData collectionSheetFlatData : jlgCollectionSheetFlatData) {
-                
-                loanProducts.add(LoanProductData.lookupWithCurrency(collectionSheetFlatData.getProductId(), collectionSheetFlatData.getProductShortName(), collectionSheetFlatData.getCurrency()));
+
+                loanProducts.add(LoanProductData.lookupWithCurrency(collectionSheetFlatData.getProductId(),
+                        collectionSheetFlatData.getProductShortName(), collectionSheetFlatData.getCurrency()));
                 corrCollectioSheetFlatData = collectionSheetFlatData;
 
                 if (firstTime || collectionSheetFlatData.getGroupId().equals(prevGroupId)) {
@@ -110,7 +104,7 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
                         clientLoansData.setLoans(loanDueDatas);
                         clientLoansDatas.add(clientLoansData);
                         loanDueDatas = new ArrayList<LoanDueData>();
-                        
+
                         if (collectionSheetFlatData.getLoanId() != null) {
                             loanDueDatas.add(collectionSheetFlatData.getLoanDueData());
                         }
@@ -144,15 +138,15 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
             // FIXME Need to check last loan is added under previous
             // client/group or new client / previous group or new client / new
             // group
-            
-            final ClientLoansData lastClientLoansData = corrCollectioSheetFlatData.getClientLoansData();
-            lastClientLoansData.setLoans(loanDueDatas);
-            clientLoansDatas.add(lastClientLoansData);
+            if (corrCollectioSheetFlatData != null) {
+                final ClientLoansData lastClientLoansData = corrCollectioSheetFlatData.getClientLoansData();
+                lastClientLoansData.setLoans(loanDueDatas);
+                clientLoansDatas.add(lastClientLoansData);
 
-            final JLGClientsData jlgClientsData = corrCollectioSheetFlatData.getJLGClientsData();
-            jlgClientsData.setClients(clientLoansDatas);
-
-            jlgClientsDatas.add(jlgClientsData);
+                final JLGClientsData jlgClientsData = corrCollectioSheetFlatData.getJLGClientsData();
+                jlgClientsData.setClients(clientLoansDatas);
+                jlgClientsDatas.add(jlgClientsData);
+            }
 
             jlgCollectionSheetData = new JLGCollectionSheetData(dueDate, loanProducts, jlgClientsDatas);
         }
@@ -166,9 +160,10 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
 
         final JLGCollectionSheetFaltDataMapper mapper = new JLGCollectionSheetFaltDataMapper();
         final String sql = mapper.collectionSheetSchema();
-
+        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        final String dueDateStr = df.format(dueDate.toDate());
         final SqlParameterSource namedParameters = new MapSqlParameterSource().addValue("hierarchy", groupHierarchy)
-                .addValue("dueDate", dueDate).addValue("officeHierarchy", officeHierarchy);
+                .addValue("dueDate", dueDateStr).addValue("officeHierarchy", officeHierarchy);
         return this.namedParameterjdbcTemplate.query(sql, namedParameters, mapper);
     }
 
@@ -176,7 +171,7 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
 
         public String collectionSheetSchema() {
 
-            return "SELECT  gp.name As groupName, "
+            return "SELECT gp.display_name As groupName, "
                     + "gp.id As groupId, "
                     + "cl.display_name As clientName, "
                     + "sf.id As staffId, "
@@ -226,7 +221,7 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
             final Integer accountStatusId = JdbcSupport.getInteger(rs, "accountStatusId");
             final String productShortName = rs.getString("productShortName");
             final Long productId = JdbcSupport.getLong(rs, "productId");
-            
+
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
             final String currencyNameCode = rs.getString("currencyNameCode");
@@ -234,7 +229,7 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
             final Integer currencyDigits = JdbcSupport.getInteger(rs, "currencyDigits");
             final CurrencyData currencyData = new CurrencyData(currencyCode, currencyName, currencyDigits, currencyDisplaySymbol,
                     currencyNameCode);
-            
+
             final BigDecimal disbursementAmount = rs.getBigDecimal("disbursementAmount");
             final BigDecimal principalDue = rs.getBigDecimal("principalDue");
             final BigDecimal principalPaid = rs.getBigDecimal("principalPaid");
@@ -243,8 +238,8 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
             final BigDecimal chargesDue = rs.getBigDecimal("chargesDue");
 
             return new JLGCollectionSheetFlatData(groupName, groupId, staffId, staffName, levelId, levelName, clientName, clientId, loanId,
-                    accountId, accountStatusId, productShortName, productId, currencyData, disbursementAmount,
-                    principalDue, principalPaid, interestDue, interestPaid, chargesDue);
+                    accountId, accountStatusId, productShortName, productId, currencyData, disbursementAmount, principalDue, principalPaid,
+                    interestDue, interestPaid, chargesDue);
         }
 
     }

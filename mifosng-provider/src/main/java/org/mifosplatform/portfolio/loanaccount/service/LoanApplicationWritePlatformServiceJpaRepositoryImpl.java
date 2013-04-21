@@ -32,8 +32,7 @@ import org.mifosplatform.portfolio.calendar.service.CalendarHelper;
 import org.mifosplatform.portfolio.client.domain.AccountNumberGenerator;
 import org.mifosplatform.portfolio.client.domain.AccountNumberGeneratorFactory;
 import org.mifosplatform.portfolio.client.domain.Client;
-import org.mifosplatform.portfolio.client.domain.ClientRepository;
-import org.mifosplatform.portfolio.client.exception.ClientNotFoundException;
+import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
 import org.mifosplatform.portfolio.collateral.domain.LoanCollateral;
 import org.mifosplatform.portfolio.collateral.service.CollateralAssembler;
 import org.mifosplatform.portfolio.fund.domain.Fund;
@@ -82,7 +81,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     private final NoteRepository noteRepository;
     private final LoanScheduleCalculationPlatformService calculationPlatformService;
     private final LoanAssembler loanAssembler;
-    private final ClientRepository clientRepository;
+    private final ClientRepositoryWrapper clientRepository;
     private final LoanProductRepository loanProductRepository;
     private final LoanChargeAssembler loanChargeAssembler;
     private final CollateralAssembler loanCollateralAssembler;
@@ -98,10 +97,10 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final LoanApplicationTransitionApiJsonValidator loanApplicationTransitionApiJsonValidator,
             final LoanApplicationCommandFromApiJsonHelper fromApiJsonDeserializer, final AprCalculator aprCalculator,
             final LoanAssembler loanAssembler, final LoanChargeAssembler loanChargeAssembler,
-            final CollateralAssembler loanCollateralAssembler, final LoanRepository loanRepository,
-            final NoteRepository noteRepository, final LoanScheduleCalculationPlatformService calculationPlatformService,
-            final ClientRepository clientRepository, final LoanProductRepository loanProductRepository,
-            final AccountNumberGeneratorFactory accountIdentifierGeneratorFactory, final LoanSummaryWrapper loanSummaryWrapper,
+            final CollateralAssembler loanCollateralAssembler, final LoanRepository loanRepository, final NoteRepository noteRepository,
+            final LoanScheduleCalculationPlatformService calculationPlatformService, final ClientRepositoryWrapper clientRepository,
+            final LoanProductRepository loanProductRepository, final AccountNumberGeneratorFactory accountIdentifierGeneratorFactory,
+            final LoanSummaryWrapper loanSummaryWrapper,
             final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory,
             final CalendarRepository calendarRepository, final CalendarInstanceRepository calendarInstanceRepository) {
         this.context = context;
@@ -135,16 +134,20 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
         AppUser currentUser = context.authenticatedUser();
 
-        this.fromApiJsonDeserializer.validateForCreate(command.json());
+        final Long productId = fromJsonHelper.extractLongNamed("productId", command.parsedJson());
 
+        final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
+        if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
 
-        //validate dates against calendar recurring dates 
-        //get calendar
+        this.fromApiJsonDeserializer.validateForCreate(command.json(), loanProduct);
+
+        // validate dates against calendar recurring dates
+        // get calendar
         final Long calendarId = command.longValueOfParameterNamed("calendarId");
         Calendar calendar = null;
-        if(calendarId != null && calendarId != 0){
+        if (calendarId != null && calendarId != 0) {
             calendar = this.calendarRepository.findOne(calendarId);
-            if(calendar == null) { throw new CalendarNotFoundException(calendarId); }
+            if (calendar == null) { throw new CalendarNotFoundException(calendarId); }
             validateCalendarDates(command, calendar);
         }
 
@@ -165,9 +168,10 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             this.noteRepository.save(note);
         }
 
-        //Save calendar instance
-        if(calendar != null){
-            CalendarInstance calendarInstance = new CalendarInstance(calendar, newLoanApplication.getId(), CalendarEntityType.LOANS.getValue());
+        // Save calendar instance
+        if (calendar != null) {
+            CalendarInstance calendarInstance = new CalendarInstance(calendar, newLoanApplication.getId(),
+                    CalendarEntityType.LOANS.getValue());
             this.calendarInstanceRepository.save(calendarInstance);
         }
 
@@ -192,12 +196,12 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             final Long calendarId = command.longValueOfParameterNamed("calendarId");
             Calendar calendar = null;
-            if(calendarId != null && calendarId != 0){
+            if (calendarId != null && calendarId != 0) {
                 calendar = this.calendarRepository.findOne(calendarId);
-                if(calendar == null) { throw new CalendarNotFoundException(calendarId); }
+                if (calendar == null) { throw new CalendarNotFoundException(calendarId); }
                 validateCalendarDates(command, calendar);
             }
-            
+
             final Loan existingLoanApplication = retrieveLoanBy(loanId);
 
             if (!existingLoanApplication.isSubmittedAndPendingApproval()) { throw new LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeModified(
@@ -213,8 +217,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final String clientIdParamName = "clientId";
             if (changes.containsKey(clientIdParamName)) {
                 final Long clientId = command.longValueOfParameterNamed(clientIdParamName);
-                final Client client = this.clientRepository.findOne(clientId);
-                if (client == null || client.isDeleted()) { throw new ClientNotFoundException(clientId); }
+                final Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
 
                 existingLoanApplication.updateClient(client);
             }
@@ -227,6 +230,9 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
                 existingLoanApplication.updateLoanProduct(loanProduct);
             }
+
+            // validate min and maximum constraints
+            this.fromApiJsonDeserializer.validateMinMaxConstraintsForModification(command.json(), existingLoanApplication.loanProduct());
 
             final String fundIdParamName = "fundId";
             if (changes.containsKey(fundIdParamName)) {
@@ -288,19 +294,21 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 this.noteRepository.save(note);
             }
 
-            List<CalendarInstance> ciList = (List<CalendarInstance>) this.calendarInstanceRepository.findByEntityIdAndEntityTypeId(loanId, CalendarEntityType.LOANS.getValue());
-            if(calendar != null){
-                
-                //For loans, allow to attach only one calendar instance per loan
-                if(ciList != null && !ciList.isEmpty()){
+            List<CalendarInstance> ciList = (List<CalendarInstance>) this.calendarInstanceRepository.findByEntityIdAndEntityTypeId(loanId,
+                    CalendarEntityType.LOANS.getValue());
+            if (calendar != null) {
+
+                // For loans, allow to attach only one calendar instance per
+                // loan
+                if (ciList != null && !ciList.isEmpty()) {
                     CalendarInstance calendarInstance = ciList.get(0);
-                    if(calendarInstance.getCalendar().getId() != calendar.getId()){
+                    if (calendarInstance.getCalendar().getId() != calendar.getId()) {
                         calendarInstance.updateCalendar(calendar);
                         this.calendarInstanceRepository.saveAndFlush(calendarInstance);
                     }
                 }
-                
-            }else if(ciList != null && !ciList.isEmpty()){
+
+            } else if (ciList != null && !ciList.isEmpty()) {
                 CalendarInstance calendarInstance = ciList.get(0);
                 this.calendarInstanceRepository.delete(calendarInstance);
             }
@@ -505,7 +513,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         loan.setHelpers(defaultLoanLifecycleStateMachine(), this.loanSummaryWrapper, this.loanRepaymentScheduleTransactionProcessorFactory);
         return loan;
     }
-    
+
     private void validateCalendarDates(final JsonCommand command, final Calendar calendar) {
 
         // Validate disbursement date and first repayment dates matches calendar

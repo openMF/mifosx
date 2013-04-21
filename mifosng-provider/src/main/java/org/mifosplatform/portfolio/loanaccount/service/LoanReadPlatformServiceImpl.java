@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -20,13 +21,13 @@ import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSourc
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
-import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepository;
+import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
-import org.mifosplatform.organisation.monetary.exception.CurrencyNotFoundException;
 import org.mifosplatform.portfolio.client.data.ClientData;
+import org.mifosplatform.portfolio.client.domain.ClientEnumerations;
 import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
-import org.mifosplatform.portfolio.group.data.GroupData;
+import org.mifosplatform.portfolio.group.data.GroupGeneralData;
 import org.mifosplatform.portfolio.group.service.GroupReadPlatformService;
 import org.mifosplatform.portfolio.loanaccount.data.DisbursementData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanAccountData;
@@ -35,6 +36,7 @@ import org.mifosplatform.portfolio.loanaccount.data.LoanStatusEnumData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanSummaryData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionEnumData;
+import org.mifosplatform.portfolio.loanaccount.data.PaymentDetailData;
 import org.mifosplatform.portfolio.loanaccount.data.RepaymentScheduleRelatedLoanData;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
@@ -46,6 +48,7 @@ import org.mifosplatform.portfolio.loanaccount.exception.LoanTransactionNotFound
 import org.mifosplatform.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.data.LoanSchedulePeriodData;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
+import org.mifosplatform.portfolio.loanproduct.service.LoanDropdownReadPlatformService;
 import org.mifosplatform.portfolio.loanproduct.service.LoanEnumerations;
 import org.mifosplatform.portfolio.loanproduct.service.LoanProductReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +58,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 @Service
 public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
@@ -62,17 +66,20 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     private final JdbcTemplate jdbcTemplate;
     private final PlatformSecurityContext context;
     private final LoanRepository loanRepository;
-    private final ApplicationCurrencyRepository applicationCurrencyRepository;
+    private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository;
     private final LoanProductReadPlatformService loanProductReadPlatformService;
     private final ClientReadPlatformService clientReadPlatformService;
     private final GroupReadPlatformService groupReadPlatformService;
     private final LoanTransactionRepository loanTransactionRepository;
+    private final LoanDropdownReadPlatformService loanDropdownReadPlatformService;
 
     @Autowired
     public LoanReadPlatformServiceImpl(final PlatformSecurityContext context, final LoanRepository loanRepository,
-            final LoanTransactionRepository loanTransactionRepository, final ApplicationCurrencyRepository applicationCurrencyRepository,
+            final LoanTransactionRepository loanTransactionRepository,
+            final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository,
             final LoanProductReadPlatformService loanProductReadPlatformService, final ClientReadPlatformService clientReadPlatformService,
-            final GroupReadPlatformService groupReadPlatformService, final TenantAwareRoutingDataSource dataSource) {
+            final GroupReadPlatformService groupReadPlatformService, final LoanDropdownReadPlatformService loanDropdownReadPlatformService,
+            final TenantAwareRoutingDataSource dataSource) {
         this.context = context;
         this.loanRepository = loanRepository;
         this.loanTransactionRepository = loanTransactionRepository;
@@ -80,6 +87,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         this.loanProductReadPlatformService = loanProductReadPlatformService;
         this.clientReadPlatformService = clientReadPlatformService;
         this.groupReadPlatformService = groupReadPlatformService;
+        this.loanDropdownReadPlatformService = loanDropdownReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
@@ -126,6 +134,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             // retrieve all loan transactions that are not invalid and have not
             // been 'contra'ed by another transaction
             // repayments at time of disbursement (e.g. charges)
+
+            /*** TODO Vishwas: Remove references to "Contra" from the codebase ***/
             String sql = "select "
                     + rm.LoanPaymentsSchema()
                     + " where tr.loan_id = ? and tr.transaction_type_enum not in (0, 3) and tr.is_reversed=0 order by tr.transaction_date ASC";
@@ -140,7 +150,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
         context.authenticatedUser();
 
-        final ClientData clientAccount = this.clientReadPlatformService.retrieveIndividualClient(clientId);
+        final ClientData clientAccount = this.clientReadPlatformService.retrieveOne(clientId);
         final LocalDate expectedDisbursementDate = DateUtils.getLocalDateOfTenant();
         LoanAccountData loanTemplateDetails = LoanAccountData.clientDefaults(clientAccount.id(), clientAccount.displayName(),
                 clientAccount.officeId(), expectedDisbursementDate);
@@ -158,7 +168,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
         context.authenticatedUser();
 
-        final GroupData groupAccount = this.groupReadPlatformService.retrieveGroupDetails(groupId , false);
+        final GroupGeneralData groupAccount = this.groupReadPlatformService.retrieveOne(groupId);
         final LocalDate expectedDisbursementDate = DateUtils.getLocalDateOfTenant();
         LoanAccountData loanDetails = LoanAccountData.groupDefaults(groupAccount, expectedDisbursementDate);
 
@@ -169,13 +179,19 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
         return loanDetails;
     }
-    
+
     @Override
-    public LoanAccountData retrieveTemplateWithCompleteGroupAndProductDetails(Long groupId, Long productId){
-        
+    public LoanAccountData retrieveTemplateWithCompleteGroupAndProductDetails(final Long groupId, final Long productId) {
+
         context.authenticatedUser();
 
-        final GroupData groupAccount = this.groupReadPlatformService.retrieveGroup(groupId);
+        GroupGeneralData groupAccount = this.groupReadPlatformService.retrieveOne(groupId);
+        // get group associations
+        Collection<ClientData> membersOfGroup = this.clientReadPlatformService.retrieveClientMembersOfGroup(groupId);
+        if (!CollectionUtils.isEmpty(membersOfGroup)) {
+            groupAccount = GroupGeneralData.withAssocations(groupAccount, membersOfGroup);
+        }
+
         final LocalDate expectedDisbursementDate = DateUtils.getLocalDateOfTenant();
         LoanAccountData loanDetails = LoanAccountData.groupDefaults(groupAccount, expectedDisbursementDate);
 
@@ -186,8 +202,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
         return loanDetails;
     }
-    
-    
+
     @Override
     public LoanTransactionData retrieveLoanTransactionTemplate(final Long loanId) {
 
@@ -198,19 +213,18 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         Loan loan = this.loanRepository.findOne(loanId);
         if (loan == null) { throw new LoanNotFoundException(loanId); }
 
-        final String currencyCode = loan.repaymentScheduleDetail().getPrincipal().getCurrencyCode();
-        ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(currencyCode);
-        if (currency == null) { throw new CurrencyNotFoundException(currencyCode); }
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
 
-        final CurrencyData currencyData = new CurrencyData(currency.getCode(), currency.getName(), currency.getDecimalPlaces(),
-                currency.getDisplaySymbol(), currency.getNameCode());
+        final CurrencyData currencyData = applicationCurrency.toData();
 
         final LocalDate earliestUnpaidInstallmentDate = loan.possibleNextRepaymentDate();
 
         final Money possibleNextRepaymentAmount = loan.possibleNextRepaymentAmount();
         final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.REPAYMENT);
-        return new LoanTransactionData(null, transactionType, currencyData, earliestUnpaidInstallmentDate,
-                possibleNextRepaymentAmount.getAmount(), null, null, null, null);
+        final List<EnumOptionData> paymentOptions = loanDropdownReadPlatformService.retrievePaymentTypeOptions();
+        return new LoanTransactionData(null, transactionType, null, currencyData, earliestUnpaidInstallmentDate,
+                possibleNextRepaymentAmount.getAmount(), null, null, null, null, paymentOptions);
     }
 
     @Override
@@ -224,21 +238,17 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final Loan loan = this.loanRepository.findOne(loanId);
         if (loan == null) { throw new LoanNotFoundException(loanId); }
 
-        final String currencyCode = loan.repaymentScheduleDetail().getPrincipal().getCurrencyCode();
-        final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(currencyCode);
-        if (currency == null) { throw new CurrencyNotFoundException(currencyCode); }
-
-        final CurrencyData currencyData = new CurrencyData(currency.getCode(), currency.getName(), currency.getDecimalPlaces(),
-                currency.getDisplaySymbol(), currency.getNameCode());
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+        final CurrencyData currencyData = applicationCurrency.toData();
 
         final LoanTransaction waiveOfInterest = loan.deriveDefaultInterestWaiverTransaction();
 
         final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.WAIVE_INTEREST);
 
-        final MonetaryCurrency monetaryCurrency = new MonetaryCurrency(currency.getCode(), currency.getDecimalPlaces());
-        final BigDecimal amount = waiveOfInterest.getAmount(monetaryCurrency).getAmount();
-        return new LoanTransactionData(null, transactionType, currencyData, waiveOfInterest.getTransactionDate(), amount, null, null, null,
-                null);
+        final BigDecimal amount = waiveOfInterest.getAmount(currency).getAmount();
+        return new LoanTransactionData(null, transactionType, null, currencyData, waiveOfInterest.getTransactionDate(), amount, null, null,
+                null, null);
     }
 
     @Override
@@ -247,7 +257,17 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         context.authenticatedUser();
 
         final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.WRITEOFF);
-        return new LoanTransactionData(null, transactionType, null, DateUtils.getLocalDateOfTenant(), null, null, null, null, null);
+        return new LoanTransactionData(null, transactionType, null, null, DateUtils.getLocalDateOfTenant(), null, null, null, null, null);
+    }
+
+    @Override
+    public LoanTransactionData retrieveDisbursalTemplate(final Long loanId) {
+        final Loan loan = this.loanRepository.findOne(loanId);
+        if (loan == null) { throw new LoanNotFoundException(loanId); }
+        final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.DISBURSEMENT);
+        final List<EnumOptionData> paymentOptions = loanDropdownReadPlatformService.retrievePaymentTypeOptions();
+        return new LoanTransactionData(null, transactionType, null, null, loan.getExpectedDisbursedOnLocalDate(), null, null, null, null,
+                null, paymentOptions);
     }
 
     @Override
@@ -258,17 +278,14 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final Loan loan = this.loanRepository.findOne(loanId);
         if (loan == null) { throw new LoanNotFoundException(loanId); }
 
-        final String currencyCode = loan.repaymentScheduleDetail().getPrincipal().getCurrencyCode();
-        final ApplicationCurrency currency = this.applicationCurrencyRepository.findOneByCode(currencyCode);
-        if (currency == null) { throw new CurrencyNotFoundException(currencyCode); }
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+        final CurrencyData currencyData = applicationCurrency.toData();
 
         final LoanTransaction transaction = this.loanTransactionRepository.findOne(transactionId);
         if (transaction == null) { throw new LoanTransactionNotFoundException(transactionId); }
 
         if (transaction.isNotBelongingToLoanOf(loan)) { throw new LoanTransactionNotFoundException(transactionId, loanId); }
-
-        final CurrencyData currencyData = new CurrencyData(currency.getCode(), currency.getName(), currency.getDecimalPlaces(),
-                currency.getDisplaySymbol(), currency.getNameCode());
 
         return transaction.toData(currencyData);
     }
@@ -280,7 +297,10 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " l.loanpurpose_cv_id as loanPurposeId, cv.code_value as loanPurposeName,"
                     + " lp.id as loanProductId, lp.name as loanProductName, lp.description as loanProductDescription,"
                     + " c.id as clientId, c.display_name as clientName, c.office_id as clientOfficeId,"
-                    + " g.id as groupId, g.name as groupName, g.office_id as groupOfficeId, g.staff_id As groupStaffId , g.parent_id as groupParentId , g.hierarchy As groupHierarchy , g.external_id As groupExternalId , "
+                    + " g.id as groupId, g.display_name as groupName,"
+                    + " g.office_id as groupOfficeId, g.staff_id As groupStaffId , g.parent_id as groupParentId, "
+                    + " g.hierarchy As groupHierarchy , g.external_id As groupExternalId, "
+                    + " g.status_enum as statusEnum, g.activation_date as activationDate, "
                     + " l.submittedon_date as submittedOnDate, sbu.username as submittedByUsername, sbu.firstname as submittedByFirstname, sbu.lastname as submittedByLastname,"
                     + " l.rejectedon_date as rejectedOnDate, rbu.username as rejectedByUsername, rbu.firstname as rejectedByFirstname, rbu.lastname as rejectedByLastname,"
                     + " l.withdrawnon_date as withdrawnOnDate, wbu.username as withdrawnByUsername, wbu.firstname as withdrawnByFirstname, wbu.lastname as withdrawnByLastname,"
@@ -515,20 +535,21 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                         totalWaived, totalWrittenOff, totalOutstanding, totalOverdue, overdueSinceDate);
             }
 
-            GroupData groupData = null;
-            
-            if(groupId != null){
-                
-                groupData = new GroupData(groupId, groupName, groupExternalId, groupOfficeId, groupStaffId, groupParentId, groupHierarchy);
+            GroupGeneralData groupData = null;
+            if (groupId != null) {
+                final Integer groupStatusEnum = JdbcSupport.getInteger(rs, "statusEnum");
+                final EnumOptionData groupStatus = ClientEnumerations.status(groupStatusEnum);
+                final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
+                groupData = GroupGeneralData.instance(groupId, groupName, groupExternalId, groupStatus, activationDate, groupOfficeId,
+                        null, groupParentId, null, groupStaffId, null, groupHierarchy);
             }
-            
+
             return LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientName, clientOfficeId, groupData,
-                    loanProductId, loanProductName, loanProductDescription, fundId, fundName, loanPurposeId,
-                    loanPurposeName, loanOfficerId, loanOfficerName, currencyData, principal, inArrearsTolerance, termFrequency,
-                    termPeriodFrequencyType, numberOfRepayments, repaymentEvery, repaymentFrequencyType, transactionStrategyId,
-                    amortizationType, interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType,
-                    interestCalculationPeriodType, expectedFirstRepaymentOnDate, interestChargedFromDate, timeline, loanSummary,
-                    feeChargesDueAtDisbursementCharged);
+                    loanProductId, loanProductName, loanProductDescription, fundId, fundName, loanPurposeId, loanPurposeName,
+                    loanOfficerId, loanOfficerName, currencyData, principal, inArrearsTolerance, termFrequency, termPeriodFrequencyType,
+                    numberOfRepayments, repaymentEvery, repaymentFrequencyType, transactionStrategyId, amortizationType,
+                    interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType, interestCalculationPeriodType,
+                    expectedFirstRepaymentOnDate, interestChargedFromDate, timeline, loanSummary, feeChargesDueAtDisbursementCharged);
         }
     }
 
@@ -659,14 +680,14 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 if (fromDate == null) {
                     fromDate = this.lastDueDate;
                 }
-                final BigDecimal outstandingPrincipleBalanceOfLoan = outstandingLoanPrincipalBalance.subtract(principalDue);
+                final BigDecimal outstandingPrincipalBalanceOfLoan = outstandingLoanPrincipalBalance.subtract(principalDue);
 
                 // update based on current period values
                 this.lastDueDate = dueDate;
                 outstandingLoanPrincipalBalance = outstandingLoanPrincipalBalance.subtract(principalDue);
 
                 final LoanSchedulePeriodData periodData = LoanSchedulePeriodData.repaymentPeriodWithPayments(loanId, period, fromDate,
-                        dueDate, principalDue, principalPaid, principalWrittenOff, principalOutstanding, outstandingPrincipleBalanceOfLoan,
+                        dueDate, principalDue, principalPaid, principalWrittenOff, principalOutstanding, outstandingPrincipalBalanceOfLoan,
                         interestExpectedDue, interestPaid, interestWaived, interestWrittenOff, interestOutstanding, feeChargesExpectedDue,
                         feeChargesPaid, feeChargesWaived, feeChargesWrittenOff, feeChargesOutstanding, penaltyChargesExpectedDue,
                         penaltyChargesPaid, penaltyChargesWaived, penaltyChargesWrittenOff, penaltyChargesOutstanding, totalDueForPeriod,
@@ -689,12 +710,15 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         public String LoanPaymentsSchema() {
 
             return " tr.id as id, tr.transaction_type_enum as transactionType, tr.transaction_date as `date`, tr.amount as total, "
-                    + "tr.principal_portion_derived as principal, " + "tr.interest_portion_derived as interest, "
-                    + "tr.fee_charges_portion_derived as fees, " + "tr.penalty_charges_portion_derived as penalties, "
+                    + " tr.principal_portion_derived as principal, tr.interest_portion_derived as interest, "
+                    + " tr.fee_charges_portion_derived as fees, tr.penalty_charges_portion_derived as penalties, "
+                    + " pd.payment_type_enum as paymentType,pd.account_number as accountNumber,pd.check_number as checkNumber, "
+                    + " pd.receipt_number as receiptNumber, pd.bank_number as bankNumber,pd.routing_code as routingCode, "
                     + " l.currency_code as currencyCode, l.currency_digits as currencyDigits, rc.`name` as currencyName, "
                     + " rc.display_symbol as currencyDisplaySymbol, rc.internationalized_name_code as currencyNameCode "
-                    + " from m_loan l " + " join m_loan_transaction tr on tr.loan_id = l.id"
-                    + " join m_currency rc on rc.`code` = l.currency_code ";
+                    + " from m_loan l join m_loan_transaction tr on tr.loan_id = l.id"
+                    + " join m_currency rc on rc.`code` = l.currency_code "
+                    + " left JOIN m_payment_detail pd ON tr.payment_detail_id = pd.id";
         }
 
         @Override
@@ -711,6 +735,22 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final Long id = rs.getLong("id");
             final int transactionTypeInt = JdbcSupport.getInteger(rs, "transactionType");
             final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(transactionTypeInt);
+
+            PaymentDetailData paymentDetailData = null;
+
+            if (transactionType.isPaymentOrReceipt()) {
+                final Integer paymentTypeId = JdbcSupport.getInteger(rs, "paymentType");
+                if (paymentTypeId != null) {
+                    EnumOptionData paymentType = LoanEnumerations.paymentType(paymentTypeId);
+                    final String accountNumber = rs.getString("accountNumber");
+                    final String checkNumber = rs.getString("checkNumber");
+                    final String routingCode = rs.getString("routingCode");
+                    final String receiptNumber = rs.getString("receiptNumber");
+                    final String bankNumber = rs.getString("bankNumber");
+                    paymentDetailData = new PaymentDetailData(id, paymentType, accountNumber, checkNumber, routingCode, receiptNumber,
+                            bankNumber);
+                }
+            }
             final LocalDate date = JdbcSupport.getLocalDate(rs, "date");
             final BigDecimal totalAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "total");
             final BigDecimal principalPortion = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "principal");
@@ -718,8 +758,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final BigDecimal feeChargesPortion = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "fees");
             final BigDecimal penaltyChargesPortion = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penalties");
 
-            return new LoanTransactionData(id, transactionType, currencyData, date, totalAmount, principalPortion, interestPortion,
-                    feeChargesPortion, penaltyChargesPortion);
+            return new LoanTransactionData(id, transactionType, paymentDetailData, currencyData, date, totalAmount, principalPortion,
+                    interestPortion, feeChargesPortion, penaltyChargesPortion);
         }
     }
+
 }

@@ -29,12 +29,13 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
-import org.mifosplatform.organisation.office.data.OfficeLookup;
+import org.mifosplatform.organisation.office.data.OfficeData;
 import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
 import org.mifosplatform.organisation.staff.data.BulkTransferLoanOfficerData;
 import org.mifosplatform.organisation.staff.data.StaffAccountSummaryCollectionData;
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.organisation.staff.service.StaffReadPlatformService;
+import org.mifosplatform.portfolio.loanaccount.service.BulkLoansReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -52,19 +53,21 @@ public class BulkLoansApiResource {
     private final PlatformSecurityContext context;
     private final StaffReadPlatformService staffReadPlatformService;
     private final OfficeReadPlatformService officeReadPlatformService;
+    private final BulkLoansReadPlatformService bulkLoansReadPlatformService;
     private final DefaultToApiJsonSerializer<BulkTransferLoanOfficerData> toApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
 
     @Autowired
     public BulkLoansApiResource(final PlatformSecurityContext context, final StaffReadPlatformService staffReadPlatformService,
-            final OfficeReadPlatformService officeReadPlatformService,
+            final OfficeReadPlatformService officeReadPlatformService, final BulkLoansReadPlatformService bulkLoansReadPlatformService,
             final DefaultToApiJsonSerializer<BulkTransferLoanOfficerData> toApiJsonSerializer,
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService) {
         this.context = context;
         this.staffReadPlatformService = staffReadPlatformService;
         this.officeReadPlatformService = officeReadPlatformService;
+        this.bulkLoansReadPlatformService = bulkLoansReadPlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
@@ -79,7 +82,7 @@ public class BulkLoansApiResource {
 
         context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
 
-        final Collection<OfficeLookup> offices = this.officeReadPlatformService.retrieveAllOfficesForLookup();
+        final Collection<OfficeData> offices = this.officeReadPlatformService.retrieveAllOfficesForDropdown();
 
         Collection<StaffData> loanOfficers = null;
         StaffAccountSummaryCollectionData staffAccountSummaryCollectionData = null;
@@ -89,7 +92,7 @@ public class BulkLoansApiResource {
         }
 
         if (loanOfficerId != null) {
-            staffAccountSummaryCollectionData = this.staffReadPlatformService.retrieveLoanOfficerAccountSummary(loanOfficerId);
+            staffAccountSummaryCollectionData = this.bulkLoansReadPlatformService.retrieveLoanOfficerAccountSummary(loanOfficerId);
         }
 
         final BulkTransferLoanOfficerData loanReassignmentData = BulkTransferLoanOfficerData.templateForBulk(officeId, loanOfficerId,

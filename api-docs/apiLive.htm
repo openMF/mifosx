@@ -176,6 +176,14 @@
 								<td></td>
 								<td><a href="#clients_retrieve">Retrieve a Client</a></td>
 								<td><a href="#clients_update">Update a Client</a></td>
+								<td><a href="#clients_delete">Delete a Client</a></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>clients/{clientId}?command=activate</td>
+								<td><a href="#clients_activate">Activate a Client</a></td>
+								<td></td>
+								<td></td>
 								<td></td>
 							</tr>
 							<tr class="alt">
@@ -228,7 +236,7 @@
 				</div>
 			</div>
 			<div class="flybar-nav">
-				<h2 class="flybar-button">Group</h2>
+				<h2 class="flybar-button">Groupings</h2>
 				<div id="toc-menu-group" class="flybar-menu">
 					<div class="tocMatrix">
 						<table class=matrixHeading>
@@ -275,43 +283,50 @@
 									</table></td>
 							</tr>
 							<tr class="alt">
+								<td><a href="#centers">Center</a></td>
+								<td>centers</td>
+								<td><a href="#centers_create">Create a Center</a></td>
+								<td><a href="#centers_list">List Centers</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>centers/{centerId}</td>
+								<td></td>
+								<td><a href="#centers_retrieve">Retrieve a Center</a></td>
+								<td><a href="#centers_update">Update a Center</a></td>
+								<td><a href="#centers_delete">Delete a Center</a></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>centers/{centerId}?command=activate</td>
+								<td><a href="#centers_activate">Activate a Center</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
 								<td><a href="#groups">Group</a></td>
 								<td>groups</td>
 								<td><a href="#groups_create">Create a Group</a></td>
 								<td><a href="#groups_list">List Groups</a></td>
 								<td></td>
-								<td><a href="#groups_delete">Delete a Group</a></td>
+								<td></td>
 							</tr>
-							<tr>
+							<tr class="alt">
 								<td></td>
 								<td>groups/{group}</td>
 								<td></td>
 								<td><a href="#groups_retrieve">Retrieve a Group</a></td>
 								<td><a href="#groups_update">Update a Group</a></td>
-								<td></td>
-							</tr>
-							<tr class="alt">
-								<td></td>
-								<td>groups/{group}/loans</td>
-								<td></td>
-								<td><a href="#groups_loansummary">Retrieve a Group's
-										Loan Account Summary</a></td>
-								<td></td>
-								<td></td>
+								<td><a href="#groups_delete">Delete a Group</a></td>
 							</tr>
 							<tr>
 								<td></td>
-								<td>groups/{group}/command/assign_loanofficer</td>
-								<td><a href="#groups_assignlo">Assign a Loan Officer</a></td>
+								<td>groups/{groupId}?command=activate</td>
+								<td><a href="#groups_activate">Activate a Group</a></td>
 								<td></td>
-								<td></td>
-								<td></td>
-							</tr>
-							<tr class="alt">
-								<td></td>
-								<td>groups/{group}/command/unassign_loanofficer</td>
-								<td><a href="#groups_unassign_lo">Unassign a Loan Officer</a></td>
-								<td></a></td>
 								<td></td>
 								<td></td>
 							</tr>
@@ -319,6 +334,8 @@
 					</div>
 				</div>
 			</div>
+
+
 			<div class="flybar-nav">
 				<h2 class="flybar-button">Loan</h2>
 				<div id="toc-menu-loan" class="flybar-menu">
@@ -937,9 +954,8 @@
 								<td><a href="#permissions">Permission</a></td>
 								<td>permissions</td>
 								<td></td>
-								<td><a href="#permissions_list">List Application
-										Permissions</a></td>
-								<td></td>
+								<td><a href="#permissions_list">List Application Permissions</a></td>
+								<td><a href="#permissions_update">Enable/Disable Permissions for Maker Checker</a></td>
 								<td></td>
 							</tr>
 						</table>
@@ -1034,6 +1050,46 @@
 								<td><a href="#configs_codes_codevalues_retrieve">Retrieve a Code Value</a></td>
 								<td><a href="#configs_codes_codevalues_update">Update a Code Value</a></td>
 								<td><a href="#configs_codes_codevalues_delete">Delete a Code Value</a></td>
+							</tr>
+							<tr>
+								<td><a href="#audits">Audits</a></td>
+								<td>audits</td>
+								<td></td>
+								<td><a href="#audits_list">List Audits</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>audits/{auditId}</td>
+								<td></td>
+								<td><a href="#audits_retrieve">Retrieve an Audit Entry</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td><a href="#makercheckers">Makercheckers</a></td>
+								<td>makercheckers</td>
+								<td></td>
+								<td><a href="#makercheckers_list">List Maker Checker Entries</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>makercheckers/{auditId}</td>
+								<td></td>
+								<td></td>
+								<td></td>
+								<td><a href="#makercheckers_delete">Delete Maker Checker Entry</a></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>makercheckers/{auditId}?command=approve</td>
+								<td><a href="#makercheckers_approve">Approve Maker Checker Entry</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
 							</tr>
 						</table>
 					</div>
@@ -1239,14 +1295,22 @@
 							<tr>
 								<td><a href="#reports">Report</a></td>
 								<td>reports</td>
-								<td></td>
+								<td><a href="#reports_create">Create a Report</a></td>
 								<td><a href="#reports_list">List Reports</a></td>
 								<td></td>
 								<td></td>
 							</tr>
 							<tr class="alt">
 								<td></td>
-								<td>reports/{reportName}</td>
+								<td>reports/{id}</td>
+								<td></td>
+								<td><a href="#reports_retrieve">Retrieve a Report</a></td>
+								<td><a href="#reports_update">Update a Report</a></td>
+								<td><a href="#reports_delete">Delete a Report</a></td>
+							</tr>
+							<tr>
+								<td><a href="#runreports">Run Report</a></td>
+								<td>runreports/{reportName}</td>
 								<td></td>
 								<td><a href="#report_run">Run a Report</a></td>
 								<td></td>
@@ -1277,6 +1341,14 @@
 											<td><div class=matrixHeadingCommands>read</div></td>
 										</tr>
 									</table></td>
+							</tr>
+							<tr class="alt">
+								<td>centers/template</td>
+								<td><a href="#centers_template">Retrieve Center Template</a></td>
+							</tr>
+							<tr>
+								<td>groups/template</td>
+								<td><a href="#groups_template">Retrieve Group Template</a></td>
 							</tr>
 							<tr class="alt">
 								<td>clients/template</td>
@@ -1649,8 +1721,8 @@ function executeAjaxRequest(url, verbType, jsonData, basicAuthKey, successFuncti
 			<div class="method-section">
 				<div class="method-description">
 					<h3>Clients</h3>
-					<p>Clients are people and businesses that have applied (or may
-						apply) to an MFI for loans.</p>
+					<p>Clients are people and businesses that have applied (or may apply) to an MFI for loans.</p>
+					<p>Clients can be created in <b>Pending</b> or straight into <b>Active</b> state.</p>
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
 							<td><div class="mifosXHeading2">Field Descriptions</div></td>
@@ -1663,6 +1735,29 @@ function executeAjaxRequest(url, verbType, jsonData, basicAuthKey, successFuncti
 								value is set as account no. for client account, otherwise an
 								auto generated account no. is put in place based on the
 								configured strategy.</td>
+						</tr>
+						<tr class=alt>
+							<td>externalId</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>A place to put an external reference for
+								this client e.g. The ID another system uses.<br> If
+								provided, it must be unique.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>active</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Indicates whether this client is to be created as <b>active</b> client. If active=true, then <b>activationDate</b> must be provided. If active=false, then the client is created as <b>pending</b>.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>activationDate</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>The date on which the client became <b>active</b>.
+							</td>
 						</tr>
 						<tr class=alt>
 							<td>firstname</td>
@@ -1693,63 +1788,11 @@ function executeAjaxRequest(url, verbType, jsonData, basicAuthKey, successFuncti
 								business that doesnt suit the firstname,middlename,lastname
 								structure.</td>
 						</tr>
-						<tr class=alt>
-							<td>externalId</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>A place to put an external reference for
-								this client e.g. The ID another system uses.<br> If
-								provided, it must be unique.
-							</td>
-						</tr>
 					</table>
 				</div>
 			</div>
 
-			<a id="client_list" name="clients_list" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>List Clients</h4>
-					<p>Example Requests:</p>
-					<div class=apiClick>clients</div>
-					<br>
-					<br>
-					<div class=apiClick>clients?fields=displayName,officeName,joinedDate</div>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-GET https://DomainName/api/v1/clients
-					</code>
-					<code class="method-response">
-[
-    {
-        "id": 2,
-        "accountNo": "000000002",
-        "externalId": "one/78",
-        "fullname": "New Business to Create",
-        "displayName": "New Business to Create",
-        "officeId": 1,
-        "officeName": "Head Office",
-        "joinedDate": [2006,6,13]
-    },
-    {
-        "id": 1,
-        "accountNo": "000000001",
-        "externalId": "786YYH7",
-        "firstname": "Petra",
-        "lastname": "Yton",
-        "displayName": "Petra Yton",
-        "officeId": 1,
-        "officeName": "Head Office",
-        "joinedDate": [2009,3,4]
-    }
-]
-					</code>
-				</div>
-			</div>
-
-			<a id="clients_template" name="clients_template"
-				class="old-syle-anchor">&nbsp;</a>
+			<a id="clients_template" name="clients_template" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Retrieve Client Details Template</h4>
@@ -1771,58 +1814,19 @@ GET https://DomainName/api/v1/clients/template
 					</code>
 					<code class="method-response">
 {
-    "officeId": 1,
-    "joinedDate": [
-        2013,
-        2,
-        5
-    ],
-    "allowedOffices": [
-        {
-            "id": 1,
-            "name": "Head Office",
-            "nameDecorated": "Head Office"
-        }
-    ]
-}
-					</code>
-				</div>
-			</div>
-
-
-			<a id="clients_retrieve" name="clients_retrieve"
-				class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>Retrieve a Client</h4>
-					<p>Example Requests:</p>
-					<div class=apiClick>clients/1</div>
-					<br>
-					<br>
-					<div class=apiClick>clients/1?template=true</div>
-					<br>
-					<br>
-					<div class=apiClick>clients/1?fields=id,displayName,officeName</div>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-GET https://DomainName/api/v1/clients/{clientId}
-					</code>
-					<code class="method-response">
-{
-    "id": 1,
-    "accountNo": "000000001",
-    "externalId": "786YYH7",
-    "firstname": "Petra",
-    "lastname": "Yton",
-    "displayName": "Petra Yton",
-    "officeId": 1,
-    "officeName": "Head Office",
-    "joinedDate": [
-        2009,
-        3,
-        4
-    ]
+  "activationDate": [
+    2013,
+    4,
+    17
+  ],
+  "officeId": 1,
+  "officeOptions": [
+    {
+      "id": 1,
+      "name": "Head Office",
+      "nameDecorated": "Head Office"
+    }
+  ]
 }
 					</code>
 				</div>
@@ -1843,9 +1847,17 @@ GET https://DomainName/api/v1/clients/{clientId}
 							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
 						</tr>
 						<tr class=alt>
-							<td>firstname and lastname OR fullname<br>, joinedDate,
-								officeId
+							<td>firstname and lastname OR fullname,<br> officeId,<br> active=true and activationDate OR active=false,<br>
 							</td>
+						</tr>
+					</table>
+						<br />
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Optional Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>groupId, externalId, accountNo</td>
 						</tr>
 					</table>
 				</div>
@@ -1856,14 +1868,15 @@ POST https://DomainName/api/v1/clients
 					<code class="method-request">
 POST clients
 Content-Type: application/json Request Body:
-{
-    "officeId": 1,
-    "firstname": "Petra",
-    "lastname": "Yton",
-    "externalId": "786YYH7",
-    "dateFormat": "dd MMMM yyyy",
-    "locale": "en",
-    "joinedDate": "04 March 2009"
+{ 
+	"officeId": 1, 
+	"firstname": "Petra", 
+	"lastname": "Yton", 
+	"externalId": "786YYH7", 
+	"dateFormat": "dd MMMM yyyy", 
+	"locale": "en", 
+	"active": true,
+	"activationDate": "04 March 2009"
 } 
 					</code>
 					<code class="method-response">
@@ -1878,22 +1891,157 @@ Content-Type: application/json Request Body:
 					<code class="method-request">
 POST clients
 Content-Type: application/json 
-Request Body: 
-{
-    "officeId": 1,
-    "fullname": "New Business to Create",
-    "externalId": "one/78",
-    "dateFormat": "dd MMMM yyyy",
-    "locale": "en",
-    "joinedDate": "13 June 2006"
+Request Body:
+{ 
+	"officeId": 1, 
+	"fullname": "Client of group",
+	"groupId": 1,
+	"dateFormat": "dd MMMM yyyy", 
+	"locale": "en", 
+	"active": true,
+	"activationDate": "04 March 2009"
 }
 					</code>
 					<code class="method-response">
 {
-    "officeId": 1,
-    "clientId": 2,
-    "resourceId": 2
+  "officeId": 1,
+  "groupId": 1,
+  "clientId": 2,
+  "resourceId": 2
 }
+					</code>
+				</div>
+			</div>
+
+	<a id="clients_activate" name="clients_activate" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Activate a Client</h2>
+	        <p>Clients can be created in a <i>Pending</i> state. This API exists to enable client activation (for when a client becomes approved member of microfinance institue).</p>
+	        <p>If the client happens to be alrady active this API will result in an error.</p>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/clients/{clientId}?command=activate</code>
+	        <code class="method-request">POST clients/1?command=activate
+Content-Type: application/json
+Request Body:
+{
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "activationDate": "01 March 2011"
+}
+			</code>
+	        <code class="method-response">
+{
+  "officeId": 1,
+  "clientId": 1,
+  "resourceId": 1
+}
+	        </code>
+	    </div>
+	</div>
+
+			<a id="clients_retrieve" name="clients_retrieve" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve a Client</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>clients/1</div>
+					<br>
+					<br>
+					<div class=apiClick>clients/1?template=true</div>
+					<br>
+					<br>
+					<div class=apiClick>clients/1?fields=id,displayName,officeName</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/clients/{clientId}
+					</code>
+					<code class="method-response">
+{
+  "id": 2,
+  "accountNo": "000000002",
+  "status": {
+    "id": 300,
+    "code": "clientStatusType.active",
+    "value": "Active"
+  },
+  "activationDate": [
+    2009,
+    3,
+    4
+  ],
+  "fullname": "Client of group",
+  "displayName": "Client of group",
+  "officeId": 1,
+  "officeName": "Head Office",
+  "groups": [
+    {
+      "id": 1,
+      "name": "Example Group"
+    }
+  ]
+}
+					</code>
+				</div>
+			</div>
+
+			<a id="client_list" name="clients_list" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>List Clients</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>clients</div>
+					<br>
+					<br>
+					<div class=apiClick>clients?fields=displayName,officeName,joinedDate</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/clients
+					</code>
+					<code class="method-response">
+[
+  {
+    "id": 2,
+    "accountNo": "000000002",
+    "status": {
+      "id": 300,
+      "code": "clientStatusType.active",
+      "value": "Active"
+    },
+    "activationDate": [
+      2009,
+      3,
+      4
+    ],
+    "fullname": "Client of group",
+    "displayName": "Client of group",
+    "officeId": 1,
+    "officeName": "Head Office"
+  },
+  {
+    "id": 1,
+    "accountNo": "000000001",
+    "externalId": "786YYH7",
+    "status": {
+      "id": 300,
+      "code": "clientStatusType.active",
+      "value": "Active"
+    },
+    "activationDate": [
+      2009,
+      3,
+      4
+    ],
+    "firstname": "Petra",
+    "lastname": "Yton",
+    "displayName": "Petra Yton",
+    "officeId": 1,
+    "officeName": "Head Office"
+  }
+]
 					</code>
 				</div>
 			</div>
@@ -1902,6 +2050,7 @@ Request Body:
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Update a Client</h4>
+					<p>You can update any attribute of a client except for its association with <i>groups</i>. The relationship between a client and a group must be removed through the <b>Groups</b> API.</p>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
@@ -1912,10 +2061,7 @@ PUT clients/1
 Content-Type: application/json 
 Request Body:
 {
-    "externalId": "786444UUUYYH7",
-    "dateFormat": "dd MMMM yyyy",
-    "locale": "en",
-    "joinedDate": "09 June 2006"
+    "externalId": "786444UUUYYH7"
 }
 					</code>
 					<code class="method-response">
@@ -1924,18 +2070,41 @@ Request Body:
     "clientId": 1,
     "resourceId": 1,
     "changes": {
-        "externalId": "786444UUUYYH7",
-        "joinedDate": "09 June 2006",
-        "dateFormat": "dd MMMM yyyy",
-        "locale": "en"
+        "externalId": "786444UUUYYH7"
     }
 }
 					</code>
 				</div>
 			</div>
 
-			<a id="clients_loansummary" name="clients_loansummary"
-				class="old-syle-anchor">&nbsp;</a>
+			<a id="clients_delete" name="clients_delete" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Delete a Client</h4>
+					<p>If a client is in <i>Pending</i> state you are allowed to <b>Delete</b> it. The delete is a 'hard delete' and cannot be recovered from. Once clients become active or have loans or savings associated with it, you cannot delete the client but you may <b>Close</b> the client if they have died or exited the program.</p>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+DELETE https://DomainName/api/v1/clients/{clientId}
+						</code>
+					<code class="method-request">
+DELETE clients/3
+Content-Type: application/json 
+Request Body:
+{
+}
+					</code>
+					<code class="method-response">
+{
+  "officeId": 1,
+  "clientId": 3,
+  "resourceId": 3
+}
+					</code>
+				</div>
+			</div>
+
+			<a id="clients_loansummary" name="clients_loansummary" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Retrieve a Client's Loan Account Summary</h4>
@@ -2540,54 +2709,597 @@ No Request Body:
 				</div>
 			</div>
 
+			<!-- Start of Administrative Units API-->
+			<a id="centers" name="centers" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h3>Centers</h3>
+					<p><b>Centers</b> along with <b>Groups</b> are used to provided a distinctive banking distribution channel used in microfinance. Its common in areas such as India to use Centers and Group administrative units in <b>grameen style lending</b>. Typically groups will contain one to five people and centers themselves will be made of anywhere between 2-7 groups.
+					</p>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Field Descriptions</div></td>
+						</tr>
+						<tr class=alt>
+							<td>externalId</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>A place to put an external reference for this center e.g. The ID another system uses. If provided, it must be unique.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>name</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Name given to the Center.</td>
+						</tr>
+						<tr class=alt>
+							<td>active</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Indicates whether this center is to be created as <b>active</b>. If active=true, then <b>activationDate</b> must be provided. If active=false, then the center is created as <b>pending</b>.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>activationDate</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>The date on which the center became <b>active</b>.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>officeId</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>The officeId of the office/branch this center is administrated through.</td>
+						</tr>
+						<tr class=alt>
+							<td>staffId</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>The staffId of the staff member dealing with this center. The staff member is not specifically the loan officer.</td>
+						</tr>
+						<tr class=alt>
+							<td>groupMembers</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>The array of groupIds to indicate what groups are part of this center.</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+
+			<a id="centers_template" name="centers_template" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve a Center Template</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>centers/template</div>
+					<br/>
+					<div class=apiClick>centers/template?officeId=2</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/mifosng-provider/api/v1/centers/template
+					</code>
+					<code class="method-response">
+{
+  "active": false,
+  "activationDate": [
+    2013,
+    4,
+    18
+  ],
+  "officeId": 1,
+  "officeOptions": [
+    {
+      "id": 1,
+      "name": "Head Office",
+      "nameDecorated": "Head Office"
+    },
+    {
+      "id": 2,
+      "name": "Branch Office 1",
+      "nameDecorated": "....Branch Office 1"
+    }
+  ],
+  "staffOptions": [
+    {
+      "id": 1,
+      "displayName": "C, Mike"
+    }
+  ],
+  "groupMembersOptions": [
+    {
+      "id": 1,
+      "name": "First Group",
+      "externalId": "000-1A",
+      "officeId": 1,
+      "officeName": "Head Office",
+      "hierarchy": ".1."
+    },
+    {
+      "id": 2,
+      "name": "Pending Group",
+      "officeId": 1,
+      "officeName": "Head Office",
+      "hierarchy": ".2."
+    }
+  ]
+}
+					</code>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/mifosng-provider/api/v1/centers/template?officeId=2
+					</code>
+					<code class="method-response">
+{
+  "active": false,
+  "activationDate": [
+    2013,
+    4,
+    18
+  ],
+  "officeId": 2,
+  "officeOptions": [
+    {
+      "id": 1,
+      "name": "Head Office",
+      "nameDecorated": "Head Office"
+    },
+    {
+      "id": 2,
+      "name": "Branch Office 1",
+      "nameDecorated": "....Branch Office 1"
+    }
+  ],
+  "staffOptions": [
+    {
+      "id": 2,
+      "displayName": "D, Mary"
+    },
+    {
+      "id": 3,
+      "displayName": "P, Paul"
+    }
+  ]
+}
+					</code>
+				</div>
+			</div>
+
+			<a id="centers_create" name="centers_create" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Create a Center</h4>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>name, officeId, active, activationDate (if active=true)</td>
+						</tr>
+					</table>
+					<br/>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Optional Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>externalId, staffId, groupMembers</td>
+						</tr>
+					</table>
+				</div>
+				<div class="method-example">
+					<p>Creater a center as pending with no association to groupMembers.</p>
+					<code class="method-declaration">
+POST https://DomainName/mifosng-provider/api/v1/centers
+					</code>
+					<code class="method-request">
+POST centers
+Content-Type: application/json Request Body:
+{
+ 	"name": "First Center (No groups)", 
+ 	"officeId": 1, 
+ 	"active": false
+}
+					</code>
+					<code class="method-response">
+{
+  "officeId": 1,
+  "groupId": 8,
+  "resourceId": 8
+}
+					</code>
+				</div>
+
+				<div class="method-example">
+					<p>Creater a center as active with no association to groupMembers.</p>
+					<code class="method-declaration">
+POST https://DomainName/mifosng-provider/api/v1/centers
+					</code>
+					<code class="method-request">
+POST centers
+Content-Type: application/json Request Body:
+{
+	"name": "centerwithgroup",
+	"officeId": 1,
+	"groupMembers": ["7"],
+	"locale": "en",
+	"dateFormat": "dd MMMM yyyy",
+	"active": true,
+	"activationDate": "01 March 2011"
+}
+					</code>
+					<code class="method-response">
+{
+  "officeId": 1,
+  "groupId": 9,
+  "resourceId": 9
+}
+					</code>
+				</div>
+			</div>
+
+	<a id="centers_activate" name="centers_activate" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Activate a Center</h2>
+	        <p>Centers can be created in a <i>Pending</i> state. This API exists to enable center activation.</p>
+	        <p>If the center happens to be already active this API will result in an error.</p>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/centers/{centerId}?command=activate</code>
+	        <code class="method-request">POST centers/1?command=activate
+Content-Type: application/json
+Request Body:
+{
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "activationDate": "01 March 2011"
+}
+			</code>
+	        <code class="method-response">
+{
+  "officeId": 1,
+  "groupId": 1,
+  "resourceId": 1
+}
+	        </code>
+	    </div>
+	</div>
+
+			<a id="centers_update" name="centers_update" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Update a Center</h4>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+PUT https://DomainName/mifosng-provider/api/v1/centers/{centerId}
+						</code>
+					<code class="method-request">
+PUT centers/8
+Content-Type: application/json 
+Request Body:
+{
+	"name": "First Center (No groups)",
+}
+					</code>
+					<code class="method-response">
+{
+  "officeId": 1,
+  "groupId": 8,
+  "resourceId": 8,
+  "changes": {
+    "name": "First Center (No groups) - modified"
+  }
+}
+					</code>
+				</div>
+			</div>
+			
+			<a id="centers_delete" name="centers_delete" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Delete a Center</h4>
+					<p>A center can be delete if it is in <i>pending</i> state and has nothing associated with it - groups, loans, savings etc</p>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+POST https://DomainName/mifosng-provider/api/v1/centers/{centerId}
+						</code>
+					<code class="method-request">
+DELETE centers/8
+					</code>
+					<code class="method-response">
+{
+	"resourceId":1,
+	"changes":{}
+}
+					</code>
+				</div>
+			</div>
+
+			<a id="centers_retrieve" name="centers_retrieve" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve a Center</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>centers/1</div>
+					<br/>
+					<div class=apiClick>centers/1?associations=groupMembers</div>
+				</div>
+				<div class="method-example">
+					<p>Retrieve an existing center with no groups information.</p>
+					<code class="method-declaration">
+GET https://DomainName/mifosng-provider/api/v1/centers/8
+					</code>
+					<code class="method-response">
+{
+  "id": 8,
+  "status": {
+    "id": 100,
+    "code": "groupingStatusType.pending",
+    "value": "Pending"
+  },
+  "active": false,
+  "name": "First Center (No groups)",
+  "officeId": 1,
+  "officeName": "Head Office",
+  "hierarchy": ".8."
+}
+					</code>
+				</div>
+				<div class="method-example">
+					<p>Retrieve an existing center with no groups information.</p>
+					<code class="method-declaration">
+GET https://DomainName/mifosng-provider/api/v1/centers/9?associations=groupMembers
+					</code>
+					<code class="method-response">
+{
+  "id": 9,
+  "status": {
+    "id": 300,
+    "code": "groupingStatusType.active",
+    "value": "Active"
+  },
+  "active": true,
+  "activationDate": [
+    2011,
+    3,
+    1
+  ],
+  "name": "centerwithgroup",
+  "officeId": 1,
+  "officeName": "Head Office",
+  "hierarchy": ".9.",
+  "groupMembers": [
+    {
+      "id": 7,
+      "name": "Othergroup",
+      "officeId": 1,
+      "officeName": "Head Office",
+      "hierarchy": ".7."
+    }
+  ]
+}
+					</code>
+				</div>
+			</div>
+
+						<a id="centers_list" name="centers_list" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>List Centers</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>centers</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/mifosng-provider/api/v1/centers
+					</code>
+					<code class="method-response">
+[
+  {
+    "id": 8,
+    "status": {
+      "id": 100,
+      "code": "groupingStatusType.pending",
+      "value": "Pending"
+    },
+    "active": false,
+    "name": "First Center (No groups)",
+    "officeId": 1,
+    "officeName": "Head Office",
+    "hierarchy": ".8."
+  },
+  {
+    "id": 9,
+    "status": {
+      "id": 300,
+      "code": "groupingStatusType.active",
+      "value": "Active"
+    },
+    "active": true,
+    "activationDate": [
+      2011,
+      3,
+      1
+    ],
+    "name": "centerwithgroup",
+    "officeId": 1,
+    "officeName": "Head Office",
+    "hierarchy": ".9."
+  }
+]
+					</code>
+				</div>
+			</div>
+			<!-- End of Centers API-->
 
 			<!-- start of Groups api docs -->
 			<a id="groups" name="groups" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h3>Groups</h3>
-					<p>Groups are collection of clients for specific purpose (JLG,SHG, Program etc) </p>
+					<p><b>Groups</b> are used to provide a distinctive banking distribution channel used in microfinance throughout the world. The Group is an administrative unit. It can contain as few as 5 people or as many as 40 depending on how its used.</p>
+
+					<p>Different styles of group lending - Joint-Liability Group, Grameen Model (Center-Group), Self-Help Groups, Village/Communal Banks)</p>
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
 							<td><div class="mifosXHeading2">Field Descriptions</div></td>
 						</tr>
 						<tr class=alt>
-							<td>office_id</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>It stores the officeid of office, to this officer Group belongs.</td>
-						</tr>
-						<tr class=alt>
-							<td>loan_officer_id</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>Id of the officer who manages this group.</td>
-						</tr>
-						<tr class=alt>
 							<td>name</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>Human friendly identity of the Group (Name given to the group).</td>
+							<td class=fielddesc>Name given to the Group.</td>
 						</tr>
 						<tr class=alt>
 							<td>externalId</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>A place to put an external reference for
-								this group e.g. The ID another system uses.<br> If
-								provided, it must be unique.
+							<td class=fielddesc>A place to put an external reference for this group e.g. The ID another system uses. If provided, it must be unique.
 							</td>
 						</tr>
-												<tr class=alt>
-						<td>is_deleted</td>
+						<tr class=alt>
+							<td>officeId</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>Indicator for active or archived groups.
+							<td class=fielddesc>The officeId of the office/branch this group is administrated through.</td>
+						</tr>
+						<tr class=alt>
+							<td>active</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Indicates whether this group is to be created as <b>active</b>. If active=true, then <b>activationDate</b> must be provided. If active=false, then the group is created as <b>pending</b>.
 							</td>
+						</tr>
+						<tr class=alt>
+							<td>activationDate</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>The date on which the group became <b>active</b>.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>staffId</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>The staffId of the staff member dealing with this group. The staff member is not specifically the loan officer. The staff member must be assigned to the same office as this group.</td>
+						</tr>
+						<tr class=alt>
+							<td>clientMembers</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>The individual client members that make up the group. The clients must be assigned to the same office as this group.</td>
 						</tr>
 					</table>
 				</div>
 			</div>
+
+			<a id="groups_template" name="groups_template" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve Group Template</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>groups/template</div>
+					<br/>
+					<div class=apiClick>groups/template?officeId=2</div>
+					<br/>
+					<div class=apiClick>groups/template?centerId=1</div>
+					<br/>
+					
+				</div>
+				<div class="method-example">
+					<p>Template to create a standard group</p>
+					<code class="method-declaration">
+GET https://DomainName/mifosng-provider/api/v1/groups/template
+					</code>
+					<code class="method-response">
+{
+  "officeId": 1,
+  "officeOptions": [
+    {
+      "id": 1,
+      "name": "Head Office",
+      "nameDecorated": "Head Office"
+    },
+    {
+      "id": 2,
+      "name": "Branch Office 1",
+      "nameDecorated": "....Branch Office 1"
+    }
+  ],
+  "staffOptions": [
+    {
+      "id": 1,
+      "displayName": "C, Mike"
+    }
+  ],
+  "clientOptions": [
+    {
+      "id": 1,
+      "displayName": "Petra Yton",
+      "officeId": 1,
+      "officeName": "Head Office"
+    },
+    {
+      "id": 2,
+      "displayName": "Small shop business",
+      "officeId": 1,
+      "officeName": "Head Office"
+    }
+  ]
+}
+					</code>
+				</div>
+				<div class="method-example">
+					<p>Template to create a standard group with specific office known. This will return only staffOptions and clientMembersOptions relevant for the chosen office.</p>
+					<code class="method-declaration">
+GET https://DomainName/mifosng-provider/api/v1/groups/template?officeId=2
+					</code>
+					<code class="method-response">
+{
+  "officeId": 2,
+  "officeOptions": [
+    {
+      "id": 1,
+      "name": "Head Office",
+      "nameDecorated": "Head Office"
+    },
+    {
+      "id": 2,
+      "name": "Branch Office 1",
+      "nameDecorated": "....Branch Office 1"
+    }
+  ],
+  "staffOptions": [
+    {
+      "id": 2,
+      "displayName": "D, Mary"
+    },
+    {
+      "id": 3,
+      "displayName": "P, Paul"
+    }
+  ]
+}
+					</code>
+				</div>
+				<div class="method-example">
+					<p>Template to create a group for an existing center. As an existing center will be assigned to an office, this will return only staffOptions and clientMembersOptions relevant for the chosen center/office.</p>
+					<code class="method-declaration">
+GET https://DomainName/mifosng-provider/api/v1/groups/template?centerId=1
+					</code>
+					<code class="method-response">
+
+					</code>
+				</div>
+			</div>
+
 			<a id="groups_create" name="groups_create" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
@@ -2597,32 +3309,204 @@ No Request Body:
 							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
 						</tr>
 						<tr class=alt>
-							<td>name<br>
-								officeId<br>
-								clients
-							</td>
+							<td>name, officeId, active, activationDate (if active=true)</td>
+						</tr>
+					</table>
+					<br/>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Optional Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>externalId,staffId,clientMembers</td>
 						</tr>
 					</table>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
-						POST https://DomainName/mifosng-provider/api/v1/groups
+POST https://DomainName/mifosng-provider/api/v1/groups
 					</code>
 					<code class="method-request">
-						POST groups
-						Content-Type: application/json Request Body:
-						{
-						"officeId":"1",
-						"name":"TA Group",
-						"externalId":"",
-						"clientMembers":["82","83","84"]
-						}
+POST groups
+Content-Type: application/json Request Body:
+{
+	"officeId":"1",
+	"name":"Pending Group",
+	"active": false 
+}
 					</code>
 					<code class="method-response">
-						{"resourceId":24,"changes":{}}
+{
+  "officeId": 1,
+  "groupId": 2,
+  "resourceId": 2
+}
+					</code>
+					<code class="method-request">
+POST groups
+Content-Type: application/json Request Body:
+{
+	"officeId":"1", 
+	"name":"First Group",
+	"externalId": "000-1A", 
+	"clientMembers": ["1"],
+	"dateFormat": "dd MMMM yyyy", 
+	"locale": "en", 
+	"active": true, 
+	"activationDate": "04 March 2009"
+}
+					</code>
+					<code class="method-response">
+{
+  "officeId": 1,
+  "groupId": 1,
+  "resourceId": 1
+}
 					</code>
 				</div>
 			</div>
+
+	<a id="groups_activate" name="groups_activate" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Activate a Group</h2>
+	        <p>Groups can be created in a <i>Pending</i> state. This API exists to enable group activation.</p>
+	        <p>If the group happens to be already active this API will result in an error.</p>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/groups/{groupId}?command=activate</code>
+	        <code class="method-request">POST groups/1?command=activate
+Content-Type: application/json
+Request Body:
+{
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "activationDate": "01 March 2011"
+}
+			</code>
+	        <code class="method-response">
+{
+  "officeId": 1,
+  "groupId": 1,
+  "resourceId": 1
+}
+	        </code>
+	    </div>
+	</div>
+
+			<a id="groups_retrieve" name="groups_retrieve" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve a Group</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>groups/1</div>
+					<br/>
+					<div class=apiClick>groups/1?associations=clientMembers</div>
+				</div>
+				<div class="method-example">
+					<p>Group with no clientMembers information requested.</p>
+					<code class="method-declaration">
+GET https://DomainName/mifosng-provider/api/v1/groups/1
+					</code>
+					<code class="method-response">
+{
+  "id": 1,
+  "name": "First Group",
+  "externalId": "000-1A",
+  "officeId": 1,
+  "officeName": "Head Office",
+  "hierarchy": ".1."
+}
+					</code>
+				</div>
+				<div class="method-example">
+					<p>Group with clientMembers.</p>
+					<code class="method-declaration">
+GET https://DomainName/mifosng-provider/api/v1/groups/1?associations=clientMembers
+					</code>
+					<code class="method-response">
+{
+  "id": 1,
+  "name": "First Group",
+  "externalId": "000-1A",
+  "officeId": 1,
+  "officeName": "Head Office",
+  "hierarchy": ".1.",
+  "clientMembers": [
+    {
+      "id": 1,
+      "accountNo": "000000001",
+      "externalId": "786YYH7",
+      "activationDate": [
+        2009,
+        3,
+        4
+      ],
+      "firstname": "Petra",
+      "lastname": "Yton",
+      "displayName": "Petra Yton",
+      "officeId": 1,
+      "officeName": "Head Office"
+    }
+  ]
+}
+					</code>
+				</div>
+			</div>
+
+			<a id="groups_update" name="groups_update" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Update a Group</h4>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+PUT https://DomainName/mifosng-provider/api/v1/groups/{groupid}
+						</code>
+					<code class="method-request">
+PUT groups/1
+Content-Type: application/json 
+Request Body:
+{
+	"name": "First Group (changed)"
+}
+					</code>
+					<code class="method-response">
+{
+  "officeId": 1,
+  "groupId": 1,
+  "resourceId": 1,
+  "changes": {
+    "name": "First Group (changed)"
+  }
+}
+					</code>
+				</div>
+			</div>
+
+			<a id="groups_delete" name="groups_delete" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Delete a Group</h4>
+					<p>A group can be deleted if it is in <i>pending</i> state and has nothing associated with it - groups, loans, savings etc</p>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+POST https://DomainName/mifosng-provider/api/v1/groups/{groupid}
+						</code>
+					<code class="method-request">
+DELETE groups/2
+					</code>
+					<code class="method-response">
+{
+  "officeId": 1,
+  "groupId": 2,
+  "resourceId": 2
+}
+					</code>
+				</div>
+			</div>
+
 			<a id="groups_list" name="groups_list" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
@@ -2635,209 +3519,23 @@ No Request Body:
 GET https://DomainName/mifosng-provider/api/v1/groups
 					</code>
 					<code class="method-response">
-[{
+[
+  {
     "id": 1,
-    "name": "GWT_2",
-    "externalId": "GWT_EX_ID_2",
-    "officeId": 7,
-    "officeName": "Z2"
-}, {
-    "id": 2,
-    "name": "group22",
-    "externalId": "11234",
-    "officeId": 1,
-    "officeName": "Head Office"
-}, {
-    "id": 3,
-    "name": "PlusOne",
-    "officeId": 22,
-    "officeName": "North Point Office"
-}]
-					</code>
-				</div>
-			</div>
-			<a id="groups_retrieve" name="groups_retrieve"
-				class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>Retrieve a Group</h4>
-					<p>Example Requests:</p>
-					<div class=apiClick>groups/10</div>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-GET https://DomainName/mifosng-provider/api/v1/groups/10
-					</code>
-					<code class="method-response">
-{
-    "id": 10,
-    "name": "test123",
-    "externalId": "tejjjst",
+    "name": "First Group (changed)",
+    "externalId": "000-1A",
     "officeId": 1,
     "officeName": "Head Office",
-    "clientMembers": [{
-        "id": 1,
-        "displayName": "Willie O\u0027Meara"
-    }]
-}
-					</code>
-				</div>
-			</div>
-			<a id="groups_loansummary" name="groups_loansummary"
-				class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>Retrieve a Groups's Loan Account Summary</h4>
-					<p>
-						An example of how a loan portfolio summary can be provided. This
-						one contains quite a bit of redundant data (like the counts) 
-					</p>
-					<p>Example Requests:</p>
-					<div class=apiClick>groups/7/loans</div>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-GET https://DomainName/mifosng-provider/api/v1/groups/7/loans
-					</code>
-					<code class="method-response">
-{
-    "anyLoanCount": 1,
-    "pendingApprovalLoanCount": 0,
-    "pendingApprovalLoans": [],
-    "awaitingDisbursalLoanCount": 0,
-    "awaitingDisbursalLoans": [],
-    "activeLoanCount": 1,
-    "openLoans": [{
-        "id": 79,
-        "productId": 1,
-        "productName": "1-PORetailLoan",
-        "accountStatusId": 300
-    }],
-    "closedLoanCount": 0,
-    "closedLoans": [],
-    "anyIndividualLoanCount": 3,
-    "pendingApprovalIndividualLoanCount": 0,
-    "pendingApprovalIndividualLoans": [],
-    "awaitingDisbursalIndividualLoanCount": 0,
-    "awaitingDisbursalIndividualLoans": [],
-    "activeIndividualLoanCount": 3,
-    "openIndividualLoans": [{
-        "id": 80,
-        "productId": 17,
-        "productName": "17-Intrasoft Business Loan",
-        "accountStatusId": 300
-    }, {
-        "id": 81,
-        "productId": 1,
-        "productName": "1-PORetailLoan",
-        "accountStatusId": 300
-    }, {
-        "id": 82,
-        "productId": 13,
-        "productName": "13-A Flat Loan",
-        "accountStatusId": 300
-    }],
-    "closedIndividualLoanCount": 0,
-    "closedIndividualLoans": []
-}
-					</code>
-				</div>
-			</div>
-			<a id="groups_update" name="groups_update" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>Update a Group</h4>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-PUT https://DomainName/mifosng-provider/api/v1/groups/{groupid}
-						</code>
-					<code class="method-request">
-PUT groups/7 
-Content-Type: application/json 
-Request Body:
-{
-    "officeId": "26",
-    "name": "Laxmi SSG U",
-    "externalId": "Unq 2--124",
-    "clientMembers": ["91", "93", "94"]
-}
-					</code>
-					<code class="method-response">
-{
-	"resourceId":7,
-	"changes":{}
-}
-					</code>
-				</div>
-			</div>
-			<a id="groups_assignlo" name="groups_assignlo" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>Assign a Loan Officer to Group</h4>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-POST https://DomainName/mifosng-provider/api/v1/groups/{groupid}/command/assign_loanofficer
-						</code>
-					<code class="method-request">
-POST groups/20/command/assign_loanofficer 
-Content-Type: application/json 
-Request Body:
-{
-{"loanOfficerId":"1"}
-}
-					</code>
-					<code class="method-response">
-{
-	"resourceId":20,
-	"changes":{}
-}
-					</code>
-				</div>
-			</div>
-			<a id="groups_unassign_lo" name="groups_unassign_lo" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>Unassign a loan officer to a Group</h4>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-POST https://DomainName/mifosng-provider/api/v1/groups/{groupid}/command/assign_loanofficer
-						</code>
-					<code class="method-request">
-POST groups/20/command/unassign_loanofficer 
-Content-Type: application/json 
-Request Body:
-{
-{"loanOfficerId":"1"}
-}
-					</code>
-					<code class="method-response">
-{
-	"resourceId":20,
-	"changes":{}
-}
-					</code>
-				</div>
-			</div>
-						<a id="groups_delete" name="groups_delete" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>Delete a Group</h4>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-POST https://DomainName/mifosng-provider/api/v1/groups/{groupid}
-						</code>
-					<code class="method-request">
-DELETE groups/7
-					</code>
-					<code class="method-response">
-{
-	"resourceId":7,
-	"changes":{}
-}
+    "hierarchy": ".1."
+  },
+  {
+    "id": 2,
+    "name": "Pending Group",
+    "officeId": 1,
+    "officeName": "Head Office",
+    "hierarchy": ".2."
+  }
+]
 					</code>
 				</div>
 			</div>
@@ -3550,7 +4248,7 @@ GET https://DomainName/api/v1/loans/{loanId}
 							<td>productId, principal, loanTermFrequency,
 								loanTermFrequencyType, numberOfRepayments, repaymentEvery,
 								repaymentFrequencyType, interestRatePerPeriod,
-								interestRateFrequencyType, amortizationType, interestType,
+								amortizationType, interestType,
 								interestCalculationPeriodType, expectedDisbursementDate,
 								transactionProcessingStrategyId</td>
 						</tr>
@@ -3575,7 +4273,6 @@ Request Body:
     "repaymentEvery": 1,
     "repaymentFrequencyType": 2,
     "interestRatePerPeriod": 2,
-    "interestRateFrequencyType": 2,
     "amortizationType": 1,
     "interestType": 0,
     "interestCalculationPeriodType": 1,
@@ -3701,7 +4398,7 @@ Request Body:
 							<td>clientId, productId, principal, loanTermFrequency,
 								loanTermFrequencyType, numberOfRepayments, repaymentEvery,
 								repaymentFrequencyType, interestRatePerPeriod,
-								interestRateFrequencyType, amortizationType, interestType,
+								amortizationType, interestType,
 								interestCalculationPeriodType, transactionProcessingStrategyId,
 								expectedDisbursementDate, submittedOnDate</td>
 						</tr>
@@ -3727,7 +4424,6 @@ Request Body:
     "repaymentEvery": 1,
     "repaymentFrequencyType": 2,
     "interestRatePerPeriod": 2,
-    "interestRateFrequencyType": 2,
     "amortizationType": 1,
     "interestType": 0,
     "interestCalculationPeriodType": 1,
@@ -6639,13 +7335,14 @@ Request Body:
 			<div class="method-section">
 				<div class="method-description">
 					<h3>Global Configuration</h3>
-					<p>Global configuration related to set of supported
-						enable/disable configurations e.g. maker-checker.</p>
+					<p>Global configuration related to set of supported enable/disable configurations:</p>
+					<ol>
+						<li><b>maker-checker</b> - defaults to false - if true turns on maker-checker functionality</li>
+					</ol>
 				</div>
 			</div>
 
-			<a id="configs_globalconfig_retrieve"
-				name="configs_globalconfig_retrieve" class="old-syle-anchor">&nbsp;</a>
+			<a id="configs_globalconfig_retrieve" name="configs_globalconfig_retrieve" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Retrieve Global Configuration</h4>
@@ -6659,12 +7356,12 @@ GET https://DomainName/api/v1/configurations
 					</code>
 					<code class="method-response">
 {
-    "globalConfiguration": [
-        {
-            "name": "maker-checker",
-            "enabled": false
-        }
-    ]
+  "globalConfiguration": [
+    {
+      "name": "maker-checker",
+      "enabled": false
+    }
+  ]
 }
 					</code>
 				</div>
@@ -6685,7 +7382,15 @@ PUT configurations
 Content-Type: application/json 
 Request Body: { }
 					</code>
-					<code class="method-response">{ "changes": {} } </code>
+					<code class="method-response">
+{
+  "changes": {
+    "globalConfiguration": {
+      "maker-checker": false
+    }
+  }
+}
+					</code>
 				</div>
 			</div>
 
@@ -7010,18 +7715,629 @@ Content-Type: application/json
 			</div>
 
 
-			<!-- Funds starts here-->
+			<!-- Audit starts here -->
+			<a id="audits" name="audits" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h3>Audits</h3>
+					<p>Every non-read Mifos API request is audited.  A fully processed request can
+                                        not be changed or deleted.  See maker checker api for situations where an audit is not
+                                        fully processed.<br><br>                                 
+                                        
+                                        Permissions: To search and look at audit entries a user needs to be attached to a role
+                                        that has one of the ALL_FUNCTIONS, ALL_FUNCTIONS_READ or READ_AUDIT permissions.<br><br>
+                                        
+                                        Data Scope: A user can only see audits that are within their data scope.  However,
+                                        'head office' users can see all audits including those that aren't office/branch related
+                                        e.g. Loan Product changes.                                        
+					<p/>
+				</div>
+			</div>
+
+			<a id="audits_list" name="audits_list"
+				class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>List Audits</h4>
+					<p>Get a list of audits that match the criteria supplied,
+                                        and are within the requestors' data scope.</p>
+					<h5>Arguments</h5>
+					<dl class="argument-list">
+                                            <dt>actionName</dt>
+                                            <dd>optional</dd>
+                                            <dd>Examples: CREATE, UPDATE, DISBURSE</dd>
+                                            
+                                            <dt>entityName</dt>
+                                            <dd>optional</dd>
+                                            <dd>Examples: CLIENT, LOAN, FUND</dd>
+                                                
+					    <dt>resourceId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the entityName</span>
+                                            </dd>
+                                            
+					    <dt>makerId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the application user creating the entry</span>
+                                            </dd>
+                                            
+                                            <dt>makerDateTimeFrom</dt>
+                                            <dd>optional, <span>
+                                            Get entries created on or after this</span>
+                                            </dd>
+                                            <dd>Example: 2013-04-10 08:00:00</dd>
+                                            
+                                            <dt>makerDateTimeTo</dt>
+                                            <dd>optional, <span>
+                                            Get entries created on or before this</span>
+                                            </dd>
+                                            <dd>Example: 2013-05-10 08:00:00</dd>
+                                            
+					    <dt>checkerId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the application user that checked (approved) the entry</span>
+                                            </dd>
+                                            
+                                            <dt>checkerDateTimeFrom</dt>
+                                            <dd>optional, <span>
+                                            Get entries checked on or after this</span>
+                                            </dd>
+                                            <dd>Example: 2013-04-10 08:00:00</dd>
+                                            
+                                            <dt>checkerDateTimeTo</dt>
+                                            <dd>optional, <span>
+                                            Get entries checked on or before this</span>
+                                            </dd>
+                                            <dd>Example: 2013-05-10 18:00:00</dd>
+                                            
+					    <dt>processingResult</dt>
+                                            <dd>optional, <span>
+                                            The enum value of the processing status</span>
+                                            </dd>
+                                            <dd>values:<br>
+                                            0: Invalid<br>
+                                            1: processed<br>
+                                            2: awaiting.approval<br>
+                                            3: rejected
+                                            </dd>
+                                            
+					    <dt>officeId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the office/branch associated with the entry (if there is one)</span>
+                                            </dd>
+                                            
+					    <dt>groupId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the group associated with the entry (if there is one).
+                                            A group is a general idea and may be a Center, a Group, a Communal Bank or other.</span>
+                                            </dd>
+                                            
+					    <dt>clientId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the client associated with the entry (if there is one)</span>
+                                            </dd>
+                                            
+					    <dt>loanId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the loan associated with the entry (if there is one)</span>
+                                            </dd>
+                                            
+					    <dt>savingsAccountId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the savings account associated with the entry (if there is one)</span>
+                                            </dd>
+                                            
+					    <dt>includeJson</dt>
+                                            <dd>optional, <span>
+                                            Values are true, false.  Default is false.</span>
+                                            </dd>
+                                            
+					</dl>
+					<p>Example Requests:</p>
+					<div class=apiClick>audits</div><br>
+					<div class=apiClick>audits?fields=madeOnDate,maker,processingResult</div><br>
+					<div class=apiClick>audits?makerDateTimeFrom=2013-03-25 08:00:00&makerDateTimeTo=2013-04-04 18:00:00</div><br>
+					<div class=apiClick>audits?officeId=1</div><br>
+					<div class=apiClick>audits?officeId=1&includeJson=true</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/audits
+					</code>
+					<code class="method-response">
+[
+  {
+    "id": 671,
+    "actionName": "PERMISSIONS",
+    "entityName": "ROLE",
+    "resourceId": 6,
+    "maker": "keithwoodlock",
+    "madeOnDate": 1365014262000,
+    "processingResult": "processed"
+  },
+  {
+    "id": 670,
+    "actionName": "CREATE",
+    "entityName": "CLIENTNOTE",
+    "resourceId": 287,
+    "maker": "keithwoodlock",
+    "madeOnDate": 1365014204000,
+    "processingResult": "awaiting.approval",
+    "officeName": "my office",
+    "clientName": "gg ggg"
+  },
+  {
+    "id": 668,
+    "actionName": "UPDATE",
+    "entityName": "PERMISSION",
+    "maker": "keithwoodlock",
+    "madeOnDate": 1365014186000,
+    "processingResult": "processed"
+  },
+  {
+    "id": 667,
+    "actionName": "CREATE",
+    "entityName": "CLIENTNOTE",
+    "resourceId": 286,
+    "maker": "keithwoodlock",
+    "madeOnDate": 1365014169000,
+    "processingResult": "processed",
+    "officeName": "my office name",
+    "clientName": "gg ggg"
+  },
+  {
+    "id": 666,
+    "actionName": "CREATE",
+    "entityName": "CLIENT",
+    "resourceId": 363,
+    "maker": "keithwoodlock",
+    "madeOnDate": 1365012843000,
+    "processingResult": "awaiting.approval",
+    "officeName": "my office name"
+  },
+  {
+    "id": 657,
+    "actionName": "CREATE",
+    "entityName": "CLIENT",
+    "resourceId": 362,
+    "maker": "ii",
+    "madeOnDate": 1364953928000,
+    "checker": "ii",
+    "checkedOnDate": 1365010060000,
+    "processingResult": "processed",
+    "officeName": "my office name",
+    "clientName": "gg ggg"
+  },
+  {
+    "id": 645,
+    "actionName": "CREATE",
+    "entityName": "LOAN",
+    "resourceId": 373,
+    "maker": "keithwoodlock",
+    "madeOnDate": 1364860260000,
+    "checker": "keithwoodlock",
+    "checkedOnDate": 1364861222000,
+    "processingResult": "processed",
+    "officeName": "another office",
+    "clientName": "another client",
+    "loanAccountNo": "000000373"
+  },...
+  ]
+					</code>
+				</div>
+			</div>
+
+			<a id="audits_searchtemplate" name="audits_searchtemplate"
+				class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Audit Search Template</h4>
+					<p>This is a convenience resource. It can be useful when
+                                        building an Audit Search UI. "appUsers" are data scoped to
+                                        the office/branch the requestor is associated with.
+					</p>
+					<p>Example Requests:</p>
+					<div class=apiClick>audits/searchtemplate</div>
+					<div class=apiClick>audits/searchtemplate?fields=actionNames</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/audits/searchtemplate
+					</code>
+					<code class="method-response">
+{
+  "appUsers": [
+    {
+      "id": 30,
+      "username": "user 1"
+    },
+    {
+      "id": 28,
+      "username": "user 2"
+    },
+    {
+      "id": 35,
+      "username": "user 3"
+    },...
+  ],
+  "actionNames": [
+    "CREATE",
+    "DELETE",
+    "UPDATE",
+    "ACTIVATE",
+    "ADJUST",
+    "APPROVALUNDO",
+    "APPROVE",
+    "APPROVEINPAST",
+    "BULKREASSIGN",
+    "CALCULATEINTEREST",
+    "CLOSE",
+    "CLOSEASRESCHEDULED",
+    "CREATEHISTORIC",
+    "DEPOSIT",
+    "DEREGISTER",
+    "DISBURSALUNDO",
+    "DISBURSE",
+    "DISBURSEINPAST",
+    "INTEREST",
+    "PERMISSIONS",
+    "REGISTER",
+    "REJECT",...
+  ],
+  "entityNames": [
+    "CALENDAR",
+    "CENTER",
+    "CHARGE",
+    "CLIENT",
+    "CLIENTIDENTIFIER",
+    "CLIENTIMAGE",
+    "CLIENTNOTE",
+    "CODE",
+    "CODEVALUE",
+    "COLLATERAL",
+    "CONFIGURATION",
+    "CURRENCY",
+    "DATATABLE",
+    "DEPOSITACCOUNT",
+    "DEPOSITNOTE",
+    "DEPOSITPRODUCT",
+    "DOCUMENT",
+    "FUND",
+    "GLACCOUNT",
+    "GLCLOSURE",
+    "GROUP",
+    "GROUPNOTE",...
+  ],
+  "processingResults": [
+    {
+      "id": 0,
+      "processingResult": "invalid"
+    },
+    {
+      "id": 1,
+      "processingResult": "processed"
+    },
+    {
+      "id": 2,
+      "processingResult": "awaiting.approval"
+    },
+    {
+      "id": 3,
+      "processingResult": "rejected"
+    }
+  ]
+}
+					</code>
+				</div>
+			</div>
+
+
+			<a id="audits_retrieve" name="audits_retrieve"
+				class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve an Audit Entry</h4>
+					<p></p>
+					<p>Example Requests:</p>
+					<div class=apiClick>audits/20</div>
+					<div class=apiClick>audits/20?fields=madeOnDate,maker,processingResult</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/audits
+					</code>
+					<code class="method-response">
+{
+  "id": 20,
+  "actionName": "REPAYMENT",
+  "entityName": "LOAN",
+  "resourceId": 868,
+  "maker": "dataentry1",
+  "madeOnDate": 1358449025000,
+  "processingResult": "processed",
+  "commandAsJson": "{\"transactionDate\":\"28 September 2012\",\"transactionAmount\":\"1,967.00\",\"locale\":\"en\",\"dateFormat\":\"dd MMMM yyyy\"}",
+  "officeName": "another office",
+  "clientName": "another client",
+  "loanAccountNo": "23"
+}
+					</code>
+				</div>
+			</div>
+
+
+			<!-- Maker Checker starts here -->
+			<a id="makercheckers" name="makercheckers" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h3>Maker Checker (or 4-eye) functionality</h3>
+                                        <p>Mifos X Maker Checker functionality allows an MFI to define transactions
+                                        as having a maker and a checker phase.  One user enters, deletes or changes data.
+                                        Then, another user that has "Checker" rights for that transaction, can inspect
+                                        and approve the data.
+                                        </p>
+                                        
+                                        <p>By default, Maker Checker functionality is disabled.
+                                        See <a href="#configs_globalconfig_update">Update Global Configuration</a> to enable/disable
+                                        Maker Checker functionality at a global level.
+                                        </p>
+                                        
+                                        <p>
+                                        Additionally, Maker Checker functionality for each transaction (permission) is disabled by default.
+                                        see <a href="#permissions_update">Enable/Disable Permissions for Maker Checker</a> to enable/disable
+                                        Maker Checker functionality at a transaction (permission) level.
+                                        </p>
+                                        
+                                        <p>
+                                        Finally, to give checking rights to a user (via a role associated with the user) see
+                                        <a href="#rolespermissions_update">Update a Role's Permissions</a>
+                                        </p>
+                                        <p>For example, <br>
+<code>
+{
+ "permissions":{
+    "CREATE_GUARANTOR_CHECKER":true,
+    "CREATE_CLIENT_CHECKER":true
+ }
+}
+</code>
+                                        <br>
+                                        will give checking rights for CREATE_GUARANTOR and CREATE_CLIENT</p>
+                                        <p>Alternatively, the special permissions ALL_FUNCTIONS or CHECKER_SUPER_USER will give blanket
+                                        checking rights.
+                                        </p>
+                                        <p>
+                                        When a user "makes" an entry that is enabled for Maker Checker, it is audited and the audit status
+                                        is set to a value of 2 (awaiting.approval).
+                                        </p>
+                                                                                                                        
+                                        Checkers can only Check and approve entries that they have been permitted to check.<br><br>
+                                        
+                                        Checkers can only Check and approve entries that are within their data scope.  However,
+                                        'head office' Checkers can Check and approve all entries 
+                                        including those that aren't office/branch related (as long as they have the Checker permissions)
+                                        e.g. Loan Product changes.                                        
+					<p/>
+				</div>
+			</div>
+
+			<a id="makercheckers_list" name="makercheckers_list"
+				class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>List Maker Checker Entries</h4>
+					<p>Get a list of entries that can be checked by the requestor that match the criteria supplied.</p>
+					<h5>Arguments</h5>
+					<dl class="argument-list">
+                                            <dt>actionName</dt>
+                                            <dd>optional</dd>
+                                            <dd>Examples: CREATE, UPDATE, DISBURSE</dd>
+                                            
+                                            <dt>entityName</dt>
+                                            <dd>optional</dd>
+                                            <dd>Examples: CLIENT, LOAN, FUND</dd>
+                                                
+					    <dt>resourceId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the entityName</span>
+                                            </dd>
+                                            
+					    <dt>makerId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the application user creating the entry</span>
+                                            </dd>
+                                            
+                                            <dt>makerDateTimeFrom</dt>
+                                            <dd>optional, <span>
+                                            Get entries created on or after this</span>
+                                            </dd>
+                                            <dd>Example: 2013-04-10 08:00:00</dd>
+                                            
+                                            <dt>makerDateTimeTo</dt>
+                                            <dd>optional, <span>
+                                            Get entries created on or before this</span>
+                                            </dd>
+                                            <dd>Example: 2013-05-10 08:00:00</dd>
+                                                                                                                                    
+					    <dt>officeId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the office/branch associated with the entry (if there is one)</span>
+                                            </dd>
+                                            
+					    <dt>groupId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the group associated with the entry (if there is one).
+                                            A group is a general idea and may be a Center, a Group, a Communal Bank or other.</span>
+                                            </dd>
+                                            
+					    <dt>clientId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the client associated with the entry (if there is one)</span>
+                                            </dd>
+                                            
+					    <dt>loanId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the loan associated with the entry (if there is one)</span>
+                                            </dd>
+                                            
+					    <dt>savingsAccountId</dt>
+                                            <dd>optional, <span>
+                                            The id value of the savings account associated with the entry (if there is one)</span>
+                                            </dd>
+                                            
+					    <dt>includeJson</dt>
+                                            <dd>optional, <span>
+                                            Values are true, false.  Default is false.</span>
+                                            </dd>
+                                            
+					</dl>
+					<p>Example Requests:</p>
+					<div class=apiClick>makercheckers</div><br>
+					<div class=apiClick>makercheckers?fields=madeOnDate,maker,processingResult</div><br>
+					<div class=apiClick>makercheckers?makerDateTimeFrom=2013-03-25 08:00:00&makerDateTimeTo=2013-04-04 18:00:00</div><br>
+					<div class=apiClick>makercheckers?officeId=1</div><br>
+					<div class=apiClick>makercheckers?officeId=1&includeJson=true</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/makercheckers
+					</code>
+					<code class="method-response">
+[
+  {
+    "id": 654,
+    "actionName": "CREATE",
+    "entityName": "LOANPRODUCT",
+    "resourceId": 15,
+    "maker": "keithwoodlock",
+    "madeOnDate": 1364924512000,
+    "processingResult": "awaiting.approval"
+  },
+  {
+    "id": 666,
+    "actionName": "CREATE",
+    "entityName": "CLIENT",
+    "resourceId": 363,
+    "maker": "keithwoodlock",
+    "madeOnDate": 1365012843000,
+    "processingResult": "awaiting.approval",
+    "officeName": "my office name"
+  },
+  {
+    "id": 670,
+    "actionName": "CREATE",
+    "entityName": "CLIENTNOTE",
+    "resourceId": 287,
+    "maker": "keithwoodlock",
+    "madeOnDate": 1365014204000,
+    "processingResult": "awaiting.approval",
+    "officeName": "my office name",
+    "clientName": "gg ggg"
+  }
+]
+					</code>
+				</div>
+			</div>
+
+			<a id="makercheckers_searchtemplate" name="makercheckers_searchtemplate"
+				class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Maker Checker Search Template</h4>
+					<p>This is a convenience resource. It can be useful when
+                                        building a Checker Inbox UI. "appUsers" are data scoped to
+                                        the office/branch the requestor is associated with.
+                                        "actionNames" and "entityNames" returned are those that the
+                                        requestor has Checker approval permissions for.
+					</p>
+					<p>Example Requests:</p>
+					<div class=apiClick>makercheckers/searchtemplate</div>
+					<div class=apiClick>makercheckers/searchtemplate?fields=entityNames</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/audits/searchtemplate
+					</code>
+					<code class="method-response">
+{
+  "appUsers": [
+    {
+      "id": 30,
+      "username": "user 1"
+    },
+    {
+      "id": 28,
+      "username": "user 2"
+    },
+    {
+      "id": 35,
+      "username": "user 3"
+    },...
+  ],
+  "actionNames": [
+    "CREATE",
+    "DELETE",
+    "UPDATE",
+    "ACTIVATE",
+    "ADJUST",
+    "APPROVALUNDO",
+    "APPROVE",...
+  ],
+  "entityNames": [
+    "CALENDAR",
+    "CENTER",
+    "CHARGE",
+    "CLIENT",
+    "CLIENTIDENTIFIER",...
+  ]
+}
+					</code>
+				</div>
+			</div>
+
+			<a id="makercheckers_approve" name="makercheckers_approve" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Approve Maker Checker Entry</h4>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+POST https://DomainName/api/v1/makercheckers/{auditId}?command=approve
+					</code>
+					<code class="method-request">
+POST makercheckers/1?command=approve
+Content-Type: application/json
+					</code>
+					<code class="method-response">{ "auditId": 1 } </code>
+				</div>
+			</div>
+                        
+			<a id="makercheckers_delete" name="makercheckers_delete" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Delete Maker Checker Entry</h4>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+DELETE https://DomainName/api/v1/makercheckers/{auditId}
+					</code>
+					<code class="method-request">
+DELETE makercheckers/1
+Content-Type: application/json
+					</code>
+					<code class="method-response">{ "auditId": 1 } </code>
+				</div>
+			</div>
+
+
+
+			<!-- Fund starts here -->
 			<a id="funds" name="funds" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h3>Funds</h3>
-					<p>Simple implementation of funds. At present funds can
-						optionally be associated with a Loan.</p>
-					<p>This information can then be used to produce reports on
-						loans/loan amounts drawn from a fund.</p>
-				</div>
-			</div>
-
+                                </div>
+                        </div>
+                                        
 			<a id="funds_create" name="funds_create" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
@@ -8803,7 +10119,7 @@ Request Body:
 						<dd>Specifies the order in which data is returned.</dd>
 						<dt>genericResultSet</dt>
 						<dd>
-							<span>optional</span>
+							<span>optional, defaults to false</span>
 						</dd>
 						<dd>If 'true' an optimised JSON format is returned suitable for tabular display of data.
 							This format is used by the default data tables UI functionality.</dd>
@@ -9611,783 +10927,252 @@ No Request Body:
 			<div class="method-section">
 				<div class="method-description">
 					<h3>Reports</h3>
-					<p>The reports resource allows you to run and receive output
-						from pre-defined Mifos X reports. The default output is a JSON
-						formatted "Generic Resultset". The Generic Resultset contains
-						Column Heading as well as Data information. However, you can
-						export to CSV format by simply adding "&exportCSV=true" to the end
-						of your URL.</p>
-					<p>If Pentaho reports have been pre-defined, they can also be
-						run through this resource. Pentaho reports can return HTML, PDF or
-						CSV formats.</p>
-					<p>The Mifos X Individual Lending client application uses a
-						JQuery plugin called stretchyreporting which, itself, uses this
-						reports resource to provide a pretty flexible reporting User
-						Interface (UI).</p>
+                                        <p>
+                                        Non-core reports can be added, updated and deleted.
+                                        </p>
+                                        <p>
+                                        Core reports (supplied at installation/upgrade time) can only have their "useReport" updated.
+                                        "useReport" is used, for example, in the reference UI report page to 'show'/'not show' reports.
+                                        Reports that have useReport set to false can still be run.
+                                        Reports only used for workflow purposes are examples of reports that would have their useReport set to false.
+                                        </p>
+                                        <p>
+                                        Placeholders can be put in the reportSql to act as parameters.  They have the format ${paramName}.
+                                        The runreports api will translate the value of any query parameter beginning R_ with the equivalent placeholder.<br>
+                                        e.g. query parameter R_myName=john will replace ${myName} with john
+                                        </p>
+                                        <p>
+                                        There is a special 'automatic' placeholder ${currentUserHierarchy} - if this is included in reportSql
+                                        it gets replaced by the requesting users' office hierarchy value.  This enables data scoping.<br>
+                                        Usage example "where o.hierarchy like CONCAT('${currentUserHierarchy}', '%')"
+                                        </p>
+                                        <p>
+                                        Note: <br>
+                                        The reports api allows parameters (not just placeholders in reportSql) to be associated with reports.
+                                        These associated parameters are only required to allow the reference UI reporting functionality implement
+                                        user-friendly parameter input.                                        
+                                        </p>
 				</div>
 			</div>
 
-
+			<a id="reports_create" name="reports_create" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Create a Report</h4>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+POST https://DomainName/api/v1/reports
+					</code>
+					<code class="method-request">
+POST reports
+Content-Type: application/json 
+Request Body: 
+{
+    reportName: "myReport",
+    reportType: "Table",
+    reportCategory: "My Category",
+    description: "sample non-core report",
+    reportSql: "select 'hello'",
+    useReport: false
+}
+					</code>
+					<code class="method-response">
+{ 
+	"resourceId": 100
+} 
+					</code>
+				</div>
+			</div>
 
 			<a id="reports_list" name="reports_list" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h4>List Reports</h4>
-					<p>Lists all reports and their parameters. If a report has more
-						than one parameter it will be listed the same number of times as
-						it has parameters.</p>
+					<p>Lists all reports and their parameters. </p>
 
-					<h5>Arguments</h5>
-					<dl class="argument-list">
-						<dt>exportCSV</dt>
-						<dd>
-							optional, <span>The only valid value is 'true'. If any
-								other value is provided the argument will be ignored</span>
-						</dd>
-						<dd>Output will be delivered as a CSV file instead of JSON.</dd>
-					</dl>
-					<p>Example Requests:</p>
+					<p>Example Request:</p>
 					<div class=apiClick>reports</div>
-					<br>
-					<br>
-					<div class=apiClick>reports?exportCSV=true</div>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
 GET https://DomainName/api/v1/reports
 					</code>
 					<code class="method-response">
-{
-    "columnHeaders": [
-        {
-            "columnName": "report_id",
-            "columnType": "INT",
-            "isColumnNullable": false,
-            "isColumnPrimaryKey": false,
-            "columnValues": []
-        },
-        {
-            "columnName": "report_name",
-            "columnType": "VARCHAR",
-            "isColumnNullable": false,
-            "isColumnPrimaryKey": false,
-            "columnValues": []
-        },
-        {
-            "columnName": "report_type",
-            "columnType": "VARCHAR",
-            "isColumnNullable": false,
-            "isColumnPrimaryKey": false,
-            "columnValues": []
-        },
-        {
-            "columnName": "report_subtype",
-            "columnType": "VARCHAR",
-            "isColumnNullable": false,
-            "isColumnPrimaryKey": false,
-            "columnValues": []
-        },
-        {
-            "columnName": "report_category",
-            "columnType": "VARCHAR",
-            "isColumnNullable": false,
-            "isColumnPrimaryKey": false,
-            "columnValues": []
-        },
-        {
-            "columnName": "parameter_id",
-            "columnType": "INT",
-            "isColumnNullable": false,
-            "isColumnPrimaryKey": false,
-            "columnValues": []
-        },
-        {
-            "columnName": "report_parameter_name",
-            "columnType": "VARCHAR",
-            "isColumnNullable": false,
-            "isColumnPrimaryKey": false,
-            "columnValues": []
-        },
-        {
-            "columnName": "parameter_name",
-            "columnType": "VARCHAR",
-            "isColumnNullable": false,
-            "isColumnPrimaryKey": false,
-            "columnValues": []
-        }
-    ],
-    "data": [
-        {
-            "row": [
-                "10",
-                "Active Loans Portfolio Status",
-                "Table",
-                null,
-                "Loan",
-                "5",
-                null,
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "10",
-                "Active Loans Portfolio Status",
-                "Table",
-                null,
-                "Loan",
-                "6",
-                null,
-                "loanOfficerIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "10",
-                "Active Loans Portfolio Status",
-                "Table",
-                null,
-                "Loan",
-                "10",
-                null,
-                "currencyIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "10",
-                "Active Loans Portfolio Status",
-                "Table",
-                null,
-                "Loan",
-                "20",
-                null,
-                "fundIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "10",
-                "Active Loans Portfolio Status",
-                "Table",
-                null,
-                "Loan",
-                "25",
-                null,
-                "loanProductIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "11",
-                "Active Loans Summary per Branch",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "5",
-                null,
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "11",
-                "Active Loans Summary per Branch",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "10",
-                null,
-                "currencyIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "48",
-                "Balance Sheet",
-                "Pentaho",
-                null,
-                "Accounting",
-                "5",
-                "branch",
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "48",
-                "Balance Sheet",
-                "Pentaho",
-                null,
-                "Accounting",
-                "41",
-                "date",
-                "endDateSelect"
-            ]
-        },
-        {
-            "row": [
-                "1",
-                "Client Listing",
-                "Table",
-                null,
-                "Client",
-                "5",
-                null,
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "2",
-                "Client Loans Listing",
-                "Table",
-                null,
-                "Client",
-                "5",
-                null,
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "2",
-                "Client Loans Listing",
-                "Table",
-                null,
-                "Client",
-                "6",
-                null,
-                "loanOfficerIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "2",
-                "Client Loans Listing",
-                "Table",
-                null,
-                "Client",
-                "10",
-                null,
-                "currencyIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "2",
-                "Client Loans Listing",
-                "Table",
-                null,
-                "Client",
-                "20",
-                null,
-                "fundIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "2",
-                "Client Loans Listing",
-                "Table",
-                null,
-                "Client",
-                "25",
-                null,
-                "loanProductIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "20",
-                "Funds Disbursed Between Dates Summary",
-                "Table",
-                null,
-                "Fund",
-                "10",
-                null,
-                "currencyIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "20",
-                "Funds Disbursed Between Dates Summary",
-                "Table",
-                null,
-                "Fund",
-                "20",
-                null,
-                "fundIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "20",
-                "Funds Disbursed Between Dates Summary",
-                "Table",
-                null,
-                "Fund",
-                "40",
-                null,
-                "startDateSelect"
-            ]
-        },
-        {
-            "row": [
-                "20",
-                "Funds Disbursed Between Dates Summary",
-                "Table",
-                null,
-                "Fund",
-                "41",
-                null,
-                "endDateSelect"
-            ]
-        },
-        {
-            "row": [
-                "21",
-                "Funds Disbursed Between Dates Summary by Office",
-                "Table",
-                null,
-                "Fund",
-                "5",
-                null,
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "21",
-                "Funds Disbursed Between Dates Summary by Office",
-                "Table",
-                null,
-                "Fund",
-                "10",
-                null,
-                "currencyIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "21",
-                "Funds Disbursed Between Dates Summary by Office",
-                "Table",
-                null,
-                "Fund",
-                "20",
-                null,
-                "fundIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "21",
-                "Funds Disbursed Between Dates Summary by Office",
-                "Table",
-                null,
-                "Fund",
-                "40",
-                null,
-                "startDateSelect"
-            ]
-        },
-        {
-            "row": [
-                "21",
-                "Funds Disbursed Between Dates Summary by Office",
-                "Table",
-                null,
-                "Fund",
-                "41",
-                null,
-                "endDateSelect"
-            ]
-        },
-        {
-            "row": [
-                "49",
-                "Income Statement",
-                "Pentaho",
-                null,
-                "Accounting",
-                "5",
-                "branch",
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "49",
-                "Income Statement",
-                "Pentaho",
-                null,
-                "Accounting",
-                "40",
-                "fromDate",
-                "startDateSelect"
-            ]
-        },
-        {
-            "row": [
-                "49",
-                "Income Statement",
-                "Pentaho",
-                null,
-                "Accounting",
-                "41",
-                "toDate",
-                "endDateSelect"
-            ]
-        },
-        {
-            "row": [
-                "5",
-                "Loans Awaiting Disbursal",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "5",
-                null,
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "5",
-                "Loans Awaiting Disbursal",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "6",
-                null,
-                "loanOfficerIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "5",
-                "Loans Awaiting Disbursal",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "10",
-                null,
-                "currencyIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "5",
-                "Loans Awaiting Disbursal",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "20",
-                null,
-                "fundIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "5",
-                "Loans Awaiting Disbursal",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "25",
-                null,
-                "loanProductIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "6",
-                "Loans Awaiting Disbursal Summary",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "5",
-                null,
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "6",
-                "Loans Awaiting Disbursal Summary",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "6",
-                null,
-                "loanOfficerIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "6",
-                "Loans Awaiting Disbursal Summary",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "10",
-                null,
-                "currencyIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "6",
-                "Loans Awaiting Disbursal Summary",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "20",
-                null,
-                "fundIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "6",
-                "Loans Awaiting Disbursal Summary",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "25",
-                null,
-                "loanProductIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "7",
-                "Loans Awaiting Disbursal Summary by Month",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "5",
-                null,
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "7",
-                "Loans Awaiting Disbursal Summary by Month",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "6",
-                null,
-                "loanOfficerIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "7",
-                "Loans Awaiting Disbursal Summary by Month",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "10",
-                null,
-                "currencyIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "7",
-                "Loans Awaiting Disbursal Summary by Month",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "20",
-                null,
-                "fundIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "7",
-                "Loans Awaiting Disbursal Summary by Month",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "25",
-                null,
-                "loanProductIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "15",
-                "Portfolio at Risk",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "5",
-                null,
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "15",
-                "Portfolio at Risk",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "6",
-                null,
-                "loanOfficerIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "15",
-                "Portfolio at Risk",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "10",
-                null,
-                "currencyIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "15",
-                "Portfolio at Risk",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "20",
-                null,
-                "fundIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "15",
-                "Portfolio at Risk",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "25",
-                null,
-                "loanProductIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "16",
-                "Portfolio at Risk by Branch",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "5",
-                null,
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "16",
-                "Portfolio at Risk by Branch",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "6",
-                null,
-                "loanOfficerIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "16",
-                "Portfolio at Risk by Branch",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "10",
-                null,
-                "currencyIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "16",
-                "Portfolio at Risk by Branch",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "20",
-                null,
-                "fundIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "16",
-                "Portfolio at Risk by Branch",
-                "Table",
-                null,
-                "Loan Portfolio",
-                "25",
-                null,
-                "loanProductIdSelectAll"
-            ]
-        },
-        {
-            "row": [
-                "50",
-                "Trial Balance",
-                "Pentaho",
-                null,
-                "Accounting",
-                "5",
-                "branch",
-                "OfficeIdSelectOne"
-            ]
-        },
-        {
-            "row": [
-                "50",
-                "Trial Balance",
-                "Pentaho",
-                null,
-                "Accounting",
-                "40",
-                "fromDate",
-                "startDateSelect"
-            ]
-        },
-        {
-            "row": [
-                "50",
-                "Trial Balance",
-                "Pentaho",
-                null,
-                "Accounting",
-                "41",
-                "toDate",
-                "endDateSelect"
-            ]
-        }
+[
+  {
+    "id": 1,
+    "reportName": "Client Listing",
+    "reportType": "Table",
+    "reportCategory": "Client",
+    "description": "Individual Client Report\r\n\r\nLists the small number of defined fields on the client table.  Would expect to copy this \n\nreport and add any \u0027one to one\u0027 additional data for specific tenant needs.\r\n\r\nCan be run for any size MFI but you\u0027d expect it only to be run within a branch for \n\nlarger ones.  Depending on how many columns are displayed, there is probably is a limit of about 20/50k clients returned for html display (export to excel doesn\u0027t \n\nhave that client browser/memory impact).",
+    "coreReport": true,
+    "useReport": true,
+    "reportParameters": [
+      {
+        "id": 5,
+        "parameterName": "OfficeIdSelectOne"
+      }
     ]
+  },
+  {
+    "id": 2,
+    "reportName": "Client Loans Listing",
+    "reportType": "Table",
+    "reportCategory": "Client",
+    "description": "Individual Client Report\r\n\r\nPretty \n\nwide report that lists the basic details of client loans.  \r\n\r\nCan be run for any size MFI but you\u0027d expect it only to be run within a branch for larger ones.  \n\nThere is probably is a limit of about 20/50k clients returned for html display (export to excel doesn\u0027t have that client browser/memory impact).",
+    "coreReport": true,
+    "useReport": true,
+    "reportParameters": [
+      {
+        "id": 5,
+        "parameterName": "OfficeIdSelectOne"
+      },
+      {
+        "id": 6,
+        "parameterName": "loanOfficerIdSelectAll"
+      },
+      {
+        "id": 10,
+        "parameterName": "currencyIdSelectAll"
+      },
+      {
+        "id": 20,
+        "parameterName": "fundIdSelectAll"
+      },
+      {
+        "id": 25,
+        "parameterName": "loanProductIdSelectAll"
+      },
+      {
+        "id": 26,
+        "parameterName": "loanPurposeIdSelectAll"
+      }
+    ]
+  },...
+  ]
+  </code>
+				</div>
+			</div>
+
+
+			<a id="reports_retrieve" name="reports_retrieve" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve a Report</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>reports/1</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/reports/{id}
+					</code>
+					<code class="method-response">
+{
+  "id": 1,
+  "reportName": "Client Listing",
+  "reportType": "Table",
+  "reportCategory": "Client",
+  "description": "Individual Client Report\r\n\r\nLists the small number of defined fields on the client table.  Would expect to copy this \n\nreport and add any \u0027one to one\u0027 additional data for specific tenant needs.\r\n\r\nCan be run for any size MFI but you\u0027d expect it only to be run within a branch for \n\nlarger ones.  Depending on how many columns are displayed, there is probably is a limit of about 20/50k clients returned for html display (export to excel doesn\u0027t \n\nhave that client browser/memory impact).",
+  "reportSql": "select \r\nconcat(repeat(\"..\",   \r\n   ((LENGTH(ounder.`hierarchy`) - LENGTH(REPLACE(ounder.`hierarchy`, \u0027.\u0027, \u0027\u0027)) - 1))), ounder.`name`) as \"Office/Branch\",\r\n c.account_no as \"Client Account No.\",  \r\nc.display_name as \"Name\",  \n\nc.joined_date as \"Joined\", c.external_id as \"External Id\"\r\nfrom m_office o \r\njoin m_office ounder on ounder.hierarchy like concat(o.hierarchy, \u0027%\u0027)\r\nand \n\nounder.hierarchy like concat(\u0027${currentUserHierarchy}\u0027, \u0027%\u0027)\r\njoin m_client c on c.office_id \u003d ounder.id\r\nwhere o.id \u003d ${officeId}\r\nand c.is_deleted\u003d0\r\n\n\norder by ounder.hierarchy, c.account_no",
+  "coreReport": true,
+  "useReport": true,
+  "reportParameters": [
+    {
+      "id": 5,
+      "parameterName": "OfficeIdSelectOne"
+    }
+  ]
 }
 					</code>
 				</div>
 			</div>
 
+			<a id="reports_update" name="reports_update" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Update a Report</h4>
+                                        <p>
+                                        Only the useReport value can be updated for core reports.
+                                        </p>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+PUT https://DomainName/api/v1/reports/{id}
+					</code>
+					<code class="method-request">
+PUT reports/100
+Content-Type: application/json 
+Request Body: 
+{
+    reportCategory: "My Category updated",
+    useReport: true
+}
+					</code>
+					<code class="method-response">
+{
+  "resourceId": 100,
+  "changes": {
+    "reportCategory": "My Category updated",
+    "useReport": true
+  }
+}
+					</code>
+				</div>
+			</div>
+
+
+			<a id="reports_delete" name="reports_delete" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Delete a Report</h4>
+                                        <p>
+                                        Only non-core reports can be deleted.
+                                        </p>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+DELETE https://DomainName/api/v1/reports/{id}
+					</code>
+					<code class="method-request">
+DELETE reports/100
+Content-Type: application/json 
+Request Body: 
+{}
+					</code>
+					<code class="method-response">
+{
+  "resourceId": 100
+}
+					</code>
+				</div>
+			</div>
+
+			<!-- start of runreports api docs -->
+			<a id="runreports" name="runreports" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h3>Run Reports</h3>
+				</div>
+			</div>
 			<a id="report_run" name="report_run" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Running a Report</h4>
-					<p>Runs a report and returns the report output.</p>
+					<p>This resource allows you to run and receive output from pre-defined Mifos X reports. </p>
+                                        <p>Reports can also be used to provide data for searching and workflow functionality.</p>
+                                        <p>
+                                                The default output is a JSON formatted "Generic Resultset". The Generic Resultset contains
+						Column Heading as well as Data information. However, you can
+						export to CSV format by simply adding "&exportCSV=true" to the end
+						of your URL.</p>
+					<p>If Pentaho reports have been pre-defined, they can also be
+						run through this resource. Pentaho reports can return HTML, PDF or
+						CSV formats.</p>
+					<p>The Mifos X reference application uses a
+						JQuery plugin called stretchyreporting which, itself, uses this
+						reports resource to provide a pretty flexible reporting User
+						Interface (UI).</p>
 					<h5>Arguments</h5>
 					<dl class="argument-list">
 						<dt>R_'parameter names' ...</dt>
@@ -10398,6 +11183,12 @@ GET https://DomainName/api/v1/reports
 							specific report and how it has been configured. R_officeId is an
 							example parameter name.</dd>
 						<dd>Note: the prefix R_ stands for Reporting</dd>
+						<dt>genericResultSet</dt>
+						<dd>
+							<span>optional, defaults to true</span>
+						</dd>
+						<dd>If 'true' an optimised JSON format is returned suitable for tabular display of data.
+						<dd>If 'false' a simple JSON format is returned.
 						<dt>parameterType</dt>
 						<dd>
 							optional, <span>The only valid value is 'true'. If any
@@ -10422,36 +11213,32 @@ GET https://DomainName/api/v1/reports
 						<dd>Only applies to Pentaho reports.</dd>
 					</dl>
 					<p>Example Requests:</p>
-					<div class=apiClick>reports/Client%20Listing?R_officeId=1</div>
+					<div class=apiClick>runreports/Client%20Listing?R_officeId=1</div>
 					<br>
 					<br>
-					<div class=apiClick>reports/Client%20Listing?R_officeId=1&exportCSV=true</div>
+					<div class=apiClick>runreports/Client%20Listing?R_officeId=1&exportCSV=true</div>
 					<br>
 					<br>
-					<div class=apiClick>reports/selectOfficeId?R_officeId=1&ampparameterType=true</div>
+					<div class=apiClick>runreports/OfficeIdSelectOne?R_officeId=1&ampparameterType=true</div>
 					<br>
 					<br>
-					<div class=apiClick>reports/selectOfficeId?R_officeId=1&ampparameterType=true&exportCSV=true</div>
+					<div class=apiClick>runreports/OfficeIdSelectOne?R_officeId=1&ampparameterType=true&exportCSV=true</div>
 					<br>
 					<br>
-					<div class=apiClick>reports/Client Listing
-						(Pentaho)?output-type=HTML&R_officeId=1</div>
+					<div class=apiClick>runreports/Expected%20Payments%20By%20Date%20-%20Formatted?R_endDate=2013-04-30&R_loanOfficerId=-1&R_officeId=1&R_startDate=2013-04-16&output-type=HTML&R_officeId=1</div>
 					<br>
 					<br>
-					<div class=apiClick>reports/Client Listing
-						(Pentaho)?output-type=XLS&R_officeId=1</div>
+					<div class=apiClick>runreports/Expected%20Payments%20By%20Date%20-%20Formatted?R_endDate=2013-04-30&R_loanOfficerId=-1&R_officeId=1&R_startDate=2013-04-16&output-type=XLS&R_officeId=1</div>
 					<br>
 					<br>
-					<div class=apiClick>reports/Client Listing
-						(Pentaho)?output-type=CSV&R_officeId=1</div>
+					<div class=apiClick>runreports/Expected%20Payments%20By%20Date%20-%20Formatted?R_endDate=2013-04-30&R_loanOfficerId=-1&R_officeId=1&R_startDate=2013-04-16&output-type=CSV&R_officeId=1</div>
 					<br>
 					<br>
-					<div class=apiClick>reports/Client Listing
-						(Pentaho)?output-type=PDF&R_officeId=1</div>
+					<div class=apiClick>runreports/Expected%20Payments%20By%20Date%20-%20Formatted?R_endDate=2013-04-30&R_loanOfficerId=-1&R_officeId=1&R_startDate=2013-04-16&output-type=PDF&R_officeId=1</div>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
-GET https://DomainName/api/v1/reports/{reportName}
+GET https://DomainName/api/v1/runreports/{reportName}
 					</code>
 					<code class="method-response">
 {
@@ -11025,6 +11812,9 @@ Request body:
 				<div class="method-description">
 					<h3>Permissions</h3>
 					<p>An API capability to support management of application permissions for user administration.</p>
+                                        <p>There is no Mifos X functionality for creating or deleting permissions.  Permissions come pre-installed.</p>
+                                        <p>Permissions are not updated, except in the case of enabling or disabling non-read transactions for
+                                        Maker Checker functionality</p>
 				</div>
 			</div>
 
@@ -11033,10 +11823,25 @@ Request body:
 			<div class="method-section">
 				<div class="method-description">
 					<h4>List Application Permissions</h4>
+					<h5>Arguments</h5>
+					<dl class="argument-list">
+					    <dt>makerCheckerable</dt>
+                                            <dd>optional, <span>
+                                            Values are true, false.  Default is false.</span>
+                                            <p>If makerCheckerable=false or not supplied then a list of application permissions is returned.  The "selected"
+                                            attribute is always true in this case.
+                                            </p>
+                                            <p>If makerCheckerable=true then the "selected" attribute shows whether the permission is
+                                            enabled for Maker Check functionality.
+                                            </p>
+                                            <p>
+                                            Note: Each Mifos X transaction is associated with a permission.
+                                            </p>
+                                            </dd>
+                                        </dl>
 					<p>Example Requests:</p>
-					<div class=apiClick>permissions</div>
-					<br>
-					<br>
+					<div class=apiClick>permissions</div><br><br>
+					<div class=apiClick>permissions?makerCheckerable=true</div><br><br>
 					<div class=apiClick>permissions?fields=grouping,code</div>
 				</div>
 				<div class="method-example">
@@ -11064,6 +11869,30 @@ GET https://DomainName/api/v1/permissions
 					</code>
 				</div>
 			</div>
+
+			<a id="permissions_update" name="permissions_update" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Enable/Disable Permissions for Maker Checker</h4>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+PUT https://DomainName/api/v1/permissions
+						</code>
+					<code class="method-request">
+PUT permissions 
+Content-Type: application/json 
+Request Body:
+{
+ "permissions":{
+    "CREATE_GUARANTOR":true,
+    "CREATE_CLIENT":true
+ }
+}
+					</code>
+				</div>
+			</div>
+
 
 			<!-- start of accounting api docs -->
             <a id="glaccounts" name="glaccounts" class="old-syle-anchor">&nbsp;</a>
@@ -12333,6 +13162,14 @@ GET https://DomainName/api/v1/search?query=000000111
 					<td></td>
 					<td><a href="#clients_retrieve">Retrieve a Client</a></td>
 					<td><a href="#clients_update">Update a Client</a></td>
+					<td><a href="#clients_delete">Delete a Client</a></td>
+				</tr>
+				<tr class="alt">
+					<td></td>
+					<td>clients/{clientId}?command=activate</td>
+					<td><a href="#clients_activate">Activate a Client</a></td>
+					<td></td>
+					<td></td>
 					<td></td>
 				</tr>
 				<tr class="alt">
@@ -12380,6 +13217,56 @@ GET https://DomainName/api/v1/search?query=000000111
 					</td>
 					<td></td>
 				</tr>
+				<!-- centers groups -->
+				<tr class="alt">
+					<td><a href="#centers">Center</a></td>
+					<td>centers</td>
+					<td><a href="#centers_create">Create a Center</a></td>
+					<td><a href="#centers_list">List Centers</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>centers/{centerId}</td>
+					<td></td>
+					<td><a href="#centers_retrieve">Retrieve a Center</a></td>
+					<td><a href="#centers_update">Update a Center</a></td>
+					<td><a href="#centers_delete">Delete a Center</a></td>
+				</tr>
+				<tr class="alt">
+					<td></td>
+					<td>centers/{centerId}?command=activate</td>
+					<td><a href="#centers_activate">Activate a Center</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td><a href="#groups">Group</a></td>
+					<td>groups</td>
+					<td><a href="#groups_create">Create a Group</a></td>
+					<td><a href="#groups_list">List Groups</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr class="alt">
+					<td></td>
+					<td>groups/{group}</td>
+					<td></td>
+					<td><a href="#groups_retrieve">Retrieve a Group</a></td>
+					<td><a href="#groups_update">Update a Group</a></td>
+					<td><a href="#groups_delete">Delete a Group</a></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>groups/{groupId}?command=activate</td>
+					<td><a href="#groups_activate">Activate a Group</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<!-- end of centers, groups api -->
 				<!-- loans api full matrix-->
 				<tr class="alt">
 					<td><a href="#loanproducts">Loan Product</a></td>
@@ -12482,6 +13369,13 @@ GET https://DomainName/api/v1/search?query=000000111
 					<td></td>
 					<td>loans/{loanId}/transactions?command=waiveInterest</td>
 					<td><a href="#loans_transaction_waiveinterest">Waive Interest</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr><tr>
+					<td></td>
+					<td>loans/{loanId}/transactions?command=writeoff</td>
+					<td><a href="#loans_transaction_write-off_loan">Write-off Loan</a></td>
 					<td></td>
 					<td></td>
 					<td></td>
@@ -12686,6 +13580,46 @@ GET https://DomainName/api/v1/search?query=000000111
 					<td><a href="#configs_codes_codevalues_update">Update a Code Value</a></td>
 					<td><a href="#configs_codes_codevalues_delete">Delete a Code Value</a></td>
 				</tr>
+                                <tr>
+                                        <td><a href="#audits">Audits</a></td>
+                                        <td>audits</td>
+                                        <td></td>
+                                        <td><a href="#audits_list">List Audits</a></td>
+                                        <td></td>
+                                        <td></td>
+                                </tr>
+                                <tr class="alt">
+                                        <td></td>
+                                        <td>audits/{auditId}</td>
+                                        <td></td>
+                                        <td><a href="#audits_retrieve">Retrieve an Audit Entry</a></td>
+                                        <td></td>
+                                        <td></td>
+                                </tr>
+                                <tr>
+                                        <td><a href="#makercheckers">Makercheckers</a></td>
+                                        <td>makercheckers</td>
+                                        <td></td>
+                                        <td><a href="#makercheckers_list">List Maker Checker Entries</a></td>
+                                        <td></td>
+                                        <td></td>
+                                </tr>
+                                <tr class="alt">
+                                        <td></td>
+                                        <td>makercheckers/{auditId}</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td><a href="#makercheckers_delete">Delete Maker Checker Entry</a></td>
+                                </tr>
+                                <tr>
+                                        <td></td>
+                                        <td>makercheckers/{auditId}?command=approve</td>
+                                        <td><a href="#makercheckers_approve">Approve Maker Checker Entry</a></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                </tr>
 				<tr class="alt">
 					<td><a href="#funds">Funds</a></td>
 					<td>funds</td>
@@ -12888,23 +13822,31 @@ GET https://DomainName/api/v1/search?query=000000111
 					<td></td>
 					<td></td>
 				</tr>
-				<tr>
-					<td><a href="#reports">Report</a></td>
-					<td>reports</td>
-					<td></td>
-					<td><a href="#reports_list">List Reports</a></td>
-					<td></td>
-					<td></td>
-				</tr>
+                                <tr>
+                                        <td><a href="#reports">Report</a></td>
+                                        <td>reports</td>
+                                        <td><a href="#reports_create">Create a Report</a></td>
+                                        <td><a href="#reports_list">List Reports</a></td>
+                                        <td></td>
+                                        <td></td>
+                                </tr>
+                                <tr class="alt">
+                                        <td></td>
+                                        <td>reports/{id}</td>
+                                        <td></td>
+                                        <td><a href="#reports_retrieve">Retrieve a Report</a></td>
+                                        <td><a href="#reports_update">Update a Report</a></td>
+                                        <td><a href="#reports_delete">Delete a Report</a></td>
+                                </tr>
+                                <tr>
+                                        <td><a href="#runreports">Run Report</a></td>
+                                        <td>runreports/{reportName}</td>
+                                        <td></td>
+                                        <td><a href="#report_run">Run a Report</a></td>
+                                        <td></td>
+                                        <td></td>
+                                </tr>
 				<tr class="alt">
-					<td></td>
-					<td>reports/{reportName}</td>
-					<td></td>
-					<td><a href="#report_run">Run a Report</a></td>
-					<td></td>
-					<td></td>
-				</tr>
-				<tr>
 					<td><a href="#authentication">Authentication</a></td>
 					<td>authentication</td>
 					<td><a href="#authenticate_request">Verify Authentication</a></td>
@@ -12912,7 +13854,7 @@ GET https://DomainName/api/v1/search?query=000000111
 					<td></td>
 					<td></td>
 				</tr>
-				<tr class="alt">
+				<tr>
 					<td><a href="#users">User</a></td>
 					<td>users</td>
 					<td><a href="#users_create">Create a User</a></td>
@@ -12920,7 +13862,7 @@ GET https://DomainName/api/v1/search?query=000000111
 					<td></td>
 					<td></td>
 				</tr>
-				<tr>
+				<tr class="alt">
 					<td></td>
 					<td>users/{userId}</td>
 					<td></td>
@@ -12928,7 +13870,7 @@ GET https://DomainName/api/v1/search?query=000000111
 					<td><a href="#users_update">Update a User</a></td>
 					<td><a href="#users_delete">Delete a User</a></td>
 				</tr>
-				<tr class="alt">
+				<tr>
 					<td><a href="#roles">Role</a></td>
 					<td>roles</td>
 					<td><a href="#roles_create">Create a New Role</a></td>
@@ -12936,7 +13878,7 @@ GET https://DomainName/api/v1/search?query=000000111
 					<td></td>
 					<td></td>
 				</tr>
-				<tr>
+				<tr class="alt">
 					<td></td>
 					<td>roles/{roleId}</td>
 					<td></td>
@@ -12944,7 +13886,7 @@ GET https://DomainName/api/v1/search?query=000000111
 					<td><a href="#roles_update">Update a Role</a></td>
 					<td></td>
 				</tr>
-				<tr class="alt">
+				<tr>
 					<td></td>
 					<td>roles/{roleId}/permissions</td>
 					<td></td>
@@ -12954,12 +13896,12 @@ GET https://DomainName/api/v1/search?query=000000111
 							Permissions</a></td>
 					<td></td>
 				</tr>
-				<tr>
+				<tr class="alt">
 					<td><a href="#permissions">Permission</a></td>
 					<td>permissions</td>
 					<td></td>
-					<td><a href="#permissions_list">List Permissions</a></td>
-					<td></td>
+					<td><a href="#permissions_list">List Application Permissions</a></td>
+					<td><a href="#permissions_update">Enable/Disable Permissions for Maker Checker</a></td>
 					<td></td>
 				</tr>				
 			</table>

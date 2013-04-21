@@ -6,19 +6,30 @@ The next evolution of mifos focussing being faster, lighter and cheaper to chang
 Build Status
 ============
 
-[![Build Status](https://travis-ci.org/openMF/mifosx.png?branch=master)](https://travis-ci.org/openMF/mifosx)
+Travis
+
+[![Build
+Status](https://travis-ci.org/openMF/mifosx.png?branch=master)](https://travis-ci.org/openMF/mifosx)
+
+Cloudbees Jenkins
+
+[![Build
+Status](https://openmf.ci.cloudbees.com/job/MIFOSX%20INTEGRATION%20TEST/badge/icon)](https://openmf.ci.cloudbees.com/job/MIFOSX%20INTEGRATION%20TEST/)
+
+<a target="_blank" href="https://openmf.ci.cloudbees.com/job/MIFOSX%20INTEGRATION%20TEST/"  title="Jenkins@CloudBees">Jenkins@CloudBees Unit + Integration Tests</a>
+
 
 Version
 ==========
 
 The mifosx platform is currently still in BETA. That means its likely that there will be changes to the Platform API so any use or development against is at your own risk.
 
-Latest release: 
+Latest release: <a target="_blank" href="https://github.com/openMF/mifosx/tree/mifosplatform-0.11.3.beta" title="mifosplatform-0.11.3.beta">mifosplatform-0.11.3.beta</a>
 
 License
 =============
 
-This project is licensed under MPL V2. See https://github.com/openMF/mifosx/blob/master/LICENSE.md
+This project is licensed under the open source MPL V2. See https://github.com/openMF/mifosx/blob/master/LICENSE.md
 
 Mifos Platform API
 =====================
@@ -29,7 +40,7 @@ Mifos Platform API
 Online Client Application Demos
 =============================
 
-<a target="_blank" href="https://demo.openmf.org" title="Client apps: Individual Lending">Individual Lending App</a>
+<a target="_blank" href="https://demo.openmf.org" title="Reference Client App">Reference Client App</a>
 
 
 Developers
@@ -40,14 +51,16 @@ see https://mifosforge.jira.com/wiki/display/MIFOSX/Getting+started+-+Contributi
 
 see https://mifosforge.jira.com/wiki/display/MIFOSX/The+Basic+Design - Overview of Platform Implementation
 
-see https://github.com/keithwoodlock/mifosx/wiki/Screen-Based-Reporting for info around reporting
+see https://github.com/openMF/mifosx/wiki/Screen-Based-Reporting for info around reporting
 
-see https://github.com/keithwoodlock/mifosx/wiki/Git-Usuage for info around using git
+see https://github.com/openMF/mifosx/wiki/Git-Usuage for info around using git
 
 see https://www.ohloh.net/p/mifosx for activity overview and basic code analysis.
 
 Amazon Public AMI
 =================
+
+Note: The Public AMI is currently out of date
 
 Launch instance <a target="_blank" href="https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchAmi=ami-65e6e011" title="Mifos X Public AMI 1">ami-65e6e011</a>
 

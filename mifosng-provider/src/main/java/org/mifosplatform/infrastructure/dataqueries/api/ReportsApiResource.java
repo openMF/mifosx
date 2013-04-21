@@ -5,32 +5,33 @@
  */
 package org.mifosplatform.infrastructure.dataqueries.api;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
-import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
+import org.mifosplatform.commands.domain.CommandWrapper;
+import org.mifosplatform.commands.service.CommandWrapperBuilder;
+import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
+import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
+import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
-import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
-import org.mifosplatform.infrastructure.dataqueries.service.GenericDataService;
+import org.mifosplatform.infrastructure.dataqueries.data.ReportData;
 import org.mifosplatform.infrastructure.dataqueries.service.ReadReportingService;
-import org.mifosplatform.infrastructure.security.exception.NoAuthorizationException;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
-import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -40,152 +41,133 @@ import org.springframework.stereotype.Component;
 @Scope("singleton")
 public class ReportsApiResource {
 
-    private final PlatformSecurityContext context;
-    private final ToApiJsonSerializer<GenericResultsetData> toApiJsonSerializer;
-    private final ReadReportingService readExtraDataAndReportingService;
-    private final GenericDataService genericDataService;
+	private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(
+			Arrays.asList("id", "reportName", "reportType", "reportSubType",
+					"reportCategory", "description", "reportSql", "coreReport",
+					"useReport", "reportParameters"));
 
-    @Autowired
-    public ReportsApiResource(final PlatformSecurityContext context, final ReadReportingService readExtraDataAndReportingService,
-            final GenericDataService genericDataService, final ToApiJsonSerializer<GenericResultsetData> toApiJsonSerializer) {
-        this.context = context;
-        this.readExtraDataAndReportingService = readExtraDataAndReportingService;
-        this.genericDataService = genericDataService;
-        this.toApiJsonSerializer = toApiJsonSerializer;
-    }
+	private final String resourceNameForPermissions = "REPORT";
+	private final PlatformSecurityContext context;
+	private final ToApiJsonSerializer<ReportData> toApiJsonSerializer;
+	private final ReadReportingService readExtraDataAndReportingService;
+	private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
+	private final ApiRequestParameterHelper apiRequestParameterHelper;
 
-    @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.APPLICATION_JSON, "application/x-msdownload" })
-    public Response retrieveReportList(@Context final UriInfo uriInfo) {
+	@Autowired
+	public ReportsApiResource(
+			final PlatformSecurityContext context,
+			final ReadReportingService readExtraDataAndReportingService,
+			final ToApiJsonSerializer<ReportData> toApiJsonSerializer,
+			PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
+			final ApiRequestParameterHelper apiRequestParameterHelper) {
+		this.context = context;
+		this.readExtraDataAndReportingService = readExtraDataAndReportingService;
+		this.toApiJsonSerializer = toApiJsonSerializer;
+		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
+		this.apiRequestParameterHelper = apiRequestParameterHelper;
+	}
 
-        Map<String, String> extractedQueryParams = new HashMap<String, String>();
+	@GET
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String retrieveReportList(@Context final UriInfo uriInfo) {
 
-        boolean prettyPrint = ApiParameterHelper.prettyPrint(uriInfo.getQueryParameters());
-        boolean exportCsv = ApiParameterHelper.exportCsv(uriInfo.getQueryParameters());
+		context.authenticatedUser().validateHasReadPermission(
+				resourceNameForPermissions);
 
-        boolean exportPdf = ApiParameterHelper.exportPdf(uriInfo.getQueryParameters());
+		final Collection<ReportData> result = this.readExtraDataAndReportingService
+				.retrieveReportList();
 
-        if (exportPdf) {
-            String result = this.readExtraDataAndReportingService.retrieveReportPDF(".", ".", extractedQueryParams);
-            return Response.ok().entity(result).header("Content-Disposition", "attachment;filename=ReportList.pdf").build();
-        }
+		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper
+				.process(uriInfo.getQueryParameters());
+		return this.toApiJsonSerializer.serialize(settings, result,
+				RESPONSE_DATA_PARAMETERS);
+	}
 
-        if (!exportCsv) {
-            GenericResultsetData result = this.readExtraDataAndReportingService.retrieveGenericResultset(".", ".", extractedQueryParams);
+	@GET
+	@Path("{id}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String retrieveReport(@PathParam("id") final Long id,
+			@Context final UriInfo uriInfo) {
 
-            final String json = this.toApiJsonSerializer.serializePretty(prettyPrint, result);
+		context.authenticatedUser().validateHasReadPermission(
+				resourceNameForPermissions);
 
-            return Response.ok().entity(json).build();
-        }
+		final ReportData result = this.readExtraDataAndReportingService
+				.retrieveReport(id);
 
-        StreamingOutput result = this.readExtraDataAndReportingService.retrieveReportCSV(".", ".", extractedQueryParams);
+		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper
+				.process(uriInfo.getQueryParameters());
 
-        return Response.ok().entity(result).header("Content-Disposition", "attachment;filename=ReportList.csv").build();
-    }
+		if (settings.isTemplate()) {
+			result.appendedTemplate();
+		}
+		return this.toApiJsonSerializer.serialize(settings, result,
+				RESPONSE_DATA_PARAMETERS);
+	}
 
-    @GET
-    @Path("{reportName}")
-    @Consumes({ MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.APPLICATION_JSON, "application/x-msdownload", "application/vnd.ms-excel", "application/pdf", "text/html" })
-    public Response retrieveReport(@PathParam("reportName") final String reportName, @Context final UriInfo uriInfo) {
+	@GET
+	@Path("template")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String retrieveOfficeTemplate(@Context final UriInfo uriInfo) {
 
-        MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters();
+		context.authenticatedUser().validateHasReadPermission(
+				resourceNameForPermissions);
 
-        boolean prettyPrint = ApiParameterHelper.prettyPrint(uriInfo.getQueryParameters());
-        boolean exportCsv = ApiParameterHelper.exportCsv(uriInfo.getQueryParameters());
-        boolean parameterType = ApiParameterHelper.parameterType(uriInfo.getQueryParameters());
-        boolean exportPdf = ApiParameterHelper.exportPdf(uriInfo.getQueryParameters());
+		ReportData result = new ReportData();
+		result.appendedTemplate();
 
-        checkUserPermissionForReport(reportName, parameterType);
+		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper
+				.process(uriInfo.getQueryParameters());
+		return this.toApiJsonSerializer.serialize(settings, result,
+				RESPONSE_DATA_PARAMETERS);
+	}
 
-        String parameterTypeValue = null;
-        if (!parameterType) {
-            parameterTypeValue = "report";
-            if (this.readExtraDataAndReportingService.getReportType(reportName).equalsIgnoreCase("Pentaho")) {
-                Map<String, String> reportParams = getReportParams(queryParams, true);
-                return this.readExtraDataAndReportingService.processPentahoRequest(reportName, queryParams.getFirst("output-type"),
-                        reportParams);
-            }
-        } else {
-            parameterTypeValue = "parameter";
-        }
+	@POST
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String createReport(final String apiRequestBodyAsJson) {
 
-        // PDF format
+		final CommandWrapper commandRequest = new CommandWrapperBuilder()
+				.createReport().withJson(apiRequestBodyAsJson).build();
 
-        if (exportPdf) {
-            Map<String, String> reportParams = getReportParams(queryParams, false);
-            String pdfFileName = this.readExtraDataAndReportingService.retrieveReportPDF(reportName, parameterTypeValue, reportParams);
+		final CommandProcessingResult result = this.commandsSourceWritePlatformService
+				.logCommandSource(commandRequest);
 
-            File file = new File(pdfFileName);
+		return this.toApiJsonSerializer.serialize(result);
+	}
 
-            ResponseBuilder response = Response.ok(file);
-            response.header("Content-Disposition", "attachment; filename=\"" + pdfFileName + "\"");
-            response.header("content-Type", "application/pdf");
+	@PUT
+	@Path("{id}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String updateReport(@PathParam("id") final Long id,
+			final String apiRequestBodyAsJson) {
 
-            return response.build();
+		final CommandWrapper commandRequest = new CommandWrapperBuilder()
+				.updateReport(id).withJson(apiRequestBodyAsJson).build();
 
-        }
+		final CommandProcessingResult result = this.commandsSourceWritePlatformService
+				.logCommandSource(commandRequest);
 
-        if (!exportCsv) {
-            Map<String, String> reportParams = getReportParams(queryParams, false);
+		return this.toApiJsonSerializer.serialize(result);
+	}
 
-            GenericResultsetData result = this.readExtraDataAndReportingService.retrieveGenericResultset(reportName, parameterTypeValue,
-                    reportParams);
+	@DELETE
+	@Path("{id}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String deleteReport(@PathParam("id") final Long id) {
 
-            String json = "";
-            final boolean genericResultSetIsPassed = ApiParameterHelper.genericResultSetPassed(uriInfo.getQueryParameters());
-            final boolean genericResultSet = ApiParameterHelper.genericResultSet(uriInfo.getQueryParameters());
-            if (genericResultSetIsPassed) {
-                if (genericResultSet) {
-                    json = this.toApiJsonSerializer.serializePretty(prettyPrint, result);
-                } else {
-                    json = this.genericDataService.generateJsonFromGenericResultsetData(result);
-                }
-            } else {
-                json = this.toApiJsonSerializer.serializePretty(prettyPrint, result);
-            }
+		final CommandWrapper commandRequest = new CommandWrapperBuilder()
+				.deleteReport(id).build();
 
-            return Response.ok().entity(json).type(MediaType.APPLICATION_JSON).build();
-        }
+		final CommandProcessingResult result = this.commandsSourceWritePlatformService
+				.logCommandSource(commandRequest);
 
-        // CSV Export
-        Map<String, String> reportParams = getReportParams(queryParams, false);
-        StreamingOutput result = this.readExtraDataAndReportingService.retrieveReportCSV(reportName, parameterTypeValue, reportParams);
+		return this.toApiJsonSerializer.serialize(result);
+	}
 
-        return Response.ok().entity(result).type("application/x-msdownload")
-                .header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".csv").build();
-    }
-
-    private void checkUserPermissionForReport(final String reportName, final boolean parameterType) {
-
-        // Anyone can run a 'report' that is simply getting possible parameter
-        // (dropdown listbox) values.
-        if (!parameterType) {
-            AppUser currentUser = context.authenticatedUser();
-            if (currentUser.hasNotPermissionForReport(reportName)) { throw new NoAuthorizationException("Not authorised to run report: "
-                    + reportName); }
-        }
-    }
-
-    private Map<String, String> getReportParams(final MultivaluedMap<String, String> queryParams, final Boolean isPentaho) {
-
-        Map<String, String> reportParams = new HashMap<String, String>();
-        Set<String> keys = queryParams.keySet();
-        String pKey;
-        String pValue;
-        for (String k : keys) {
-
-            if (k.startsWith("R_")) {
-                if (isPentaho)
-                    pKey = k.substring(2);
-                else
-                    pKey = "${" + k.substring(2) + "}";
-
-                pValue = queryParams.get(k).get(0);
-                reportParams.put(pKey, pValue);
-            }
-        }
-        return reportParams;
-    }
 }

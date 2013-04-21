@@ -199,6 +199,30 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder createReport() {
+        this.actionName = "CREATE";
+        this.entityName = "REPORT";
+        this.entityId = null;
+        this.href = "/reports/template";
+        return this;
+    }
+
+    public CommandWrapperBuilder updateReport(final Long id) {
+        this.actionName = "UPDATE";
+        this.entityName = "REPORT";
+        this.entityId = id;
+        this.href = "/reports/" + id;
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteReport(final Long id) {
+        this.actionName = "DELETE";
+        this.entityName = "REPORT";
+        this.entityId = id;
+        this.href = "/reports/" + id;
+        return this;
+    }
+
     public CommandWrapperBuilder updateCurrencies() {
         this.actionName = "UPDATE";
         this.entityName = "CURRENCY";
@@ -304,10 +328,20 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder activateClient(final Long clientId) {
+        this.actionName = "ACTIVATE";
+        this.entityName = "CLIENT";
+        this.entityId = clientId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "?command=activate&template=true";
+        return this;
+    }
+
     public CommandWrapperBuilder updateClient(final Long clientId) {
         this.actionName = "UPDATE";
         this.entityName = "CLIENT";
         this.entityId = clientId;
+        this.clientId = clientId;
         this.href = "/clients/" + clientId;
         return this;
     }
@@ -316,6 +350,7 @@ public class CommandWrapperBuilder {
         this.actionName = "DELETE";
         this.entityName = "CLIENT";
         this.entityId = clientId;
+        this.clientId = clientId;
         this.href = "/clients/" + clientId;
         this.json = "{}";
         return this;
@@ -717,8 +752,17 @@ public class CommandWrapperBuilder {
         this.actionName = "CALCULATEINTEREST";
         this.entityName = "SAVINGSACCOUNT";
         this.savingsId = accountId;
-        this.entityId = null;
+        this.entityId = accountId;
         this.href = "/savingsaccounts/" + accountId + "?command=calculateInterest";
+        return this;
+    }
+
+    public CommandWrapperBuilder savingsAccountInterestPosting(final Long accountId) {
+        this.actionName = "POSTINTEREST";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = accountId;
+        this.href = "/savingsaccounts/" + accountId + "?command=postInterest";
         return this;
     }
 
@@ -790,6 +834,25 @@ public class CommandWrapperBuilder {
         this.actionName = "UPDATE";
         this.entityName = "GROUP";
         this.entityId = groupId;
+        this.groupId = groupId;
+        this.href = "/groups/" + groupId;
+        return this;
+    }
+
+    public CommandWrapperBuilder activateGroup(final Long groupId) {
+        this.actionName = "ACTIVATE";
+        this.entityName = "GROUP";
+        this.entityId = groupId;
+        this.groupId = groupId;
+        this.href = "/groups/" + groupId + "?command=activate";
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteGroup(final Long groupId) {
+        this.actionName = "DELETE";
+        this.entityName = "GROUP";
+        this.entityId = groupId;
+        this.groupId = groupId;
         this.href = "/groups/" + groupId;
         return this;
     }
@@ -798,14 +861,7 @@ public class CommandWrapperBuilder {
         this.actionName = "UNASSIGNSTAFF";
         this.entityName = "GROUP";
         this.entityId = groupId;
-        this.href = "/groups/" + groupId;
-        return this;
-    }
-
-    public CommandWrapperBuilder deleteGroup(final Long groupId) {
-        this.actionName = "DELETE";
-        this.entityName = "GROUP";
-        this.entityId = groupId;
+        this.groupId = groupId;
         this.href = "/groups/" + groupId;
         return this;
     }
@@ -835,13 +891,45 @@ public class CommandWrapperBuilder {
         this.loanId = loanId;
         this.href = "/loans/" + loanId + "/collaterals/" + collateralId;
         return this;
-    }    
+    }
 
     public CommandWrapperBuilder updateCollectionSheet(final Long groupId) {
         this.actionName = "UPDATE";
         this.entityName = "COLLECTIONSHEET";
         this.entityId = groupId;
         this.href = "/groups/" + groupId + "/collectionsheet";
+        return this;
+    }
+
+    public CommandWrapperBuilder createCenter() {
+        this.actionName = "CREATE";
+        this.entityName = "CENTER";
+        this.href = "/centers/template";
+        return this;
+    }
+
+    public CommandWrapperBuilder updateCenter(final Long centerId) {
+        this.actionName = "UPDATE";
+        this.entityName = "CENTER";
+        this.entityId = centerId;
+        this.href = "/centers/" + centerId;
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteCenter(final Long centerId) {
+        this.actionName = "DELETE";
+        this.entityName = "CENTER";
+        this.entityId = centerId;
+        this.href = "/centers/" + centerId;
+        return this;
+    }
+
+    public CommandWrapperBuilder activateCenter(final Long centerId) {
+        this.actionName = "ACTIVATE";
+        this.entityName = "CENTER";
+        this.entityId = centerId;
+        this.groupId = centerId;
+        this.href = "/centers/" + centerId + "?command=activate";
         return this;
     }
 }

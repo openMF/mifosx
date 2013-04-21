@@ -668,6 +668,10 @@ public class Loan extends AbstractPersistable<Long> {
         return this.client;
     }
 
+    public LoanProduct loanProduct(){
+        return this.loanProduct;
+    }
+    
     public LoanProductRelatedDetail repaymentScheduleDetail() {
         return this.loanRepaymentScheduleDetail;
     }
@@ -810,7 +814,8 @@ public class Loan extends AbstractPersistable<Long> {
         }
 
         final String clientIdParamName = "clientId";
-        //FIXME AA : Client is null for group loans. Group loan modifications require group validation.
+        // FIXME AA : Client is null for group loans. Group loan modifications
+        // require group validation.
         if (this.client != null) {
             if (command.isChangeInLongParameterNamed(clientIdParamName, this.client.getId())) {
                 final Long newValue = command.longValueOfParameterNamed(clientIdParamName);
@@ -1227,11 +1232,12 @@ public class Loan extends AbstractPersistable<Long> {
         this.actualDisbursementDate = expectedDisbursedOnLocalDate.toDate();
         updateLoanScheduleDependentDerivedFields();
         /****
-         * Vishwas TODO: Refactor to skip unnecessary creation of Disbursement
+         * Vishwas TODO: Re-factor to skip unnecessary creation of Disbursement
          * and fees applied transactions (though they are not persisted) on
          * modifications to loan application modification
          *****/
-        handleDisbursementTransaction(expectedDisbursedOnLocalDate);
+        PaymentDetail paymentDetail = null;
+        handleDisbursementTransaction(paymentDetail, expectedDisbursedOnLocalDate);
     }
 
     private Collection<Long> findExistingTransactionIds() {
@@ -1259,9 +1265,8 @@ public class Loan extends AbstractPersistable<Long> {
     }
 
     public Map<String, Object> disburse(final AppUser currentUser, final JsonCommand command, final ApplicationCurrency currency,
-            final List<Long> existingTransactionIds, final List<Long> existingReversedTransactionIds) {
-
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>();
+            final List<Long> existingTransactionIds, final List<Long> existingReversedTransactionIds,
+            final Map<String, Object> actualChanges, final PaymentDetail paymentDetail) {
 
         updateLoanToPreDisbursalState();
 
@@ -1284,7 +1289,7 @@ public class Loan extends AbstractPersistable<Long> {
             actualChanges.put("dateFormat", command.dateFormat());
             actualChanges.put("actualDisbursementDate", command.stringValueOfParameterNamed("actualDisbursementDate"));
 
-            handleDisbursementTransaction(actualDisbursementDate);
+            handleDisbursementTransaction(paymentDetail, actualDisbursementDate);
 
             if (isRepaymentScheduleRegenerationRequiredForDisbursement(actualDisbursementDate)) {
                 regenerateRepaymentSchedule(currency);
@@ -1317,8 +1322,6 @@ public class Loan extends AbstractPersistable<Long> {
         final LoanScheduleGenerator loanScheduleGenerator = new DefaultLoanScheduleGeneratorFactory().create(interestMethod);
 
         final BigDecimal principal = this.loanRepaymentScheduleDetail.getPrincipal().getAmount();
-        final BigDecimal minPrincipal = this.loanRepaymentScheduleDetail.getMinPrincipal().getAmount();
-        final BigDecimal maxPrincipal = this.loanRepaymentScheduleDetail.getMaxPrincipal().getAmount();
         final BigDecimal inArrearsTolerance = this.loanRepaymentScheduleDetail.getInArrearsTolerance().getAmount();
         final BigDecimal interestRatePerPeriod = this.loanRepaymentScheduleDetail.getNominalInterestRatePerPeriod();
         final PeriodFrequencyType interestRatePeriodFrequencyType = this.loanRepaymentScheduleDetail.getInterestPeriodFrequencyType();
@@ -1333,30 +1336,35 @@ public class Loan extends AbstractPersistable<Long> {
         final Integer loanTermFrequency = this.termFrequency;
         final PeriodFrequencyType loanTermPeriodFrequencyType = PeriodFrequencyType.fromInt(this.termPeriodFrequencyType);
 
-        final LoanSchedule loanSchedule = new LoanSchedule(loanScheduleGenerator, applicationCurrency, principal, minPrincipal,
-                maxPrincipal, interestRatePerPeriod, interestRatePeriodFrequencyType, defaultAnnualNominalInterestRate, interestMethod,
-                interestCalculationPeriodMethod, repaymentEvery, repaymentPeriodFrequencyType, numberOfRepayments, amortizationMethod,
-                loanTermFrequency, loanTermPeriodFrequencyType, setOfLoanCharges(), this.getDisbursementDate(),
-                this.getExpectedFirstRepaymentOnDate(), this.getInterestChargedFromDate(), inArrearsTolerance);
+        final LoanSchedule loanSchedule = new LoanSchedule(loanScheduleGenerator, applicationCurrency, principal, interestRatePerPeriod,
+                interestRatePeriodFrequencyType, defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod,
+                repaymentEvery, repaymentPeriodFrequencyType, numberOfRepayments, amortizationMethod, loanTermFrequency,
+                loanTermPeriodFrequencyType, setOfLoanCharges(), this.getDisbursementDate(), this.getExpectedFirstRepaymentOnDate(),
+                this.getInterestChargedFromDate(), inArrearsTolerance);
 
         final LoanScheduleData generatedData = loanSchedule.generate();
 
         updateLoanSchedule(generatedData);
     }
 
-    private LoanTransaction handleDisbursementTransaction(final LocalDate disbursedOn) {
+    private LoanTransaction handleDisbursementTransaction(final PaymentDetail paymentDetail, final LocalDate disbursedOn) {
         // track disbursement transaction
         final LoanTransaction disbursementTransaction = LoanTransaction.disbursement(this.loanRepaymentScheduleDetail.getPrincipal(),
-                disbursedOn);
+                paymentDetail, disbursedOn);
         disbursementTransaction.updateLoan(this);
         this.loanTransactions.add(disbursementTransaction);
 
         // add repayment transaction to track incoming money from client to mfi
         // for (charges due at time of disbursement)
+
+        /***
+         * TODO Vishwas: do we need to be able to pass in payment type details
+         * for repayments at disbursements too?
+         ***/
         final Money totalFeeChargesDueAtDisbursement = this.summary.getTotalFeeChargesDueAtDisbursement(loanCurrency());
         if (totalFeeChargesDueAtDisbursement.isGreaterThanZero()) {
 
-            LoanTransaction chargesPayment = LoanTransaction.repaymentAtDisbursement(totalFeeChargesDueAtDisbursement, disbursedOn);
+            LoanTransaction chargesPayment = LoanTransaction.repaymentAtDisbursement(totalFeeChargesDueAtDisbursement, null, disbursedOn);
             Money zero = Money.zero(getCurrency());
             chargesPayment.updateComponents(zero, zero, totalFeeChargesDueAtDisbursement, zero);
             chargesPayment.updateLoan(this);
@@ -1980,7 +1988,7 @@ public class Loan extends AbstractPersistable<Long> {
         return date;
     }
 
-    private LocalDate getExpectedDisbursedOnLocalDate() {
+    public LocalDate getExpectedDisbursedOnLocalDate() {
         LocalDate expectedDisbursementDate = null;
         if (this.expectedDisbursementDate != null) {
             expectedDisbursementDate = new LocalDate(this.expectedDisbursementDate);

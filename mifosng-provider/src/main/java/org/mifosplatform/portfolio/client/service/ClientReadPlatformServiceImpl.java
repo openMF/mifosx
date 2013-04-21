@@ -13,17 +13,20 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
+import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
-import org.mifosplatform.organisation.office.data.OfficeLookup;
+import org.mifosplatform.organisation.office.data.OfficeData;
 import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryCollectionData;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryData;
 import org.mifosplatform.portfolio.client.data.ClientData;
-import org.mifosplatform.portfolio.client.data.ClientLookup;
+import org.mifosplatform.portfolio.client.domain.ClientEnumerations;
 import org.mifosplatform.portfolio.client.exception.ClientNotFoundException;
-import org.mifosplatform.portfolio.group.data.GroupLookup;
+import org.mifosplatform.portfolio.group.data.GroupGeneralData;
+import org.mifosplatform.portfolio.group.service.SearchParameters;
 import org.mifosplatform.portfolio.loanaccount.data.LoanStatusEnumData;
 import org.mifosplatform.portfolio.loanproduct.service.LoanEnumerations;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -40,6 +43,12 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final PlatformSecurityContext context;
     private final OfficeReadPlatformService officeReadPlatformService;
 
+    // data mappers
+    private final ClientMapper clientMapper = new ClientMapper();
+    private final ClientLookupMapper lookupMapper = new ClientLookupMapper();
+    private final ClientMembersOfGroupMapper membersOfGroupMapper = new ClientMembersOfGroupMapper();
+    private final ParentGroupsMapper clientGroupsMapper = new ParentGroupsMapper();
+
     @Autowired
     public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final TenantAwareRoutingDataSource dataSource,
             final OfficeReadPlatformService officeReadPlatformService) {
@@ -49,99 +58,167 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     }
 
     @Override
-    public Collection<ClientData> retrieveAllIndividualClients(final String extraCriteria) {
+    public ClientData retrieveTemplate() {
 
-        AppUser currentUser = context.authenticatedUser();
-        String hierarchy = currentUser.getOffice().getHierarchy();
-        String hierarchySearchString = hierarchy + "%";
+        final AppUser currentUser = context.authenticatedUser();
 
-        ClientMapper rm = new ClientMapper();
+        final Collection<OfficeData> offices = officeReadPlatformService.retrieveAllOfficesForDropdown();
 
-        String sql = "select " + rm.clientSchema();
+        final Long officeId = currentUser.getOffice().getId();
+
+        return ClientData.template(officeId, new LocalDate(), offices);
+    }
+
+    @Override
+    public Collection<ClientData> retrieveAll(final SearchParameters searchParameters) {
+
+        final AppUser currentUser = context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+        final String hierarchySearchString = hierarchy + "%";
+
+        String sql = "select " + this.clientMapper.schema() + " where o.hierarchy like ?";
+
+        final String extraCriteria = buildSqlStringFromClientCriteria(searchParameters);
 
         if (StringUtils.isNotBlank(extraCriteria)) sql += " and (" + extraCriteria + ")";
 
         sql += " order by c.display_name ASC, c.account_no ASC";
 
-        return this.jdbcTemplate.query(sql, rm, new Object[] { hierarchySearchString });
+        return this.jdbcTemplate.query(sql, clientMapper, new Object[] { hierarchySearchString });
+    }
+
+    private String buildSqlStringFromClientCriteria(final SearchParameters searchParameters) {
+
+        final String sqlSearch = searchParameters.getSqlSearch();
+        final Long officeId = searchParameters.getOfficeId();
+        final String externalId = searchParameters.getExternalId();
+        final String displayName = searchParameters.getName();
+        final String firstname = searchParameters.getFirstname();
+        final String lastname = searchParameters.getLastname();
+        final String hierarchy = searchParameters.getHierarchy();
+
+        String extraCriteria = "";
+        if (sqlSearch != null) {
+            extraCriteria = " and (" + sqlSearch + ")";
+        }
+
+        if (officeId != null) {
+            extraCriteria += " and office_id = " + officeId;
+        }
+
+        if (externalId != null) {
+            extraCriteria += " and external_id like " + ApiParameterHelper.sqlEncodeString(externalId);
+        }
+
+        if (displayName != null) {
+            extraCriteria += " and concat(ifnull(firstname, ''), if(firstname > '',' ', '') , ifnull(lastname, '')) like "
+                    + ApiParameterHelper.sqlEncodeString(displayName);
+        }
+
+        if (firstname != null) {
+            extraCriteria += " and firstname like " + ApiParameterHelper.sqlEncodeString(firstname);
+        }
+
+        if (lastname != null) {
+            extraCriteria += " and lastname like " + ApiParameterHelper.sqlEncodeString(lastname);
+        }
+
+        if (hierarchy != null) {
+            extraCriteria += " and o.hierarchy like " + ApiParameterHelper.sqlEncodeString(hierarchy + "%");
+        }
+
+        if (StringUtils.isNotBlank(extraCriteria)) {
+            extraCriteria = extraCriteria.substring(4);
+        }
+
+        return extraCriteria;
     }
 
     @Override
-    public ClientData retrieveIndividualClient(final Long clientId) {
+    public ClientData retrieveOne(final Long clientId) {
 
         try {
-
             AppUser currentUser = context.authenticatedUser();
             String hierarchy = currentUser.getOffice().getHierarchy();
             String hierarchySearchString = hierarchy + "%";
 
-            ClientMapper rm = new ClientMapper();
-            String sql = "select " + rm.clientSchema() + " and c.id = " + clientId;
-            ClientData clientData =  this.jdbcTemplate.queryForObject(sql, rm, new Object[] { hierarchySearchString });
+            String sql = "select " + this.clientMapper.schema() + " where o.hierarchy like ? and c.id = ?";
+            ClientData clientData = this.jdbcTemplate.queryForObject(sql, this.clientMapper,
+                    new Object[] { hierarchySearchString, clientId });
 
-            ParentGroupsMapper cgrm = new ParentGroupsMapper();
-            String cgSql = "select " + cgrm.parentGroupsSchema();
-            Collection<GroupLookup> parentGroups = this.jdbcTemplate.query(cgSql, cgrm, new Object[] { clientId }); 
-            
-            return ClientData.setParentGroups(clientData , parentGroups);
-            
+            String clientGroupsSql = "select " + this.clientGroupsMapper.parentGroupsSchema();
+
+            Collection<GroupGeneralData> parentGroups = this.jdbcTemplate.query(clientGroupsSql, this.clientGroupsMapper,
+                    new Object[] { clientId });
+            return ClientData.setParentGroups(clientData, parentGroups);
         } catch (EmptyResultDataAccessException e) {
             throw new ClientNotFoundException(clientId);
         }
     }
 
     @Override
-    public Collection<ClientLookup> retrieveAllIndividualClientsForLookup(final String extraCriteria) {
+    public Collection<ClientData> retrieveAllForLookup(final String extraCriteria) {
 
-        this.context.authenticatedUser();
-
-        ClientLookupMapper rm = new ClientLookupMapper();
-
-        String sql = "select " + rm.clientLookupSchema();
+        String sql = "select " + this.lookupMapper.schema();
 
         if (StringUtils.isNotBlank(extraCriteria)) {
             sql += " and (" + extraCriteria + ")";
         }
 
-        return this.jdbcTemplate.query(sql, rm, new Object[] {});
+        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[] {});
     }
 
     @Override
-    public Collection<ClientLookup> retrieveAllIndividualClientsForLookupByOfficeId(final Long officeId) {
-        this.context.authenticatedUser();
+    public Collection<ClientData> retrieveAllForLookupByOfficeId(final Long officeId) {
 
-        ClientLookupMapper rm = new ClientLookupMapper();
+        final String sql = "select " + this.lookupMapper.schema() + " and c.office_id = ?";
 
-        String sql = "select " + rm.clientLookupSchema() + " and c.office_id = " + officeId;
-
-        return this.jdbcTemplate.query(sql, rm, new Object[] {});
+        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[] { officeId });
     }
 
     @Override
-    public ClientData retrieveNewClientDetails() {
+    public Collection<ClientData> retrieveClientMembersOfGroup(final Long groupId) {
 
         final AppUser currentUser = context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+        final String hierarchySearchString = hierarchy + "%";
 
-        final List<OfficeLookup> offices = new ArrayList<OfficeLookup>(officeReadPlatformService.retrieveAllOfficesForLookup());
-        final Long officeId = currentUser.getOffice().getId();
+        final String sql = "select " + this.membersOfGroupMapper.schema()
+ + " where o.hierarchy like ? and pgc.group_id = ?";
 
-        return ClientData.template(officeId, new LocalDate(), offices);
+        return this.jdbcTemplate.query(sql, this.membersOfGroupMapper, new Object[] { hierarchySearchString, groupId });
     }
 
-    private static final class ClientMapper implements RowMapper<ClientData> {
+    private static final class ClientMembersOfGroupMapper implements RowMapper<ClientData> {
 
-        public String clientSchema() {
-            return "c.account_no as accountNo, c.office_id as officeId, o.name as officeName, c.id as id, "
-                    + "c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, "
-                    + "c.fullname as fullname, c.display_name as displayName, "
-                    + "c.external_id as externalId, c.joined_date as joinedDate, c.image_key as imagekey from m_client c join m_office o on o.id = c.office_id "
-                    + " where o.hierarchy like ? and c.is_deleted=0 ";
+        private final String schema;
+
+        public ClientMembersOfGroupMapper() {
+            final StringBuilder sqlBuilder = new StringBuilder(200);
+
+            sqlBuilder.append("c.id as id, c.account_no as accountNo, c.external_id as externalId, ");
+            sqlBuilder.append("c.office_id as officeId, o.name as officeName, ");
+            sqlBuilder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, ");
+            sqlBuilder.append("c.fullname as fullname, c.display_name as displayName, ");
+            sqlBuilder.append("c.activation_date as activationDate, c.image_key as imagekey ");
+            sqlBuilder.append("from m_client c ");
+            sqlBuilder.append("join m_office o on o.id = c.office_id ");
+            sqlBuilder.append("join m_group_client pgc on pgc.client_id = c.id");
+
+            this.schema = sqlBuilder.toString();
+        }
+
+        public String schema() {
+            return this.schema;
         }
 
         @Override
         public ClientData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
 
             final String accountNo = rs.getString("accountNo");
+
+            final EnumOptionData status = null;
+
             final Long officeId = JdbcSupport.getLong(rs, "officeId");
             final Long id = JdbcSupport.getLong(rs, "id");
             final String firstname = rs.getString("firstname");
@@ -150,49 +227,109 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String fullname = rs.getString("fullname");
             final String displayName = rs.getString("displayName");
             final String externalId = rs.getString("externalId");
-            final LocalDate joinedDate = JdbcSupport.getLocalDate(rs, "joinedDate");
+            final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
             final String imageKey = rs.getString("imageKey");
             final String officeName = rs.getString("officeName");
 
-            return new ClientData(accountNo, officeId, officeName, id, firstname, middlename, lastname, fullname, displayName, externalId,
-                    joinedDate, imageKey, null, null, null ,null);
+            return ClientData.instance(accountNo, status, officeId, officeName, id, firstname, middlename, lastname, fullname, displayName,
+                    externalId, activationDate, imageKey);
+        }
+    }
+
+    private static final class ClientMapper implements RowMapper<ClientData> {
+
+        private final String schema;
+
+        public ClientMapper() {
+            StringBuilder builder = new StringBuilder(400);
+
+            builder.append("c.id as id, c.account_no as accountNo, c.external_id as externalId, c.status_enum as statusEnum, ");
+            builder.append("c.office_id as officeId, o.name as officeName, ");
+            builder.append("c.office_id as officeId, o.name as officeName, ");
+            builder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, ");
+            builder.append("c.fullname as fullname, c.display_name as displayName, ");
+            builder.append("c.activation_date as activationDate, c.image_key as imagekey ");
+            builder.append("from m_client c ");
+            builder.append("join m_office o on o.id = c.office_id ");
+
+            this.schema = builder.toString();
+        }
+
+        public String schema() {
+            return this.schema;
+        }
+
+        @Override
+        public ClientData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+
+            final String accountNo = rs.getString("accountNo");
+
+            final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
+            final EnumOptionData status = ClientEnumerations.status(statusEnum);
+
+            final Long officeId = JdbcSupport.getLong(rs, "officeId");
+            final Long id = JdbcSupport.getLong(rs, "id");
+            final String firstname = rs.getString("firstname");
+            final String middlename = rs.getString("middlename");
+            final String lastname = rs.getString("lastname");
+            final String fullname = rs.getString("fullname");
+            final String displayName = rs.getString("displayName");
+            final String externalId = rs.getString("externalId");
+            final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
+            final String imageKey = rs.getString("imageKey");
+            final String officeName = rs.getString("officeName");
+
+            return ClientData.instance(accountNo, status, officeId, officeName, id, firstname, middlename, lastname, fullname, displayName,
+                    externalId, activationDate, imageKey);
         }
 
     }
 
-    private static final class ParentGroupsMapper implements RowMapper<GroupLookup> {
+    private static final class ParentGroupsMapper implements RowMapper<GroupGeneralData> {
 
         public String parentGroupsSchema() {
-            return "gp.id As groupId , gp.name As groupName from m_client cl JOIN m_group_client gc ON cl.id = gc.client_id "
-                    + "JOIN m_group gp ON gp.id = gc.group_id WHERE cl.id  = ? AND gp.is_deleted = 0 ";
-       }
+            return "gp.id As groupId , gp.display_name As groupName from m_client cl JOIN m_group_client gc ON cl.id = gc.client_id "
+                    + "JOIN m_group gp ON gp.id = gc.group_id WHERE cl.id  = ?";
+        }
 
         @Override
-        public GroupLookup mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+        public GroupGeneralData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
 
             final Long groupId = JdbcSupport.getLong(rs, "groupId");
             final String groupName = rs.getString("groupName");
 
-            return new GroupLookup(groupId, groupName);
+            return GroupGeneralData.lookup(groupId, groupName);
         }
-
     }
 
-    private static final class ClientLookupMapper implements RowMapper<ClientLookup> {
+    private static final class ClientLookupMapper implements RowMapper<ClientData> {
 
-        public String clientLookupSchema() {
-            return "c.id as id, c.display_name as displayName, " + "c.office_id as officeId, o.name as officeName "
-                    + "from m_client c join m_office o on o.id = c.office_id where c.is_deleted=0 ";
+        private final String schema;
+
+        public ClientLookupMapper() {
+            StringBuilder builder = new StringBuilder(200);
+
+            builder.append("c.id as id, c.display_name as displayName, ");
+            builder.append("c.office_id as officeId, o.name as officeName ");
+            builder.append("from m_client c ");
+            builder.append("join m_office o on o.id = c.office_id ");
+
+            this.schema = builder.toString();
+        }
+
+        public String schema() {
+            return this.schema;
         }
 
         @Override
-        public ClientLookup mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
-            Long id = rs.getLong("id");
-            String displayName = rs.getString("displayName");
-            Long officeId = rs.getLong("officeId");
-            String officeName = rs.getString("officeName");
+        public ClientData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
 
-            return ClientLookup.template(id, displayName, officeId, officeName);
+            final Long id = rs.getLong("id");
+            final String displayName = rs.getString("displayName");
+            final Long officeId = rs.getLong("officeId");
+            final String officeName = rs.getString("officeName");
+
+            return ClientData.lookup(id, displayName, officeId, officeName);
         }
     }
 
@@ -203,7 +340,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             this.context.authenticatedUser();
 
             // Check if client exists
-            retrieveIndividualClient(clientId);
+            retrieveOne(clientId);
 
             List<ClientAccountSummaryData> pendingApprovalLoans = new ArrayList<ClientAccountSummaryData>();
             List<ClientAccountSummaryData> awaitingDisbursalLoans = new ArrayList<ClientAccountSummaryData>();
@@ -269,7 +406,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         this.context.authenticatedUser();
 
         // Check if client exists
-        retrieveIndividualClient(clientId);
+        retrieveOne(clientId);
 
         ClientLoanAccountSummaryDataMapper rm = new ClientLoanAccountSummaryDataMapper();
 
@@ -354,9 +491,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private static final class ClientIdentifierMapper implements RowMapper<ClientData> {
 
         public String clientLookupByIdentifierSchema() {
-            return "c.id as id, c.account_no as accountNo, c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, "
-                    + "c.fullname as fullname, c.display_name as displayName," + "c.office_id as officeId, o.name as officeName "
-                    + " from m_client c, m_office o, m_client_identifier ci " + "where o.id = c.office_id and c.id=ci.client_id "
+            return "c.id as id, c.account_no as accountNo, c.status_enum as statusEnum, c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, "
+                    + "c.fullname as fullname, c.display_name as displayName,"
+                    + "c.office_id as officeId, o.name as officeName "
+                    + " from m_client c, m_office o, m_client_identifier ci "
+                    + "where o.id = c.office_id and c.id=ci.client_id "
                     + "and ci.document_type_id= ? and ci.document_key like ?";
         }
 
@@ -365,6 +504,10 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             final Long id = rs.getLong("id");
             final String accountNo = rs.getString("accountNo");
+
+            final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
+            final EnumOptionData status = ClientEnumerations.status(statusEnum);
+
             final String firstname = rs.getString("firstname");
             final String middlename = rs.getString("middlename");
             final String lastname = rs.getString("lastname");
@@ -374,7 +517,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final Long officeId = rs.getLong("officeId");
             final String officeName = rs.getString("officeName");
 
-            return ClientData.clientIdentifier(id, accountNo, firstname, middlename, lastname, fullname, displayName, officeId, officeName);
+            return ClientData.clientIdentifier(id, accountNo, status, firstname, middlename, lastname, fullname, displayName, officeId,
+                    officeName);
         }
     }
 }

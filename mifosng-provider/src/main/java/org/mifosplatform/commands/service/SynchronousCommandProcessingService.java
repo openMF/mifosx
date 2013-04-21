@@ -149,6 +149,10 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 handler = applicationContext.getBean("updateClientCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isDelete()) {
                 handler = applicationContext.getBean("deleteClientCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isClientActivation()) {
+                handler = applicationContext.getBean("activateClientCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
             }
             // end of client
         } else if (wrapper.isUpdateRolePermissions()) {
@@ -370,6 +374,8 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 handler = applicationContext.getBean("activateSavingsAccountCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isSavingsAccountInterestCalculation()) {
                 handler = applicationContext.getBean("calculateInterestSavingsAccountCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isSavingsAccountInterestPosting()) {
+                handler = applicationContext.getBean("postInterestSavingsAccountCommandHandler", NewCommandSourceHandler.class);
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
@@ -392,14 +398,39 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 handler = applicationContext.getBean("unassignStaffCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isDelete()) {
                 handler = applicationContext.getBean("deleteGroupCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isGroupActivation()) {
+                handler = applicationContext.getBean("activateGroupCommandHandler", NewCommandSourceHandler.class);
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
-        
+        } else if (wrapper.isCenterResource()) {
+            if (wrapper.isCreate()) {
+                handler = applicationContext.getBean("createCenterCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdate()) {
+                handler = applicationContext.getBean("updateCenterCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isDelete()) {
+                handler = applicationContext.getBean("deleteCenterCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isCenterActivation()) {
+                handler = applicationContext.getBean("activateCenterCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
         } else if (wrapper.isCollectionSheetResource()) {
 
             if (wrapper.isUpdate()) {
                 handler = applicationContext.getBean("updateCollectionSheetCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
+
+        } else if (wrapper.isReportResource()) {
+
+            if (wrapper.isCreate()) {
+                handler = applicationContext.getBean("createReportCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdate()) {
+                handler = applicationContext.getBean("updateReportCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isDelete()) {
+                handler = applicationContext.getBean("deleteReportCommandHandler", NewCommandSourceHandler.class);
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
