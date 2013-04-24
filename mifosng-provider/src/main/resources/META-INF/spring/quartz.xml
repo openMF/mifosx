@@ -3,44 +3,40 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="cronQuartzJob" class="org.mifosplatform.scheduledjobs.Job">
-        <constructor-arg type="java.lang.String" value="I am a cron job" />
-    </bean>
+    <bean id="cronQuartzJobA" class="org.mifosplatform.scheduledjobs.JobA"/>
 
-    <bean id="scheduledQuartzJob" class="org.mifosplatform.scheduledjobs.Job">
-        <constructor-arg type="java.lang.String" value="I am a scheduled job" />
-    </bean>
+    <bean id="cronQuartzJobB" class="org.mifosplatform.scheduledjobs.JobB"/>
 
-    <bean id="cronDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
-        <property name="group" value="myJobs" />
-        <property name="targetObject" ref="cronQuartzJob" />
+    <bean id="jobADetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="group" value="mifosJobs" />
+        <property name="targetObject" ref="cronQuartzJobA" />
+        <property name="targetMethod" value="execute" />
+        <property name="concurrent" value="false" />
+    </bean>
+    <bean id="jobBDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="group" value="mifosJobs" />
+        <property name="targetObject" ref="cronQuartzJobB" />
         <property name="targetMethod" value="execute" />
         <property name="concurrent" value="false" />
     </bean>
 
-    <bean id="scheduledDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
-        <property name="group" value="myJobs" />
-        <property name="targetObject" ref="scheduledQuartzJob" />
-        <property name="targetMethod" value="execute" />
-        <property name="concurrent" value="false" />
-    </bean>
 
-    <!-- create the Trigger with a Schedule that runs every 5 seconds -->
+    <!-- create the Trigger with a Schedule that runs every 2 seconds -->
     <bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
 
-        <property name="jobDetail" ref="cronDetail" />
-        <property name="cronExpression" value="0 0/1 * 1/1 * ? *" />
+        <property name="jobDetail" ref="jobADetail" />
+        <property name="cronExpression" value="0/2 * * * * ?" />
     </bean>
 
     <!--  create a Scheduled Trigger -->
-    <bean id="simpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
-        <property name="group" value="myJobs" />
-        <property name="jobDetail" ref="scheduledDetail" />
-        <!-- 10 seconds -->
-        <property name="startDelay" value="10000" />
-        <!-- repeat every 5 seconds -->
-        <property name="repeatInterval" value="60000" />
-    </bean>
+    <!--<bean id="simpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">-->
+        <!--<property name="group" value="mifosJobs" />-->
+        <!--<property name="jobDetail" ref="scheduledDetail" />-->
+        <!--&lt;!&ndash; 10 seconds &ndash;&gt;-->
+        <!--<property name="startDelay" value="10000" />-->
+        <!--&lt;!&ndash; repeat every 5 seconds &ndash;&gt;-->
+        <!--<property name="repeatInterval" value="60000" />-->
+    <!--</bean>-->
 
     <!-- schedule the Jobs -->
     <bean name="schedulerFactory" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
