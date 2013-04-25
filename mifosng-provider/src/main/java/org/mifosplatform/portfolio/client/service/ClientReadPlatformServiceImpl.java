@@ -5,17 +5,12 @@
  */
 package org.mifosplatform.portfolio.client.service;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
+import org.mifosplatform.infrastructure.core.service.DocumentStoreFactory;
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.data.OfficeData;
@@ -23,6 +18,7 @@ import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryCollectionData;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryData;
 import org.mifosplatform.portfolio.client.data.ClientData;
+import org.mifosplatform.portfolio.client.data.ImageData;
 import org.mifosplatform.portfolio.client.domain.ClientEnumerations;
 import org.mifosplatform.portfolio.client.exception.ClientNotFoundException;
 import org.mifosplatform.portfolio.group.data.GroupGeneralData;
@@ -30,18 +26,29 @@ import org.mifosplatform.portfolio.group.service.SearchParameters;
 import org.mifosplatform.portfolio.loanaccount.data.LoanStatusEnumData;
 import org.mifosplatform.portfolio.loanproduct.service.LoanEnumerations;
 import org.mifosplatform.useradministration.domain.AppUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 @Service
 public class ClientReadPlatformServiceImpl implements ClientReadPlatformService {
+    private final static Logger logger = LoggerFactory.getLogger(ClientReadPlatformServiceImpl.class);
+
 
     private final JdbcTemplate jdbcTemplate;
     private final PlatformSecurityContext context;
     private final OfficeReadPlatformService officeReadPlatformService;
+    private final DocumentStoreFactory documentStoreFactory;
 
     // data mappers
     private final ClientMapper clientMapper = new ClientMapper();
@@ -51,9 +58,10 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
     @Autowired
     public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final TenantAwareRoutingDataSource dataSource,
-            final OfficeReadPlatformService officeReadPlatformService) {
+                                         final OfficeReadPlatformService officeReadPlatformService, final DocumentStoreFactory documentStoreFactory) {
         this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
+        this.documentStoreFactory = documentStoreFactory;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
@@ -84,7 +92,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         sql += " order by c.display_name ASC, c.account_no ASC";
 
-        return this.jdbcTemplate.query(sql, clientMapper, new Object[] { hierarchySearchString });
+        return this.jdbcTemplate.query(sql, clientMapper, new Object[]{hierarchySearchString});
     }
 
     private String buildSqlStringFromClientCriteria(final SearchParameters searchParameters) {
@@ -136,7 +144,6 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
     @Override
     public ClientData retrieveOne(final Long clientId) {
-
         try {
             AppUser currentUser = context.authenticatedUser();
             String hierarchy = currentUser.getOffice().getHierarchy();
@@ -144,13 +151,23 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             String sql = "select " + this.clientMapper.schema() + " where o.hierarchy like ? and c.id = ?";
             ClientData clientData = this.jdbcTemplate.queryForObject(sql, this.clientMapper,
-                    new Object[] { hierarchySearchString, clientId });
+                    new Object[]{hierarchySearchString, clientId});
 
             String clientGroupsSql = "select " + this.clientGroupsMapper.parentGroupsSchema();
 
             Collection<GroupGeneralData> parentGroups = this.jdbcTemplate.query(clientGroupsSql, this.clientGroupsMapper,
-                    new Object[] { clientId });
+                    new Object[]{clientId});
+
+            String clientImageSql = "select * from m_image where client_id =" + clientId;
+
+            try{
+                ImageData imageData = this.jdbcTemplate.queryForObject(clientImageSql, new ImageMapper());
+                clientData.setImageData(documentStoreFactory.getInstanceFromStorageType(imageData.storeType()).retrieveImage(imageData));
+            }
+            catch (EmptyResultDataAccessException e){
+            }
             return ClientData.setParentGroups(clientData, parentGroups);
+
         } catch (EmptyResultDataAccessException e) {
             throw new ClientNotFoundException(clientId);
         }
@@ -165,7 +182,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             sql += " and (" + extraCriteria + ")";
         }
 
-        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[] {});
+        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[]{});
     }
 
     @Override
@@ -173,7 +190,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         final String sql = "select " + this.lookupMapper.schema() + " and c.office_id = ?";
 
-        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[] { officeId });
+        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[]{officeId});
     }
 
     @Override
@@ -184,9 +201,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final String hierarchySearchString = hierarchy + "%";
 
         final String sql = "select " + this.membersOfGroupMapper.schema()
- + " where o.hierarchy like ? and pgc.group_id = ?";
+                + " where o.hierarchy like ? and pgc.group_id = ?";
 
-        return this.jdbcTemplate.query(sql, this.membersOfGroupMapper, new Object[] { hierarchySearchString, groupId });
+        return this.jdbcTemplate.query(sql, this.membersOfGroupMapper, new Object[]{hierarchySearchString, groupId});
     }
 
     private static final class ClientMembersOfGroupMapper implements RowMapper<ClientData> {
@@ -232,7 +249,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String officeName = rs.getString("officeName");
 
             return ClientData.instance(accountNo, status, officeId, officeName, id, firstname, middlename, lastname, fullname, displayName,
-                    externalId, activationDate, imageKey);
+                    externalId, activationDate, null);
         }
     }
 
@@ -276,11 +293,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String displayName = rs.getString("displayName");
             final String externalId = rs.getString("externalId");
             final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
-            final String imageKey = rs.getString("imageKey");
+//            final String imageKey = rs.getString("imageKey");
             final String officeName = rs.getString("officeName");
 
             return ClientData.instance(accountNo, status, officeId, officeName, id, firstname, middlename, lastname, fullname, displayName,
-                    externalId, activationDate, imageKey);
+                    externalId, activationDate, null);
         }
 
     }
@@ -300,6 +317,18 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             return GroupGeneralData.lookup(groupId, groupName);
         }
+    }
+
+    private static final class ImageMapper implements RowMapper<ImageData> {
+
+        @Override
+        public ImageData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+            final Long clientId = rs.getLong("client_id");
+            final String imageKey = rs.getString("key");
+            final String storeType = rs.getString("storage_type");
+            return new ImageData(clientId, imageKey, storeType);
+        }
+
     }
 
     private static final class ClientLookupMapper implements RowMapper<ClientData> {
@@ -351,7 +380,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             String sql = "select " + rm.loanAccountSummarySchema() + " where l.client_id = ?";
 
-            List<ClientAccountSummaryData> results = this.jdbcTemplate.query(sql, rm, new Object[] { clientId });
+            List<ClientAccountSummaryData> results = this.jdbcTemplate.query(sql, rm, new Object[]{clientId});
             if (results != null) {
                 for (ClientAccountSummaryData row : results) {
 
@@ -386,7 +415,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final ClientSavingsAccountSummaryDataMapper savingsAccountSummaryDataMapper = new ClientSavingsAccountSummaryDataMapper();
             final String savingsSql = "select " + savingsAccountSummaryDataMapper.schema() + " where sa.client_id = ?";
             final List<ClientAccountSummaryData> savingsAccounts = this.jdbcTemplate.query(savingsSql, savingsAccountSummaryDataMapper,
-                    new Object[] { clientId });
+                    new Object[]{clientId});
 
             approvedSavingAccounts.addAll(savingsAccounts);
 
@@ -412,7 +441,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         String sql = "select " + rm.loanAccountSummarySchema() + " where l.client_id = ? and l.loan_officer_id = ?";
 
-        List<ClientAccountSummaryData> loanAccounts = this.jdbcTemplate.query(sql, rm, new Object[] { clientId, loanOfficerId });
+        List<ClientAccountSummaryData> loanAccounts = this.jdbcTemplate.query(sql, rm, new Object[]{clientId, loanOfficerId});
 
         return loanAccounts;
     }
@@ -482,7 +511,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             final String sql = "select " + mapper.clientLookupByIdentifierSchema();
 
-            return jdbcTemplate.queryForObject(sql, mapper, new Object[] { identifierTypeId, identifierKey });
+            return jdbcTemplate.queryForObject(sql, mapper, new Object[]{identifierTypeId, identifierKey});
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
