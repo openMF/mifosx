@@ -5,7 +5,6 @@
  */
 package org.mifosplatform.portfolio.client.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -21,7 +20,8 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.core.domain.Base64EncodedImage;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
-import org.mifosplatform.infrastructure.core.service.FileUtils;
+import org.mifosplatform.infrastructure.core.service.DocumentStore;
+import org.mifosplatform.infrastructure.core.service.FileSystemDocumentStore;
 import org.mifosplatform.infrastructure.documentmanagement.exception.DocumentManagementException;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.domain.Office;
@@ -59,12 +59,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private final GroupRepository groupRepository;
     private final ClientDataValidator fromApiJsonDeserializer;
     private final AccountNumberGeneratorFactory accountIdentifierGeneratorFactory;
+    private final DocumentStore documentStore;
 
     @Autowired
     public ClientWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final ClientRepositoryWrapper clientRepository, final OfficeRepository officeRepository, final NoteRepository noteRepository,
-            final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGeneratorFactory accountIdentifierGeneratorFactory,
-            final GroupRepository groupRepository) {
+                                                       final ClientRepositoryWrapper clientRepository, final OfficeRepository officeRepository, final NoteRepository noteRepository,
+                                                       final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGeneratorFactory accountIdentifierGeneratorFactory,
+                                                       final GroupRepository groupRepository) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.officeRepository = officeRepository;
@@ -72,6 +73,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.accountIdentifierGeneratorFactory = accountIdentifierGeneratorFactory;
         this.groupRepository = groupRepository;
+        this.documentStore = new FileSystemDocumentStore();
     }
 
     @Transactional
@@ -223,12 +225,12 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
     @Transactional
     @Override
-    public CommandProcessingResult saveOrUpdateClientImage(final Long clientId, final String imageName, final InputStream inputStream) {
+    public CommandProcessingResult saveOrUpdateClientImage(final Long clientId, final String imageName, final InputStream inputStream, Long fileSize) {
         try {
             final Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
-            String imageUploadLocation = setupForClientImageUpdate(clientId, client);
+            deletePreviousClientImage(clientId, client);
 
-            String imageLocation = FileUtils.saveToFileSystem(inputStream, imageUploadLocation, imageName);
+            String imageLocation = this.documentStore.saveImage(inputStream, clientId, imageName, fileSize);
 
             return updateClientImage(clientId, client, imageLocation);
         } catch (IOException ioe) {
@@ -245,7 +247,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
         // delete image from the file system
         if (StringUtils.isNotEmpty(client.imageKey())) {
-            FileUtils.deleteClientImage(clientId, client.imageKey());
+            this.documentStore.deleteClientImage(clientId, client.imageKey());
         }
         return updateClientImage(clientId, client, null);
     }
@@ -254,9 +256,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     public CommandProcessingResult saveOrUpdateClientImage(final Long clientId, final Base64EncodedImage encodedImage) {
         try {
             final Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
-            final String imageUploadLocation = setupForClientImageUpdate(clientId, client);
+            deletePreviousClientImage(clientId, client);
 
-            final String imageLocation = FileUtils.saveToFileSystem(encodedImage, imageUploadLocation, "image");
+            final String imageLocation = this.documentStore.saveImage(encodedImage, clientId, "image");
 
             return updateClientImage(clientId, client, imageLocation);
         } catch (IOException ioe) {
@@ -265,20 +267,13 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         }
     }
 
-    private String setupForClientImageUpdate(final Long clientId, final Client client) {
+    private void deletePreviousClientImage(final Long clientId, final Client client) {
         if (client == null) { throw new ClientNotFoundException(clientId); }
 
-        final String imageUploadLocation = FileUtils.generateClientImageParentDirectory(clientId);
         // delete previous image from the file system
         if (StringUtils.isNotEmpty(client.imageKey())) {
-            FileUtils.deleteClientImage(clientId, client.imageKey());
+            this.documentStore.deleteClientImage(clientId, client.imageKey());
         }
-
-        /** Recursively create the directory if it does not exist **/
-        if (!new File(imageUploadLocation).isDirectory()) {
-            new File(imageUploadLocation).mkdirs();
-        }
-        return imageUploadLocation;
     }
 
     private CommandProcessingResult updateClientImage(final Long clientId, final Client client, final String imageLocation) {

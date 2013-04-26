@@ -11,7 +11,8 @@ import java.io.InputStream;
 
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
-import org.mifosplatform.infrastructure.core.service.FileUtils;
+import org.mifosplatform.infrastructure.core.service.DocumentStore;
+import org.mifosplatform.infrastructure.core.service.FileSystemDocumentStore;
 import org.mifosplatform.infrastructure.documentmanagement.command.DocumentCommand;
 import org.mifosplatform.infrastructure.documentmanagement.command.DocumentCommandValidator;
 import org.mifosplatform.infrastructure.documentmanagement.domain.Document;
@@ -34,11 +35,13 @@ public class DocumentWritePlatformServiceJpaRepositoryImpl implements DocumentWr
 
     private final PlatformSecurityContext context;
     private final DocumentRepository documentRepository;
+    private final DocumentStore documentStore;
 
     @Autowired
     public DocumentWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final DocumentRepository documentRepository) {
         this.context = context;
         this.documentRepository = documentRepository;
+        this.documentStore = new FileSystemDocumentStore();
     }
 
     @Transactional
@@ -53,15 +56,7 @@ public class DocumentWritePlatformServiceJpaRepositoryImpl implements DocumentWr
 
             validator.validateForCreate();
 
-            final String fileUploadLocation = FileUtils.generateFileParentDirectory(documentCommand.getParentEntityType(),
-                    documentCommand.getParentEntityId());
-
-            /** Recursively create the directory if it does not exist **/
-            if (!new File(fileUploadLocation).isDirectory()) {
-                new File(fileUploadLocation).mkdirs();
-            }
-
-            final String fileLocation = FileUtils.saveToFileSystem(inputStream, fileUploadLocation, documentCommand.getFileName());
+            final String fileLocation = this.documentStore.saveDocument(inputStream, documentCommand);
 
             final Document document = Document.createNew(documentCommand.getParentEntityType(), documentCommand.getParentEntityId(),
                     documentCommand.getName(), documentCommand.getFileName(), documentCommand.getSize(), documentCommand.getType(),
@@ -97,18 +92,10 @@ public class DocumentWritePlatformServiceJpaRepositoryImpl implements DocumentWr
             oldLocation = documentForUpdate.getLocation();
             // if a new file is also passed in
             if (inputStream != null && documentCommand.isFileNameChanged()) {
-                final String fileUploadLocation = FileUtils.generateFileParentDirectory(documentCommand.getParentEntityType(),
-                        documentCommand.getParentEntityId());
-
-                /** Recursively create the directory if it does not exist **/
-                if (!new File(fileUploadLocation).isDirectory()) {
-                    new File(fileUploadLocation).mkdirs();
-                }
 
                 // TODO provide switch to toggle between file system appender
                 // and Amazon S3 appender
-                final String fileLocation = FileUtils.saveToFileSystem(inputStream, fileUploadLocation, documentCommand.getFileName());
-                documentCommand.setLocation(fileLocation);
+                documentCommand.setLocation(this.documentStore.saveDocument(inputStream, documentCommand));
             }
 
             documentForUpdate.update(documentCommand);
