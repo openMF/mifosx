@@ -5,26 +5,6 @@
  */
 package org.mifosplatform.portfolio.client.api;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
-
 import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
@@ -37,6 +17,7 @@ import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.data.OfficeData;
 import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
+import org.mifosplatform.paginationutil.Page;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryCollectionData;
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
@@ -44,6 +25,12 @@ import org.mifosplatform.portfolio.group.service.SearchParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
+import java.util.*;
 
 @Path("/clients")
 @Component
@@ -91,26 +78,73 @@ public class ClientsApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveAll(@Context final UriInfo uriInfo, @QueryParam("sqlSearch") final String sqlSearch,
-            @QueryParam("officeId") final Long officeId, @QueryParam("externalId") final String externalId,
-            @QueryParam("displayName") final String displayName, @QueryParam("firstName") final String firstname,
-            @QueryParam("lastName") final String lastname, @QueryParam("underHierarchy") final String hierarchy) {
+                              @QueryParam("officeId") final Long officeId, @QueryParam("externalId") final String externalId,
+                              @QueryParam("displayName") final String displayName, @QueryParam("firstName") final String firstname,
+                              @QueryParam("lastName") final String lastname, @QueryParam("underHierarchy") final String hierarchy) {
 
+        // authentication of user making the request
         context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
+        // setting the query parameters in a SearchParameters object.
         final SearchParameters searchParameters = SearchParameters.forClients(sqlSearch, officeId, externalId, displayName, firstname,
                 lastname, hierarchy);
+
+        // retrieving the list of clients by making a method call to the db-layer. ( ClientReadPlatformService class)
         final Collection<ClientData> clients = this.clientReadPlatformService.retrieveAll(searchParameters);
 
+        // Serialising the collection returned into JSON format.
         final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        // returns a json response.
         return this.toApiJsonSerializer.serialize(settings, clients, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
     }
+
+
+    /**
+     * This method retrieveAll() returns a list of clients as a response after Paginating it according to limit,offset
+     *
+     * @param uriInfo
+     * @param sqlSearch
+     * @param officeId
+     * @param externalId
+     * @param displayName
+     * @param firstname
+     * @param lastname
+     * @param hierarchy
+     * @param limit
+     * @param offset
+     * @return
+     */
+    @GET
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveAll(@Context final UriInfo uriInfo, @QueryParam("sqlSearch") final String sqlSearch,
+            @QueryParam("officeId") final Long officeId, @QueryParam("externalId") final String externalId,
+            @QueryParam("displayName") final String displayName, @QueryParam("firstName") final String firstname,
+            @QueryParam("lastName") final String lastname, @QueryParam("underHierarchy") final String hierarchy, @QueryParam("limit")  int limit, @QueryParam("offset") int offset) {
+
+        // authentication of user making the request
+        context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+
+        // setting the query parameters in a SearchParameters object.
+        final SearchParameters searchParameters = SearchParameters.forClients(sqlSearch, officeId, externalId, displayName, firstname,
+                lastname, hierarchy);
+
+        // retrieving the list of clients by making a method call to the db-layer. ( ClientReadPlatformService class)
+        final Page<ClientData> clients = this.clientReadPlatformService.retrieveAllPaginatedUsingPaginationHelper(searchParameters,limit,offset);
+
+        // Serialising the collection returned into JSON format.
+        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        // returns a json response.
+        return this.toApiJsonSerializer.serialize(settings, clients.getPageItems(), ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
+    }
+
 
     @GET
     @Path("{clientId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOne(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo) {
-
+        // user authentication done here.
         context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
         final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());

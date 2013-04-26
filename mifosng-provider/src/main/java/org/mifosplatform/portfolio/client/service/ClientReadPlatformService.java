@@ -5,18 +5,23 @@
  */
 package org.mifosplatform.portfolio.client.service;
 
-import java.util.Collection;
-
+import org.mifosplatform.paginationutil.Page;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryCollectionData;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryData;
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.group.service.SearchParameters;
+
+import java.util.Collection;
 
 public interface ClientReadPlatformService {
 
     ClientData retrieveTemplate();
 
     Collection<ClientData> retrieveAll(SearchParameters searchParameters);
+
+    Page<ClientData> retrieveAllPaginatedUsingSqlQuery(SearchParameters searchParameters,int limit, int offset);
+
+    Page<ClientData> retrieveAllPaginatedUsingPaginationHelper(SearchParameters searchParameters,int limit, int offset);
 
     ClientData retrieveOne(Long clientId);
 

@@ -5,12 +5,6 @@
  */
 package org.mifosplatform.portfolio.client.service;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
@@ -20,6 +14,8 @@ import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSourc
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.data.OfficeData;
 import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
+import org.mifosplatform.paginationutil.Page;
+import org.mifosplatform.paginationutil.PaginationHelper;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryCollectionData;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryData;
 import org.mifosplatform.portfolio.client.data.ClientData;
@@ -35,6 +31,12 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Service
 public class ClientReadPlatformServiceImpl implements ClientReadPlatformService {
@@ -69,6 +71,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         return ClientData.template(officeId, new LocalDate(), offices);
     }
 
+    /**
+     * retrieveAll method is to retrieve the list of all clients from db depending upon the search parameters.
+     * @param searchParameters
+     * @return
+     */
     @Override
     public Collection<ClientData> retrieveAll(final SearchParameters searchParameters) {
 
@@ -76,7 +83,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final String hierarchy = currentUser.getOffice().getHierarchy();
         final String hierarchySearchString = hierarchy + "%";
 
-        String sql = "select " + this.clientMapper.schema() + " where o.hierarchy like ?";
+        String sql = "select" + this.clientMapper.schema() + " where o.hierarchy like ?";
 
         final String extraCriteria = buildSqlStringFromClientCriteria(searchParameters);
 
@@ -86,6 +93,77 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         return this.jdbcTemplate.query(sql, clientMapper, new Object[] { hierarchySearchString });
     }
+
+
+    /**
+     * method returns a list of client data from the offset given with limit number of items as a Page object.
+     * @param searchParameters
+     * @param limit - limit is the size of list ie. number of elements on the page
+     * @param offset - offset is the row number (entry number) from where to start.
+     * @return
+     */
+    public Page<ClientData> retrieveAllPaginatedUsingSqlQuery(final SearchParameters searchParameters,int limit, int offset) {
+
+        final AppUser currentUser = context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+        final String hierarchySearchString = hierarchy + "%";
+
+        // sql query for retrieving client list with a limit and offset set. limit and offset values remain same in sql entries also.
+        String sql = "select SQL_CALC_FOUND_ROWS" + this.clientMapper.schema() + " where o.hierarchy like ?";
+
+        final String extraCriteria = buildSqlStringFromClientCriteria(searchParameters);
+
+        if (StringUtils.isNotBlank(extraCriteria)) sql += " and (" + extraCriteria + ")";
+
+                sql += " order by c.display_name ASC, c.account_no ASC LIMIT" + limit + "OFFSET" + offset;
+
+        // list clientList stores the list of ClientData retrieved from the db.
+        List<ClientData> clientList = this.jdbcTemplate.query(sql, clientMapper, new Object[] { hierarchySearchString });
+
+        // sqlCount stores the total number of result entries.
+        int sqlCount = jdbcTemplate.queryForInt("FOUND_ROWS()");
+
+
+        // creating a page object and populating it with list retrieved.
+        Page<ClientData> page = new Page<ClientData>();
+        page.setPageItems(clientList);
+
+        return page;
+    }
+
+
+
+    /**
+     * retrieveAll method is to retrieve the list of all clients from db depending upon the search parameters.
+     * @param searchParameters
+     * @return
+     */
+    public Page<ClientData> retrieveAllPaginatedUsingPaginationHelper(final SearchParameters searchParameters,int limit,int offset) {
+
+        final AppUser currentUser = context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+        final String hierarchySearchString = hierarchy + "%";
+
+        String sqlCount = "select count(*) from m_client c join m_office o on o.id = c.office_id join m_group_client pgc on pgc.client_id = c.id where o.hierarchy like" + hierarchySearchString;
+
+        String sql = "select" + this.clientMapper.schema() + " where o.hierarchy like ?";
+
+        final String extraCriteria = buildSqlStringFromClientCriteria(searchParameters);
+
+        if (StringUtils.isNotBlank(extraCriteria)) sql += " and (" + extraCriteria + ")";
+
+        sql += " order by c.display_name ASC, c.account_no ASC";
+
+        PaginationHelper<ClientData> paginationHelper = new PaginationHelper<ClientData>();
+        Page<ClientData> page = new Page<ClientData>();
+
+        page = paginationHelper.fetchPage(jdbcTemplate , sqlCount, sql,new Object[] { hierarchySearchString }, limit, offset, clientMapper );
+
+       return page;
+    }
+
+
+
 
     private String buildSqlStringFromClientCriteria(final SearchParameters searchParameters) {
 
@@ -236,6 +314,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         }
     }
 
+
+    // ParameterizedRowMapper Class for ClientData.
     private static final class ClientMapper implements RowMapper<ClientData> {
 
         private final String schema;
