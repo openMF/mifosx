@@ -336,7 +336,7 @@ public final class LoanProductCommandFromApiJsonDeserializer {
         
         if (fromApiJsonHelper.parameterExists("interestRatePerPeriod", element)) {
             final BigDecimal interestRatePerPeriod = fromApiJsonHelper.extractBigDecimalWithLocaleNamed("interestRatePerPeriod", element);
-            baseDataValidator.reset().parameter("interestRatePerPeriod").value(interestRatePerPeriod).notNull().positiveAmount();
+            baseDataValidator.reset().parameter("interestRatePerPeriod").value(interestRatePerPeriod).notNull().zeroOrPositiveAmount();
         }
 
         String minNumberOfRepaymentsParameterName = "minNumberOfRepayments";

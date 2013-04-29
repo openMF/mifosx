@@ -140,7 +140,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         final String interestRatePerPeriodParameterName = "interestRatePerPeriod";
         final BigDecimal interestRatePerPeriod = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(interestRatePerPeriodParameterName,
                 element);
-        baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull().positiveAmount();
+        baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull()
+                .zeroOrPositiveAmount();
 
         final String interestRateFrequencyTypeParameterName = "interestRateFrequencyType";
         final Integer interestRateFrequencyType = fromApiJsonHelper.extractIntegerSansLocaleNamed(interestRateFrequencyTypeParameterName,
@@ -411,7 +412,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             atLeastOneParameterPassedForUpdate = true;
             final BigDecimal interestRatePerPeriod = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(interestRatePerPeriodParameterName,
                     element);
-            baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull().positiveAmount();
+            baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull()
+                    .zeroOrPositiveAmount();
         }
 
         final String interestRateFrequencyTypeParameterName = "interestRateFrequencyType";
@@ -592,19 +594,20 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
                 "Validation errors exist.", dataValidationErrors); }
     }
-    
-    public void validateMinMaxConstraintValues(final JsonElement element, final LoanProduct loanProduct){
+
+    public void validateMinMaxConstraintValues(final JsonElement element, final LoanProduct loanProduct) {
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
-        
+
         final BigDecimal minPrincipal = loanProduct.getMinPrincipalAmount().getAmount();
         final BigDecimal maxPrincipal = loanProduct.getMaxPrincipalAmount().getAmount();
         final String principalParameterName = "principal";
 
         if (fromApiJsonHelper.parameterExists(principalParameterName, element)) {
             final BigDecimal principal = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(principalParameterName, element);
-            baseDataValidator.reset().parameter(principalParameterName).value(principal).notNull().positiveAmount().inMinAndMaxAmountRange(minPrincipal, maxPrincipal);
+            baseDataValidator.reset().parameter(principalParameterName).value(principal).notNull().positiveAmount()
+                    .inMinAndMaxAmountRange(minPrincipal, maxPrincipal);
         }
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
                 "Validation errors exist.", dataValidationErrors); }
