@@ -5,10 +5,6 @@
  */
 package org.mifosplatform.infrastructure.documentmanagement.service;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.service.DocumentStore;
@@ -27,6 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+import java.io.InputStream;
 
 @Service
 public class DocumentWritePlatformServiceJpaRepositoryImpl implements DocumentWritePlatformService {
@@ -69,8 +68,8 @@ public class DocumentWritePlatformServiceJpaRepositoryImpl implements DocumentWr
             logger.error(dve.getMessage(), dve);
             throw new PlatformDataIntegrityException("error.msg.document.unknown.data.integrity.issue",
                     "Unknown data integrity issue with resource.");
-        } catch (final IOException ioe) {
-            logger.error(ioe.getMessage(), ioe);
+        } catch (final DocumentManagementException dme) {
+            logger.error(dme.getMessage(), dme);
             throw new DocumentManagementException(documentCommand.getName());
         }
     }
@@ -112,8 +111,8 @@ public class DocumentWritePlatformServiceJpaRepositoryImpl implements DocumentWr
             logger.error(dve.getMessage(), dve);
             throw new PlatformDataIntegrityException("error.msg.document.unknown.data.integrity.issue",
                     "Unknown data integrity issue with resource.");
-        } catch (final IOException ioe) {
-            logger.error(ioe.getMessage(), ioe);
+        } catch (final DocumentManagementException dme) {
+            logger.error(dme.getMessage(), dme);
             throw new DocumentManagementException(documentCommand.getName());
         }
     }

@@ -247,7 +247,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
         // delete image from the file system
         if (StringUtils.isNotEmpty(client.imageKey())) {
-            this.documentStore.deleteClientImage(clientId, client.imageKey());
+            this.documentStore.deleteImage(clientId, client.imageKey());
         }
         return updateClientImage(clientId, client, null);
     }
@@ -272,7 +272,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
         // delete previous image from the file system
         if (StringUtils.isNotEmpty(client.imageKey())) {
-            this.documentStore.deleteClientImage(clientId, client.imageKey());
+            this.documentStore.deleteImage(clientId, client.imageKey());
         }
     }
 

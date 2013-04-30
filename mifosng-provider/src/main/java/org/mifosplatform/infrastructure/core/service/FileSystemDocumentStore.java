@@ -5,28 +5,75 @@
  */
 package org.mifosplatform.infrastructure.core.service;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import org.mifosplatform.infrastructure.core.api.ApiConstants;
+import com.lowagie.text.pdf.codec.Base64;
 import org.mifosplatform.infrastructure.core.domain.Base64EncodedImage;
 import org.mifosplatform.infrastructure.documentmanagement.command.DocumentCommand;
 import org.mifosplatform.infrastructure.documentmanagement.exception.DocumentManagementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.lowagie.text.pdf.codec.Base64;
+import java.io.*;
 
-public class FileSystemDocumentStore implements DocumentStore {
+public class FileSystemDocumentStore extends DocumentStore {
 
     private final static Logger logger = LoggerFactory.getLogger(FileSystemDocumentStore.class);
 
     public static final String MIFOSX_BASE_DIR = System.getProperty("user.home") + File.separator + ".mifosx";
-    private Integer maxFileSize = ApiConstants.MAX_FILE_UPLOAD_SIZE_IN_MB;
-    private Integer maxImageSize = ApiConstants.MAX_IMAGE_UPLOAD_SIZE_IN_MB;
+
+
+    @Override
+    public String saveDocument(InputStream uploadedInputStream, DocumentCommand documentCommand) throws DocumentManagementException{
+        String documentName = documentCommand.getFileName();
+        String uploadDocumentLocation = generateFileParentDirectory(documentCommand.getParentEntityType(), documentCommand.getParentEntityId());
+
+        validateFileSizeWithinPermissibleRange(documentCommand.getSize(), documentName, maxFileSize);
+        makeDirectories(uploadDocumentLocation);
+
+        String fileLocation = uploadDocumentLocation + File.separator + documentName;
+
+        writeFileToFileSystem(uploadedInputStream, fileLocation);
+        return fileLocation;
+    }
+
+
+    @Override
+    public String saveImage(InputStream uploadedInputStream, Long resourceId, String imageName, Long fileSize) throws IOException {
+        String uploadImageLocation = generateClientImageParentDirectory(resourceId);
+
+        validateFileSizeWithinPermissibleRange(fileSize, imageName, maxImageSize);
+        makeDirectories(uploadImageLocation);
+
+        String fileLocation = uploadImageLocation + File.separator + imageName;
+
+        writeFileToFileSystem(uploadedInputStream, fileLocation);
+        return fileLocation;
+    }
+
+    @Override
+    public String saveImage(Base64EncodedImage base64EncodedImage, Long resourceId, String imageName)
+            throws IOException {
+        String uploadImageLocation = generateClientImageParentDirectory(resourceId);
+
+        makeDirectories(uploadImageLocation);
+
+        String fileLocation = uploadImageLocation + File.separator + imageName + base64EncodedImage.getFileExtension();
+        OutputStream out = new FileOutputStream(new File(fileLocation));
+        byte[] imgBytes = Base64.decode(base64EncodedImage.getBase64EncodedString());
+        out.write(imgBytes);
+        out.flush();
+        out.close();
+        return fileLocation;
+    }
+
+    @Override
+    public void deleteImage(final Long resourceId, final String location) {
+        File fileToBeDeleted = new File(location);
+        boolean fileDeleted = fileToBeDeleted.delete();
+        if (!fileDeleted) {
+            // no need to throw an Error, simply log a warning
+            logger.warn("Unable to delete image associated with clients with Id " + resourceId);
+        }
+    }
 
     /**
      * Generate the directory path for storing the new document
@@ -50,25 +97,6 @@ public class FileSystemDocumentStore implements DocumentStore {
     }
 
     /**
-     * @param uploadedInputStream
-     * @param documentCommand
-     * @return
-     * @throws IOException
-     */
-    public String saveDocument(InputStream uploadedInputStream, DocumentCommand documentCommand) throws IOException {
-        String documentName = documentCommand.getFileName();
-        String uploadDocumentLocation = generateFileParentDirectory(documentCommand.getParentEntityType(), documentCommand.getParentEntityId());
-
-        validateFileSizeWithinPermissibleRange(documentCommand.getSize(), documentName, maxFileSize);
-        makeDirectories(uploadDocumentLocation);
-
-        String fileLocation = uploadDocumentLocation + File.separator + documentName;
-
-        writeFileToFileSystem(uploadedInputStream, fileLocation);
-        return fileLocation;
-    }
-
-    /**
      * Recursively create the directory if it does not exist *
      */
     private void makeDirectories(String uploadDocumentLocation) {
@@ -78,78 +106,22 @@ public class FileSystemDocumentStore implements DocumentStore {
     }
 
 
-    @Override
-    public String saveImage(InputStream uploadedInputStream, Long resourceId, String imageName, Long fileSize) throws IOException {
-        String uploadImageLocation = generateClientImageParentDirectory(resourceId);
+    private void writeFileToFileSystem(InputStream uploadedInputStream, String fileLocation) throws DocumentManagementException {
 
-        validateFileSizeWithinPermissibleRange(fileSize, imageName, maxImageSize);
-        makeDirectories(uploadImageLocation);
+        try{
+            OutputStream out = new FileOutputStream(new File(fileLocation));
+            int read = 0;
+            byte[] bytes = new byte[1024];
 
-        String fileLocation = uploadImageLocation + File.separator + imageName;
-
-        writeFileToFileSystem(uploadedInputStream, fileLocation);
-        return fileLocation;
-    }
-
-    private void writeFileToFileSystem(InputStream uploadedInputStream, String fileLocation) throws IOException {
-        OutputStream out = new FileOutputStream(new File(fileLocation));
-        int read = 0;
-        byte[] bytes = new byte[1024];
-
-        while ((read = uploadedInputStream.read(bytes)) != -1) {
-            out.write(bytes, 0, read);
+            while ((read = uploadedInputStream.read(bytes)) != -1) {
+                out.write(bytes, 0, read);
+            }
+            out.flush();
+            out.close();
         }
-        out.flush();
-        out.close();
-    }
-
-    /**
-     *
-     *
-     *
-     * @param base64EncodedImage
-     * @param resourceId
-     * @param imageName
-     * @throws IOException
-     */
-    public String saveImage(Base64EncodedImage base64EncodedImage, Long resourceId, String imageName)
-            throws IOException {
-        String uploadImageLocation = generateClientImageParentDirectory(resourceId);
-
-        makeDirectories(uploadImageLocation);
-
-        String fileLocation = uploadImageLocation + File.separator + imageName + base64EncodedImage.getFileExtension();
-        OutputStream out = new FileOutputStream(new File(fileLocation));
-        byte[] imgBytes = Base64.decode(base64EncodedImage.getBase64EncodedString());
-        out.write(imgBytes);
-        out.flush();
-        out.close();
-        return fileLocation;
-    }
-
-    /**
-     * @param fileSize
-     * @param name
-     */
-    public void validateFileSizeWithinPermissibleRange(Long fileSize, String name, int maxFileSize) {
-        /**
-         * Using Content-Length gives me size of the entire request, which is
-         * good enough for now for a fast fail as the length of the rest of the
-         * content i.e name and description while compared to the uploaded file
-         * size is negligible
-         **/
-        if (fileSize != null && ((fileSize / (1024 * 1024)) > maxFileSize)) {
-            throw new DocumentManagementException(name, fileSize,
-                    maxFileSize);
+        catch (IOException ioException){
+            throw new DocumentManagementException("IO Exception caught while writing to FileSystem" + ioException.getMessage());
         }
     }
 
-    public void deleteClientImage(final Long resourceId, final String location) {
-        File fileToBeDeleted = new File(location);
-        boolean fileDeleted = fileToBeDeleted.delete();
-        if (!fileDeleted) {
-            // no need to throw an Error, simply log a warning
-            logger.warn("Unable to delete image associated with clients with Id " + resourceId);
-        }
-    }
 }
