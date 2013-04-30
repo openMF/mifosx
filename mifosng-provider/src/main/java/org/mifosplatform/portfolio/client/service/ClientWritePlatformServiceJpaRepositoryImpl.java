@@ -5,12 +5,6 @@
  */
 package org.mifosplatform.portfolio.client.service;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -46,6 +40,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.InputStream;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWritePlatformService {
@@ -233,8 +232,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             String imageLocation = this.documentStore.saveImage(inputStream, clientId, imageName, fileSize);
 
             return updateClientImage(clientId, client, imageLocation);
-        } catch (IOException ioe) {
-            logger.error(ioe.getMessage(), ioe);
+        } catch (DocumentManagementException dme) {
+            logger.error(dme.getMessage(), dme);
             throw new DocumentManagementException(imageName);
         }
     }
@@ -261,8 +260,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final String imageLocation = this.documentStore.saveImage(encodedImage, clientId, "image");
 
             return updateClientImage(clientId, client, imageLocation);
-        } catch (IOException ioe) {
-            logger.error(ioe.getMessage(), ioe);
+        } catch (DocumentManagementException dme) {
+            logger.error(dme.getMessage(), dme);
             throw new DocumentManagementException("image");
         }
     }

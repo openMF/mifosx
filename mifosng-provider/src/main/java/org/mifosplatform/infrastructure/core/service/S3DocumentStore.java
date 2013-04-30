@@ -6,14 +6,15 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.lowagie.text.pdf.codec.Base64;
 import org.mifosplatform.infrastructure.core.domain.Base64EncodedImage;
 import org.mifosplatform.infrastructure.documentmanagement.command.DocumentCommand;
 import org.mifosplatform.infrastructure.documentmanagement.exception.DocumentManagementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 
 public class S3DocumentStore extends DocumentStore {
@@ -41,13 +42,24 @@ public class S3DocumentStore extends DocumentStore {
     }
 
     @Override
-    public String saveImage(Base64EncodedImage base64EncodedImage, Long resourceId, String imageName) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public String saveImage(InputStream toUploadInputStream, Long resourceId, String imageName, Long fileSize) throws DocumentManagementException {
+        validateFileSizeWithinPermissibleRange(fileSize, imageName, maxImageSize);
+
+        String uploadImageLocation = generateClientImageParentDirectory(resourceId);
+        String fileLocation = uploadImageLocation + File.separator + imageName;
+
+        uploadDocument(toUploadInputStream, fileLocation);
+        return fileLocation;
     }
 
     @Override
-    public String saveImage(InputStream uploadedInputStream, Long resourceId, String imageName, Long fileSize) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public String saveImage(Base64EncodedImage base64EncodedImage, Long resourceId, String imageName) throws DocumentManagementException {
+        String uploadImageLocation = generateClientImageParentDirectory(resourceId);
+        String fileLocation = uploadImageLocation + File.separator + imageName + base64EncodedImage.getFileExtension();
+        InputStream toUploadInputStream = new ByteArrayInputStream(Base64.decode(base64EncodedImage.getBase64EncodedString()));
+
+        uploadDocument(toUploadInputStream,fileLocation);
+        return fileLocation;
     }
 
     @Override

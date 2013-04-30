@@ -22,7 +22,7 @@ public class FileSystemDocumentStore extends DocumentStore {
 
 
     @Override
-    public String saveDocument(InputStream uploadedInputStream, DocumentCommand documentCommand) throws DocumentManagementException{
+    public String saveDocument(InputStream uploadedInputStream, DocumentCommand documentCommand) throws DocumentManagementException {
         String documentName = documentCommand.getFileName();
         String uploadDocumentLocation = generateFileParentDirectory(documentCommand.getParentEntityType(), documentCommand.getParentEntityId());
 
@@ -37,7 +37,7 @@ public class FileSystemDocumentStore extends DocumentStore {
 
 
     @Override
-    public String saveImage(InputStream uploadedInputStream, Long resourceId, String imageName, Long fileSize) throws IOException {
+    public String saveImage(InputStream uploadedInputStream, Long resourceId, String imageName, Long fileSize) throws DocumentManagementException {
         String uploadImageLocation = generateClientImageParentDirectory(resourceId);
 
         validateFileSizeWithinPermissibleRange(fileSize, imageName, maxImageSize);
@@ -50,18 +50,21 @@ public class FileSystemDocumentStore extends DocumentStore {
     }
 
     @Override
-    public String saveImage(Base64EncodedImage base64EncodedImage, Long resourceId, String imageName)
-            throws IOException {
+    public String saveImage(Base64EncodedImage base64EncodedImage, Long resourceId, String imageName) throws DocumentManagementException {
         String uploadImageLocation = generateClientImageParentDirectory(resourceId);
 
         makeDirectories(uploadImageLocation);
 
         String fileLocation = uploadImageLocation + File.separator + imageName + base64EncodedImage.getFileExtension();
-        OutputStream out = new FileOutputStream(new File(fileLocation));
-        byte[] imgBytes = Base64.decode(base64EncodedImage.getBase64EncodedString());
-        out.write(imgBytes);
-        out.flush();
-        out.close();
+        try {
+            OutputStream out = new FileOutputStream(new File(fileLocation));
+            byte[] imgBytes = Base64.decode(base64EncodedImage.getBase64EncodedString());
+            out.write(imgBytes);
+            out.flush();
+            out.close();
+        }catch (IOException ioe){
+            throw new DocumentManagementException(ioe.getMessage());
+        }
         return fileLocation;
     }
 
@@ -108,7 +111,7 @@ public class FileSystemDocumentStore extends DocumentStore {
 
     private void writeFileToFileSystem(InputStream uploadedInputStream, String fileLocation) throws DocumentManagementException {
 
-        try{
+        try {
             OutputStream out = new FileOutputStream(new File(fileLocation));
             int read = 0;
             byte[] bytes = new byte[1024];
@@ -118,8 +121,7 @@ public class FileSystemDocumentStore extends DocumentStore {
             }
             out.flush();
             out.close();
-        }
-        catch (IOException ioException){
+        } catch (IOException ioException) {
             throw new DocumentManagementException("IO Exception caught while writing to FileSystem" + ioException.getMessage());
         }
     }

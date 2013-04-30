@@ -77,6 +77,4 @@ public class S3DocumentStoreTest {
         s3ClientMock = mock(AmazonS3Client.class);
         documentCommand = new DocumentCommand(null, -1l, "parentEntityType", 1l, null, "someFileName", 3l,  null, null, null);
     }
-
-
 }
