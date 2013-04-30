@@ -29,6 +29,8 @@ import org.mifosplatform.portfolio.group.data.GroupGeneralData;
 import org.mifosplatform.portfolio.group.service.SearchParameters;
 import org.mifosplatform.portfolio.loanaccount.data.LoanStatusEnumData;
 import org.mifosplatform.portfolio.loanproduct.service.LoanEnumerations;
+import org.mifosplatform.portfolio.pagination.Page;
+import org.mifosplatform.portfolio.pagination.PaginationHelper;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -87,6 +89,33 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         return this.jdbcTemplate.query(sql, clientMapper, new Object[] { hierarchySearchString });
     }
 
+    @Override
+    public Page<ClientData> retrieveAllPaginatedAndSorted(final SearchParameters searchParameters, final int offset, final int limit,
+            final String orderby, final String sortOrder) {
+
+        final AppUser currentUser = context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+        final String hierarchySearchString = hierarchy + "%";
+
+        String sql = "select SQL_CALC_FOUND_ROWS " + this.clientMapper.schema() + " where o.hierarchy like ?";
+
+        final String extraCriteria = buildSqlStringFromClientCriteria(searchParameters);
+
+        if (StringUtils.isNotBlank(extraCriteria)) sql += " and (" + extraCriteria + ")";
+
+        if (orderby != null && sortOrder != null) {
+            if (!orderby.equalsIgnoreCase("") && !sortOrder.equalsIgnoreCase("")) {
+                sql += " order by " + orderby + " " + sortOrder;
+            }
+        } else
+            sql += " order by c.display_name ASC, c.account_no ASC";
+
+        PaginationHelper<ClientData> ph = new PaginationHelper<ClientData>();
+        String sqlCountRows = "SELECT FOUND_ROWS()";
+        String sqlFetchRows = sql + " LIMIT " + limit + " OFFSET " + offset;
+        return ph.fetchPage(jdbcTemplate, sqlCountRows, sqlFetchRows, new Object[] { hierarchySearchString }, offset, limit, clientMapper);
+    }
+    
     private String buildSqlStringFromClientCriteria(final SearchParameters searchParameters) {
 
         final String sqlSearch = searchParameters.getSqlSearch();
