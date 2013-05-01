@@ -137,7 +137,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     .build();
         } catch (DataAccessException dve) {
             handleDataIntegrityIssues(command, dve);
-            return new CommandProcessingResult(Long.valueOf(-1));
+            return CommandProcessingResult.empty();
         }
     }
 
@@ -333,6 +333,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .build();
     }
 
+    @Transactional
     @Override
     public CommandProcessingResult postInterest(final Long savingsId, final JsonCommand command) {
         this.context.authenticatedUser();

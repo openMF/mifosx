@@ -1374,21 +1374,29 @@
 								<td>savingsaccounts/template?clientId={clientId}</td>
 								<td><a href="#savingsaccounts_template">Retrieve Savings Account Template</a></td>
 							</tr>
-							<tr class="alt">
+                                                        <tr class="alt">
+                                                                <td>savingsaccounts/{accountId}/transactions/template</td>
+                                                                <td><a href="#savingsaccounts_transactions_template">Retrieve Savings Account Transaction Template</a></td>
+                                                        </tr>
+							<tr>
 								<td>offices/template</td>
 								<td><a href="#offices_template">Retrieve Office Template</a></td>
 							</tr>
-							<tr>
+							<tr class="alt">
 								<td>users/template</td>
 								<td><a href="#users_template">Retrieve User Template</a></td>
 							</tr>
-                                                        <tr class="alt">
+                                                        <tr>
                                                                 <td>audits/searchtemplate</td>
                                                                 <td><a href="#audits_searchtemplate">Retrieve Audit Search Template</a></td>
                                                         </tr>
-                                                        <tr>
+                                                        <tr class="alt">
                                                                 <td>makercheckers/searchtemplate</td>
                                                                 <td><a href="#makercheckers_searchtemplate">Retrieve Maker Checker Search Template</a></td>
+                                                        </tr>
+                                                        <tr>
+                                                                <td>reports/template</td>
+                                                                <td><a href="#reports_template">Retrieve Report Template</a></td>
                                                         </tr>
 						</table>
 					</div>
@@ -2050,7 +2058,9 @@ GET https://DomainName/api/v1/clients
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Update a Client</h4>
-					<p>You can update any attribute of a client except for its association with <i>groups</i>. The relationship between a client and a group must be removed through the <b>Groups</b> API.</p>
+					<p><b>Note:</b>You can update any of the basic attributes of a client using this API but not its associations.</p>
+					<p>Chaning the relationship between a client and its office is not supported through this API. An API specific to handling <b>transfers</b> of clients between offices will be introduced for this.</p>
+					<p>The relationship between a client and a group must be removed through the <b>Groups</b> API.</p>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
@@ -9627,7 +9637,7 @@ Request Body:
 	    <div class="method-description">
 	        <h2>Calculate Interest on Savings Account</h2>
 	        <p>
-	        	Calculates interest earned on a savings account based on todays date. It does not attempt to <b>post or credit</b> the interest on the account. That is responsibility of another API that will be called by overnight process.
+	        	Calculates interest earned on a savings account based on todays date. It does not attempt to <b>post or credit</b> the interest on the account. That is responsibility of the <a href="#savingsaccounts_post_interest" >Post Interest API</a> that will likely be called by overnight process.
 	        </p>
 	    </div>
 	    <div class="method-example">
@@ -9649,10 +9659,37 @@ Request Body:
 	    </div>
 	</div>
 
+	<a id="savingsaccounts_post_interest" name="savingsaccounts_post_interest" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Post Interest on Savings Account</h2>
+	        <p>
+	        	Calculates and Posts interest earned on a savings account based on todays date and whether an interest posting or crediting event is due.
+	        </p>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/savingsaccounts/{savingsId}?command=postInterest</code>
+	        <code class="method-request">POST savingsaccount/1?command=postInterest
+Content-Type: application/json
+Request Body:
+{
+}
+			</code>
+	        <code class="method-response">
+{
+  "officeId": 1,
+  "clientId": 1,
+  "savingsId": 1,
+  "resourceId": 1
+}
+	        </code>
+	    </div>
+	</div>
+
 	<a id="savingsaccounts_list" name="savingsaccounts_list" class="old-syle-anchor">&nbsp;</a>
     <div class="method-section">
         <div class="method-description">
-            <h4>List Savings Accounts</h4>
+            <h2>List Savings Accounts</h2>
             <p>Example Requests:</p> 
             <div class=apiClick>savingsaccounts</div>
             <br><br>
@@ -10955,6 +10992,84 @@ No Request Body:
 				</div>
 			</div>
 
+			<a id="reports_template" name="reports_template" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve Report Template</h4>
+					<p>This is a convenience resource. It can be useful when
+						building maintenance user interface screens for client
+						applications. The template data returned consists of any or all
+						of:
+					<ul>
+						<li class=normalli>Field Defaults</li>
+						<li class=normalli>Allowed Value Lists</li>
+					</ul>
+					</p>
+					<p>Example Request:</p>
+					<div class=apiClick>reports/template</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/reports/template
+					</code>
+					<code class="method-response">
+{
+  "allowedReportTypes": [
+    "Table",
+    "Pentaho",
+    "Chart"
+  ],
+  "allowedReportSubTypes": [
+    "Bar",
+    "Pie"
+  ],
+  "allowedParameters": [
+    {
+      "id": 1,
+      "parameterName": "startDateSelect"
+    },
+    {
+      "id": 2,
+      "parameterName": "endDateSelect"
+    },
+    {
+      "id": 3,
+      "parameterName": "obligDateTypeSelect"
+    },
+    {
+      "id": 5,
+      "parameterName": "OfficeIdSelectOne"
+    },
+    {
+      "id": 6,
+      "parameterName": "loanOfficerIdSelectAll"
+    },
+    {
+      "id": 10,
+      "parameterName": "currencyIdSelectAll"
+    },
+    {
+      "id": 20,
+      "parameterName": "fundIdSelectAll"
+    },
+    {
+      "id": 25,
+      "parameterName": "loanProductIdSelectAll"
+    },
+    {
+      "id": 26,
+      "parameterName": "loanPurposeIdSelectAll"
+    },
+    {
+      "id": 100,
+      "parameterName": "parTypeSelect"
+    }
+  ]
+}
+					</code>
+				</div>
+			</div>
+
 			<a id="reports_create" name="reports_create" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
@@ -11061,7 +11176,8 @@ GET https://DomainName/api/v1/reports
 				<div class="method-description">
 					<h4>Retrieve a Report</h4>
 					<p>Example Requests:</p>
-					<div class=apiClick>reports/1</div>
+					<div class=apiClick>reports/1</div><br><br>
+					<div class=apiClick>reports/1?template=true</div>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
@@ -13496,6 +13612,14 @@ GET https://DomainName/api/v1/search?query=000000111
 					<td></td>
 					<td></td>
 				</tr>
+				<tr>
+					<td></td>
+					<td>savingsaccounts/{accountId}?command=postInterest</td>
+					<td><a href="#savingsaccounts_post_interest">Post Interest on a Savings Account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
 				<tr class="alt">
 					<td><a href="#savingsaccounts_transactions">Savings Transactions</a></td>
 					<td>savingsaccounts/{accountId}/transactions?command=deposit</td>
@@ -13924,6 +14048,14 @@ GET https://DomainName/api/v1/search?query=000000111
 							</tr>
 						</table></td>
 				</tr>
+                                <tr class="alt">
+                                        <td>centers/template</td>
+                                        <td><a href="#centers_template">Retrieve Center Template</a></td>
+                                </tr>
+                                <tr>
+                                        <td>groups/template</td>
+                                        <td><a href="#groups_template">Retrieve Group Template</a></td>
+                                </tr>
 				<tr class="alt">
 					<td>clients/template</td>
 					<td><a href="#clients_template">Retrieve Client Template</a></td>
@@ -13938,7 +14070,7 @@ GET https://DomainName/api/v1/search?query=000000111
 				</tr>
 				<tr>
 					<td>loans/{loanId}/transactions/template</td>
-					<td><a href="#loans_repaymenttemplate_etc">Retrieve Tranaction Template</a></td>
+					<td><a href="#loans_repaymenttemplate_etc">Retrieve Loan Transaction Template</a></td>
 				</tr>
 				<tr class="alt">
 					<td>savingproducts/template</td>
@@ -13967,6 +14099,10 @@ GET https://DomainName/api/v1/search?query=000000111
 				<tr class="alt">
 					<td>makercheckers/searchtemplate</td>
 					<td><a href="#makercheckers_searchtemplate">Retrieve Maker Checker Search Template</a></td>
+				</tr>
+				<tr>
+					<td>reports/template</td>
+					<td><a href="#reports_template">Retrieve Report Template</a></td>
 				</tr>
 			</table>
 		</div>

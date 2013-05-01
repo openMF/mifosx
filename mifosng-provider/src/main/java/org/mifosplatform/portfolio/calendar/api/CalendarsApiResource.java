@@ -24,7 +24,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
-import org.joda.time.LocalDate;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
@@ -40,7 +39,6 @@ import org.mifosplatform.portfolio.calendar.domain.Calendar;
 import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
 import org.mifosplatform.portfolio.calendar.service.CalendarDropdownReadPlatformService;
 import org.mifosplatform.portfolio.calendar.service.CalendarReadPlatformService;
-import org.mifosplatform.portfolio.calendar.service.CalendarHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -56,7 +54,7 @@ public class CalendarsApiResource {
     private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("id", "entityId", "entityType", "title",
             "description", "location", "startDate", "endDate", "duration", "type", "repeating", "recurrence", "remindBy", "firstReminder",
             "secondReminder", "humanReadable", "createdDate", "lastUpdatedDate", "createdByUserId", "createdByUsername",
-            "lastUpdatedByUserId", "lastUpdatedByUsername", "recurringDates"));
+            "lastUpdatedByUserId", "lastUpdatedByUsername", "recurringDates","nextTenRecurringDates"));
     private final String resourceNameForPermissions = "CALENDAR";
 
     private final PlatformSecurityContext context;
@@ -91,7 +89,7 @@ public class CalendarsApiResource {
         CalendarData calendarData = this.readPlatformService.retrieveCalendar(calendarId, entityId, entityTypeId);
 
         // Include recurring date details
-        calendarData = handleRecurringDate(calendarData);
+        calendarData = this.readPlatformService.generateRecurringDate(calendarData);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         if (settings.isTemplate()) {
@@ -123,7 +121,7 @@ public class CalendarsApiResource {
                 CalendarEntityType.valueOf(entityType.toUpperCase()).getValue()));
 
         // Add recurring dates
-        calendarsData = handleRecurringDates(calendarsData);
+        calendarsData = this.readPlatformService.generateRecurringDates(calendarsData);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, calendarsData, this.RESPONSE_DATA_PARAMETERS);
@@ -193,22 +191,5 @@ public class CalendarsApiResource {
         final List<EnumOptionData> calendarTypeOptions = this.dropdownReadPlatformService.retrieveCalendarTypeOptions();
         final List<EnumOptionData> remindByOptions = this.dropdownReadPlatformService.retrieveCalendarRemindByOptions();
         return new CalendarData(calendarData, entityTypeOptions, calendarTypeOptions, remindByOptions);
-    }
-
-    private CalendarData handleRecurringDate(final CalendarData calendarData){
-        if(!calendarData.isRepeating()) return calendarData;
-
-        final Collection<LocalDate> recurringDates = CalendarHelper.getRecurringDates(calendarData.getRecurrence(), calendarData.getStartDate(), calendarData.getEndDate());
-        return new CalendarData(calendarData, recurringDates);
-    }
-
-    private Collection<CalendarData> handleRecurringDates(final Collection<CalendarData> calendarsData) {
-        Collection<CalendarData> recuCalendarsData = new ArrayList<CalendarData>();
-
-        for (CalendarData calendarData : calendarsData) {
-            recuCalendarsData.add(handleRecurringDate(calendarData));
-        }
-
-        return recuCalendarsData;
     }
 }

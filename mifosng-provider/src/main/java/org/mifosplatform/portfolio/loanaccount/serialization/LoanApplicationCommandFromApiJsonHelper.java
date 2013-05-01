@@ -22,6 +22,7 @@ import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanType;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.serialization.LoanProductCommandFromApiJsonDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
      * The parameters supported for this command.
      */
     final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("dateFormat", "locale", "id", "clientId", "groupId",
-            "productId", "principal", "loanTermFrequency", "loanTermFrequencyType", "numberOfRepayments", "repaymentEvery",
+            "loanType", "productId", "principal", "loanTermFrequency", "loanTermFrequencyType", "numberOfRepayments", "repaymentEvery",
             "repaymentFrequencyType", "interestRatePerPeriod", "amortizationType", "interestType",
             "interestCalculationPeriodType", "expectedDisbursementDate", "repaymentsStartingFromDate", "interestChargedFromDate",
             "submittedOnDate", "submittedOnNote", //
@@ -69,20 +70,35 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
 
         final JsonElement element = fromApiJsonHelper.parse(json);
-        final Long clientId = fromApiJsonHelper.extractLongNamed("clientId", element);
-        if (clientId != null) {
-            baseDataValidator.reset().parameter("clientId").value(clientId).longGreaterThanZero();
-        }
+        
 
-        final Long groupId = fromApiJsonHelper.extractLongNamed("groupId", element);
-        if (groupId != null) {
-            baseDataValidator.reset().parameter("groupId").value(groupId).longGreaterThanZero();
-        }
+        final String loanTypeParameterName = "loanType";
+        final String loanTypeStr = fromApiJsonHelper.extractStringNamed(loanTypeParameterName, element);
+        baseDataValidator.reset().parameter(loanTypeParameterName).value(loanTypeStr).notNull();
+        
+        if(!StringUtils.isBlank(loanTypeStr)){
+            final LoanType loanType = LoanType.fromName(loanTypeStr);
+            baseDataValidator.reset().parameter(loanTypeParameterName).value(loanType.getValue()).inMinMaxRange(1, 3);
+            
+            final Long clientId = fromApiJsonHelper.extractLongNamed("clientId", element);
+            final Long groupId = fromApiJsonHelper.extractLongNamed("groupId", element);
+            if(loanType.isIndividualLoan()){
+                baseDataValidator.reset().parameter("clientId").value(clientId).notNull().longGreaterThanZero();
+                baseDataValidator.reset().parameter("groupId").value(groupId).mustBeBlankWhenParameterProvided("clientId", clientId);
+            }
 
-        if (clientId == null && groupId == null) {
-            baseDataValidator.reset().parameter("clientId").value(clientId).notNull().integerGreaterThanZero();
-        }
+            if (loanType.isGroupLoan()) {
+                baseDataValidator.reset().parameter("groupId").value(groupId).notNull().longGreaterThanZero();
+                baseDataValidator.reset().parameter("clientId").value(clientId).mustBeBlankWhenParameterProvided("groupId", groupId);
+            }
 
+            if (loanType.isJLGLoan()) {
+                baseDataValidator.reset().parameter("clientId").value(clientId).notNull().integerGreaterThanZero();
+                baseDataValidator.reset().parameter("groupId").value(groupId).notNull().longGreaterThanZero();
+            }
+
+        }
+        
         final Long productId = fromApiJsonHelper.extractLongNamed("productId", element);
         baseDataValidator.reset().parameter("productId").value(productId).notNull().integerGreaterThanZero();
 
@@ -144,7 +160,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         final String interestRatePerPeriodParameterName = "interestRatePerPeriod";
         final BigDecimal interestRatePerPeriod = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(interestRatePerPeriodParameterName,
                 element);
-        baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull().positiveAmount();
+        baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull()
+                .zeroOrPositiveAmount();
 
         final String interestTypeParameterName = "interestType";
         final Integer interestType = fromApiJsonHelper.extractIntegerSansLocaleNamed(interestTypeParameterName, element);
@@ -295,7 +312,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
         final JsonElement element = fromApiJsonHelper.parse(json);
         boolean atLeastOneParameterPassedForUpdate = false;
-
+                
         final String clientIdParameterName = "clientId";
         if (fromApiJsonHelper.parameterExists(clientIdParameterName, element)) {
             atLeastOneParameterPassedForUpdate = true;
@@ -411,7 +428,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             atLeastOneParameterPassedForUpdate = true;
             final BigDecimal interestRatePerPeriod = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(interestRatePerPeriodParameterName,
                     element);
-            baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull().positiveAmount();
+            baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull()
+                    .zeroOrPositiveAmount();
         }
 
         final String interestTypeParameterName = "interestType";
@@ -584,11 +602,21 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                 "Validation errors exist.", dataValidationErrors); }
     }
     
-    public void validateMinMaxConstraintsForModification(final String json, final LoanProduct loanProduct) {
-        final JsonElement element = fromApiJsonHelper.parse(json);
+    public void validateMinMaxConstraintValues(final JsonElement element, final LoanProduct loanProduct) {
+
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
-        this.loanProductCommandFromApiJsonDeserializer.validateMinMaxConstraints(element, baseDataValidator, loanProduct);
+
+        final BigDecimal minPrincipal = loanProduct.getMinPrincipalAmount().getAmount();
+        final BigDecimal maxPrincipal = loanProduct.getMaxPrincipalAmount().getAmount();
+        final String principalParameterName = "principal";
+
+        if (fromApiJsonHelper.parameterExists(principalParameterName, element)) {
+            final BigDecimal principal = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(principalParameterName, element);
+            baseDataValidator.reset().parameter(principalParameterName).value(principal).notNull().positiveAmount()
+                    .inMinAndMaxAmountRange(minPrincipal, maxPrincipal);
+        }
+
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
                 "Validation errors exist.", dataValidationErrors); }
     }
