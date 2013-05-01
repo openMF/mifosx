@@ -7,7 +7,6 @@ package org.mifosplatform.portfolio.client.api;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +40,7 @@ import org.mifosplatform.portfolio.client.data.ClientAccountSummaryCollectionDat
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
 import org.mifosplatform.portfolio.group.service.SearchParameters;
+import org.mifosplatform.portfolio.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -90,19 +90,19 @@ public class ClientsApiResource {
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAll(@Context final UriInfo uriInfo, @QueryParam("sqlSearch") final String sqlSearch,
+    public String retrieveAllPaginatedAndSorted(@QueryParam("sqlSearch") final String sqlSearch,
             @QueryParam("officeId") final Long officeId, @QueryParam("externalId") final String externalId,
             @QueryParam("displayName") final String displayName, @QueryParam("firstName") final String firstname,
-            @QueryParam("lastName") final String lastname, @QueryParam("underHierarchy") final String hierarchy) {
-
+            @QueryParam("lastName") final String lastname, @QueryParam("underHierarchy") final String hierarchy,
+            @QueryParam("offset") final int offset, @QueryParam("limit") final int limit, @QueryParam("orderBy") final String orderBy,
+            @QueryParam("sortOrder") final String sortOrder) {
         context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
         final SearchParameters searchParameters = SearchParameters.forClients(sqlSearch, officeId, externalId, displayName, firstname,
                 lastname, hierarchy);
-        final Collection<ClientData> clients = this.clientReadPlatformService.retrieveAll(searchParameters);
-
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, clients, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
+        Page<ClientData> clientData = this.clientReadPlatformService.retrieveAllPaginatedAndSorted(searchParameters, offset, limit,
+                orderBy, sortOrder);
+        return this.toApiJsonSerializer.serialize(clientData);
     }
 
     @GET
@@ -123,7 +123,7 @@ public class ClientsApiResource {
 
         return this.toApiJsonSerializer.serialize(settings, clientData, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
     }
-
+     
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
