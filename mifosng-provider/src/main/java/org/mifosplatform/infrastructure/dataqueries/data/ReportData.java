@@ -36,6 +36,8 @@ final public class ReportData {
 	private List<String> allowedReportTypes;
 	@SuppressWarnings("unused")
 	private List<String> allowedReportSubTypes;
+	@SuppressWarnings("unused")
+	private Collection<ReportParameterData> allowedParameters;
 
 	public ReportData(final Long id, final String reportName,
 			final String reportType, final String reportSubType,
@@ -55,6 +57,7 @@ final public class ReportData {
 		this.useReport = useReport;
 		this.allowedReportTypes = null;
 		this.allowedReportSubTypes = null;
+		this.allowedParameters = null;
 	}
 
 	public ReportData() {
@@ -70,9 +73,11 @@ final public class ReportData {
 		this.useReport = null;
 		this.allowedReportTypes = null;
 		this.allowedReportSubTypes = null;
+		this.allowedParameters = null;
 	}
 
-	public void appendedTemplate() {
+	public void appendedTemplate(
+			final Collection<ReportParameterData> allowedParameters) {
 
 		List<String> reportTypes = new ArrayList<String>();
 		reportTypes.add("Table");
@@ -84,6 +89,9 @@ final public class ReportData {
 		reportSubTypes.add("Bar");
 		reportSubTypes.add("Pie");
 		this.allowedReportSubTypes = reportSubTypes;
+
+		this.allowedParameters = allowedParameters;
+
 	}
 
 }

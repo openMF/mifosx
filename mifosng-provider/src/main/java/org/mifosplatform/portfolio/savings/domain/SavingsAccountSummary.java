@@ -29,6 +29,12 @@ public final class SavingsAccountSummary {
     @Column(name = "total_interest_posted_derived", scale = 6, precision = 19)
     private BigDecimal totalInterestPosted;
 
+    @Column(name = "total_withdrawal_fees_derived", scale = 6, precision = 19)
+    private BigDecimal totalWithdrawalFees;
+
+    @Column(name = "total_annual_fees_derived", scale = 6, precision = 19)
+    private BigDecimal totalAnnualFees;
+
     @Column(name = "account_balance_derived", scale = 6, precision = 19)
     private BigDecimal accountBalance = BigDecimal.ZERO;
 
@@ -42,9 +48,11 @@ public final class SavingsAccountSummary {
         this.totalDeposits = wrapper.calculateTotalDeposits(currency, transactions);
         this.totalWithdrawals = wrapper.calculateTotalWithdrawals(currency, transactions);
         this.totalInterestPosted = wrapper.calculateTotalInterestPosted(currency, transactions);
+        this.totalWithdrawalFees = wrapper.calculateTotalWithdrawalFees(currency, transactions);
+        this.totalAnnualFees = wrapper.calculateTotalAnnualFees(currency, transactions);
 
         this.accountBalance = Money.of(currency, this.totalDeposits).plus(this.totalInterestPosted).minus(this.totalWithdrawals)
-                .getAmount();
+                .minus(this.totalWithdrawalFees).minus(this.totalAnnualFees).getAmount();
     }
 
     public void updateFromInterestPeriodSummaries(final MonetaryCurrency currency,

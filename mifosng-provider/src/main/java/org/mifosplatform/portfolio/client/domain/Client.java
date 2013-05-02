@@ -56,6 +56,10 @@ public final class Client extends AbstractPersistable<Long> {
     @Column(name = "status_enum", nullable = false)
     private Integer status;
 
+    @Column(name = "activation_date", nullable = true)
+    @Temporal(TemporalType.DATE)
+    private Date activationDate;
+
     @Column(name = "firstname", length = 50)
     private String firstname;
 
@@ -72,15 +76,8 @@ public final class Client extends AbstractPersistable<Long> {
     @Column(name = "display_name", length = 100, nullable = false)
     private String displayName;
 
-    @Column(name = "activation_date", nullable = true)
-    @Temporal(TemporalType.DATE)
-    private Date activationDate;
-
     @Column(name = "external_id", length = 100, nullable = true, unique = true)
     private String externalId;
-
-    @Column(name = "is_deleted", nullable = false)
-    private boolean deleted = false;
 
     @Column(name = "image_key", length = 500, nullable = true)
     private String imageKey;
@@ -92,8 +89,7 @@ public final class Client extends AbstractPersistable<Long> {
     @Transient
     private boolean accountNumberRequiresAutoGeneration = false;
 
-    public static Client createNew(final Office clientOffice, final Group clientParentGroup, final JsonCommand command,
-            final boolean isPendingStateAllowed) {
+    public static Client createNew(final Office clientOffice, final Group clientParentGroup, final JsonCommand command) {
 
         final String accountNo = command.stringValueOfParameterNamed(ClientApiConstants.accountNoParamName);
         final String externalId = command.stringValueOfParameterNamed(ClientApiConstants.externalIdParamName);
@@ -103,17 +99,16 @@ public final class Client extends AbstractPersistable<Long> {
         final String lastname = command.stringValueOfParameterNamed(ClientApiConstants.lastnameParamName);
         final String fullname = command.stringValueOfParameterNamed(ClientApiConstants.fullnameParamName);
 
-        ClientStatus status = ClientStatus.ACTIVE;
-        boolean active = true;
-        if (isPendingStateAllowed && command.hasParameter("active")) {
+        ClientStatus status = ClientStatus.PENDING;
+        boolean active = false;
+        if (command.hasParameter("active")) {
             active = command.booleanPrimitiveValueOfParameterNamed(ClientApiConstants.activeParamName);
         }
 
         LocalDate activationDate = null;
         if (active) {
+            status = ClientStatus.ACTIVE;
             activationDate = command.localDateValueOfParameterNamed(ClientApiConstants.activationDateParamName);
-        } else {
-            status = ClientStatus.PENDING;
         }
 
         return new Client(status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname, activationDate,
@@ -192,10 +187,6 @@ public final class Client extends AbstractPersistable<Long> {
         return getId().equals(clientId);
     }
 
-    public void changeOffice(final Office newOffice) {
-        this.office = newOffice;
-    }
-
     public void updateAccountNo(final String accountIdentifier) {
         this.accountNumber = accountIdentifier;
         this.accountNumberRequiresAutoGeneration = false;
@@ -205,7 +196,7 @@ public final class Client extends AbstractPersistable<Long> {
         if (isActive()) {
             final String defaultUserMessage = "Cannot activate client. Client is already active.";
             final ApiParameterError error = ApiParameterError.parameterError("error.msg.clients.already.active", defaultUserMessage,
-                    "activationDate", activationLocalDate.toString(formatter));
+                    ClientApiConstants.activationDateParamName, activationLocalDate.toString(formatter));
 
             final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
             dataValidationErrors.add(error);
@@ -217,7 +208,7 @@ public final class Client extends AbstractPersistable<Long> {
 
             final String defaultUserMessage = "Activation date cannot be in the future.";
             final ApiParameterError error = ApiParameterError.parameterError("error.msg.clients.activationDate.in.the.future",
-                    defaultUserMessage, "activationDate", activationLocalDate);
+                    defaultUserMessage, ClientApiConstants.activationDateParamName, activationLocalDate);
 
             final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
             dataValidationErrors.add(error);
@@ -253,58 +244,45 @@ public final class Client extends AbstractPersistable<Long> {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(9);
 
-        final String statusEnumParamName = "status";
-        if (command.isChangeInIntegerParameterNamed(statusEnumParamName, this.status)) {
-            final Integer newValue = command.integerValueOfParameterNamed(statusEnumParamName);
-            actualChanges.put(statusEnumParamName, ClientEnumerations.status(newValue));
+        if (command.isChangeInIntegerParameterNamed(ClientApiConstants.statusParamName, this.status)) {
+            final Integer newValue = command.integerValueOfParameterNamed(ClientApiConstants.statusParamName);
+            actualChanges.put(ClientApiConstants.statusParamName, ClientEnumerations.status(newValue));
             this.status = ClientStatus.fromInt(newValue).getValue();
         }
 
-        final String accountNoParamName = "accountNo";
-        if (command.isChangeInStringParameterNamed(accountNoParamName, this.accountNumber)) {
-            final String newValue = command.stringValueOfParameterNamed(accountNoParamName);
-            actualChanges.put(accountNoParamName, newValue);
+        if (command.isChangeInStringParameterNamed(ClientApiConstants.accountNoParamName, this.accountNumber)) {
+            final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.accountNoParamName);
+            actualChanges.put(ClientApiConstants.accountNoParamName, newValue);
             this.accountNumber = StringUtils.defaultIfEmpty(newValue, null);
         }
 
-        final String externalIdParamName = "externalId";
-        if (command.isChangeInStringParameterNamed(externalIdParamName, this.externalId)) {
-            final String newValue = command.stringValueOfParameterNamed(externalIdParamName);
-            actualChanges.put(externalIdParamName, newValue);
+        if (command.isChangeInStringParameterNamed(ClientApiConstants.externalIdParamName, this.externalId)) {
+            final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.externalIdParamName);
+            actualChanges.put(ClientApiConstants.externalIdParamName, newValue);
             this.externalId = StringUtils.defaultIfEmpty(newValue, null);
         }
 
-        final String officeIdParamName = "officeId";
-        if (command.isChangeInLongParameterNamed(officeIdParamName, this.office.getId())) {
-            final Long newValue = command.longValueOfParameterNamed(officeIdParamName);
-            actualChanges.put(officeIdParamName, newValue);
-        }
-
-        final String firstnameParamName = "firstname";
-        if (command.isChangeInStringParameterNamed(firstnameParamName, this.firstname)) {
-            final String newValue = command.stringValueOfParameterNamed(firstnameParamName);
-            actualChanges.put(firstnameParamName, newValue);
+        if (command.isChangeInStringParameterNamed(ClientApiConstants.firstnameParamName, this.firstname)) {
+            final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.firstnameParamName);
+            actualChanges.put(ClientApiConstants.firstnameParamName, newValue);
             this.firstname = StringUtils.defaultIfEmpty(newValue, null);
         }
 
-        final String middlenameParamName = "middlename";
-        if (command.isChangeInStringParameterNamed(middlenameParamName, this.middlename)) {
-            final String newValue = command.stringValueOfParameterNamed(middlenameParamName);
-            actualChanges.put(middlenameParamName, newValue);
+        if (command.isChangeInStringParameterNamed(ClientApiConstants.middlenameParamName, this.middlename)) {
+            final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.middlenameParamName);
+            actualChanges.put(ClientApiConstants.middlenameParamName, newValue);
             this.middlename = StringUtils.defaultIfEmpty(newValue, null);
         }
 
-        final String lastnameParamName = "lastname";
-        if (command.isChangeInStringParameterNamed(lastnameParamName, this.lastname)) {
-            final String newValue = command.stringValueOfParameterNamed(lastnameParamName);
-            actualChanges.put(lastnameParamName, newValue);
+        if (command.isChangeInStringParameterNamed(ClientApiConstants.lastnameParamName, this.lastname)) {
+            final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.lastnameParamName);
+            actualChanges.put(ClientApiConstants.lastnameParamName, newValue);
             this.lastname = StringUtils.defaultIfEmpty(newValue, null);
         }
 
-        final String fullnameParamName = "fullname";
-        if (command.isChangeInStringParameterNamed(fullnameParamName, this.fullname)) {
-            final String newValue = command.stringValueOfParameterNamed(fullnameParamName);
-            actualChanges.put(fullnameParamName, newValue);
+        if (command.isChangeInStringParameterNamed(ClientApiConstants.fullnameParamName, this.fullname)) {
+            final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.fullnameParamName);
+            actualChanges.put(ClientApiConstants.fullnameParamName, newValue);
             this.fullname = newValue;
         }
 
@@ -313,14 +291,13 @@ public final class Client extends AbstractPersistable<Long> {
         final String dateFormatAsInput = command.dateFormat();
         final String localeAsInput = command.locale();
 
-        final String joiningDateParamName = "joinedDate";
-        if (command.isChangeInLocalDateParameterNamed(joiningDateParamName, getJoiningLocalDate())) {
-            final String valueAsInput = command.stringValueOfParameterNamed(joiningDateParamName);
-            actualChanges.put(joiningDateParamName, valueAsInput);
-            actualChanges.put("dateFormat", dateFormatAsInput);
-            actualChanges.put("locale", localeAsInput);
+        if (command.isChangeInLocalDateParameterNamed(ClientApiConstants.activationDateParamName, getActivationLocalDate())) {
+            final String valueAsInput = command.stringValueOfParameterNamed(ClientApiConstants.activationDateParamName);
+            actualChanges.put(ClientApiConstants.activationDateParamName, valueAsInput);
+            actualChanges.put(ClientApiConstants.dateFormatParamName, dateFormatAsInput);
+            actualChanges.put(ClientApiConstants.localeParamName, localeAsInput);
 
-            final LocalDate newValue = command.localDateValueOfParameterNamed(joiningDateParamName);
+            final LocalDate newValue = command.localDateValueOfParameterNamed(ClientApiConstants.activationDateParamName);
             this.activationDate = newValue.toDate();
         }
 
@@ -336,24 +313,36 @@ public final class Client extends AbstractPersistable<Long> {
 
         if (StringUtils.isNotBlank(this.fullname)) {
 
-            baseDataValidator.reset().parameter("firstname").value(this.firstname)
-                    .mustBeBlankWhenParameterProvided("fullname", this.fullname);
+            baseDataValidator.reset().parameter(ClientApiConstants.firstnameParamName).value(this.firstname)
+                    .mustBeBlankWhenParameterProvided(ClientApiConstants.fullnameParamName, this.fullname);
 
-            baseDataValidator.reset().parameter("middlename").value(this.middlename)
-                    .mustBeBlankWhenParameterProvided("fullname", this.fullname);
+            baseDataValidator.reset().parameter(ClientApiConstants.middlenameParamName).value(this.middlename)
+                    .mustBeBlankWhenParameterProvided(ClientApiConstants.fullnameParamName, this.fullname);
 
-            baseDataValidator.reset().parameter("lastname").value(this.lastname)
-                    .mustBeBlankWhenParameterProvided("fullname", this.fullname);
+            baseDataValidator.reset().parameter(ClientApiConstants.lastnameParamName).value(this.lastname)
+                    .mustBeBlankWhenParameterProvided(ClientApiConstants.fullnameParamName, this.fullname);
         }
 
         if (StringUtils.isBlank(this.fullname)) {
-            baseDataValidator.reset().parameter("firstname").value(this.firstname).notBlank().notExceedingLengthOf(50);
-            baseDataValidator.reset().parameter("middlename").value(this.middlename).ignoreIfNull().notExceedingLengthOf(50);
-            baseDataValidator.reset().parameter("lastname").value(this.lastname).notBlank().notExceedingLengthOf(50);
+            baseDataValidator.reset().parameter(ClientApiConstants.firstnameParamName).value(this.firstname).notBlank()
+                    .notExceedingLengthOf(50);
+            baseDataValidator.reset().parameter(ClientApiConstants.middlenameParamName).value(this.middlename).ignoreIfNull()
+                    .notExceedingLengthOf(50);
+            baseDataValidator.reset().parameter(ClientApiConstants.lastnameParamName).value(this.lastname).notBlank()
+                    .notExceedingLengthOf(50);
         }
 
-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
-                "Validation errors exist.", dataValidationErrors); }
+        if (this.activationDate != null) {
+            if (office.isOpeningDateAfter(getActivationLocalDate())) {
+                final String defaultUserMessage = "Client activation date cannot be a date before the office opening date.";
+                final ApiParameterError error = ApiParameterError.parameterError(
+                        "error.msg.clients.activationDate.cannot.be.before.office.activation.date", defaultUserMessage,
+                        ClientApiConstants.activationDateParamName, getActivationLocalDate());
+                dataValidationErrors.add(error);
+            }
+        }
+
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
     private void deriveDisplayName() {
@@ -378,58 +367,23 @@ public final class Client extends AbstractPersistable<Long> {
         this.displayName = nameBuilder.toString();
     }
 
-    private LocalDate getJoiningLocalDate() {
-        LocalDate joiningLocalDate = null;
+    private LocalDate getActivationLocalDate() {
+        LocalDate activationLocalDate = null;
         if (this.activationDate != null) {
-            joiningLocalDate = LocalDate.fromDateFields(this.activationDate);
+            activationLocalDate = LocalDate.fromDateFields(this.activationDate);
         }
-        return joiningLocalDate;
-    }
-
-    /**
-     * Delete is a <i>soft delete</i>. Updates flag on client so it wont appear
-     * in query/report results.
-     * 
-     * Any fields with unique constraints and prepended with id of record.
-     */
-    public void delete() {
-        this.deleted = true;
-        this.externalId = this.getId() + "_" + this.externalId;
-    }
-
-    public boolean isDeleted() {
-        return deleted;
+        return activationLocalDate;
     }
 
     public boolean isOfficeIdentifiedBy(final Long officeId) {
         return this.office.identifiedBy(officeId);
     }
 
-    public Office getOffice() {
-        return office;
-    }
-
-    public String getFirstName() {
-        return firstname;
-    }
-
-    public String getLastName() {
-        return lastname;
-    }
-
-    public Date getJoiningDate() {
-        return activationDate;
-    }
-
-    public String getExternalId() {
-        return externalId;
-    }
-
-    public String getImageKey() {
+    public String imageKey() {
         return imageKey;
     }
 
-    public void setImageKey(final String imageKey) {
+    public void updateImageKey(final String imageKey) {
         this.imageKey = imageKey;
     }
 

@@ -3,6 +3,8 @@ package org.mifosplatform.portfolio.savings.data;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.accountNoParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.activationDateParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.activeParamName;
+import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.annualFeeAmountParamName;
+import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.annualFeeOnMonthDayParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.clientIdParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.externalIdParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.groupIdParamName;
@@ -15,6 +17,8 @@ import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.lockin
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.minRequiredOpeningBalanceParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.nominalAnnualInterestRateParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.productIdParamName;
+import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.withdrawalFeeAmountParamName;
+import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.withdrawalFeeTypeParamName;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -24,6 +28,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.MonthDay;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
@@ -159,6 +164,28 @@ public class SavingsAccountDataValidator {
             }
         }
 
+        if (this.fromApiJsonHelper.parameterExists(withdrawalFeeAmountParamName, element)) {
+
+            final BigDecimal withdrawalFeeAmount = fromApiJsonHelper
+                    .extractBigDecimalWithLocaleNamed(withdrawalFeeAmountParamName, element);
+            baseDataValidator.reset().parameter(withdrawalFeeAmountParamName).value(withdrawalFeeAmount).positiveAmount();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(withdrawalFeeTypeParamName, element)) {
+            final Integer withdrawalFeeType = fromApiJsonHelper.extractIntegerSansLocaleNamed(withdrawalFeeTypeParamName, element);
+            baseDataValidator.reset().parameter(withdrawalFeeTypeParamName).value(withdrawalFeeType).isOneOfTheseValues(1, 2);
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(annualFeeAmountParamName, element)) {
+            final BigDecimal annualFeeAmount = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(annualFeeAmountParamName, element);
+            baseDataValidator.reset().parameter(annualFeeAmountParamName).value(annualFeeAmount).notNull().positiveAmount();
+
+            if (annualFeeAmount != null) {
+                MonthDay monthDayOfAnnualFee = fromApiJsonHelper.extractMonthDayNamed(annualFeeOnMonthDayParamName, element);
+                baseDataValidator.reset().parameter(annualFeeOnMonthDayParamName).value(monthDayOfAnnualFee).notNull();
+            }
+        }
+
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
@@ -290,15 +317,33 @@ public class SavingsAccountDataValidator {
             }
         }
 
+        if (this.fromApiJsonHelper.parameterExists(withdrawalFeeAmountParamName, element)) {
+
+            final BigDecimal withdrawalFeeAmount = fromApiJsonHelper
+                    .extractBigDecimalWithLocaleNamed(withdrawalFeeAmountParamName, element);
+            baseDataValidator.reset().parameter(withdrawalFeeAmountParamName).value(withdrawalFeeAmount).notNull().positiveAmount();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(withdrawalFeeTypeParamName, element)) {
+            final Integer withdrawalFeeType = fromApiJsonHelper.extractIntegerSansLocaleNamed(withdrawalFeeTypeParamName, element);
+            baseDataValidator.reset().parameter(withdrawalFeeTypeParamName).value(withdrawalFeeType).isOneOfTheseValues(1, 2);
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(annualFeeAmountParamName, element)) {
+            final BigDecimal annualFeeAmount = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(annualFeeAmountParamName, element);
+            baseDataValidator.reset().parameter(annualFeeAmountParamName).value(annualFeeAmount).ignoreIfNull().positiveAmount();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(annualFeeOnMonthDayParamName, element)) {
+            MonthDay monthDayOfAnnualFee = fromApiJsonHelper.extractMonthDayNamed(annualFeeOnMonthDayParamName, element);
+            baseDataValidator.reset().parameter(annualFeeOnMonthDayParamName).value(monthDayOfAnnualFee).ignoreIfNull();
+        }
+
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
 
     }
 
     private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
-        if (!dataValidationErrors.isEmpty()) {
-            //
-            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
-                    dataValidationErrors);
-        }
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 }

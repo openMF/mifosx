@@ -7,6 +7,8 @@ package org.mifosplatform.portfolio.savings.domain;
 
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.activationDateParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.activeParamName;
+import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.annualFeeAmountParamName;
+import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.annualFeeOnMonthDayParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.interestCalculationDaysInYearTypeParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.interestCalculationTypeParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.interestCompoundingPeriodTypeParamName;
@@ -15,18 +17,20 @@ import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.lockin
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.minRequiredOpeningBalanceParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.nominalAnnualInterestRateParamName;
+import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.withdrawalFeeAmountParamName;
+import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.withdrawalFeeTypeParamName;
 
 import java.math.BigDecimal;
 import java.util.Locale;
 
 import org.joda.time.LocalDate;
+import org.joda.time.MonthDay;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.portfolio.client.domain.Client;
-import org.mifosplatform.portfolio.client.domain.ClientRepository;
-import org.mifosplatform.portfolio.client.exception.ClientNotFoundException;
+import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
 import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.group.domain.GroupRepository;
 import org.mifosplatform.portfolio.group.exception.GroupNotFoundException;
@@ -40,14 +44,14 @@ import com.google.gson.JsonElement;
 public class SavingsAccountAssembler {
 
     private final SavingsAccountTransactionSummaryWrapper savingsAccountTransactionSummaryWrapper;
-    private final ClientRepository clientRepository;
+    private final ClientRepositoryWrapper clientRepository;
     private final GroupRepository groupRepository;
     private final SavingsProductRepository savingProductRepository;
     private final FromJsonHelper fromApiJsonHelper;
 
     @Autowired
     public SavingsAccountAssembler(final SavingsAccountTransactionSummaryWrapper savingsAccountTransactionSummaryWrapper,
-            final ClientRepository clientRepository, final GroupRepository groupRepository,
+            final ClientRepositoryWrapper clientRepository, final GroupRepository groupRepository,
             final SavingsProductRepository savingProductRepository, final FromJsonHelper fromApiJsonHelper) {
         this.savingsAccountTransactionSummaryWrapper = savingsAccountTransactionSummaryWrapper;
         this.clientRepository = clientRepository;
@@ -78,13 +82,12 @@ public class SavingsAccountAssembler {
         Client client = null;
         Group group = null;
         if (clientId != null) {
-            client = this.clientRepository.findOne(clientId);
-            if (client == null || client.isDeleted()) { throw new ClientNotFoundException(clientId); }
+            client = this.clientRepository.findOneWithNotFoundDetection(clientId);
         }
 
         if (groupId != null) {
             group = this.groupRepository.findOne(groupId);
-            if (group == null || group.isDeleted()) { throw new GroupNotFoundException(groupId); }
+            if (group == null) { throw new GroupNotFoundException(groupId); }
         }
 
         BigDecimal interestRate = null;
@@ -155,9 +158,41 @@ public class SavingsAccountAssembler {
             lockinPeriodFrequencyType = product.lockinPeriodFrequencyType();
         }
 
+        BigDecimal withdrawalFeeAmount = null;
+        if (command.parameterExists(withdrawalFeeAmountParamName)) {
+            withdrawalFeeAmount = command.bigDecimalValueOfParameterNamed(withdrawalFeeAmountParamName);
+        } else {
+            withdrawalFeeAmount = product.withdrawalFeeAmount();
+        }
+
+        SavingsWithdrawalFeesType withdrawalFeeType = null;
+        if (command.parameterExists(withdrawalFeeAmountParamName)) {
+            final Integer withdrawalFeeTypeValue = command.integerValueOfParameterNamed(withdrawalFeeTypeParamName);
+            if (withdrawalFeeTypeValue != null) {
+                withdrawalFeeType = SavingsWithdrawalFeesType.fromInt(withdrawalFeeTypeValue);
+            }
+        } else {
+            withdrawalFeeType = product.withdrawalFeeType();
+        }
+
+        BigDecimal annualFeeAmount = null;
+        if (command.parameterExists(annualFeeAmountParamName)) {
+            annualFeeAmount = command.bigDecimalValueOfParameterNamed(annualFeeAmountParamName);
+        } else {
+            annualFeeAmount = product.annualFeeAmount();
+        }
+
+        MonthDay monthDayOfAnnualFee = null;
+        if (command.parameterExists(annualFeeOnMonthDayParamName)) {
+            monthDayOfAnnualFee = command.extractMonthDayNamed(annualFeeOnMonthDayParamName);
+        } else {
+            monthDayOfAnnualFee = product.monthDayOfAnnualFee();
+        }
+
         final SavingsAccount account = SavingsAccount.createNewAccount(client, group, product, accountNo, externalId, interestRate,
                 interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
-                minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType);
+                minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeAmount, withdrawalFeeType,
+                annualFeeAmount, monthDayOfAnnualFee);
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper);
 
         if (active) {

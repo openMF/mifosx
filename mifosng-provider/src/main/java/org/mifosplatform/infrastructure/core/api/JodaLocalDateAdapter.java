@@ -23,7 +23,7 @@ public class JodaLocalDateAdapter implements JsonSerializer<LocalDate> {
 
     @SuppressWarnings("unused")
     @Override
-    public JsonElement serialize(LocalDate src, Type typeOfSrc, JsonSerializationContext context) {
+    public JsonElement serialize(final LocalDate src, final Type typeOfSrc, final JsonSerializationContext context) {
 
         JsonArray array = null;
         if (src != null) {

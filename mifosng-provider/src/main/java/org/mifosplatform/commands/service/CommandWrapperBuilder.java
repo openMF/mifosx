@@ -834,6 +834,25 @@ public class CommandWrapperBuilder {
         this.actionName = "UPDATE";
         this.entityName = "GROUP";
         this.entityId = groupId;
+        this.groupId = groupId;
+        this.href = "/groups/" + groupId;
+        return this;
+    }
+
+    public CommandWrapperBuilder activateGroup(final Long groupId) {
+        this.actionName = "ACTIVATE";
+        this.entityName = "GROUP";
+        this.entityId = groupId;
+        this.groupId = groupId;
+        this.href = "/groups/" + groupId + "?command=activate";
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteGroup(final Long groupId) {
+        this.actionName = "DELETE";
+        this.entityName = "GROUP";
+        this.entityId = groupId;
+        this.groupId = groupId;
         this.href = "/groups/" + groupId;
         return this;
     }
@@ -842,14 +861,7 @@ public class CommandWrapperBuilder {
         this.actionName = "UNASSIGNSTAFF";
         this.entityName = "GROUP";
         this.entityId = groupId;
-        this.href = "/groups/" + groupId;
-        return this;
-    }
-
-    public CommandWrapperBuilder deleteGroup(final Long groupId) {
-        this.actionName = "DELETE";
-        this.entityName = "GROUP";
-        this.entityId = groupId;
+        this.groupId = groupId;
         this.href = "/groups/" + groupId;
         return this;
     }
@@ -909,6 +921,39 @@ public class CommandWrapperBuilder {
         this.entityName = "CENTER";
         this.entityId = centerId;
         this.href = "/centers/" + centerId;
+        return this;
+    }
+
+    public CommandWrapperBuilder activateCenter(final Long centerId) {
+        this.actionName = "ACTIVATE";
+        this.entityName = "CENTER";
+        this.entityId = centerId;
+        this.groupId = centerId;
+        this.href = "/centers/" + centerId + "?command=activate";
+        return this;
+    }
+
+    public CommandWrapperBuilder createAccountingRule() {
+        this.actionName = "CREATE";
+        this.entityName = "ACCOUNTINGRULE";
+        this.entityId = null;
+        this.href = "/accountingrules/template";
+        return this;
+    }
+
+    public CommandWrapperBuilder updateAccountingRule(final Long accountingRuleId) {
+        this.actionName = "UPDATE";
+        this.entityName = "ACCOUNTINGRULE";
+        this.entityId = accountingRuleId;
+        this.href = "/accountingrules/" + accountingRuleId;
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteAccountingRule(final Long accountingRuleId) {
+        this.actionName = "DELETE";
+        this.entityName = "ACCOUNTINGRULE";
+        this.entityId = accountingRuleId;
+        this.href = "/accountingrules/" + accountingRuleId;
         return this;
     }
 }

@@ -11,7 +11,9 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
+import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
@@ -20,10 +22,12 @@ import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.organisation.staff.service.StaffReadPlatformService;
 import org.mifosplatform.portfolio.client.data.ClientData;
+import org.mifosplatform.portfolio.client.domain.ClientEnumerations;
 import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
 import org.mifosplatform.portfolio.group.data.CenterData;
 import org.mifosplatform.portfolio.group.data.GroupGeneralData;
-import org.mifosplatform.portfolio.group.data.GroupTypes;
+import org.mifosplatform.portfolio.group.domain.GroupTypes;
+import org.mifosplatform.portfolio.group.domain.GroupingTypeEnumerations;
 import org.mifosplatform.portfolio.group.exception.GroupNotFoundException;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +45,11 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
     private final ClientReadPlatformService clientReadPlatformService;
     private final OfficeReadPlatformService officeReadPlatformService;
     private final StaffReadPlatformService staffReadPlatformService;
+
+    // data mappers
+    private final AllGroupTypesDataMapper allGroupTypesDataMapper = new AllGroupTypesDataMapper();
+
+    // data mappers
     private final CenterDataMapper centerMapper = new CenterDataMapper();
     private final GroupDataMapper groupDataMapper = new GroupDataMapper();
 
@@ -64,8 +73,8 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
 
         String sqlQueryCriteria = searchCriteria.getSqlSearch();
         if (StringUtils.isNotBlank(sqlQueryCriteria)) {
-            sqlQueryCriteria = sqlQueryCriteria.replaceAll(" name ", " g.name ");
-            sqlQueryCriteria = sqlQueryCriteria.replaceAll("name ", "g.name ");
+            sqlQueryCriteria = sqlQueryCriteria.replaceAll(" display_name ", " g.display_name ");
+            sqlQueryCriteria = sqlQueryCriteria.replaceAll("display_name ", "g.display_name ");
             extraCriteria = " and (" + sqlQueryCriteria + ")";
         }
 
@@ -81,7 +90,7 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
 
         final String name = searchCriteria.getName();
         if (name != null) {
-            extraCriteria += " and g.name like " + ApiParameterHelper.sqlEncodeString(name + "%");
+            extraCriteria += " and g.display_name like " + ApiParameterHelper.sqlEncodeString(name + "%");
         }
 
         final String hierarchy = searchCriteria.getHierarchy();
@@ -95,21 +104,21 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
 
         return extraCriteria;
     }
-    
-    private static final String sqlQuery = "g.id as id, g.external_id as externalId, g.name as name, " +
-    		"g.office_id as officeId, o.name as officeName, " +
-    		"g.staff_id as staffId, s.display_name as staffName, " +
-    		"g.hierarchy as hierarchy " +
-    		"from m_group g " +
-    		"join m_office o on o.id = g.office_id " +
-    		"left join m_staff s on s.id = g.staff_id ";
-    
+
+    private static final String sqlQuery = "g.id as id, g.external_id as externalId, g.display_name as name, "
+            + "g.office_id as officeId, o.name as officeName, " //
+            + "g.staff_id as staffId, s.display_name as staffName, " //
+            + "g.status_enum as statusEnum, g.activation_date as activationDate, " //
+            + "g.hierarchy as hierarchy " //
+            + "from m_group g " //
+            + "join m_office o on o.id = g.office_id " + "left join m_staff s on s.id = g.staff_id ";
+
     private static final class CenterDataMapper implements RowMapper<CenterData> {
 
         private final String schemaSql;
 
         public CenterDataMapper() {
-            
+
             this.schemaSql = sqlQuery;
         }
 
@@ -122,6 +131,9 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
 
             final Long id = rs.getLong("id");
             final String name = rs.getString("name");
+            final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
+            final EnumOptionData status = GroupingTypeEnumerations.status(statusEnum);
+            final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
             final String externalId = rs.getString("externalId");
             final Long officeId = rs.getLong("officeId");
             final String officeName = rs.getString("officeName");
@@ -129,7 +141,7 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
             final String staffName = rs.getString("staffName");
             final String hierarchy = rs.getString("hierarchy");
 
-            return CenterData.instance(id, name, externalId, officeId, officeName, staffId, staffName, hierarchy);
+            return CenterData.instance(id, name, externalId, status, activationDate, officeId, officeName, staffId, staffName, hierarchy);
         }
     }
 
@@ -138,7 +150,7 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
         private final String schemaSql;
 
         public GroupDataMapper() {
-            
+
             this.schemaSql = sqlQuery;
         }
 
@@ -152,16 +164,22 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
             final Long id = rs.getLong("id");
             final String name = rs.getString("name");
             final String externalId = rs.getString("externalId");
+
+            final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
+            final EnumOptionData status = ClientEnumerations.status(statusEnum);
+            final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
+
             final Long officeId = rs.getLong("officeId");
             final String officeName = rs.getString("officeName");
             final Long staffId = JdbcSupport.getLong(rs, "staffId");
             final String staffName = rs.getString("staffName");
             final String hierarchy = rs.getString("hierarchy");
 
-            return GroupGeneralData.instance(id, name, externalId, officeId, officeName, null, null, staffId, staffName, hierarchy);
+            return GroupGeneralData.instance(id, name, externalId, status, activationDate, officeId, officeName, null, null, staffId,
+                    staffName, hierarchy);
         }
     }
-    
+
     @Override
     public Collection<CenterData> retrieveAll(final SearchParameters searchCriteria) {
 
@@ -179,15 +197,13 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
             sql += " and (" + extraCriteria + ")";
         }
 
-        sql += "order by g.hierarchy";
+        sql += " order by g.hierarchy";
 
         return this.jdbcTemplate.query(sql, centerMapper, new Object[] { hierarchySearchString });
     }
 
     @Override
     public Collection<CenterData> retrieveAllForDropdown(final Long officeId) {
-
-        this.context.authenticatedUser();
 
         final AppUser currentUser = context.authenticatedUser();
         final String hierarchy = currentUser.getOffice().getHierarchy();
@@ -202,14 +218,47 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
     @Override
     public CenterData retrieveTemplate(final Long officeId) {
 
+        final Long officeIdDefaulted = defaultToUsersOfficeIfNull(officeId);
+
         final Collection<OfficeData> officeOptions = this.officeReadPlatformService.retrieveAllOfficesForDropdown();
 
-        Collection<StaffData> staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(officeId);
+        Collection<StaffData> staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(officeIdDefaulted);
         if (CollectionUtils.isEmpty(staffOptions)) {
             staffOptions = null;
         }
 
-        return CenterData.template(officeId, officeOptions, staffOptions);
+        Collection<GroupGeneralData> groupMembersOptions = retrieveAllGroupsForCenterDropdown(officeIdDefaulted);
+        if (CollectionUtils.isEmpty(groupMembersOptions)) {
+            groupMembersOptions = null;
+        }
+
+        // final boolean clientPendingApprovalAllowed =
+        // this.configurationDomainService.isClientPendingApprovalAllowedEnabled();
+
+        return CenterData.template(officeIdDefaulted, new LocalDate(), officeOptions, staffOptions, groupMembersOptions);
+    }
+
+    private Collection<GroupGeneralData> retrieveAllGroupsForCenterDropdown(final Long officeId) {
+
+        final Long defaultOfficeId = defaultToUsersOfficeIfNull(officeId);
+
+        final AppUser currentUser = context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+        final String hierarchySearchString = hierarchy + "%";
+
+        final String sql = "select " + allGroupTypesDataMapper.schema()
+                + " where g.office_id = ? and g.parent_id is null and g.level_Id = ? and o.hierarchy like ? order by g.hierarchy";
+
+        return this.jdbcTemplate.query(sql, allGroupTypesDataMapper, new Object[] { defaultOfficeId, GroupTypes.GROUP.getId(),
+                hierarchySearchString });
+    }
+
+    private Long defaultToUsersOfficeIfNull(final Long officeId) {
+        Long defaultOfficeId = officeId;
+        if (defaultOfficeId == null) {
+            defaultOfficeId = this.context.authenticatedUser().getOffice().getId();
+        }
+        return defaultOfficeId;
     }
 
     @Override
@@ -222,6 +271,7 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
 
             String sql = "select " + this.centerMapper.schema() + " where g.id = ? and o.hierarchy like ?";
             return this.jdbcTemplate.queryForObject(sql, this.centerMapper, new Object[] { centerId, hierarchySearchString });
+
         } catch (EmptyResultDataAccessException e) {
             throw new GroupNotFoundException(centerId);
         }
@@ -251,8 +301,7 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
             staffOptions = null;
         }
 
-        Collection<ClientData> clientOptions = this.clientReadPlatformService
-                .retrieveAllForLookupByOfficeId(centerOfficeId);
+        Collection<ClientData> clientOptions = this.clientReadPlatformService.retrieveAllForLookupByOfficeId(centerOfficeId);
         if (CollectionUtils.isEmpty(clientOptions)) {
             clientOptions = null;
         }
@@ -262,8 +311,8 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
     }
 
     @Override
-    public Collection<GroupGeneralData> retriveAssociatedGroups(Long centerId) {
-            String sql = "select " + this.groupDataMapper.schema() + " where g.parent_id = ? ";
-            return this.jdbcTemplate.query(sql, groupDataMapper, new Object[] { centerId });
-    }    
+    public Collection<GroupGeneralData> retrieveAssociatedGroups(final Long centerId) {
+        String sql = "select " + this.groupDataMapper.schema() + " where g.parent_id = ? ";
+        return this.jdbcTemplate.query(sql, this.groupDataMapper, new Object[] { centerId });
+    }
 }

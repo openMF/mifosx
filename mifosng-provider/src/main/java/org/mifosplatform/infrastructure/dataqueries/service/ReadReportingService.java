@@ -13,6 +13,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
 import org.mifosplatform.infrastructure.dataqueries.data.ReportData;
+import org.mifosplatform.infrastructure.dataqueries.data.ReportParameterData;
 
 public interface ReadReportingService {
 
@@ -31,6 +32,8 @@ public interface ReadReportingService {
 	String getReportType(String reportName);
 
 	Collection<ReportData> retrieveReportList();
+
+	Collection<ReportParameterData> getAllowedParameters();
 
 	ReportData retrieveReport(final Long id);
 }

@@ -37,12 +37,12 @@ public final class ClientDataValidator {
         this.fromApiJsonHelper = fromApiJsonHelper;
     }
 
-    public void validateForCreate(final String json, final boolean isPendingApprovalEnabled) {
+    public void validateForCreate(final String json) {
 
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-        fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, ClientApiConstants.CLIENT_REQUEST_DATA_PARAMETERS);
+        fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, ClientApiConstants.CLIENT_CREATE_REQUEST_DATA_PARAMETERS);
         final JsonElement element = fromApiJsonHelper.parse(json);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
@@ -74,10 +74,6 @@ public final class ClientDataValidator {
             if (active.booleanValue()) {
                 final LocalDate joinedDate = fromApiJsonHelper.extractLocalDateNamed(ClientApiConstants.activationDateParamName, element);
                 baseDataValidator.reset().parameter(ClientApiConstants.activationDateParamName).value(joinedDate).notNull();
-            } else {
-                if (!isPendingApprovalEnabled) {
-                    baseDataValidator.reset().parameter(ClientApiConstants.activeParamName).failWithCode(".pending.status.not.allowed");
-                }
             }
         } else {
             baseDataValidator.reset().parameter(ClientApiConstants.activeParamName).value(active).trueOrFalseRequired(false);
@@ -86,12 +82,12 @@ public final class ClientDataValidator {
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
-    public void validateForUpdate(final String json, final boolean isPendingApprovalEnabled) {
+    public void validateForUpdate(final String json) {
 
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-        fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, ClientApiConstants.CLIENT_REQUEST_DATA_PARAMETERS);
+        fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, ClientApiConstants.CLIENT_UPDATE_REQUEST_DATA_PARAMETERS);
         final JsonElement element = fromApiJsonHelper.parse(json);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
@@ -128,24 +124,12 @@ public final class ClientDataValidator {
             atLeastOneParameterPassedForUpdate = true;
         }
 
-        if (fromApiJsonHelper.parameterExists(ClientApiConstants.officeIdParamName, element)) {
-            atLeastOneParameterPassedForUpdate = true;
-            final Long officeId = fromApiJsonHelper.extractLongNamed(ClientApiConstants.officeIdParamName, element);
-            baseDataValidator.reset().parameter(ClientApiConstants.officeIdParamName).value(officeId).notNull().integerGreaterThanZero();
-        }
-
         final Boolean active = fromApiJsonHelper.extractBooleanNamed(ClientApiConstants.activeParamName, element);
         if (active != null) {
             if (active.booleanValue()) {
                 final LocalDate joinedDate = fromApiJsonHelper.extractLocalDateNamed(ClientApiConstants.activationDateParamName, element);
                 baseDataValidator.reset().parameter(ClientApiConstants.activationDateParamName).value(joinedDate).notNull();
-            } else {
-                if (!isPendingApprovalEnabled) {
-                    baseDataValidator.reset().parameter(ClientApiConstants.activeParamName).failWithCode(".pending.status.not.allowed");
-                }
             }
-        } else {
-            baseDataValidator.reset().parameter(ClientApiConstants.activeParamName).value(active).trueOrFalseRequired(false);
         }
 
         if (!atLeastOneParameterPassedForUpdate) {
@@ -179,8 +163,7 @@ public final class ClientDataValidator {
     private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
         if (!dataValidationErrors.isEmpty()) {
             //
-            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
-                    dataValidationErrors);
+            throw new PlatformApiDataValidationException(dataValidationErrors);
         }
     }
 }

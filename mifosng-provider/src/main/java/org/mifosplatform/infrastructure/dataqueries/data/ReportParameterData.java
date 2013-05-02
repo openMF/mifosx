@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.infrastructure.dataqueries.data;
 
+/* used to show list of parameters used by a report and also for getting a list of parameters available (the reportParameterName is left null */
 final public class ReportParameterData {
 
 	@SuppressWarnings("unused")
@@ -14,11 +15,10 @@ final public class ReportParameterData {
 	@SuppressWarnings("unused")
 	private final String parameterName;
 
-	public ReportParameterData(final Long id,
-			final String reportParameterName, final String parameterName) {
+	public ReportParameterData(final Long id, final String reportParameterName,
+			final String parameterName) {
 		this.id = id;
 		this.reportParameterName = reportParameterName;
 		this.parameterName = parameterName;
 	}
-
 }
