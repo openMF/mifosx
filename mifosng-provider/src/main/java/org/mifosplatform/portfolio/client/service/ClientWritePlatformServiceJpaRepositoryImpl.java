@@ -15,7 +15,7 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder
 import org.mifosplatform.infrastructure.core.domain.Base64EncodedImage;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.service.DocumentStore;
-import org.mifosplatform.infrastructure.core.service.FileSystemDocumentStore;
+import org.mifosplatform.infrastructure.core.service.DocumentStoreFactory;
 import org.mifosplatform.infrastructure.documentmanagement.exception.DocumentManagementException;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.domain.Office;
@@ -64,7 +64,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     public ClientWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
                                                        final ClientRepositoryWrapper clientRepository, final OfficeRepository officeRepository, final NoteRepository noteRepository,
                                                        final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGeneratorFactory accountIdentifierGeneratorFactory,
-                                                       final GroupRepository groupRepository) {
+                                                       final GroupRepository groupRepository, DocumentStoreFactory documentStoreFactory) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.officeRepository = officeRepository;
@@ -72,7 +72,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.accountIdentifierGeneratorFactory = accountIdentifierGeneratorFactory;
         this.groupRepository = groupRepository;
-        this.documentStore = new FileSystemDocumentStore();
+        this.documentStore = documentStoreFactory.getInstance();
     }
 
     @Transactional

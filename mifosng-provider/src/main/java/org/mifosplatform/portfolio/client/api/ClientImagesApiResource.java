@@ -5,28 +5,16 @@
  */
 package org.mifosplatform.portfolio.client.api;
 
-import java.io.File;
-import java.io.InputStream;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-
+import com.lowagie.text.pdf.codec.Base64;
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataBodyPart;
+import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.domain.Base64EncodedImage;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.mifosplatform.infrastructure.core.service.DocumentStore;
-import org.mifosplatform.infrastructure.core.service.FileSystemDocumentStore;
+import org.mifosplatform.infrastructure.core.service.DocumentStoreFactory;
 import org.mifosplatform.infrastructure.core.service.ImageUtils;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.client.data.ClientData;
@@ -37,10 +25,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.lowagie.text.pdf.codec.Base64;
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataBodyPart;
-import com.sun.jersey.multipart.FormDataParam;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import java.io.File;
+import java.io.InputStream;
 
 @Path("/clients/{clientId}/images")
 @Component
@@ -51,16 +41,17 @@ public class ClientImagesApiResource {
     private final ClientReadPlatformService clientReadPlatformService;
     private final ClientWritePlatformService clientWritePlatformService;
     private final DefaultToApiJsonSerializer<ClientData> toApiJsonSerializer;
-    private final DocumentStore fileSystemDocumentStore;
+    private final DocumentStore documentStore;
 
     @Autowired
     public ClientImagesApiResource(final PlatformSecurityContext context, final ClientReadPlatformService readPlatformService,
-                                   final ClientWritePlatformService clientWritePlatformService, final DefaultToApiJsonSerializer<ClientData> toApiJsonSerializer) {
+                                   final ClientWritePlatformService clientWritePlatformService, final DefaultToApiJsonSerializer<ClientData> toApiJsonSerializer,
+                                   final DocumentStoreFactory documentStoreFactory) {
         this.context = context;
         this.clientReadPlatformService = readPlatformService;
         this.clientWritePlatformService = clientWritePlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
-        this.fileSystemDocumentStore = new FileSystemDocumentStore();
+        this.documentStore = documentStoreFactory.getInstance();
     }
 
     /**
@@ -78,7 +69,7 @@ public class ClientImagesApiResource {
         // and clients not setting mime type
         ImageUtils.validateClientImageNotEmpty(fileDetails.getFileName());
         ImageUtils.validateImageMimeType(bodyPart.getMediaType().toString());
-//        this.fileSystemDocumentStore.validateFileSizeWithinPermissibleRange(fileSize, fileDetails.getFileName(), ApiConstants.MAX_FILE_UPLOAD_SIZE_IN_MB);
+//        this.documentStore.validateFileSizeWithinPermissibleRange(fileSize, fileDetails.getFileName(), ApiConstants.MAX_FILE_UPLOAD_SIZE_IN_MB);
 
 
         final CommandProcessingResult result = this.clientWritePlatformService.saveOrUpdateClientImage(clientId, fileDetails.getFileName(),

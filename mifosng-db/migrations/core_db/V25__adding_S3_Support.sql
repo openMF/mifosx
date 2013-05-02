@@ -11,3 +11,5 @@ INSERT INTO m_s3_details (name) VALUES ('cdn_url');
 INSERT INTO m_s3_details (name) VALUES ('bucket_name');
 INSERT INTO m_s3_details (name) VALUES ('access_key');
 INSERT INTO m_s3_details (name) VALUES ('secret_key');
+
+ALTER TABLE m_document ADD COLUMN storage_location varchar(50);

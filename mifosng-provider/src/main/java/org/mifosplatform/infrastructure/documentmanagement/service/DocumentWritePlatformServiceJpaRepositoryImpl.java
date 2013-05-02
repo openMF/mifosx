@@ -8,7 +8,7 @@ package org.mifosplatform.infrastructure.documentmanagement.service;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.service.DocumentStore;
-import org.mifosplatform.infrastructure.core.service.FileSystemDocumentStore;
+import org.mifosplatform.infrastructure.core.service.DocumentStoreFactory;
 import org.mifosplatform.infrastructure.documentmanagement.command.DocumentCommand;
 import org.mifosplatform.infrastructure.documentmanagement.command.DocumentCommandValidator;
 import org.mifosplatform.infrastructure.documentmanagement.domain.Document;
@@ -37,10 +37,11 @@ public class DocumentWritePlatformServiceJpaRepositoryImpl implements DocumentWr
     private final DocumentStore documentStore;
 
     @Autowired
-    public DocumentWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final DocumentRepository documentRepository) {
+    public DocumentWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final DocumentRepository documentRepository,
+                                                         final DocumentStoreFactory documentStoreFactory) {
         this.context = context;
         this.documentRepository = documentRepository;
-        this.documentStore = new FileSystemDocumentStore();
+        this.documentStore = documentStoreFactory.getInstance();
     }
 
     @Transactional
