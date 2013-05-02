@@ -54,6 +54,7 @@ public final class JournalEntryCommandFromApiJsonDeserializer extends AbstractFr
         final JsonElement element = this.fromApiJsonHelper.parse(json);
 
         final Long officeId = this.fromApiJsonHelper.extractLongNamed(JournalEntryJsonInputParams.OFFICE_ID.getValue(), element);
+        final String referenceNumber = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.REFERENCE_NUMBER.getValue(), element);
         final String comments = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.COMMENTS.getValue(), element);
         final LocalDate transactionDate = this.fromApiJsonHelper.extractLocalDateNamed(
                 JournalEntryJsonInputParams.TRANSACTION_DATE.getValue(), element);
@@ -73,7 +74,7 @@ public final class JournalEntryCommandFromApiJsonDeserializer extends AbstractFr
                 debits = populateCreditsOrDebitsArray(topLevelJsonElement, locale, debits, JournalEntryJsonInputParams.DEBITS.getValue());
             }
         }
-        return new JournalEntryCommand(officeId, transactionDate, comments, credits, debits);
+        return new JournalEntryCommand(officeId, transactionDate, comments, credits, debits, referenceNumber);
     }
 
     /**

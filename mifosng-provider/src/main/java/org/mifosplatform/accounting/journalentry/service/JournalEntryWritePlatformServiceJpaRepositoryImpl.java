@@ -88,12 +88,15 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             /** Set a transaction Id and save these Journal entries **/
             final Date transactionDate = command.DateValueOfParameterNamed(JournalEntryJsonInputParams.TRANSACTION_DATE.getValue());
             final String transactionId = generateTransactionId();
+            
+            // reference number
+            final String referenceNumber = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.REFERENCE_NUMBER.getValue());
 
             saveAllDebitOrCreditEntries(journalEntryCommand, office, transactionDate, journalEntryCommand.getDebits(), transactionId,
-                    JournalEntryType.DEBIT);
+                    JournalEntryType.DEBIT, referenceNumber);
 
             saveAllDebitOrCreditEntries(journalEntryCommand, office, transactionDate, journalEntryCommand.getCredits(), transactionId,
-                    JournalEntryType.CREDIT);
+                    JournalEntryType.CREDIT, referenceNumber);
 
             return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withOfficeId(officeId)
                     .withTransactionId(transactionId).build();
@@ -122,11 +125,11 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             if (journalEntry.isDebitEntry()) {
                 reversalJournalEntry = JournalEntry.createNew(journalEntry.getOffice(), journalEntry.getGlAccount(), reversalTransactionId,
                         manualEntry, journalEntry.getTransactionDate(), JournalEntryType.CREDIT, journalEntry.getAmount(), reversalComment,
-                        null, null);
+                        null, null, null);
             } else {
                 reversalJournalEntry = JournalEntry.createNew(journalEntry.getOffice(), journalEntry.getGlAccount(), reversalTransactionId,
                         manualEntry, journalEntry.getTransactionDate(), JournalEntryType.DEBIT, journalEntry.getAmount(), reversalComment,
-                        null, null);
+                        null, null, null);
             }
             // save the reversal entry
             this.glJournalEntryRepository.saveAndFlush(reversalJournalEntry);
@@ -195,7 +198,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
 
     private void saveAllDebitOrCreditEntries(final JournalEntryCommand command, final Office office, final Date transactionDate,
             final SingleDebitOrCreditEntryCommand[] singleDebitOrCreditEntryCommands, final String transactionId,
-            final JournalEntryType type) {
+            final JournalEntryType type, final String referenceNumber) {
         final boolean manualEntry = true;
         for (final SingleDebitOrCreditEntryCommand singleDebitOrCreditEntryCommand : singleDebitOrCreditEntryCommands) {
             final GLAccount glAccount = this.glAccountRepository.findOne(singleDebitOrCreditEntryCommand.getGlAccountId());
@@ -217,7 +220,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                 comments = singleDebitOrCreditEntryCommand.getComments();
             }
             final JournalEntry glJournalEntry = JournalEntry.createNew(office, glAccount, transactionId, manualEntry, transactionDate,
-                    type, singleDebitOrCreditEntryCommand.getAmount(), comments, null, null);
+                    type, singleDebitOrCreditEntryCommand.getAmount(), comments, null, null, referenceNumber);
             this.glJournalEntryRepository.saveAndFlush(glJournalEntry);
         }
     }
