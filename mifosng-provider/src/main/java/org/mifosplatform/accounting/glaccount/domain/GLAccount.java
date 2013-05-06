@@ -198,5 +198,4 @@ public class GLAccount extends AbstractPersistable<Long> {
     public Integer getType() {
         return this.type;
     }
-
 }

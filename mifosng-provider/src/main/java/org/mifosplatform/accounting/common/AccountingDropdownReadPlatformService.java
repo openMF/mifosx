@@ -16,4 +16,5 @@ public interface AccountingDropdownReadPlatformService {
     public List<EnumOptionData> retrieveGLAccountUsageOptions();
 
     public List<EnumOptionData> retrieveJournalEntryTypeOptions();
+
 }
