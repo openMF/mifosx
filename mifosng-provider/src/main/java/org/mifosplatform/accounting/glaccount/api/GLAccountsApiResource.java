@@ -25,6 +25,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.mifosplatform.accounting.common.AccountingDropdownReadPlatformService;
 import org.mifosplatform.accounting.glaccount.data.GLAccountData;
+import org.mifosplatform.accounting.glaccount.domain.GLAccountType;
 import org.mifosplatform.accounting.glaccount.service.GLAccountReadPlatformService;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
@@ -45,7 +46,8 @@ import org.springframework.stereotype.Component;
 public class GLAccountsApiResource {
 
     private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("id", "name", "parentId", "glCode",
-            "disabled", "manualEntriesAllowed", "type", "usage", "description"));
+            "disabled", "manualEntriesAllowed", "type", "usage", "description", "assetHeaderAccountOptions", "liabilityHeaderAccountOptions",
+            "equityHeaderAccountOptions", "incomeHeaderAccountOptions", "expenseHeaderAccountOptions", "nameDecorated"));
 
     private final String resourceNameForPermission = "GLACCOUNT";
 
@@ -158,6 +160,20 @@ public class GLAccountsApiResource {
     private GLAccountData handleTemplate(final GLAccountData glAccountData) {
         final List<EnumOptionData> accountTypeOptions = this.dropdownReadPlatformService.retrieveGLAccountTypeOptions();
         final List<EnumOptionData> usageOptions = this.dropdownReadPlatformService.retrieveGLAccountUsageOptions();
-        return new GLAccountData(glAccountData, accountTypeOptions, usageOptions);
+        final List<GLAccountData> assetHeaderAccountOptions = defaultIfEmpty(this.glAccountReadPlatformService.retrieveAllEnabledHeaderGLAccounts(GLAccountType.ASSET));
+        final List<GLAccountData> liabilityHeaderAccountOptions = defaultIfEmpty(this.glAccountReadPlatformService.retrieveAllEnabledHeaderGLAccounts(GLAccountType.LIABILITY));
+        final List<GLAccountData> equityHeaderAccountOptions = defaultIfEmpty(this.glAccountReadPlatformService.retrieveAllEnabledHeaderGLAccounts(GLAccountType.EQUITY));
+        final List<GLAccountData> incomeHeaderAccountOptions = defaultIfEmpty(this.glAccountReadPlatformService.retrieveAllEnabledHeaderGLAccounts(GLAccountType.INCOME));
+        final List<GLAccountData> expenseHeaderAccountOptions = defaultIfEmpty(this.glAccountReadPlatformService.retrieveAllEnabledHeaderGLAccounts(GLAccountType.EXPENSE));
+        return new GLAccountData(glAccountData, accountTypeOptions, usageOptions, assetHeaderAccountOptions, liabilityHeaderAccountOptions,
+                equityHeaderAccountOptions, incomeHeaderAccountOptions, expenseHeaderAccountOptions);
+    }
+    
+    private List<GLAccountData> defaultIfEmpty(final List<GLAccountData> list) {
+        List<GLAccountData> returnList = null;
+        if (list != null && !list.isEmpty()) {
+            returnList = list;
+        }
+        return returnList;
     }
 }

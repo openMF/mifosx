@@ -29,10 +29,12 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
 @Table(name = "acc_gl_account", uniqueConstraints = { @UniqueConstraint(columnNames = { "gl_code" }, name = "acc_gl_code") })
 public class GLAccount extends AbstractPersistable<Long> {
 
-    @SuppressWarnings("unused")
-    @ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private GLAccount parent;
+    
+    @Column(name = "hierarchy", nullable = true, length = 50)
+    private String hierarchy;
 
     @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
@@ -198,5 +200,21 @@ public class GLAccount extends AbstractPersistable<Long> {
     public Integer getType() {
         return this.type;
     }
+    
+    public void generateHierarchy() {
 
+        if (parent != null) {
+            this.hierarchy = this.parent.hierarchyOf(this.getId());
+        } else {
+            this.hierarchy = ".";
+        }
+    }
+    
+    private String hierarchyOf(final Long id) {
+        return this.hierarchy + id.toString() + ".";
+    }
+
+	public boolean isDetailAccount() {
+		return GLAccountUsage.DETAIL.getValue().equals(this.usage);
+	}
 }
