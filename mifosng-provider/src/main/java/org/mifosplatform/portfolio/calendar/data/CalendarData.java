@@ -5,14 +5,14 @@
  */
 package org.mifosplatform.portfolio.calendar.data;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.portfolio.calendar.domain.CalendarRemindBy;
 import org.mifosplatform.portfolio.calendar.domain.CalendarType;
 import org.mifosplatform.portfolio.calendar.service.CalendarEnumerations;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Immutable data object representing a Calendar.

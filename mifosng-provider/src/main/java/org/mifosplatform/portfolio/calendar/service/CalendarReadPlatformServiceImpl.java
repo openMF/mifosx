@@ -5,10 +5,6 @@
  */
 package org.mifosplatform.portfolio.calendar.service;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
@@ -21,6 +17,11 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.List;
 
 @Service
 public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformService {
@@ -95,16 +96,28 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
     }
 
     @Override
-    public Collection<CalendarData> retrieveCalendarsByEntity(final Long entityId, final Integer entityTypeId) {
+    public Collection<CalendarData> retrieveCalendarsByEntity(final Long entityId, final Integer entityTypeId, List<EnumOptionData> calendarTypeOptions) {
         final CalendarDataMapper rm = new CalendarDataMapper();
 
         final String sql = rm.schema() + " and ci.entity_id = ? and ci.entity_type_enum = ? order by c.start_date ";
-
-        return this.jdbcTemplate.query(sql, rm, new Object[] { entityId, entityTypeId });
+        // buffer holds the collection of all calendars
+        Collection<CalendarData> buffer =  this.jdbcTemplate.query(sql, rm, new Object[] { entityId, entityTypeId });
+        // result will hold the filtered collection of calendars according to the calendarTypeOptions given.
+        Collection<CalendarData> result = null;
+        // checking for each calendarData element if it is one of the calendarTypeOptions.
+        for(CalendarData calData : buffer){
+            for(EnumOptionData calType : calendarTypeOptions) {
+                if(calData.getType().isEqual(calType)){
+                    result.add(calData);
+                    break;
+                }
+            }
+        }
+        return result;
     }
     
     @Override
-    public Collection<CalendarData> retrieveParentCalendarsByEntity(Long entityId, Integer entityTypeId) {
+    public Collection<CalendarData> retrieveParentCalendarsByEntity( Long entityId, Integer entityTypeId, List<EnumOptionData> calendarTypeOptions ) {
         
         final CalendarDataMapper rm = new CalendarDataMapper();
         CalendarEntityType ceType = CalendarEntityType.fromInt(entityTypeId);
@@ -112,7 +125,17 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
         final String sql = rm.schema() + " " + parentHeirarchyCondition        		
                 + " and ci.entity_type_enum = ? order by c.start_date ";
         //FIXME :AA center is the parent entity of group, change this code to support more parent entity types.
-        return this.jdbcTemplate.query(sql, rm, new Object[] { entityId, CalendarEntityType.CENTERS.getValue() });
+        Collection<CalendarData> buffer = this.jdbcTemplate.query(sql, rm, new Object[] { entityId, CalendarEntityType.CENTERS.getValue() });
+        Collection<CalendarData> result = null;
+        for(CalendarData calData : buffer) {
+            for(EnumOptionData calType : calendarTypeOptions) {
+                if(calData.getType().isEqual(calType)) {
+                    result.add(calData);
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
     @Override

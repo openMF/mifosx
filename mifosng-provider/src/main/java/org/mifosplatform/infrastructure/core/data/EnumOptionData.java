@@ -26,4 +26,20 @@ public class EnumOptionData {
     public Long getId() {
         return id;
     }
+
+    public String getCode() {
+        return code;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public boolean isEqual(EnumOptionData other) {
+        if(this.id == other.getId()){
+            return true;
+        }
+    return false;
+    }
+
 }
