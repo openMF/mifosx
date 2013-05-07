@@ -5,8 +5,8 @@
  */
 package org.mifosplatform.infrastructure.core.service;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TomcatJdbcDataSourcePerTenantService implements DataSourcePerTenantService {
 
-    private final Map<Long, DataSource> tenantToDataSourceMap = new ConcurrentHashMap<Long, DataSource>(1);
+    private final Map<Long, DataSource> tenantToDataSourceMap = new HashMap<Long, DataSource>(1);
     private final DataSource tenantDataSource;
 
     @Autowired
@@ -44,13 +44,16 @@ public class TomcatJdbcDataSourcePerTenantService implements DataSourcePerTenant
 
         MifosPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
         if (tenant != null) {
-            // if tenant information available switch to appropriate datasource
-            // for that tenant.
-            if (this.tenantToDataSourceMap.containsKey(tenant.getId())) {
-                tenantDataSource = this.tenantToDataSourceMap.get(tenant.getId());
-            } else {
-                tenantDataSource = createNewDataSourceFor(tenant);
-                this.tenantToDataSourceMap.put(tenant.getId(), tenantDataSource);
+            synchronized (this.tenantToDataSourceMap) {
+                // if tenant information available switch to appropriate
+                // datasource
+                // for that tenant.
+                if (this.tenantToDataSourceMap.containsKey(tenant.getId())) {
+                    tenantDataSource = this.tenantToDataSourceMap.get(tenant.getId());
+                } else {
+                    tenantDataSource = createNewDataSourceFor(tenant);
+                    this.tenantToDataSourceMap.put(tenant.getId(), tenantDataSource);
+                }
             }
         }
 
