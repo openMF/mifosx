@@ -98,42 +98,37 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
     @Override
     public Collection<CalendarData> retrieveCalendarsByEntity(final Long entityId, final Integer entityTypeId, List<EnumOptionData> calendarTypeOptions) {
         final CalendarDataMapper rm = new CalendarDataMapper();
-
-        final String sql = rm.schema() + " and ci.entity_id = ? and ci.entity_type_enum = ? order by c.start_date ";
-        // buffer holds the collection of all calendars
-        Collection<CalendarData> buffer =  this.jdbcTemplate.query(sql, rm, new Object[] { entityId, entityTypeId });
-        // result will hold the filtered collection of calendars according to the calendarTypeOptions given.
-        Collection<CalendarData> result = null;
-        // checking for each calendarData element if it is one of the calendarTypeOptions.
-        for(CalendarData calData : buffer){
-            for(EnumOptionData calType : calendarTypeOptions) {
-                if(calData.getType().isEqual(calType)){
-                    result.add(calData);
-                    break;
-                }
-            }
+        // the collection result will store the final result
+        Collection<CalendarData> result=null;
+        // string sql is the sql statement that will be executed by jdbc.
+        String sql="";
+        // if calendarType options are not given by user then return all calendars.
+        if(calendarTypeOptions.isEmpty()) {
+            sql = rm.schema() + " and ci.entity_id = ? and ci.entity_type_enum = ? order by c.start_date ";
+            result =  this.jdbcTemplate.query(sql, rm, new Object[] { entityId, entityTypeId });
+        } else if(!calendarTypeOptions.isEmpty()){
+            String sqlCalendarTypeOptions = createSqlValuesInString(calendarTypeOptions);
+            sql = rm.schema() + " and ci.entity_id = ? and ci.entity_type_enum = ? and c.calendar_type_enum in ? order by c.start_date ";
+            result = this.jdbcTemplate.query(sql,rm, new Object[] {entityId, entityTypeId, sqlCalendarTypeOptions});
         }
-        return result;
+         return result;
     }
     
     @Override
     public Collection<CalendarData> retrieveParentCalendarsByEntity( Long entityId, Integer entityTypeId, List<EnumOptionData> calendarTypeOptions ) {
-        
         final CalendarDataMapper rm = new CalendarDataMapper();
+        Collection<CalendarData> result=null;
+        String sql="";
         CalendarEntityType ceType = CalendarEntityType.fromInt(entityTypeId);
         String parentHeirarchyCondition = getParentHierarchyCondition(ceType);
-        final String sql = rm.schema() + " " + parentHeirarchyCondition        		
-                + " and ci.entity_type_enum = ? order by c.start_date ";
         //FIXME :AA center is the parent entity of group, change this code to support more parent entity types.
-        Collection<CalendarData> buffer = this.jdbcTemplate.query(sql, rm, new Object[] { entityId, CalendarEntityType.CENTERS.getValue() });
-        Collection<CalendarData> result = null;
-        for(CalendarData calData : buffer) {
-            for(EnumOptionData calType : calendarTypeOptions) {
-                if(calData.getType().isEqual(calType)) {
-                    result.add(calData);
-                    break;
-                }
-            }
+        if(calendarTypeOptions.isEmpty()){
+            sql = rm.schema() + " " + parentHeirarchyCondition + " and ci.entity_type_enum = ? order by c.start_date ";
+            result = this.jdbcTemplate.query(sql, rm, new Object[] { entityId, CalendarEntityType.CENTERS.getValue() });
+        } else {
+            String sqlCalendarTypeOptions = createSqlValuesInString(calendarTypeOptions);
+            sql = rm.schema() + " " + parentHeirarchyCondition + " and ci.entity_type_enum = ? and c.calendar_type_enum in ? order by c.start_date ";
+            result = this.jdbcTemplate.query(sql,rm, new Object[] {entityId, entityTypeId, sqlCalendarTypeOptions});
         }
         return result;
     }
@@ -178,6 +173,23 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
         }
 
         return conditionSql;
+    }
+
+    /**
+     * This method takes the List of calendarType options given in the request and creates a string to be used in the sql statement.
+     * for ex. (1,2,3,4)
+     * @param calendarTypeOptions
+     * @return
+     */
+    public String createSqlValuesInString(List<EnumOptionData> calendarTypeOptions){
+        int size = calendarTypeOptions.size();
+        String sqlCalendarTypeOptions = "(" + calendarTypeOptions.get(0).getCode();
+        for(int i=1;i<size;i++) {
+            sqlCalendarTypeOptions += "," + calendarTypeOptions.get(i).getCode();
+        }
+        sqlCalendarTypeOptions += ")";
+
+        return sqlCalendarTypeOptions;
     }
 
 }
