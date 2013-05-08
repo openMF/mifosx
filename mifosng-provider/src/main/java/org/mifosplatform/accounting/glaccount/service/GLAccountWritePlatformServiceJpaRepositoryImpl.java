@@ -66,6 +66,10 @@ public class GLAccountWritePlatformServiceJpaRepositoryImpl implements GLAccount
             final GLAccount glAccount = GLAccount.fromJson(parentGLAccount, command);
 
             this.glAccountRepository.saveAndFlush(glAccount);
+            
+            glAccount.generateHierarchy();
+            
+            this.glAccountRepository.save(glAccount);
 
             return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(glAccount.getId()).build();
         } catch (final DataIntegrityViolationException dve) {
@@ -147,7 +151,7 @@ public class GLAccountWritePlatformServiceJpaRepositoryImpl implements GLAccount
         parentGLAccount = this.glAccountRepository.findOne(parentAccountId);
         if (parentGLAccount == null) { throw new GLAccountNotFoundException(parentAccountId); }
         // ensure parent is not a detail account
-        if (parentGLAccount.isHeaderAccount()) { throw new GLAccountInvalidParentException(parentAccountId); }
+        if (parentGLAccount.isDetailAccount()) { throw new GLAccountInvalidParentException(parentAccountId); }
         return parentGLAccount;
     }
 
