@@ -97,7 +97,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         String sqlQueryCriteria = searchParameters.getSqlSearch();
         if (StringUtils.isNotBlank(sqlQueryCriteria)) {
             sqlQueryCriteria = sqlQueryCriteria.replaceAll("accountNo", "sa.account_no");
-            sqlBuilder.append(" where (").append(sqlQueryCriteria).append(")");
+            sqlBuilder.append(" and (").append(sqlQueryCriteria).append(")");
         }
 
         if (StringUtils.isNotBlank(searchParameters.getExternalId())) {
@@ -152,7 +152,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sa.status_enum as statusEnum, sa.activation_date as activationDate, ");
             sqlBuilder.append("c.id as clientId, c.display_name as clientName, ");
             sqlBuilder.append("g.id as groupId, g.display_name as groupName, ");
-            sqlBuilder.append("sp.id as productId, sp.name as productName, ");
+            sqlBuilder.append("sp.id as productId, sp.name as savingsProductName, ");
             sqlBuilder.append("sa.currency_code as currencyCode, sa.currency_digits as currencyDigits, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
@@ -208,7 +208,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final String clientName = rs.getString("clientName");
 
             final Long productId = rs.getLong("productId");
-            final String productName = rs.getString("productName");
+            final String savingsProductName = rs.getString("savingsProductName");
 
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
@@ -276,7 +276,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     totalWithdrawalFees, totalAnnualFees, totalInterestEarned, totalInterestPosted, accountBalance);
 
             return SavingsAccountData.instance(id, accountNo, externalId, status, activationDate, groupId, groupName, clientId, clientName,
-                    productId, productName, currency, nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType,
+                    productId, savingsProductName, currency, nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                     interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                     lockinPeriodFrequencyType, withdrawalFeeAmount, withdrawalFeeType, annualFeeAmount, annualFeeOnMonthDay,
                     annualFeeNextDueDate, summary);
@@ -482,7 +482,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             this.group = group;
 
             final StringBuilder sqlBuilder = new StringBuilder(400);
-            sqlBuilder.append("sp.id as productId, sp.name as productName, ");
+            sqlBuilder.append("sp.id as productId, sp.name as savingsProductName, ");
             sqlBuilder.append("sp.currency_code as currencyCode, sp.currency_digits as currencyDigits, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
@@ -513,7 +513,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         public SavingsAccountData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
 
             final Long productId = rs.getLong("productId");
-            final String productName = rs.getString("productName");
+            final String savingsProductName = rs.getString("savingsProductName");
 
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
@@ -586,7 +586,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final SavingsAccountSummaryData summary = null;
 
             return SavingsAccountData.instance(null, null, null, status, activationDate, groupId, groupName, clientId, clientName,
-                    productId, productName, currency, nominalAnnualIterestRate, interestCompoundingPeriodType, interestPostingPeriodType,
+                    productId, savingsProductName, currency, nominalAnnualIterestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                     interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                     lockinPeriodFrequencyType, withdrawalFeeAmount, withdrawalFeeType, annualFeeAmount, annualFeeOnMonthDay,
                     annualFeeNextDueDate, summary);
