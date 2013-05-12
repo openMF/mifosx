@@ -11,6 +11,7 @@ import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -95,14 +96,14 @@ public class CentersApiResource {
             @QueryParam("externalId") final String externalId, @QueryParam("name") final String name,
             @QueryParam("underHierarchy") final String hierarchy, @QueryParam("offset") final Integer offset,
             @QueryParam("limit") final Integer limit, @QueryParam("orderBy") final String orderBy,
-            @QueryParam("sortOrder") final String sortOrder) {
+            @QueryParam("sortOrder") final String sortOrder, @QueryParam("pretty") @DefaultValue("false") final boolean prettyOn) {
 
         this.context.authenticatedUser().validateHasReadPermission(GroupingTypesApiConstants.CENTER_RESOURCE_NAME);
 
         final SearchParameters searchParameters = SearchParameters.forGroups(sqlSearch, officeId, externalId, name, hierarchy, offset,
                 limit, orderBy, sortOrder);
         final Page<CenterData> groups = this.centerReadPlatformService.retrieveAll(searchParameters);
-        return this.centerApiJsonSerializer.serialize(groups);
+        return this.centerApiJsonSerializer.serializePretty(prettyOn, groups);
     }
 
     @GET

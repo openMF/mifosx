@@ -13,6 +13,7 @@ import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -95,7 +96,7 @@ public class ClientsApiResource {
             @QueryParam("firstName") final String firstname, @QueryParam("lastName") final String lastname,
             @QueryParam("underHierarchy") final String hierarchy, @QueryParam("offset") final Integer offset,
             @QueryParam("limit") final Integer limit, @QueryParam("orderBy") final String orderBy,
-            @QueryParam("sortOrder") final String sortOrder) {
+            @QueryParam("sortOrder") final String sortOrder, @QueryParam("pretty") @DefaultValue("false") final boolean prettyOn) {
 
         context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
@@ -103,7 +104,7 @@ public class ClientsApiResource {
                 lastname, hierarchy, offset, limit, orderBy, sortOrder);
 
         final Page<ClientData> clientData = this.clientReadPlatformService.retrieveAll(searchParameters);
-        return this.toApiJsonSerializer.serialize(clientData);
+        return this.toApiJsonSerializer.serializePretty(prettyOn, clientData);
     }
 
     @GET

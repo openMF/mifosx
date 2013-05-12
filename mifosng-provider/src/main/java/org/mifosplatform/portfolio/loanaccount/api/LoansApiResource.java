@@ -12,6 +12,7 @@ import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -365,14 +366,14 @@ public class LoansApiResource {
     public String retrieveAll(@QueryParam("sqlSearch") final String sqlSearch, @QueryParam("externalId") final String externalId,
             @QueryParam("underHierarchy") final String hierarchy, @QueryParam("offset") final Integer offset,
             @QueryParam("limit") final Integer limit, @QueryParam("orderBy") final String orderBy,
-            @QueryParam("sortOrder") final String sortOrder) {
+            @QueryParam("sortOrder") final String sortOrder, @QueryParam("pretty") @DefaultValue("false") final boolean prettyOn) {
 
         context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
 
         final SearchParameters searchParameters = SearchParameters.forLoans(sqlSearch, externalId, offset, limit, orderBy, sortOrder);
 
         final Page<LoanAccountData> loanBasicDetails = this.loanReadPlatformService.retrieveAll(searchParameters);
-        return this.toApiJsonSerializer.serialize(loanBasicDetails);
+        return this.toApiJsonSerializer.serializePretty(prettyOn, loanBasicDetails);
     }
     
     @POST

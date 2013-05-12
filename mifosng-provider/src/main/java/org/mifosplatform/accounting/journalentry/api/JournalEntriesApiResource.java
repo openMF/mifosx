@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -77,7 +78,8 @@ public class JournalEntriesApiResource {
             @QueryParam("manualEntriesOnly") final Boolean onlyManualEntries, @QueryParam("fromDate") final DateParam fromDateParam,
             @QueryParam("toDate") final DateParam toDateParam, @QueryParam("transactionId") final String transactionId,
             @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit,
-            @QueryParam("orderBy") final String orderBy, @QueryParam("sortOrder") final String sortOrder) {
+            @QueryParam("orderBy") final String orderBy, @QueryParam("sortOrder") final String sortOrder,
+            @QueryParam("pretty") @DefaultValue("false") final boolean prettyOn) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermission);
 
@@ -94,7 +96,7 @@ public class JournalEntriesApiResource {
 
         Page<JournalEntryData> glJournalEntries = this.journalEntryReadPlatformService.retrieveAll(searchParameters, glAccountId,
                 onlyManualEntries, fromDate, toDate, transactionId);
-        return this.apiJsonSerializerService.serialize(glJournalEntries);
+        return this.apiJsonSerializerService.serializePretty(prettyOn, glJournalEntries);
     }
 
     @GET
