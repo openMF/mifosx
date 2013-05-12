@@ -8,13 +8,17 @@ package org.mifosplatform.portfolio.savings.service;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.MonthDay;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
+import org.mifosplatform.infrastructure.core.service.Page;
+import org.mifosplatform.infrastructure.core.service.PaginationHelper;
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
@@ -22,6 +26,7 @@ import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
 import org.mifosplatform.portfolio.group.data.GroupGeneralData;
 import org.mifosplatform.portfolio.group.service.GroupReadPlatformService;
+import org.mifosplatform.portfolio.group.service.SearchParameters;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountData;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountStatusEnumData;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountSummaryData;
@@ -34,6 +39,7 @@ import org.mifosplatform.portfolio.savings.domain.SavingsInterestCalculationType
 import org.mifosplatform.portfolio.savings.domain.SavingsInterestPostingPeriodType;
 import org.mifosplatform.portfolio.savings.domain.SavingsPeriodFrequencyType;
 import org.mifosplatform.portfolio.savings.exception.SavingsAccountNotFoundException;
+import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -51,6 +57,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     private final SavingsDropdownReadPlatformService dropdownReadPlatformService;
     private final SavingsAccountTransactionTemplateMapper transactionTemplateMapper;
     private final SavingsAccountTransactionsMapper transactionsMapper;
+    
+    private final PaginationHelper<SavingsAccountData> paginationHelper = new PaginationHelper<SavingsAccountData>();
+    private final SavingAccountMapper savingAccountMapper = new SavingAccountMapper();
 
     @Autowired
     public SavingsAccountReadPlatformServiceImpl(final PlatformSecurityContext context, final TenantAwareRoutingDataSource dataSource,
@@ -68,12 +77,54 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     }
 
     @Override
-    public Collection<SavingsAccountData> retrieveAll() {
+    public Page<SavingsAccountData> retrieveAll(final SearchParameters searchParameters) {
 
-        this.context.authenticatedUser();
-        final SavingAccountMapper mapper = new SavingAccountMapper();
-        final String sql = "select " + mapper.schema();
-        return this.jdbcTemplate.query(sql, mapper, new Object[] {});
+        final AppUser currentUser = context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+        final String hierarchySearchString = hierarchy + "%";
+
+        StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+        sqlBuilder.append(savingAccountMapper.schema());
+
+        sqlBuilder.append(" join m_office o on o.id = c.office_id");
+        sqlBuilder.append(" where o.hierarchy like ?");
+
+        final Object[] objectArray = new Object[2];
+        objectArray[0] = hierarchySearchString;
+        int arrayPos = 1;
+
+        String sqlQueryCriteria = searchParameters.getSqlSearch();
+        if (StringUtils.isNotBlank(sqlQueryCriteria)) {
+            sqlQueryCriteria = sqlQueryCriteria.replaceAll("accountNo", "sa.account_no");
+            sqlBuilder.append(" and (").append(sqlQueryCriteria).append(")");
+        }
+
+        if (StringUtils.isNotBlank(searchParameters.getExternalId())) {
+            sqlBuilder.append(" and sa.external_id = ?");
+            objectArray[arrayPos] = searchParameters.getExternalId();
+            arrayPos = arrayPos + 1;
+        }
+
+        if (searchParameters.isOrderByRequested()) {
+            sqlBuilder.append(" order by ").append(searchParameters.getOrderBy());
+
+            if (searchParameters.isSortOrderProvided()) {
+                sqlBuilder.append(' ').append(searchParameters.getSortOrder());
+            }
+        }
+
+        if (searchParameters.isLimited()) {
+            sqlBuilder.append(" limit ").append(searchParameters.getLimit());
+            if (searchParameters.isOffset()) {
+                sqlBuilder.append(" offset ").append(searchParameters.getOffset());
+            }
+        }
+
+        final Object[] finalObjectArray = Arrays.copyOf(objectArray, arrayPos);
+        final String sqlCountRows = "SELECT FOUND_ROWS()";
+        return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), finalObjectArray,
+                this.savingAccountMapper);
     }
 
     @Override
@@ -101,7 +152,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sa.status_enum as statusEnum, sa.activation_date as activationDate, ");
             sqlBuilder.append("c.id as clientId, c.display_name as clientName, ");
             sqlBuilder.append("g.id as groupId, g.display_name as groupName, ");
-            sqlBuilder.append("sp.id as productId, sp.name as productName, ");
+            sqlBuilder.append("sp.id as productId, sp.name as savingsProductName, ");
             sqlBuilder.append("sa.currency_code as currencyCode, sa.currency_digits as currencyDigits, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
@@ -157,7 +208,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final String clientName = rs.getString("clientName");
 
             final Long productId = rs.getLong("productId");
-            final String productName = rs.getString("productName");
+            final String savingsProductName = rs.getString("savingsProductName");
 
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
@@ -225,7 +276,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     totalWithdrawalFees, totalAnnualFees, totalInterestEarned, totalInterestPosted, accountBalance);
 
             return SavingsAccountData.instance(id, accountNo, externalId, status, activationDate, groupId, groupName, clientId, clientName,
-                    productId, productName, currency, nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType,
+                    productId, savingsProductName, currency, nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                     interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                     lockinPeriodFrequencyType, withdrawalFeeAmount, withdrawalFeeType, annualFeeAmount, annualFeeOnMonthDay,
                     annualFeeNextDueDate, summary);
@@ -431,7 +482,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             this.group = group;
 
             final StringBuilder sqlBuilder = new StringBuilder(400);
-            sqlBuilder.append("sp.id as productId, sp.name as productName, ");
+            sqlBuilder.append("sp.id as productId, sp.name as savingsProductName, ");
             sqlBuilder.append("sp.currency_code as currencyCode, sp.currency_digits as currencyDigits, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
@@ -462,7 +513,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         public SavingsAccountData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
 
             final Long productId = rs.getLong("productId");
-            final String productName = rs.getString("productName");
+            final String savingsProductName = rs.getString("savingsProductName");
 
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
@@ -535,7 +586,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final SavingsAccountSummaryData summary = null;
 
             return SavingsAccountData.instance(null, null, null, status, activationDate, groupId, groupName, clientId, clientName,
-                    productId, productName, currency, nominalAnnualIterestRate, interestCompoundingPeriodType, interestPostingPeriodType,
+                    productId, savingsProductName, currency, nominalAnnualIterestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                     interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                     lockinPeriodFrequencyType, withdrawalFeeAmount, withdrawalFeeType, annualFeeAmount, annualFeeOnMonthDay,
                     annualFeeNextDueDate, summary);
