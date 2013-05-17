@@ -991,4 +991,12 @@ public class CommandWrapperBuilder {
         this.href = "/accountingrules/" + accountingRuleId;
         return this;
     }
+    
+    public CommandWrapperBuilder createTenant() {
+    	this.actionName = "CREATE";
+    	this.entityName = "TENANT";
+    	this.entityId = null;
+    	this.href = "/tenants";
+    	return this;
+    }
 }

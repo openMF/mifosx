@@ -37,7 +37,9 @@ CREATE TABLE `tenants` (
   `schema_username` varchar(100) NOT NULL DEFAULT 'root',
   `schema_password` varchar(100) NOT NULL DEFAULT 'mysql',
   `auto_update` tinyint(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tenant_identifier` (`identifier`),
+  UNIQUE KEY `tenant_schema_name` (`schema_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

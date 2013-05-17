@@ -443,6 +443,14 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
 
+        } else if (wrapper.isTenantResource()) {
+        	
+        	if (wrapper.isCreate()) {
+        		handler = applicationContext.getBean("createTenantCommandHandler", NewCommandSourceHandler.class);
+        	} else {
+        		throw new UnsupportedCommandException(wrapper.commandName());
+        	}
+        	
         } else {
             throw new UnsupportedCommandException(wrapper.commandName());
         }
