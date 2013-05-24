@@ -16,15 +16,26 @@ import org.springframework.security.access.prepost.PreAuthorize;
 public interface ReadWriteNonCoreDataService {
 
     List<DatatableData> retrieveDatatableNames(String appTable);
-
+    
+    DatatableData retrieveDatatable(String datatable);
+    
     @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'REGISTER_DATATABLE')")
-    void registerDatatable(String datatable, String appTable);
+    void registerDatatable(String datatable, String appTable, String dataTableDisplayName);
 
     @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'DEREGISTER_DATATABLE')")
     void deregisterDatatable(String datatable);
 
     GenericResultsetData retrieveDataTableGenericResultSet(String datatable, Long appTableId, String order, Long id);
-
+    
+    @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'CREATE_DATATABLE')")
+    void createDatatable(JsonCommand command);
+    
+    @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'DELETE_DATATABLE')")
+    void deleteDatatable(JsonCommand command);
+    
+    @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'UPDATE_DATATABLE')")
+    void updateDatatable(JsonCommand command);
+    
     CommandProcessingResult createNewDatatableEntry(String datatable, Long appTableId, JsonCommand command);
 
     CommandProcessingResult updateDatatableEntryOneToOne(String datatable, Long appTableId, JsonCommand command);
