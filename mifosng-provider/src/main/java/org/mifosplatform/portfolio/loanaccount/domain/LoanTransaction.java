@@ -83,6 +83,10 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
     public static LoanTransaction repayment(final Money amount, final PaymentDetail paymentDetail, final LocalDate paymentDate) {
         return new LoanTransaction(null, LoanTransactionType.REPAYMENT, paymentDetail, amount.getAmount(), paymentDate);
     }
+    
+    public static LoanTransaction recoveryRepayment(final Money amount, final PaymentDetail paymentDetail, final LocalDate paymentDate) {
+        return new LoanTransaction(null, LoanTransactionType.RECOVERY_REPAYMENT, paymentDetail, amount.getAmount(), paymentDate);
+    }
 
     public static LoanTransaction repaymentAtDisbursement(final Money amount, final PaymentDetail paymentDetail, final LocalDate paymentDate) {
         return new LoanTransaction(null, LoanTransactionType.REPAYMENT_AT_DISBURSEMENT, paymentDetail, amount.getAmount(), paymentDate);
@@ -257,6 +261,14 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
     public boolean isNotRepayment() {
         return !isRepayment();
     }
+    
+    public boolean isRecoveryRepayment() {
+        return LoanTransactionType.RECOVERY_REPAYMENT.equals(getTypeOf()) && isNotReversed();
+    }
+    
+    public boolean isNotRecoveryRepayment() {
+        return !isRecoveryRepayment();
+    }
 
     public boolean isDisbursement() {
         return LoanTransactionType.DISBURSEMENT.equals(getTypeOf()) && isNotReversed();
@@ -264,10 +276,6 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
 
     public boolean isRepaymentAtDisbursement() {
         return LoanTransactionType.REPAYMENT_AT_DISBURSEMENT.equals(getTypeOf()) && isNotReversed();
-    }
-
-    public boolean isRecoveryRepayment() {
-        return LoanTransactionType.RECOVERY_REPAYMENT.equals(getTypeOf()) && isNotReversed();
     }
 
     public boolean isInterestWaiver() {

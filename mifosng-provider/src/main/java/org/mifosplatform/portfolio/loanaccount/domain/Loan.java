@@ -1526,7 +1526,7 @@ public class Loan extends AbstractPersistable<Long> {
             this.loanTransactions.add(loanTransaction);
         }
 
-        if (loanTransaction.isNotRepayment() && loanTransaction.isNotWaiver()) {
+        if (loanTransaction.isNotRepayment() && loanTransaction.isNotWaiver() && loanTransaction.isNotRecoveryRepayment()) {
             final String errorMessage = "A transaction of type repayment or waiver was expected but not received.";
             throw new InvalidLoanTransactionTypeException("transaction", "is.not.a.repayment.or.waiver.transaction", errorMessage);
         }
@@ -1555,7 +1555,8 @@ public class Loan extends AbstractPersistable<Long> {
                         loanTransaction.getAmount(loanCurrency()), totalInterestOutstandingOnLoan.getAmount());
             }
         }
-
+        
+        if(loanTransaction.isNotRecoveryRepayment()) {
         final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
                 .determineProcessor(this.transactionProcessingStrategy);
         if (isTransactionChronologicallyLatest && adjustedTransaction == null) {
@@ -1574,7 +1575,7 @@ public class Loan extends AbstractPersistable<Long> {
         updateLoanSummaryDerivedFields();
 
         doPostLoanTransactionChecks(loanTransaction.getTransactionDate(), loanLifecycleStateMachine);
-
+        }
         return changedTransactionDetail;
     }
 

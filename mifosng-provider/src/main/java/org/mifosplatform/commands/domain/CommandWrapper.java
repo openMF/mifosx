@@ -321,6 +321,10 @@ public class CommandWrapper {
     public boolean isLoanRepayment() {
         return this.actionName.equalsIgnoreCase("REPAYMENT") && this.entityName.equalsIgnoreCase("LOAN");
     }
+    
+    public boolean isLoanRecoveryRepayment() {
+        return this.actionName.equalsIgnoreCase("RECOVERYREPAYMENT") && this.entityName.equalsIgnoreCase("LOAN");
+    }
 
     public boolean isLoanRepaymentAdjustment() {
         return this.actionName.equalsIgnoreCase("ADJUST") && this.entityName.equalsIgnoreCase("LOAN");

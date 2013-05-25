@@ -286,6 +286,8 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 handler = applicationContext.getBean("undoDisbursalLoanCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isLoanRepayment()) {
                 handler = applicationContext.getBean("loanRepaymentCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isLoanRecoveryRepayment()) {
+                handler = applicationContext.getBean("loanRecoveryRepaymentCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isLoanRepaymentAdjustment()) {
                 handler = applicationContext.getBean("loanRepaymentAdjustmentCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isWaiveInterestPortionOnLoan()) {
