@@ -293,9 +293,10 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     @Transactional
     @Override
     public CommandProcessingResult makeLoanRepayment(final Long loanId, final JsonCommand command) {
-
+        
+    	final String repaymentType="DEFAULT";
         context.authenticatedUser();
-
+        
         this.loanEventApiJsonValidator.validateTransaction(command.json());
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
@@ -314,8 +315,42 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         PaymentDetail paymentDetail = paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
-        CommandProcessingResultBuilder commandProcessingResultBuilder = saveLoanRepayment(loanId, paymentDetail, transactionAmount,
-                transactionDate, noteText);
+        CommandProcessingResultBuilder commandProcessingResultBuilder = saveLoanRepayment(loanId, repaymentType, paymentDetail, 
+        		transactionAmount, transactionDate, noteText);
+
+        return commandProcessingResultBuilder.withCommandId(command.commandId()) //
+                .withLoanId(loanId) //
+                .with(changes) //
+                .build();
+    }
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult makeLoanRecoveryRepayment(final Long loanId, final JsonCommand command) {
+        
+    	final String repaymentType="RECOVERY";
+        context.authenticatedUser();
+        
+        this.loanEventApiJsonValidator.validateTransaction(command.json());
+
+        final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+
+        final Map<String, Object> changes = new LinkedHashMap<String, Object>();
+        changes.put("transactionDate", command.stringValueOfParameterNamed("transactionDate"));
+        changes.put("transactionAmount", command.stringValueOfParameterNamed("transactionAmount"));
+        changes.put("locale", command.locale());
+        changes.put("dateFormat", command.dateFormat());
+
+        final String noteText = command.stringValueOfParameterNamed("note");
+        if (StringUtils.isNotBlank(noteText)) {
+            changes.put("note", noteText);
+        }
+
+        PaymentDetail paymentDetail = paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+
+        CommandProcessingResultBuilder commandProcessingResultBuilder = saveLoanRepayment(loanId, repaymentType, paymentDetail,
+        		transactionAmount, transactionDate, noteText);
 
         return commandProcessingResultBuilder.withCommandId(command.commandId()) //
                 .withLoanId(loanId) //
@@ -323,16 +358,19 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 .build();
     }
 
-    private CommandProcessingResultBuilder saveLoanRepayment(final Long loanId, final PaymentDetail paymentDetail,
+    private CommandProcessingResultBuilder saveLoanRepayment(final Long loanId, final String repaymentType, final PaymentDetail paymentDetail,
             final BigDecimal transactionAmount, final LocalDate transactionDate, final String noteText) {
         final Loan loan = retrieveLoanBy(loanId);
 
         final List<Long> existingTransactionIds = new ArrayList<Long>();
         final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
-
+        final LoanTransaction newRepaymentTransaction;
         final Money repaymentAmount = Money.of(loan.getCurrency(), transactionAmount);
-        final LoanTransaction newRepaymentTransaction = LoanTransaction.repayment(repaymentAmount, paymentDetail, transactionDate);
-
+        if(repaymentType.equals("DEFAULT")){
+            newRepaymentTransaction = LoanTransaction.repayment(repaymentAmount, paymentDetail, transactionDate);
+        }else{
+        	newRepaymentTransaction = LoanTransaction.recoveryRepayment(repaymentAmount, paymentDetail, transactionDate);	
+        }
         final ChangedTransactionDetail changedTransactionDetail = loan.makeRepayment(newRepaymentTransaction,
                 defaultLoanLifecycleStateMachine(), existingTransactionIds, existingReversedTransactionIds);
 
@@ -368,7 +406,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     @Transactional
     @Override
     public Map<String, Object> makeLoanBulkRepayment(final CollectionSheetBulkRepaymentCommand bulkRepaymentCommand) {
-
+        
+    	final String repaymentType="DEFAULT";
         context.authenticatedUser();
         final SingleRepaymentCommand[] repaymentCommand = bulkRepaymentCommand.getLoanTransactions();
         final Map<String, Object> changes = new LinkedHashMap<String, Object>();
@@ -381,7 +420,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
              * it to null for now
              ***/
             PaymentDetail paymentDetail = null;
-            saveLoanRepayment(singleLoanRepaymentCommand.getLoanId(), paymentDetail, singleLoanRepaymentCommand.getTransactionAmount(),
+            saveLoanRepayment(singleLoanRepaymentCommand.getLoanId(), repaymentType, paymentDetail, singleLoanRepaymentCommand.getTransactionAmount(),
                     bulkRepaymentCommand.getTransactionDate(), bulkRepaymentCommand.getNote());
             changes.put("bulkTransations", singleLoanRepaymentCommand);
         }

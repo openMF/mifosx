@@ -22,6 +22,8 @@ public interface LoanWritePlatformService {
 
     CommandProcessingResult makeLoanRepayment(Long loanId, JsonCommand command);
     
+    CommandProcessingResult makeLoanRecoveryRepayment(Long loanId, JsonCommand command);
+    
     Map<String, Object> makeLoanBulkRepayment(CollectionSheetBulkRepaymentCommand bulkRepaymentCommand);
 
     CommandProcessingResult adjustLoanTransaction(Long loanId, Long transactionId, JsonCommand command);

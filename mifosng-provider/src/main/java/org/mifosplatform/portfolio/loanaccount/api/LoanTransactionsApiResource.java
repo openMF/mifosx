@@ -136,6 +136,9 @@ public class LoanTransactionsApiResource {
         if (is(commandParam, "repayment")) {
             final CommandWrapper commandRequest = builder.loanRepaymentTransaction(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if(is(commandParam, "recoveryrepayment")) {
+            final CommandWrapper commandRequest = builder.loanRecoveryRepaymentTransaction(loanId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "waiveinterest")) {
             final CommandWrapper commandRequest = builder.waiveInterestPortionTransaction(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
