@@ -47,13 +47,23 @@ import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 @Service
 public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataService {
 
+	private final static String DATATABLE_NAME_REGEX_PATTERN = "^[a-z][a-z0-9-_]{0,48}[a-z0-9]$";
+	private final static String DATATABLE_DISPLAY_NAME_REGEX_PATTERN = "^[a-zA-Z][a-zA-Z0-9-\\s]{0,}[a-zA-Z0-9]$";
+	private final static String DATATABLE_COLUMN_NAME_REGEX_PATTERN = "^[a-zA-Z][a-zA-Z0-9-_\\s]{0,}[a-zA-Z0-9]$";
+	
     private final static Logger logger = LoggerFactory.getLogger(ReadWriteNonCoreDataServiceImpl.class);
-
+    private final static HashMap<String, String> apiTypeToMySQL = new HashMap<String, String>() {{
+    	put("String", "VARCHAR"); put("Number", "INT"); put("Decimal", "DECIMAL"); put("Date", "DATE");
+    }};
+    
     private final JdbcTemplate jdbcTemplate;
     private final DataSource dataSource;
     private final PlatformSecurityContext context;
@@ -83,12 +93,12 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         }
 
         // PERMITTED datatables
-        final String sql = "select application_table_name, registered_table_name" + " from x_registered_table " + " where exists"
+        final String sql = "select application_table_name, registered_table_name, display_name" + " from x_registered_table " + " where exists"
                 + " (select 'f'" + " from m_appuser_role ur " + " join m_role r on r.id = ur.role_id"
                 + " left join m_role_permission rp on rp.role_id = r.id" + " left join m_permission p on p.id = rp.permission_id"
                 + " where ur.appuser_id = " + context.authenticatedUser().getId()
                 + " and (p.code in ('ALL_FUNCTIONS', 'ALL_FUNCTIONS_READ') or p.code = concat('READ_', registered_table_name))) "
-                + andClause + " order by application_table_name, registered_table_name";
+                + andClause + " order by application_table_name, registered_table_name, display_name";
 
         final SqlRowSet rs = this.jdbcTemplate.queryForRowSet(sql);
 
@@ -96,11 +106,44 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         while (rs.next()) {
             final String appTableName = rs.getString("application_table_name");
             final String registeredDatatableName = rs.getString("registered_table_name");
-
-            datatables.add(DatatableData.create(appTableName, registeredDatatableName));
+            final String datatableDisplayName = rs.getString("display_name");
+            final List<ResultsetColumnHeaderData> columnHeaderData =
+            		this.genericDataService.fillResultsetColumnHeaders(registeredDatatableName);
+            
+            datatables.add(DatatableData.create(appTableName, registeredDatatableName, datatableDisplayName,
+            		columnHeaderData));
         }
 
         return datatables;
+    }
+    
+    @Override
+    public DatatableData retrieveDatatable(final String datatable) {
+    	
+        // PERMITTED datatables
+        final String sql = "select application_table_name, registered_table_name, display_name" + " from x_registered_table " + " where exists"
+                + " (select 'f'" + " from m_appuser_role ur " + " join m_role r on r.id = ur.role_id"
+                + " left join m_role_permission rp on rp.role_id = r.id" + " left join m_permission p on p.id = rp.permission_id"
+                + " where ur.appuser_id = " + context.authenticatedUser().getId()
+                + " and registered_table_name='" + datatable + "'"
+                + " and (p.code in ('ALL_FUNCTIONS', 'ALL_FUNCTIONS_READ') or p.code = concat('READ_', registered_table_name))) "
+                + " order by application_table_name, registered_table_name, display_name";
+
+        final SqlRowSet rs = this.jdbcTemplate.queryForRowSet(sql);
+
+        DatatableData datatableData = null;
+        while (rs.next()) {
+            final String appTableName = rs.getString("application_table_name");
+            final String registeredDatatableName = rs.getString("registered_table_name");
+            final String datatableDisplayName = rs.getString("display_name");
+            final List<ResultsetColumnHeaderData> columnHeaderData =
+            		this.genericDataService.fillResultsetColumnHeaders(registeredDatatableName);
+            
+            datatableData = DatatableData.create(appTableName, registeredDatatableName, datatableDisplayName,
+            		columnHeaderData);
+        }
+
+        return datatableData;
     }
 
     private void logAsErrorUnexpectedDataIntegrityException(final Exception dve) {
@@ -109,12 +152,13 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
     @Transactional
     @Override
-    public void registerDatatable(final String dataTableName, final String applicationTableName) {
+    public void registerDatatable(final String dataTableName, final String applicationTableName,
+    		final String dataTableDisplayName) {
 
         validateAppTable(applicationTableName);
 
-        final String registerDatatableSql = "insert into x_registered_table (registered_table_name, application_table_name) values ('"
-                + dataTableName + "', '" + applicationTableName + "')";
+        final String registerDatatableSql = "insert into x_registered_table (registered_table_name, application_table_name, display_name) values ('"
+                + dataTableName + "', '" + applicationTableName + "', '" + dataTableDisplayName + "')";
         
         final String createPermission = "'CREATE_" + dataTableName + "'";
         final String createPermissionChecker = "'CREATE_" + dataTableName + "_CHECKER'";
@@ -238,6 +282,324 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
             throw new PlatformDataIntegrityException("error.msg.unknown.data.integrity.issue",
                     "Unknown data integrity issue with resource.");
         }
+    }
+
+    private Boolean datatableExists(final String datatable) {
+    	
+    	String sql = "SELECT COUNT(*) FROM `x_registered_table` WHERE `registered_table_name`='" + datatable + "'";
+    	Integer rowCount = this.jdbcTemplate.queryForInt(sql);
+    	
+    	return (rowCount > 0);
+    }
+    
+    private void validateDatatableExists(final String name) {
+    	
+    	if (!datatableExists(name)) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.missing.table.name",
+    				"Table '" + name + "' does not exist.", name);
+    	}
+    }
+    
+    private void validateDatatableNotExists(final String name) {
+    	
+    	if (datatableExists(name)) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.duplicate.table.name",
+    				"Table '" + name + "' already exists.", name);
+    	}
+    }
+    
+    private void validateDatatableDisplayName(final String name) {
+    	
+    	if (name == null || name.isEmpty()) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.parameter.null.name",
+    				"Parameter 'name' must not be null.");
+    	} else if (!name.matches(DATATABLE_DISPLAY_NAME_REGEX_PATTERN)) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.parameter.invalid.name.regex",
+    				"Invalid characters in parameter 'name'.", name);
+    	}
+    }
+    
+    private void validateDatatableName(final String name) {
+    	
+    	if (name == null || name.isEmpty()) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.datatable.null.name",
+    				"Data table name must not be null.");
+    	} else if (!name.matches(DATATABLE_NAME_REGEX_PATTERN)) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.datatable.invalid.name.regex",
+    				"Invalid data table name.", name);
+    	}
+    }
+    
+    private void validateDatatableColumnName(final String name) {
+    	
+    	if (name == null || name.isEmpty()) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.parameter.null.name",
+    				"Parameter 'name' must not be null.");
+    	} else if (!name.matches(DATATABLE_COLUMN_NAME_REGEX_PATTERN)) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.parameter.invalid.name.regex",
+    				"Invalid characters in parameter 'name'.", name);
+    	} else if (name.equals("id") || name.endsWith("_id")) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.parameter.invalid.name.id",
+    				"Invalid value of parameter 'name'.", name);
+    	}
+    }
+    
+    private void validateDatatableColumnType(final String type, final Integer length) {
+    	
+    	if (type == null || type.isEmpty()) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.parameter.null.type",
+    				"Parameter 'type' must not be null.");
+    	} else if (type.equals("String") && length == null) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.parameter.null.length.string",
+    				"Parameter 'length' must be present when creating a column of type 'String'.");
+    	} else if (!apiTypeToMySQL.containsKey(type)) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.parameter.invalid.type",
+    				"Invalid value of parameter 'type'.", type);
+    	}
+    }
+    
+    private void validateDatatableColumnAfter(final String after) {
+    	
+    	if (after == null) {
+    		return;
+    	}
+    	
+    	if (after.isEmpty()) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.parameter.invalid.after",
+    				"Invalid value of parameter 'after'.");
+    	} else if (!after.matches(DATATABLE_NAME_REGEX_PATTERN)) {
+    		throw new PlatformDataIntegrityException("error.msg.datatables.parameter.invalid.after.regex",
+    				"Invalid characters in parameter 'after'.", after);
+    	}
+    }
+    
+    private String datatableDisplayNameToRegisteredName(final String datatable) {
+    	
+    	return "u_" + datatable.toLowerCase().replaceAll("\\s", "_");
+    }
+
+    private void parseDatatableColumnObjectForCreate(final JsonObject column, StringBuilder sqlBuilder) {
+    	
+    	String name = (column.has("name")) ? column.get("name").getAsString() : null;
+    	String type = (column.has("type")) ? column.get("type").getAsString() : null;
+    	Integer length = (column.has("length")) ? column.get("length").getAsInt() : null;
+    	Boolean isNull = (column.has("isNull")) ? column.get("isNull").getAsBoolean() : true;
+    	
+    	validateDatatableColumnName(name);
+    	validateDatatableColumnType(type, length);
+    	
+    	String mysqlType = apiTypeToMySQL.get(type);
+    	sqlBuilder = sqlBuilder.append("`" + name + "` " + mysqlType);
+    	
+    	if (type != null)
+    	{
+    		if (type.equals("String")) {
+    			sqlBuilder = sqlBuilder.append("(" + length + ")");
+    		} else if (type.equals("Decimal")) {
+    			sqlBuilder = sqlBuilder.append("(19,6)");
+    		}
+    	}
+    	if (isNull != null) {
+    		if (isNull) {
+    			sqlBuilder = sqlBuilder.append(" DEFAULT NULL");
+    		} else {
+    			sqlBuilder = sqlBuilder.append(" NOT NULL");
+    		}
+    	}
+    	
+    	sqlBuilder = sqlBuilder.append(", ");
+    }
+
+    @Transactional
+    @Override
+    public void createDatatable(final JsonCommand command) {
+    	
+    	context.authenticatedUser();
+    	
+    	JsonElement element = this.fromJsonHelper.parse(command.json());
+    	JsonArray columns = this.fromJsonHelper.extractJsonArrayNamed("columns", element);
+    	String datatableDisplayName = this.fromJsonHelper.extractStringNamed("datatableDisplayName", element);
+    	String datatable = datatableDisplayNameToRegisteredName(datatableDisplayName);
+    	String apptable = this.fromJsonHelper.extractStringNamed("apptableName", element);
+    	Boolean multiRow = this.fromJsonHelper.extractBooleanNamed("multiRow", element);
+    	
+    	if (multiRow == null) {
+    		multiRow = false;
+    	}
+    	
+    	validateDatatableDisplayName(datatableDisplayName);
+    	validateDatatableName(datatable);
+    	validateDatatableName(apptable);
+    	validateDatatableNotExists(datatable);
+    	
+    	String fkColumnName = apptable.substring(2) + "_id";
+    	StringBuilder sqlBuilder = new StringBuilder();
+    	sqlBuilder = sqlBuilder.append("CREATE TABLE `" + datatable + "` (");
+    	
+    	if (multiRow) {
+    		sqlBuilder = sqlBuilder
+    				.append("`id` BIGINT(20) NOT NULL AUTO_INCREMENT, ")
+    				.append("`" + fkColumnName + "` BIGINT NOT NULL, ");
+    	} else {
+    		sqlBuilder = sqlBuilder
+    				.append("`" + fkColumnName + "` BIGINT(20) NOT NULL, ");
+    	}
+    	
+    	for (JsonElement column : columns) {
+    		parseDatatableColumnObjectForCreate(column.getAsJsonObject(), sqlBuilder);
+    	}
+    	// Remove trailing comma and space
+    	sqlBuilder = sqlBuilder.delete(sqlBuilder.length() - 2, sqlBuilder.length());
+    	
+    	if (multiRow) {
+    		sqlBuilder = sqlBuilder
+    				.append(", PRIMARY KEY (`id`)")
+    				.append(", KEY `fk_" + apptable + "` (`" + fkColumnName + "`)")
+    				.append(", CONSTRAINT `fk_" + fkColumnName + "` ")
+    				.append("FOREIGN KEY (`" + fkColumnName + "`) ")
+    				.append("REFERENCES `" + apptable + "` (`id`)");
+    		
+    	} else {
+    		sqlBuilder = sqlBuilder
+    				.append(", PRIMARY KEY (`" + fkColumnName + "`)")
+    				.append(", CONSTRAINT `fk_" + fkColumnName + "` ")
+    				.append("FOREIGN KEY (`" + fkColumnName + "`) ")
+    				.append("REFERENCES `" + apptable + "` (`id`)");
+    	}
+    	
+    	sqlBuilder = sqlBuilder.append(") ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+    	this.jdbcTemplate.execute(sqlBuilder.toString());
+    	
+    	registerDatatable(datatable, apptable, datatableDisplayName);
+    }
+
+    @Transactional
+    @Override
+    public void deleteDatatable(final JsonCommand command) {
+    	
+    	context.authenticatedUser();
+    	
+    	JsonElement element = this.fromJsonHelper.parse(command.json());
+    	String datatableDisplayName = this.fromJsonHelper.extractStringNamed("datatableDisplayName", element);
+    	String datatable = datatableDisplayNameToRegisteredName(datatableDisplayName);
+    	
+    	validateDatatableName(datatable);
+    	validateDatatableExists(datatable);
+    	deregisterDatatable(datatable);
+    	
+    	String sql = "DROP TABLE `" + datatable + "`";
+    	this.jdbcTemplate.execute(sql);
+    }
+
+    private void parseDatatableColumnForUpdate(final JsonObject column, StringBuilder sqlBuilder) {
+    	
+    	String name = (column.has("name")) ? column.get("name").getAsString() : null;
+    	String newName = (column.has("newName")) ? column.get("newName").getAsString() : name;
+    	String type = (column.has("type")) ? column.get("type").getAsString() : null;
+    	Integer length = (column.has("length")) ? column.get("length").getAsInt() : null;
+    	Boolean isNull = (column.has("isNull")) ? column.get("isNull").getAsBoolean() : true;
+    	String after = (column.has("after")) ? column.get("after").getAsString() : null;
+    	
+    	validateDatatableColumnName(name);
+    	validateDatatableColumnName(newName);
+    	validateDatatableColumnType(type, length);
+    	validateDatatableColumnAfter(after);
+    	
+    	String mysqlType = apiTypeToMySQL.get(type);
+    	sqlBuilder = sqlBuilder.append(", CHANGE `" + name + "` `" + newName + "` " + mysqlType);
+    	
+    	if (type != null) {
+    		if (type.equals("String") && length != null) {
+    			sqlBuilder = sqlBuilder.append("(" + length + ")");
+    		} else if (type.equals("Decimal")) {
+    			sqlBuilder = sqlBuilder.append("(19,6)");
+    		}
+    	}
+    	if (isNull != null) {
+    		if (isNull) {
+    			sqlBuilder = sqlBuilder.append(" DEFAULT NULL");
+    		} else {
+    			sqlBuilder = sqlBuilder.append(" NOT NULL");
+    		}
+    	}
+    	if (after != null) {
+    		sqlBuilder = sqlBuilder.append(" AFTER `" + after + "`");
+    	}
+    }
+
+    private void parseDatatableColumnForAdd(final JsonObject column, StringBuilder sqlBuilder) {
+    	
+    	String name = (column.has("name")) ? column.get("name").getAsString() : null;
+    	String type = (column.has("type")) ? column.get("type").getAsString() : null;
+    	Integer length = (column.has("length")) ? column.get("length").getAsInt() : null;
+    	Boolean isNull = (column.has("isNull")) ? column.get("isNull").getAsBoolean() : true;
+    	String after = (column.has("after")) ? column.get("after").getAsString() : null;
+    	
+    	validateDatatableColumnName(name);
+    	validateDatatableColumnType(type, length);
+    	validateDatatableColumnAfter(after);
+    	
+    	String mysqlType = apiTypeToMySQL.get(type);
+    	sqlBuilder = sqlBuilder.append(", ADD `" + name + "` " + mysqlType);
+    	
+    	if (type != null) {
+    		if (type.equals("String") && length != null) {
+    			sqlBuilder = sqlBuilder.append("(" + length + ")");
+    		} else if (type.equals("Decimal")) {
+    			sqlBuilder = sqlBuilder.append("(19,6)");
+    		}
+    	}
+    	if (isNull != null) {
+    		if (isNull) {
+    			sqlBuilder = sqlBuilder.append(" DEFAULT NULL");
+    		} else {
+    			sqlBuilder = sqlBuilder.append(" NOT NULL");
+    		}
+    	}
+    	if (after != null) {
+    		sqlBuilder = sqlBuilder.append(" AFTER `" + after + "`");
+    	}
+    }
+
+	private void parseDatatableColumnForDrop(final JsonObject column, StringBuilder sqlBuilder) {
+		
+		String name = (column.has("name")) ? column.get("name").getAsString() : null;
+		
+		validateDatatableColumnName(name);
+		sqlBuilder = sqlBuilder.append(", DROP COLUMN `" + name + "`");
+	}
+
+    @Transactional
+    @Override
+    public void updateDatatable(final JsonCommand command) {
+    	
+    	context.authenticatedUser();
+    	
+    	JsonElement element = this.fromJsonHelper.parse(command.json());
+    	JsonArray changeColumns = this.fromJsonHelper.extractJsonArrayNamed("changeColumns", element);
+    	JsonArray addColumns = this.fromJsonHelper.extractJsonArrayNamed("addColumns", element);
+    	JsonArray dropColumns = this.fromJsonHelper.extractJsonArrayNamed("dropColumns", element);
+    	String datatableDisplayName = this.fromJsonHelper.extractStringNamed("datatableDisplayName", element);
+    	String datatable = datatableDisplayNameToRegisteredName(datatableDisplayName);
+    	
+    	validateDatatableName(datatable);
+    	validateDatatableExists(datatable);
+    	
+    	StringBuilder sqlBuilder = new StringBuilder("ALTER TABLE `" + datatable + "`");
+    	
+    	for (JsonElement column : changeColumns) {
+    		parseDatatableColumnForUpdate(column.getAsJsonObject(), sqlBuilder);
+    	}
+    	for (JsonElement column : addColumns) {
+    		parseDatatableColumnForAdd(column.getAsJsonObject(), sqlBuilder);
+    	}
+    	for (JsonElement column : dropColumns) {
+    		parseDatatableColumnForDrop(column.getAsJsonObject(), sqlBuilder);
+    	}
+    	
+    	// Remove the first comma, right after ALTER TABLE `datatable`
+    	sqlBuilder = sqlBuilder.deleteCharAt(sqlBuilder.indexOf(","));
+    	this.jdbcTemplate.execute(sqlBuilder.toString());
     }
 
     @Transactional
