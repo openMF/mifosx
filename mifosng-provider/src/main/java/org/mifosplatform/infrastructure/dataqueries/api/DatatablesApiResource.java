@@ -71,12 +71,54 @@ public class DatatablesApiResource {
     }
 
     @POST
+    @Path("db/")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String createDatatable(final String apiRequestBodyAsJson) {
+    	
+    	final CommandWrapper commandRequest = new CommandWrapperBuilder()
+    		.createDBDatatable(apiRequestBodyAsJson).build();
+
+    	final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+    	return this.toApiJsonSerializer.serialize(result);
+    }
+
+    @DELETE
+    @Path("db/")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String deleteDatatable(final String apiRequestBodyAsJson) {
+    	
+    	final CommandWrapper commandRequest = new CommandWrapperBuilder()
+    		.deleteDBDatatable(apiRequestBodyAsJson).build();
+
+    	final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+    	return this.toApiJsonSerializer.serialize(result);
+    }
+
+    @PUT
+    @Path("db/")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String updateDatatable(final String apiRequestBodyAsJson) {
+    	
+    	final CommandWrapper commandRequest = new CommandWrapperBuilder()
+    		.updateDBDatatable(apiRequestBodyAsJson).build();
+
+    	final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+    	return this.toApiJsonSerializer.serialize(result);
+    }
+
+    @POST
     @Path("register/{datatable}/{apptable}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String registerDatatable(@PathParam("datatable") final String datatable, @PathParam("apptable") final String apptable) {
 
-        this.readWriteNonCoreDataService.registerDatatable(datatable, apptable);
+    	// TODO : Handle dataTableDisplayName (3rd parameter) correctly.
+    	// 		  It should probably be passed as a JSON request body,
+    	//		  in order to avoid whitespace characters in the URL.
+        this.readWriteNonCoreDataService.registerDatatable(datatable, apptable, datatable);
 
         final CommandProcessingResult result = new CommandProcessingResultBuilder().withResourceIdAsString(datatable).build();
         return this.toApiJsonSerializer.serialize(result);
@@ -93,6 +135,18 @@ public class DatatablesApiResource {
         final CommandProcessingResult result = new CommandProcessingResultBuilder().withResourceIdAsString(datatable).build();
 
         return this.toApiJsonSerializer.serialize(result);
+    }
+
+    @GET
+    @Path("{datatable}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String getDatatable(@PathParam("datatable") final String datatable, @Context final UriInfo uriInfo) {
+
+        final DatatableData result = this.readWriteNonCoreDataService.retrieveDatatable(datatable);
+
+        final boolean prettyPrint = ApiParameterHelper.prettyPrint(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serializePretty(prettyPrint, result);
     }
 
     @GET
