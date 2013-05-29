@@ -31,7 +31,6 @@ public class CodeValue extends AbstractPersistable<Long> {
     @Column(name = "order_position")
     private int position;
 
-    @SuppressWarnings("unused")
     @ManyToOne
     @JoinColumn(name = "code_id", nullable = false)
     private Code code;

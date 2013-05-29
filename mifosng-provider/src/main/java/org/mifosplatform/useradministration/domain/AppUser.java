@@ -69,7 +69,6 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
-    @SuppressWarnings("unused")
     @Column(name = "firsttime_login_remaining", nullable = false)
     private boolean firstTimeLoginRemaining;
 

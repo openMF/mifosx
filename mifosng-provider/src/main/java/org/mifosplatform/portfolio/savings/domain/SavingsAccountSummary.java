@@ -27,7 +27,6 @@ public final class SavingsAccountSummary {
     @Column(name = "total_withdrawals_derived", scale = 6, precision = 19)
     private BigDecimal totalWithdrawals;
 
-    @SuppressWarnings("unused")
     @Column(name = "total_interest_earned_derived", scale = 6, precision = 19)
     private BigDecimal totalInterestEarned;
 
