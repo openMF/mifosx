@@ -37,6 +37,6 @@ public class AuditorAwareImpl implements AuditorAware<AppUser> {
     }
 
     private AppUser retrieveSuperUser() {
-        return this.userRepository.findOne(Long.valueOf("1"));
+        return this.userRepository.findOne((long) 1);
     }
 }

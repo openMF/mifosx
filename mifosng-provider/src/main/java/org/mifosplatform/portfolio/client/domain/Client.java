@@ -72,7 +72,6 @@ public final class Client extends AbstractPersistable<Long> {
     @Column(name = "fullname", length = 100)
     private String fullname;
 
-    @SuppressWarnings("unused")
     @Column(name = "display_name", length = 100, nullable = false)
     private String displayName;
 

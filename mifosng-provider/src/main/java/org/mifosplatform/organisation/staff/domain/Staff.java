@@ -31,9 +31,8 @@ public class Staff extends AbstractPersistable<Long> {
     @Column(name = "lastname", length = 50)
     private String lastname;
 
-    @SuppressWarnings("unused")
     @Column(name = "display_name", length = 100)
-    private String displayName;
+	private String displayName;
 
     // Office to which this employee belongs
     @ManyToOne

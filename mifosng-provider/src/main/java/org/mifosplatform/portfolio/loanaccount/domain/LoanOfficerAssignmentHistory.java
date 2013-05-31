@@ -25,7 +25,6 @@ import org.mifosplatform.useradministration.domain.AppUser;
 @Table(name = "m_loan_officer_assignment_history")
 public class LoanOfficerAssignmentHistory extends AbstractAuditableCustom<AppUser, Long> {
 
-    @SuppressWarnings("unused")
     @ManyToOne
     @JoinColumn(name = "loan_id", nullable = false)
     private Loan loan;

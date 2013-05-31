@@ -30,7 +30,6 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
 @Table(name = "m_loan_collateral")
 public class LoanCollateral extends AbstractPersistable<Long> {
 
-    @SuppressWarnings("unused")
     @ManyToOne(optional = false)
     @JoinColumn(name = "loan_id", nullable = false)
     private Loan loan;

@@ -35,7 +35,6 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
 @Table(name = "m_savings_account_transaction")
 public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
 
-    @SuppressWarnings("unused")
     @ManyToOne(optional = false)
     @JoinColumn(name = "savings_account_id", nullable = false)
     private SavingsAccount savingsAccount;
@@ -60,7 +59,6 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
     @Column(name = "running_balance_derived", scale = 6, precision = 19, nullable = false)
     private BigDecimal runningBalance;
 
-    @SuppressWarnings("unused")
     @Column(name = "cumulative_balance_derived", scale = 6, precision = 19, nullable = false)
     private BigDecimal cumulativeBalance;
 

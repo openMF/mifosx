@@ -27,7 +27,6 @@ import org.mifosplatform.useradministration.domain.AppUser;
         @UniqueConstraint(columnNames = { "client_id", "document_type_id" }, name = "unique_client_identifier") })
 public class ClientIdentifier extends AbstractAuditableCustom<AppUser, Long> {
 
-    @SuppressWarnings("unused")
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;

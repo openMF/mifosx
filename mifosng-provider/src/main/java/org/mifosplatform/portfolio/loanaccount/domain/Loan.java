@@ -98,7 +98,6 @@ public class Loan extends AbstractPersistable<Long> {
     @JoinColumn(name = "group_id", nullable = true)
     private Group group;
 
-    @SuppressWarnings("unused")
     @Column(name = "loan_type_enum", nullable = false)
     private Integer loanType;
     
@@ -139,27 +138,22 @@ public class Loan extends AbstractPersistable<Long> {
     @Column(name = "submittedon_date")
     private Date submittedOnDate;
 
-    @SuppressWarnings("unused")
     @ManyToOne(optional = true)
     @JoinColumn(name = "submittedon_userid", nullable = true)
     private AppUser submittedBy;
 
-    @SuppressWarnings("unused")
     @Temporal(TemporalType.DATE)
     @Column(name = "rejectedon_date")
     private Date rejectedOnDate;
 
-    @SuppressWarnings("unused")
     @ManyToOne(optional = true)
     @JoinColumn(name = "rejectedon_userid", nullable = true)
     private AppUser rejectedBy;
 
-    @SuppressWarnings("unused")
     @Temporal(TemporalType.DATE)
     @Column(name = "withdrawnon_date")
     private Date withdrawnOnDate;
 
-    @SuppressWarnings("unused")
     @ManyToOne(optional = true)
     @JoinColumn(name = "withdrawnon_userid", nullable = true)
     private AppUser withdrawnBy;
@@ -168,7 +162,6 @@ public class Loan extends AbstractPersistable<Long> {
     @Column(name = "approvedon_date")
     private Date approvedOnDate;
 
-    @SuppressWarnings("unused")
     @ManyToOne(optional = true)
     @JoinColumn(name = "approvedon_userid", nullable = true)
     private AppUser approvedBy;
@@ -181,22 +174,18 @@ public class Loan extends AbstractPersistable<Long> {
     @Column(name = "disbursedon_date")
     private Date actualDisbursementDate;
 
-    @SuppressWarnings("unused")
     @ManyToOne(optional = true)
     @JoinColumn(name = "disbursedon_userid", nullable = true)
     private AppUser disbursedBy;
 
-    @SuppressWarnings("unused")
     @Temporal(TemporalType.DATE)
     @Column(name = "closedon_date")
     private Date closedOnDate;
 
-    @SuppressWarnings("unused")
     @ManyToOne(optional = true)
     @JoinColumn(name = "closedon_userid", nullable = true)
     private AppUser closedBy;
 
-    @SuppressWarnings("unused")
     @Temporal(TemporalType.DATE)
     @Column(name = "writtenoffon_date")
     private Date writtenOffOnDate;
@@ -205,12 +194,10 @@ public class Loan extends AbstractPersistable<Long> {
     @Column(name = "rescheduledon_date")
     private Date rescheduledOnDate;
 
-    @SuppressWarnings("unused")
     @Temporal(TemporalType.DATE)
     @Column(name = "expected_maturedon_date")
     private Date expectedMaturityDate;
 
-    @SuppressWarnings("unused")
     @Temporal(TemporalType.DATE)
     @Column(name = "maturedon_date")
     private Date actualMaturityDate;
