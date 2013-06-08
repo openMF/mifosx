@@ -412,6 +412,12 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 handler = applicationContext.getBean("disassociateClientsFromGroupCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isSaveGroupCollectionSheet()) {
                 handler = applicationContext.getBean("saveGroupCollectionSheetCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isAssignRole()) {
+                handler = applicationContext.getBean("assignRoleCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUnAssignRole()) {
+                handler = applicationContext.getBean("unassignRoleCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdateAssignRole()) {
+                handler = applicationContext.getBean("updateAssignRoleCommandHandler", NewCommandSourceHandler.class);
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
@@ -457,6 +463,28 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 handler = applicationContext.getBean("updateAccountingRuleCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isDelete()) {
                 handler = applicationContext.getBean("deleteAccountingRuleCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
+
+        } else if (wrapper.isGroupRoleResource()) {
+            if (wrapper.isCreate()) {
+                handler = applicationContext.getBean("createGroupRoleCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdate()) {
+                handler = applicationContext.getBean("updateGroupRoleCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isDelete()) {
+                handler = applicationContext.getBean("deleteGroupRoleCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
+
+        } else if (wrapper.isCenterRoleResource()) {
+            if (wrapper.isCreate()) {
+                handler = applicationContext.getBean("createCenterRoleCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdate()) {
+                handler = applicationContext.getBean("updateCenterRoleCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isDelete()) {
+                handler = applicationContext.getBean("deleteCenterRoleCommandHandler", NewCommandSourceHandler.class);
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }

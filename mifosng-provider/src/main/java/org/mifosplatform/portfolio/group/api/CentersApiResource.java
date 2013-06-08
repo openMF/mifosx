@@ -210,8 +210,12 @@ public class CentersApiResource {
             final CommandWrapper commandRequest = builder.saveCenterCollectionSheet(centerId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             return this.toApiJsonSerializer.serialize(result);
-        } else {            //
-            throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "activate", "generateCollectionSheet" });
+        } /*else if (is(commandParam, "createRole")) {
+            final CommandWrapper commandRequest = builder.createCenterRole(centerId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            return this.toApiJsonSerializer.serialize(result);
+        }*/ else {            //
+            throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "activate", "generateCollectionSheet", "createRole" });
         }
 
     }
