@@ -1,14 +1,11 @@
-package org.mifosplatform.integrationtests.common;
+package org.mifosplatform.common;
+
 
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.path.json.JsonPath.from;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Random;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.conn.HttpHostConnectException;
@@ -17,6 +14,10 @@ import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.jayway.restassured.specification.ResponseSpecification;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Random;
 
 @SuppressWarnings("unchecked")
 public class Utils {
@@ -48,7 +49,7 @@ public class Utils {
     }
 
     public static <T> T performServerGet(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
-                                         final String getURL, final String jsonAttributeToGetBack) {
+            final String getURL, final String jsonAttributeToGetBack) {
         String json = given().spec(requestSpec)
                 .expect().spec(responseSpec).log().ifError()
                 .when().get(getURL).andReturn().asString();
@@ -56,7 +57,7 @@ public class Utils {
     }
 
     public static <T> T performServerPost(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
-                                          final String postURL, final String jsonBodyToSend, final String jsonAttributeToGetBack) {
+            final String postURL, final String jsonBodyToSend, final String jsonAttributeToGetBack) {
         String json = given().spec(requestSpec).body(jsonBodyToSend)
                 .expect().spec(responseSpec).log().ifError()
                 .when().post(postURL)
@@ -64,23 +65,6 @@ public class Utils {
         return (T) from(json).get(jsonAttributeToGetBack);
     }
 
-    public static <T> T performServerPut(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
-                                         final String putURL, final String jsonBodyToSend, final String jsonAttributeToGetBack) {
-        String json = given().spec(requestSpec).body(jsonBodyToSend)
-                .expect().spec(responseSpec).log().ifError()
-                .when().put(putURL)
-                .andReturn().asString();
-        return (T) from(json).get(jsonAttributeToGetBack);
-    }
-
-    public static <T> T performServerDelete(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
-                                            final String deleteURL, final String jsonAttributeToGetBack) {
-        String json = given().spec(requestSpec)
-                .expect().spec(responseSpec).log().ifError()
-                .when().delete(deleteURL)
-                .andReturn().asString();
-        return (T) from(json).get(jsonAttributeToGetBack);
-    }
 
     public static String convertDateToURLFormat(String dateToBeConvert){
         SimpleDateFormat oldFormat = new SimpleDateFormat("dd MMMMMM yyyy");
