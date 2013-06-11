@@ -13,32 +13,28 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class JpaTemplateDomainService implements TemplateDomainService{
+public class JpaTemplateDomainService implements TemplateDomainService {
 
 	@Autowired
 	private TemplateRepository templateRepository;
 	
 	@Override
 	public Template save(Template template) {
-		
 		return templateRepository.save(template);
 	}
 
 	@Override
 	public List<Template> getAll() {
-		
 		return templateRepository.findAll();
 	}
 
 	@Override
 	public Template getById(Long id) {
-		
 		return templateRepository.findOne(id);
 	}
 
 	@Override
 	public void delete(Long id) {
-		
 		templateRepository.delete(id);
 	}
 

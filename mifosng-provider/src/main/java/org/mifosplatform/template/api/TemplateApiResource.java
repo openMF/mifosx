@@ -17,11 +17,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
+<<<<<<< HEAD
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+=======
+import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
+>>>>>>> Initial user generated templates commit
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.mifosplatform.template.domain.Template;
@@ -56,11 +60,9 @@ public class TemplateApiResource {
 		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
 	}
 	
-	
 	@GET
 	@Produces({ MediaType.APPLICATION_JSON })
     public String getTemplates(@Context final UriInfo uriInfo) {
-		
 		List<Template> templates = templateService.getAll();
 		
 		final ApiRequestJsonSerializationSettings settings = 
