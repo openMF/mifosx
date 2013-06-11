@@ -33,7 +33,6 @@ public class Template extends AbstractPersistable<Long>{
     private Map<String, String> metadata;
     
     public Template(String name, String text, Map<String, String> metadata) {
-    	
     	this.name = name;
     	this.text = text;
     	this.metadata = metadata;
@@ -43,7 +42,6 @@ public class Template extends AbstractPersistable<Long>{
     }
     
     public static Template fromJson(final JsonCommand command) {
-    	
     	String name = command.stringValueOfParameterNamed("name");
     	String text = command.stringValueOfParameterNamed("text");
     	

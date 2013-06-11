@@ -56,11 +56,9 @@ public class TemplateApiResource {
 		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
 	}
 	
-	
 	@GET
 	@Produces({ MediaType.APPLICATION_JSON })
     public String getTemplates(@Context final UriInfo uriInfo) {
-		
 		List<Template> templates = templateService.getAll();
 		
 		final ApiRequestJsonSerializationSettings settings = 
