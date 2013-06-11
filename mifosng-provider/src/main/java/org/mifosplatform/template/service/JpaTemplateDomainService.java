@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class JpaTemplateDomainService implements TemplateDomainService{
+public class JpaTemplateDomainService implements TemplateDomainService {
 
 	@Autowired
 	private TemplateRepository templateRepository;
