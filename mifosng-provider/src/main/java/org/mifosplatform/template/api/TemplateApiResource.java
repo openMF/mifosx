@@ -75,7 +75,7 @@ public class TemplateApiResource {
 		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
 		this.fromApiJsonHelper = fromApiJsonHelper;
 	}
-	
+
 	@GET
 	@Produces({ MediaType.APPLICATION_JSON })
     public String getTemplates(@Context final UriInfo uriInfo) {

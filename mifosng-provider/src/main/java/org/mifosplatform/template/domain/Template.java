@@ -12,6 +12,7 @@ import javax.persistence.MapKeyColumn;
 import javax.persistence.Table;
 
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
+
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 @Entity

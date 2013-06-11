@@ -30,10 +30,8 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.google.common.reflect.TypeToken;
 
-
 @Service
 public class TemplateMergeService {
-	
 	
 	private final FromJsonHelper fromApiJsonHelper;
 	private Map<String, Object> scopes;
