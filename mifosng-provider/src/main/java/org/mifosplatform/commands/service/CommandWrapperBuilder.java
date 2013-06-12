@@ -1018,4 +1018,67 @@ public class CommandWrapperBuilder {
         this.href = "/accountingrules/" + accountingRuleId;
         return this;
     }
+
+    public CommandWrapperBuilder createGroupRole(final Long groupId) {
+        this.actionName = "CREATE";
+        this.entityName = "GROUPROLE";
+        this.groupId = groupId;
+        this.entityId = null;
+        this.href = "/grouproles/template";
+        return this;
+    }
+    
+    public CommandWrapperBuilder updateGroupRole(final Long groupRuleId, Long groupId) {
+        this.actionName = "UPDATE";
+        this.entityName = "GROUPROLE";
+        this.groupId = groupId;
+        this.entityId = groupRuleId;
+        this.href = "/grouproles/" + groupRuleId;
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteGroupRole(Long groupRuleId, Long groupId) {
+        this.actionName = "DELETE";
+        this.entityName = "GROUPROLE";
+        this.groupId = groupId;
+        this.entityId = groupRuleId;
+        this.href = "/grouproles/" + groupRuleId;
+        return this;
+    }
+
+    public CommandWrapperBuilder createCenterRole(Long centerId) {
+        this.actionName = "CREATE";
+        this.entityName = "CENTERROLE";
+        this.groupId = centerId;
+        this.entityId = null;
+        this.href = "/grouproles/template";
+        return this;
+    }
+
+    public CommandWrapperBuilder assignRole(Long groupId) {
+        this.actionName = "ASSIGNROLE";
+        this.entityName = "GROUP";
+        this.groupId = groupId;
+        this.entityId = null;
+        this.href = "/groups/"+groupId+"?command=assignRole";
+        return this;
+    }
+
+    public CommandWrapperBuilder unassignRole(Long groupId, Long roleId) {
+        this.actionName = "UNASSIGNROLE";
+        this.entityName = "GROUP";
+        this.groupId = groupId;
+        this.entityId = roleId;
+        this.href = "/groups/"+groupId+"?command=unassignRole";
+        return this;
+    }
+
+    public CommandWrapperBuilder updateAssignRole(Long groupId, Long roleId) {
+        this.actionName = "UPDATEASSIGNROLE";
+        this.entityName = "GROUP";
+        this.groupId = groupId;
+        this.entityId = roleId;
+        this.href = "/groups/"+groupId+"?command=updateAssignRole";
+        return this;
+    }
 }

@@ -531,4 +531,24 @@ public class CommandWrapper {
 	public boolean isAccountingRuleResource() {
 		return this.entityName.equalsIgnoreCase("ACCOUNTINGRULE");
 	}
+
+    public boolean isGroupRoleResource() {
+        return this.entityName.equalsIgnoreCase("GROUPROLE");
+    }
+
+    public boolean isCenterRoleResource() {
+        return this.entityName.equalsIgnoreCase("CENTERROLE");
+    }
+
+    public boolean isAssignRole() {
+        return this.entityName.equalsIgnoreCase("GROUP") && this.actionName.equalsIgnoreCase("ASSIGNROLE");
+    }
+
+    public boolean isUnAssignRole() {
+        return this.entityName.equalsIgnoreCase("GROUP") && this.actionName.equalsIgnoreCase("UNASSIGNROLE");
+    }
+    
+    public boolean isUpdateAssignRole() {
+        return this.entityName.equalsIgnoreCase("GROUP") && this.actionName.equalsIgnoreCase("UPDATEASSIGNROLE");
+    }
 }
