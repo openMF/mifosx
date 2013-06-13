@@ -186,11 +186,14 @@ public class ClientsApiResource {
         if (is(commandParam, "activate")) {
             final CommandWrapper commandRequest = builder.activateClient(clientId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "unassignStaff")) {
+            final CommandWrapper commandRequest = builder.unassignClientStaff(clientId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            return this.toApiJsonSerializer.serialize(result);
         }
 
         if (result == null) {
-            //
-            throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "activate" });
+            throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "activate", "unassignStaff" });
         }
 
         return this.toApiJsonSerializer.serialize(result);
