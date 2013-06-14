@@ -78,5 +78,4 @@ public class CommandProcessingResultBuilder {
         this.transactionId = withTransactionId;
         return this;
     }
-
 }

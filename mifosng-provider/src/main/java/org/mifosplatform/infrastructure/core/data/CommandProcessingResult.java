@@ -82,8 +82,7 @@ public class CommandProcessingResult {
     }
 
     private CommandProcessingResult(final Long commandId, final Long officeId, final Long groupId, final Long clientId, final Long loanId,
-            final Long savingsId, final String resourceIdentifier, final Long resourceId, final String transactionId,
-            final Map<String, Object> changesOnly) {
+            final Long savingsId, final String resourceIdentifier, final Long resourceId, final String transactionId, final Map<String, Object> changesOnly) {
         this.commandId = commandId;
         this.officeId = officeId;
         this.groupId = groupId;
