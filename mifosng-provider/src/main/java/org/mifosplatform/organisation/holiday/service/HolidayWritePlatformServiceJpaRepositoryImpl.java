@@ -82,21 +82,15 @@ public class HolidayWritePlatformServiceJpaRepositoryImpl implements HolidayWrit
 
             this.holidayRepository.save(holiday);
 
-            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(holiday.getId()).build();
+            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(holiday.getId())
+                    .build();
         } catch (final DataIntegrityViolationException dve) {
-            handleDataIntegrityIssues(command, dve);
+            handleDataIntegrityIssues(dve);
             return CommandProcessingResult.empty();
         }
     }
 
-    private void handleDataIntegrityIssues(final JsonCommand command, final DataIntegrityViolationException dve) {
-        final Throwable realCause = dve.getMostSpecificCause();
-        if (realCause.getMessage().contains("holiday_name")) {
-            final String name = command.stringValueOfParameterNamed("name");
-            throw new PlatformDataIntegrityException("error.msg.holiday.duplicate.name", "Holiday with name `" + name + "` already exists",
-                    "name", name);
-        }
-
+    private void handleDataIntegrityIssues(final DataIntegrityViolationException dve) {
         logger.error(dve.getMessage(), dve);
         throw new PlatformDataIntegrityException("error.msg.office.unknown.data.integrity.issue",
                 "Unknown data integrity issue with resource.");
