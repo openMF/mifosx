@@ -21,6 +21,7 @@ import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.mifosplatform.infrastructure.security.exception.NoAuthorizationException;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.office.domain.OfficeRepository;
@@ -216,6 +217,10 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             final Group groupForUpdate = this.groupRepository.findOneWithNotFoundDetection(groupId);
             final Long officeId = groupForUpdate.officeId();
 
+            if (!officeId.equals(this.context.authenticatedUser().getOffice().getId())) {
+                throw new NoAuthorizationException("The current user don't have any permissions to update this "+ groupingType.getValue());
+            }
+            
             final Map<String, Object> actualChanges = groupForUpdate.update(command);
 
             if (actualChanges.containsKey(GroupingTypesApiConstants.staffIdParamName)) {
