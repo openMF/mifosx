@@ -42,7 +42,7 @@ public final class CalculateLoanScheduleQueryFromApiJsonHelper {
             "loanTermFrequencyType", "repaymentFrequencyType", "interestRateFrequencyType", "amortizationType", "interestType",
             "interestCalculationPeriodType", "expectedDisbursementDate", "repaymentsStartingFromDate", "graceOnPrincipalPayment",
             "graceOnInterestPayment", "graceOnInterestCharged", "interestChargedFromDate", "submittedOnDate", "submittedOnNote", "locale",
-            "dateFormat", "charges", "collateral"));
+            "dateFormat", "charges", "collateral", "syncDisbursementWithMeeting", "syncRepaymentsWithMeeting"));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -179,10 +179,45 @@ public final class CalculateLoanScheduleQueryFromApiJsonHelper {
                 }
             }
         }
-
+        
+        validateSyncDisbursementAndSyncRepayments(baseDataValidator, element);
+                
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
                 "Validation errors exist.", dataValidationErrors); }
     }
+    
+    //FIXME: AA - Duplicate method in LoanApplicationCommandFromApiJsonHelper class
+    private void validateSyncDisbursementAndSyncRepayments(
+			final DataValidatorBuilder baseDataValidator,
+			final JsonElement element) {
+		boolean meetingIdRequired = false;
+        //validate syncDisbursement
+        final String syncDisbursementParameterName = "syncDisbursementWithMeeting";
+        if (fromApiJsonHelper.parameterExists(syncDisbursementParameterName, element)) {
+        	final Boolean syncDisbursement = fromApiJsonHelper.extractBooleanNamed(syncDisbursementParameterName, element);
+        	if(syncDisbursement == null){
+        		baseDataValidator.reset().parameter(syncDisbursementParameterName).value(syncDisbursement).trueOrFalseRequired(false);
+        	}else if(syncDisbursement.booleanValue()) {
+        		meetingIdRequired = true;
+        	}
+        }
+      //validate syncRepayments
+        final String syncRepaymentsParameterName = "syncRepaymentsWithMeeting";
+        if (fromApiJsonHelper.parameterExists(syncRepaymentsParameterName, element)) {
+        	final Boolean syncRepayments = fromApiJsonHelper.extractBooleanNamed(syncRepaymentsParameterName, element);
+        	if(syncRepayments == null){
+        		baseDataValidator.reset().parameter(syncRepaymentsParameterName).value(syncRepayments).trueOrFalseRequired(false);
+        	}else if(syncRepayments.booleanValue()) {
+        		meetingIdRequired = true;
+        	}
+        }
+        if(meetingIdRequired){
+        	final String calendarIdParameterName = "calendarId";
+        	final Long calendarId = fromApiJsonHelper.extractLongNamed(calendarIdParameterName, element);
+	        baseDataValidator.reset().parameter(calendarIdParameterName).value(calendarId).notNull().integerGreaterThanZero();
+        }
+	}
+
 
     private void validateSelectedPeriodFrequencyTypeIsTheSame(final List<ApiParameterError> dataValidationErrors,
             final Integer loanTermFrequency, final Integer loanTermFrequencyType, final Integer numberOfRepayments,
