@@ -442,7 +442,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " la.fee_charges_overdue_derived as feeChargesOverdue,"
                     + " la.penalty_charges_overdue_derived as penaltyChargesOverdue,"
                     + " la.total_overdue_derived as totalOverdue,"
-                    + " la.overdue_since_date_derived as overdueSinceDate"
+                    + " la.overdue_since_date_derived as overdueSinceDate,"
+                    + " l.sync_disbursement_with_meeting as syncDisbursementWithMeeting,"
+                    + " l.sync_repayments_with_meeting as syncRepaymentsWithMeeting"
                     + " from m_loan l" //
                     + " join m_product_loan lp on lp.id = l.product_id" //
                     + " join m_currency rc on rc.`code` = l.currency_code" //
@@ -584,6 +586,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final LocalDate expectedFirstRepaymentOnDate = JdbcSupport.getLocalDate(rs, "expectedFirstRepaymentOnDate");
             final LocalDate interestChargedFromDate = JdbcSupport.getLocalDate(rs, "interestChargedFromDate");
 
+            final Boolean syncDisbursementWithMeeting = rs.getBoolean("syncDisbursementWithMeeting");
+            final Boolean syncRepaymentsWithMeeting = rs.getBoolean("syncRepaymentsWithMeeting");
+            
             final BigDecimal feeChargesDueAtDisbursementCharged = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs,
                     "feeChargesDueAtDisbursementCharged");
             LoanSummaryData loanSummary = null;
@@ -652,7 +657,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     termPeriodFrequencyType, numberOfRepayments, repaymentEvery, repaymentFrequencyType, transactionStrategyId,
                     amortizationType, interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType,
                     interestCalculationPeriodType, expectedFirstRepaymentOnDate, graceOnPrincipalPayment, graceOnInterestPayment,
-                    graceOnInterestCharged, interestChargedFromDate, timeline, loanSummary, feeChargesDueAtDisbursementCharged);
+                    graceOnInterestCharged, interestChargedFromDate, timeline, loanSummary, feeChargesDueAtDisbursementCharged, 
+                    syncDisbursementWithMeeting, syncRepaymentsWithMeeting);
         }
     }
 
