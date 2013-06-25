@@ -118,7 +118,7 @@ public class ClientAccountSummaryCollectionData {
 
     private Integer countOf(final Integer... objects) {
         Integer count = Integer.valueOf(0);
-        for (Integer value : objects) {
+        for (final Integer value : objects) {
             if (value != null) {
                 count = count + value;
             }

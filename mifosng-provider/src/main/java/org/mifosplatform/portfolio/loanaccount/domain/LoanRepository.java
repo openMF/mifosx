@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.loanaccount.domain;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,11 +13,15 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface LoanRepository extends JpaRepository<Loan, Long>,
-		JpaSpecificationExecutor<Loan> {
-        @Query("from Loan loan where loan.client.id = :clientId and loan.group.id = :groupId")
-	List<Loan> findByClientIdAndGroupId(@Param("clientId") Long clientId, @Param("groupId") Long groupId);
-        
-        @Query("from Loan loan where loan.client.id = :clientId")
-        List<Loan> findLoanByClientId(@Param("clientId") Long clientId);
+public interface LoanRepository extends JpaRepository<Loan, Long>, JpaSpecificationExecutor<Loan> {
+
+    @Query("from Loan loan where loan.client.id = :clientId and loan.group.id = :groupId")
+    List<Loan> findByClientIdAndGroupId(@Param("clientId") Long clientId, @Param("groupId") Long groupId);
+
+    @Query("from Loan loan where loan.client.id = :clientId")
+    List<Loan> findLoanByClientId(@Param("clientId") Long clientId);
+
+    // TODO - update proper method name
+    @Query("select loan.id from Loan loan where loan.actualDisbursementDate > :disbursalDate order by loan.actualDisbursementDate")
+    List<Long> getLoansDisbursedAfter(@Param("disbursalDate") Date disbursalDate);
 }
