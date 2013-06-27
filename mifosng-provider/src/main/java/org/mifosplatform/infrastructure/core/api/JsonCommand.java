@@ -5,10 +5,12 @@
  */
 package org.mifosplatform.infrastructure.core.api;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -21,6 +23,7 @@ import org.mifosplatform.infrastructure.security.service.PlatformPasswordEncoder
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * Immutable representation of a command.
@@ -46,26 +49,27 @@ public final class JsonCommand {
     private final Long supportedEntityId;
     private final String transactionId;
     private final String url;
+    private final Long templateId;
     public static JsonCommand from(final String jsonCommand, final JsonElement parsedCommand, final FromJsonHelper fromApiJsonHelper,
             final String entityName, final Long resourceId, final Long subresourceId, final Long groupId, final Long clientId,
             final Long loanId, final Long savingsId, final Long codeId, final String supportedEntityType, final Long supportedEntityId,
-            final String transactionId, final String url) {
+            final String transactionId, final String url, final Long templateID) {
         return new JsonCommand(null, jsonCommand, parsedCommand, fromApiJsonHelper, entityName, resourceId, subresourceId, groupId,
-                clientId, loanId, savingsId, codeId, supportedEntityType, supportedEntityId, transactionId, url);
+                clientId, loanId, savingsId, codeId, supportedEntityType, supportedEntityId, transactionId, url, templateID);
     }
 
     public static JsonCommand fromExistingCommand(final Long commandId, final String jsonCommand, final JsonElement parsedCommand,
             final FromJsonHelper fromApiJsonHelper, final String entityName, final Long resourceId, final Long subresourceId,
             final String url) {
         return new JsonCommand(commandId, jsonCommand, parsedCommand, fromApiJsonHelper, entityName, resourceId, subresourceId, null, null,
-                null, null, null, null, null, null, url);
+                null, null, null, null, null, null, url, null);
     }
 
     public JsonCommand(final Long commandId, final String jsonCommand, final JsonElement parsedCommand,
             final FromJsonHelper fromApiJsonHelper, final String entityName, final Long resourceId, final Long subresourceId,
             final Long groupId, final Long clientId, final Long loanId, final Long savingsId, final Long codeId,
             final String supportedEntityType, final Long supportedEntityId, final String transactionId,
-            final String url) {
+            final String url, final Long templateId) {
         this.commandId = commandId;
         this.jsonCommand = jsonCommand;
         this.parsedCommand = parsedCommand;
@@ -82,6 +86,7 @@ public final class JsonCommand {
         this.supportedEntityId = supportedEntityId;
         this.transactionId = transactionId;
         this.url = url;
+        this.templateId = templateId;
     }
 
     public String json() {
@@ -299,6 +304,11 @@ public final class JsonCommand {
     public String stringValueOfParameterNamed(final String parameterName) {
         final String value = this.fromApiJsonHelper.extractStringNamed(parameterName, parsedCommand);
         return StringUtils.defaultIfEmpty(value, "");
+    }
+    public Map<String, String> mapValueOfParameterNamed(final String json) {
+    	final Type typeOfMap = new TypeToken<Map<String, String>>() {}.getType();
+    	final Map<String, String> value = this.fromApiJsonHelper.extractDataMap(typeOfMap, json);
+    	return value;
     }
 
     public boolean isChangeInBigDecimalParameterNamed(final String parameterName, final BigDecimal existingValue) {
