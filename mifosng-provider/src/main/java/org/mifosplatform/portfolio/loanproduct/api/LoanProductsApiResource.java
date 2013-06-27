@@ -60,15 +60,15 @@ import org.springframework.stereotype.Component;
 public class LoanProductsApiResource {
 
     private final Set<String> LOAN_PRODUCT_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("id", "name", "description", "fundId",
-            "fundName", "currency", "principal", "minPrincipal", "maxPrincipal", "numberOfRepayments", "minNumberOfRepayments",
-            "maxNumberOfRepayments", "repaymentEvery", "repaymentFrequencyType", "graceOnPrincipalPayment", "graceOnInterestPayment",
-            "graceOnInterestCharged", "interestRatePerPeriod", "minInterestRatePerPeriod", "maxInterestRatePerPeriod",
-            "interestRateFrequencyType", "annualInterestRate", "amortizationType", "interestType", "interestCalculationPeriodType",
-            "inArrearsTolerance", "transactionProcessingStrategyId", "transactionProcessingStrategyName", "charges", "accountingRule",
-            "accountingMappings", "paymentChannelToFundSourceMappings", "fundOptions", "paymentTypeOptions", "currencyOptions",
-            "repaymentFrequencyTypeOptions", "interestRateFrequencyTypeOptions", "amortizationTypeOptions", "interestTypeOptions",
-            "interestCalculationPeriodTypeOptions", "transactionProcessingStrategyOptions", "chargeOptions", "accountingOptions",
-            "accountingRuleOptions", "accountingMappingOptions"));
+            "fundName", "includeInBorrowerCycle", "currency", "principal", "minPrincipal", "maxPrincipal", "numberOfRepayments",
+            "minNumberOfRepayments", "maxNumberOfRepayments", "repaymentEvery", "repaymentFrequencyType", "graceOnPrincipalPayment",
+            "graceOnInterestPayment", "graceOnInterestCharged", "interestRatePerPeriod", "minInterestRatePerPeriod",
+            "maxInterestRatePerPeriod", "interestRateFrequencyType", "annualInterestRate", "amortizationType", "interestType",
+            "interestCalculationPeriodType", "inArrearsTolerance", "transactionProcessingStrategyId", "transactionProcessingStrategyName",
+            "charges", "accountingRule", "accountingMappings", "paymentChannelToFundSourceMappings", "fundOptions", "paymentTypeOptions",
+            "currencyOptions", "repaymentFrequencyTypeOptions", "interestRateFrequencyTypeOptions", "amortizationTypeOptions",
+            "interestTypeOptions", "interestCalculationPeriodTypeOptions", "transactionProcessingStrategyOptions", "chargeOptions",
+            "accountingOptions", "accountingRuleOptions", "accountingMappingOptions"));
 
     private final String resourceNameForPermissions = "LOANPRODUCT";
 
@@ -126,12 +126,12 @@ public class LoanProductsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveAllLoanProducts(@Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         final Collection<LoanProductData> products = this.loanProductReadPlatformService.retrieveAllLoanProducts();
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, products, LOAN_PRODUCT_DATA_PARAMETERS);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, products, this.LOAN_PRODUCT_DATA_PARAMETERS);
     }
 
     @GET
@@ -140,13 +140,13 @@ public class LoanProductsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveTemplate(@Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         LoanProductData loanProduct = this.loanProductReadPlatformService.retrieveNewLoanProductDetails();
         loanProduct = handleTemplate(loanProduct);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, loanProduct, LOAN_PRODUCT_DATA_PARAMETERS);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, loanProduct, this.LOAN_PRODUCT_DATA_PARAMETERS);
     }
 
     @GET
@@ -155,9 +155,9 @@ public class LoanProductsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveLoanProductDetails(@PathParam("productId") final Long productId, @Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
         LoanProductData loanProduct = this.loanProductReadPlatformService.retrieveLoanProduct(productId);
 
@@ -166,12 +166,13 @@ public class LoanProductsApiResource {
         Collection<ChargeToGLAccountMapper> feeToGLAccountMappings = null;
         Collection<ChargeToGLAccountMapper> penaltyToGLAccountMappings = null;
         if (loanProduct.hasAccountingEnabled()) {
-            accountingMappings = accountMappingReadPlatformService.fetchAccountMappingDetailsForLoanProduct(productId, loanProduct
+            accountingMappings = this.accountMappingReadPlatformService.fetchAccountMappingDetailsForLoanProduct(productId, loanProduct
                     .accountingRuleType().getId().intValue());
-            paymentChannelToFundSourceMappings = accountMappingReadPlatformService
+            paymentChannelToFundSourceMappings = this.accountMappingReadPlatformService
                     .fetchPaymentTypeToFundSourceMappingsForLoanProduct(productId);
-            feeToGLAccountMappings = accountMappingReadPlatformService.fetchFeeToIncomeAccountMappingsForLoanProduct(productId);
-            penaltyToGLAccountMappings = accountMappingReadPlatformService.fetchPenaltyToIncomeAccountMappingsForLoanProduct(productId);
+            feeToGLAccountMappings = this.accountMappingReadPlatformService.fetchFeeToIncomeAccountMappingsForLoanProduct(productId);
+            penaltyToGLAccountMappings = this.accountMappingReadPlatformService
+                    .fetchPenaltyToIncomeAccountMappingsForLoanProduct(productId);
             loanProduct = LoanProductData.withAccountingDetails(loanProduct, accountingMappings, paymentChannelToFundSourceMappings,
                     feeToGLAccountMappings, penaltyToGLAccountMappings);
         }
@@ -179,7 +180,7 @@ public class LoanProductsApiResource {
         if (settings.isTemplate()) {
             loanProduct = handleTemplate(loanProduct);
         }
-        return this.toApiJsonSerializer.serialize(settings, loanProduct, LOAN_PRODUCT_DATA_PARAMETERS);
+        return this.toApiJsonSerializer.serialize(settings, loanProduct, this.LOAN_PRODUCT_DATA_PARAMETERS);
     }
 
     @PUT
@@ -209,15 +210,15 @@ public class LoanProductsApiResource {
             penaltyOptions = null;
         }
 
-        final Collection<CurrencyData> currencyOptions = currencyReadPlatformService.retrieveAllowedCurrencies();
-        final List<EnumOptionData> amortizationTypeOptions = dropdownReadPlatformService.retrieveLoanAmortizationTypeOptions();
-        final List<EnumOptionData> interestTypeOptions = dropdownReadPlatformService.retrieveLoanInterestTypeOptions();
-        final List<EnumOptionData> interestCalculationPeriodTypeOptions = dropdownReadPlatformService
+        final Collection<CurrencyData> currencyOptions = this.currencyReadPlatformService.retrieveAllowedCurrencies();
+        final List<EnumOptionData> amortizationTypeOptions = this.dropdownReadPlatformService.retrieveLoanAmortizationTypeOptions();
+        final List<EnumOptionData> interestTypeOptions = this.dropdownReadPlatformService.retrieveLoanInterestTypeOptions();
+        final List<EnumOptionData> interestCalculationPeriodTypeOptions = this.dropdownReadPlatformService
                 .retrieveLoanInterestRateCalculatedInPeriodOptions();
-        final List<EnumOptionData> repaymentFrequencyTypeOptions = dropdownReadPlatformService.retrieveRepaymentFrequencyTypeOptions();
-        final List<EnumOptionData> interestRateFrequencyTypeOptions = dropdownReadPlatformService
+        final List<EnumOptionData> repaymentFrequencyTypeOptions = this.dropdownReadPlatformService.retrieveRepaymentFrequencyTypeOptions();
+        final List<EnumOptionData> interestRateFrequencyTypeOptions = this.dropdownReadPlatformService
                 .retrieveInterestRateFrequencyTypeOptions();
-        final Collection<CodeValueData> paymentTypeOptions = codeValueReadPlatformService
+        final Collection<CodeValueData> paymentTypeOptions = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode(PaymentDetailConstants.paymentTypeCodeName);
 
         Collection<FundData> fundOptions = this.fundReadPlatformService.retrieveAllFunds();
@@ -227,10 +228,11 @@ public class LoanProductsApiResource {
         final Collection<TransactionProcessingStrategyData> transactionProcessingStrategyOptions = this.dropdownReadPlatformService
                 .retreiveTransactionProcessingStrategies();
 
-        Map<String, List<GLAccountData>> accountOptions = accountingDropdownReadPlatformService
+        final Map<String, List<GLAccountData>> accountOptions = this.accountingDropdownReadPlatformService
                 .retrieveAccountMappingOptionsForLoanProducts();
 
-        List<EnumOptionData> accountingRuleTypeOptions = accountingDropdownReadPlatformService.retrieveAccountingRuleTypeOptions();
+        final List<EnumOptionData> accountingRuleTypeOptions = this.accountingDropdownReadPlatformService
+                .retrieveAccountingRuleTypeOptions();
 
         return new LoanProductData(productData, chargeOptions, penaltyOptions, paymentTypeOptions, currencyOptions,
                 amortizationTypeOptions, interestTypeOptions, interestCalculationPeriodTypeOptions, repaymentFrequencyTypeOptions,
