@@ -1291,5 +1291,4 @@ public class CommandWrapperBuilder {
         this.href = "/" + supportedEntityType + "/" + supportedEntityId + "/meetings/" + entityId + "?command=saveOrUpdateAttendance";
         return this;
     }
-    
 }

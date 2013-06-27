@@ -48,7 +48,6 @@ public class TemplateApiResource {
 			new HashSet<String>(Arrays.asList("id", "name", "text"));
 	
 	private final String resourceNameForPermission = "TEMPLATE";
-	
 	private final DefaultToApiJsonSerializer<Template> toApiJsonSerializer;
 	private final ApiRequestParameterHelper apiRequestParameterHelper;
 	private final FromJsonHelper fromApiJsonHelper;
