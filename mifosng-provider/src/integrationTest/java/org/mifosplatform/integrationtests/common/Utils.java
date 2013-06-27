@@ -6,11 +6,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-<<<<<<< HEAD
-=======
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
->>>>>>> Added metadata to templates for resource matching and adjusted RESTful API
 import java.util.Random;
 
 import org.apache.commons.lang.StringUtils;

@@ -62,7 +62,7 @@ public class CommandWrapper {
     public CommandWrapper(final Long officeId, final Long groupId, final Long clientId, final Long loanId, final Long savingsId,
             final String actionName, final String entityName, final Long entityId, final Long subentityId, final Long codeId,
             final String supportedEntityType, final Long supportedEntityId, final String href, final String json,
-            final String transactionId, final Long productId, Long tempalteId) {
+            final String transactionId, final Long productId, Long templateId) {
         this.commandId = null;
         this.officeId = officeId;
         this.groupId = groupId;
@@ -81,7 +81,7 @@ public class CommandWrapper {
         this.json = json;
         this.transactionId = transactionId;
         this.productId = productId;
-        this.templateId = tempalteId;
+        this.templateId = templateId;
     }
 
     public Long commandId() {
