@@ -24,11 +24,12 @@ public class CommandWrapperBuilder {
     private String transactionId;
     private String supportedEntityType;
     private Long supportedEntityId;
+    private Long templateId;
 
     public CommandWrapper build() {
         return new CommandWrapper(this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId, this.actionName,
                 this.entityName, this.entityId, this.subentityId, this.codeId, this.supportedEntityType, this.supportedEntityId, this.href,
-                this.json, this.transactionId);
+                this.json, this.transactionId, this.templateId);
     }
 
     public CommandWrapperBuilder withLoanId(final Long withLoanId) {
@@ -1016,6 +1017,33 @@ public class CommandWrapperBuilder {
         this.entityName = "ACCOUNTINGRULE";
         this.entityId = accountingRuleId;
         this.href = "/accountingrules/" + accountingRuleId;
+        return this;
+    }
+    
+    public CommandWrapperBuilder createTemplate() {
+        this.actionName = "CREATE";
+        this.entityName = "TEMPLATE";
+        this.entityId = null;
+        this.templateId = null;
+        this.href = "/templates";
+        return this;
+    }
+    
+    public CommandWrapperBuilder updateTemplate(final Long templateId) {
+        this.actionName = "UPDATE";
+        this.entityName = "TEMPLATE";
+        this.entityId = templateId;
+        this.templateId = templateId;
+        this.href = "/templates/" + templateId;
+        return this;
+    }
+    
+    public CommandWrapperBuilder deleteTemplate(final Long templateId) {
+        this.actionName = "DELETE";
+        this.entityName = "TEMPLATE";
+        this.entityId = templateId;
+        this.templateId = templateId;
+        this.href = "/templates/" + templateId;
         return this;
     }
 }
