@@ -17,7 +17,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
+import org.mifosplatform.commands.domain.CommandWrapper;
+import org.mifosplatform.commands.service.CommandWrapperBuilder;
+import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
+import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.mifosplatform.template.domain.Template;
@@ -34,19 +38,30 @@ public class TemplateApiResource {
 	private final Set<String> RESPONSE_DATA_PARAMETERS = 
 			new HashSet<String>(Arrays.asList("id", "name", "text"));
 	
+	private final DefaultToApiJsonSerializer<Template> toApiJsonSerializer;
+	private final ApiRequestParameterHelper apiRequestParameterHelper;
+	private final TemplateDomainService templateService;
+    private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
+
 	@Autowired
-	private DefaultToApiJsonSerializer<Template> toApiJsonSerializer;
-	@Autowired
-	private ApiRequestParameterHelper apiRequestParameterHelper;
-	@Autowired
-	private TemplateDomainService templateDomainService;
+	public TemplateApiResource(
+			DefaultToApiJsonSerializer<Template> toApiJsonSerializer, 
+			ApiRequestParameterHelper apiRequestParameterHelper, 
+			TemplateDomainService templateService,
+			PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService) {
+		
+		this.toApiJsonSerializer = toApiJsonSerializer;
+		this.apiRequestParameterHelper = apiRequestParameterHelper;
+		this.templateService = templateService;
+		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
+	}
 	
 	
 	@GET
 	@Produces({ MediaType.APPLICATION_JSON })
     public String getTemplates(@Context final UriInfo uriInfo) {
 		
-		List<Template> templates = templateDomainService.getAll();
+		List<Template> templates = templateService.getAll();
 		
 		final ApiRequestJsonSerializationSettings settings = 
 				apiRequestParameterHelper.process(uriInfo.getQueryParameters());
@@ -56,15 +71,15 @@ public class TemplateApiResource {
 	
 	@GET
 	@Path("{templateId}")
-	@Produces({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
     public String getTemplate(@PathParam("templateId") final Long templateId, 
     		@Context final UriInfo uriInfo) {
 		
-		Template template = templateDomainService.getById(templateId);
+		Template template = templateService.getById(templateId);
 		
 		final ApiRequestJsonSerializationSettings settings = 
 				apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-		return toApiJsonSerializer.serialize(
+		return this.toApiJsonSerializer.serialize(
 				settings, template, RESPONSE_DATA_PARAMETERS);
     }
 	
@@ -73,29 +88,46 @@ public class TemplateApiResource {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
     public String saveTemplate(@PathParam("templateId") final Long templateId, 
-    		@Context final UriInfo uriInfo) {
+    		final String apiRequestBodyAsJson) {
 		
-		throw new UnsupportedOperationException();
+		final CommandWrapper commandRequest = new CommandWrapperBuilder()
+		 		.updateTemplate(templateId).withJson(apiRequestBodyAsJson)
+	            .build();
+
+	    final CommandProcessingResult result = this.commandsSourceWritePlatformService.
+	    		logCommandSource(commandRequest);
+
+        return this.toApiJsonSerializer.serialize(result);
     }
 	
 	@DELETE
 	@Path("{templateId}")
-    public String deleteTemplate(@PathParam("templateId") final Long templateId, 
-    		@Context final UriInfo uriInfo) {
+	@Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String deleteTemplate(@PathParam("templateId") final Long templateId) {
 		
-		templateDomainService.delete(templateId);
-		
-		return getTemplates(uriInfo);
+		final CommandWrapper commandRequest = 
+				new CommandWrapperBuilder().deleteTemplate(templateId).build();
+
+		final CommandProcessingResult result = 
+				this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
+		return this.toApiJsonSerializer.serialize(result);
     }
 	
 	@POST
-	@Path("{templateId}")
-	@Produces(MediaType.TEXT_HTML)
-    public String mergeTemplate(@PathParam("templateId") final Long templateId, 
-    		final String apiRequestBodyAsJson, @Context final UriInfo uriInfo) {
+	@Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String mergeTemplate(final String apiRequestBodyAsJson) {
 		
-		// TODO: load template and merge data from json
-		
-		throw new UnsupportedOperationException();
+		final CommandWrapper commandRequest = new CommandWrapperBuilder()
+						 			.createTemplate()
+						 			.withJson(apiRequestBodyAsJson)
+						 			.build();
+
+		final CommandProcessingResult result = 
+				this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
+ 		return this.toApiJsonSerializer.serialize(result);
     }
 }

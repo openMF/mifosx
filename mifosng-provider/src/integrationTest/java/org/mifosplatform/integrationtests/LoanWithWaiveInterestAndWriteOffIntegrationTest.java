@@ -21,6 +21,7 @@ import com.jayway.restassured.specification.ResponseSpecification;
 * Client Loan Integration Test for checking Loan Disbursement with Waive
 * Interest and Write-Off.
 */
+
 @SuppressWarnings({ "rawtypes" })
 public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
 
