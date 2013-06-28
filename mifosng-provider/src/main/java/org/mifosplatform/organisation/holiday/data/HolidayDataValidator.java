@@ -54,6 +54,9 @@ public class HolidayDataValidator {
 
         final LocalDate toDate = this.fromApiJsonHelper.extractLocalDateNamed(HolidayApiConstants.toDate, element);
         baseDataValidator.reset().parameter(HolidayApiConstants.toDate).value(toDate).notNull();
+        
+        final LocalDate alternativeWorkingDate = this.fromApiJsonHelper.extractLocalDateNamed(HolidayApiConstants.alternativeWorkingDate, element);
+        baseDataValidator.reset().parameter(HolidayApiConstants.alternativeWorkingDate).value(alternativeWorkingDate).notNull();
 
         Set<Long> offices = null;
         final JsonObject topLevelJsonElement = element.getAsJsonObject();
