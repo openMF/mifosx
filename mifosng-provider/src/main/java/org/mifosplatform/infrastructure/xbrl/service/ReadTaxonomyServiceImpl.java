@@ -47,8 +47,9 @@ public class ReadTaxonomyServiceImpl implements ReadTaxonomyService {
 
 	@Override
 	public List<TaxonomyData> retrieveAllTaxonomyMapping() {
-		// TODO Auto-generated method stub
-		return null;
+		final TaxonomyMapper rm = new TaxonomyMapper();
+		String sql = "select " + rm.schema();
+		return this.jdbcTemplate.query(sql, rm);
 	}
 
 }

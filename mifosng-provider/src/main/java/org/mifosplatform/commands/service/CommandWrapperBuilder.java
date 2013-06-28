@@ -1018,4 +1018,12 @@ public class CommandWrapperBuilder {
         this.href = "/accountingrules/" + accountingRuleId;
         return this;
     }
+    
+    public CommandWrapperBuilder updateTaxonomyMapping() {
+        this.actionName = "UPDATE";
+        this.entityName = "TAXONOMY";
+        this.entityId = null;
+        this.href = "/taxonomy/";
+        return this;
+    }
 }
