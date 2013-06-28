@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.xbrl.data.TaxonomyData;
-import org.mifosplatform.infrastructure.xbrl.domain.Unit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -24,8 +23,8 @@ public class ReadTaxonomyServiceImpl implements ReadTaxonomyService {
 	private static final class TaxonomyMapper implements RowMapper<TaxonomyData> {
 
 		public String schema() {
-			return "tx.id as id, name as name, namespace as namespace, dimension as dimension, unit as unit, description as description"
-					+ "mapping as mapping"
+			return "tx.id as id, name as name, namespace as namespace, dimension as dimension, description as description, "
+					+ "mapping as mapping "
 					+ "from m_taxonomy tx left join m_taxonomy_mapping tm on tx.id=tm.taxonomyId";
 		}
 		
@@ -36,11 +35,9 @@ public class ReadTaxonomyServiceImpl implements ReadTaxonomyService {
 			final String name = rs.getString("name");
 			final String namespace = rs.getString("namespace");
 			final String dimension = rs.getString("dimension");
-			final int unitId = rs.getInt("unit");
-			final Unit unit = Unit.fromId(unitId);
 			final String desc = rs.getString("description");
 			final String mapping = rs.getString("mapping");
-			return new TaxonomyData(id,name,namespace,dimension,unit,desc,mapping);
+			return new TaxonomyData(id,name,namespace,dimension,desc,mapping);
 		}
 		
 	}

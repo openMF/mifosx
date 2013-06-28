@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 
 @Path("/taxonomy")
 @Component
-@Scope("/singleton")
+@Scope("singleton")
 public class TaxonomyApiResource {
 
 	private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(
