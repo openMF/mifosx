@@ -83,7 +83,7 @@ public final class LoanProductDataValidator {
         }
         
         final Boolean includeInBorrowerCycle = fromApiJsonHelper.extractBooleanNamed("includeInBorrowerCycle", element);
-        baseDataValidator.reset().parameter("includeInBorrowerCycle").value(includeInBorrowerCycle).notNull();
+        baseDataValidator.reset().parameter("includeInBorrowerCycle").value(includeInBorrowerCycle).ignoreIfNull().validateStringFor("TRUE"+DataValidatorBuilder.VALID_INPUT_SEPERATOR+"FALSE");
 
         // terms
         final String currencyCode = fromApiJsonHelper.extractStringNamed("currencyCode", element);
@@ -318,6 +318,11 @@ public final class LoanProductDataValidator {
         if (fromApiJsonHelper.parameterExists("fundId", element)) {
             final Long fundId = fromApiJsonHelper.extractLongNamed("fundId", element);
             baseDataValidator.reset().parameter("fundId").value(fundId).ignoreIfNull().integerGreaterThanZero();
+        }
+        
+        if (fromApiJsonHelper.parameterExists("includeInBorrowerCycle", element)) {
+            final Boolean includeInBorrowerCycle = fromApiJsonHelper.extractBooleanNamed("includeInBorrowerCycle", element);
+            baseDataValidator.reset().parameter("includeInBorrowerCycle").value(includeInBorrowerCycle).ignoreIfNull().validateStringFor("TRUE"+DataValidatorBuilder.VALID_INPUT_SEPERATOR+"FALSE");
         }
 
         if (fromApiJsonHelper.parameterExists("currencyCode", element)) {
