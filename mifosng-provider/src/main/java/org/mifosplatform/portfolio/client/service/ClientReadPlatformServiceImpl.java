@@ -111,7 +111,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final String extraCriteria = buildSqlStringFromClientCriteria(searchParameters);
 
         if (StringUtils.isNotBlank(extraCriteria)) {
-            sqlBuilder.append(" and (").append(extraCriteria).append(")");
+            sqlBuilder.append(" and (").append(extraCriteria.replace("(", "(c.")).append(")");
         }
 
         if (searchParameters.isOrderByRequested()) {
