@@ -146,7 +146,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         String extraCriteria = "";
         if (sqlSearch != null) {
-            extraCriteria = " and (" + sqlSearch + ")";
+            extraCriteria = " and (c." + sqlSearch + ")";
         }
 
         if (officeId != null) {
