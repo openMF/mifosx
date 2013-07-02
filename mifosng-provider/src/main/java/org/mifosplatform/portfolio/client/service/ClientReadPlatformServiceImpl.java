@@ -107,7 +107,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
         sqlBuilder.append(this.clientMapper.schema());
         sqlBuilder.append(" where o.hierarchy like ?");
-
+        //toDo Goutham.Further changes needed for this query.Now through UI we are passing 
+        //alias table name.column_name eg: c.display_Name.
         final String extraCriteria = buildSqlStringFromClientCriteria(searchParameters);
 
         if (StringUtils.isNotBlank(extraCriteria)) {
