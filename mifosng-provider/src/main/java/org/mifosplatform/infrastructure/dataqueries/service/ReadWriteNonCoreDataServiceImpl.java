@@ -759,8 +759,12 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
             final Long id) {
 
         final String appTable = queryForApplicationTableName(dataTableName);
-        checkMainResourceExistsWithinScope(appTable, appTableId);
-
+        if(!appTable.equalsIgnoreCase("m_product_loan") && !appTable.equalsIgnoreCase("m_savings_product"))
+        {
+            checkMainResourceExistsWithinScope(appTable, appTableId);
+        }
+        
+        
         final List<ResultsetColumnHeaderData> columnHeaders = this.genericDataService.fillResultsetColumnHeaders(dataTableName);
 
         String sql = "";
@@ -907,6 +911,8 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         if (appTable.equalsIgnoreCase("m_client")) return;
         if (appTable.equalsIgnoreCase("m_group")) return;
         if (appTable.equalsIgnoreCase("m_office")) return;
+        if (appTable.equalsIgnoreCase("m_product_loan")) return;
+        if (appTable.equalsIgnoreCase("m_savings_product")) return;
 
         throw new PlatformDataIntegrityException("error.msg.invalid.application.table", "Invalid Application Table: " + appTable);
     }
@@ -1165,23 +1171,29 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                 } else {
                     paramValue = tmpDate.toString();
                 }
-            }
-
-            if (columnHeader.isIntegerDisplayType()) {
+            } else if (columnHeader.isIntegerDisplayType()) {
                 Integer tmpInt = helper.convertToInteger(paramValue, columnHeader.getColumnName(), clientApplicationLocale);
                 if (tmpInt == null) {
                     paramValue = null;
                 } else {
                     paramValue = tmpInt.toString();
                 }
-            }
-
-            if (columnHeader.isDecimalDisplayType()) {
+            } else if (columnHeader.isDecimalDisplayType()) {
                 BigDecimal tmpDecimal = helper.convertFrom(paramValue, columnHeader.getColumnName(), clientApplicationLocale);
                 if (tmpDecimal == null) {
                     paramValue = null;
                 } else {
                     paramValue = tmpDecimal.toString();
+                }
+            } else if (columnHeader.isString()) {
+                if (paramValue.length() > columnHeader.getColumnLength()) {
+                    ApiParameterError error = ApiParameterError.parameterError("validation.msg.datatable.entry.column.exceeds.maxlength",
+                            "The column `" + columnHeader.getColumnName() + "` exceeds its defined max-length ",
+                            columnHeader.getColumnName(), paramValue);
+                    List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+                    dataValidationErrors.add(error);
+                    throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                            dataValidationErrors);
                 }
             }
         }

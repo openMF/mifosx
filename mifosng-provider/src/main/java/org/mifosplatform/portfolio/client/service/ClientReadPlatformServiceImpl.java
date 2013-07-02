@@ -13,6 +13,8 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.mifosplatform.infrastructure.codes.data.CodeValueData;
+import org.mifosplatform.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
@@ -51,7 +53,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final PlatformSecurityContext context;
     private final OfficeReadPlatformService officeReadPlatformService;
     private final StaffReadPlatformService staffReadPlatformService;
-
+    private final CodeValueReadPlatformService codeValueReadPlatformService;
     // data mappers
     private final PaginationHelper<ClientData> paginationHelper = new PaginationHelper<ClientData>();
     private final ClientMapper clientMapper = new ClientMapper();
@@ -61,28 +63,37 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
     @Autowired
     public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final TenantAwareRoutingDataSource dataSource,
-            final OfficeReadPlatformService officeReadPlatformService, final StaffReadPlatformService staffReadPlatformService) {
+            final OfficeReadPlatformService officeReadPlatformService, final StaffReadPlatformService staffReadPlatformService,
+            final CodeValueReadPlatformService codeValueReadPlatformService) {
         this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.staffReadPlatformService = staffReadPlatformService;
+        this.codeValueReadPlatformService = codeValueReadPlatformService;
     }
 
     @Override
-    public ClientData retrieveTemplate(final Long officeId) {
-
+    public ClientData retrieveTemplate(final Long officeId, final boolean staffInSelectedOfficeOnly) {
         this.context.authenticatedUser();
-        
+
         final Long defaultOfficeId = defaultToUsersOfficeIfNull(officeId);
 
         final Collection<OfficeData> offices = officeReadPlatformService.retrieveAllOfficesForDropdown();
 
         Collection<StaffData> staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(defaultOfficeId);
+
+        final boolean loanOfficersOnly = false;
+        if (staffInSelectedOfficeOnly) {
+            staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(defaultOfficeId);
+        } else {
+            staffOptions = this.staffReadPlatformService.retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(defaultOfficeId,
+                    loanOfficersOnly);
+        }
         if (CollectionUtils.isEmpty(staffOptions)) {
             staffOptions = null;
         }
-        
-        return ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions);
+
+        return ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions, null);
     }
 
     @Override
@@ -509,8 +520,10 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             StringBuilder accountsSummary = new StringBuilder("l.id as id, l.account_no as accountNo, l.external_id as externalId,");
             accountsSummary.append("l.product_id as productId, lp.name as productName,")
-                    .append("l.loan_status_id as statusId, l.loan_type_enum as loanType ").append("from m_loan l ")
-                    .append("LEFT JOIN m_product_loan AS lp ON lp.id = l.product_id ");
+                    .append("l.loan_status_id as statusId, l.loan_type_enum as loanType, ")
+                    .append("lc.running_count as loanCycle ").append(" from m_loan l ")
+                    .append("LEFT JOIN m_product_loan AS lp ON lp.id = l.product_id ")
+                    .append("LEFT JOIN m_client_loan_counter lc on l.id = lc.loan_id ");
 
             return accountsSummary.toString();
         }
@@ -527,8 +540,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final LoanStatusEnumData loanStatus = LoanEnumerations.status(loanStatusId);
             final Integer loanTypeId = JdbcSupport.getInteger(rs, "loanType");
             final EnumOptionData loanType = LoanEnumerations.loanType(loanTypeId);
+            final Integer loanCycle = JdbcSupport.getInteger(rs, "loanCycle");
 
-            return new ClientAccountSummaryData(id, accountNo, externalId, productId, loanProductName, loanStatus, loanType);
+            return new ClientAccountSummaryData(id, accountNo, externalId, productId, loanProductName, loanStatus, loanType, loanCycle);
         }
     }
 
@@ -578,7 +592,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                     officeName);
         }
     }
-    
+
     private Long defaultToUsersOfficeIfNull(final Long officeId) {
         Long defaultOfficeId = officeId;
         if (defaultOfficeId == null) {
@@ -586,4 +600,12 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         }
         return defaultOfficeId;
     }
+
+    @Override
+    public ClientData retrieveAllClosureReasons(String clientClosureReason) {
+        final List<CodeValueData> closureReasons = new ArrayList<CodeValueData>(
+                codeValueReadPlatformService.retrieveCodeValuesByCode(clientClosureReason));
+        return ClientData.template(null, null, null, null, closureReasons);
+    }
+
 }
