@@ -336,6 +336,15 @@ public class CommandWrapperBuilder {
         this.href = "/clients/" + clientId + "?command=activate&template=true";
         return this;
     }
+    
+    public CommandWrapperBuilder closeClient(final Long clientId) {
+        this.actionName = "CLOSE";
+        this.entityName = "CLIENT";
+        this.entityId = clientId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "?command=close&template=true";
+        return this;
+    }
 
     public CommandWrapperBuilder updateClient(final Long clientId) {
         this.actionName = "UPDATE";
@@ -1060,6 +1069,15 @@ public class CommandWrapperBuilder {
         this.entityId = clientId;
         this.clientId = clientId;
         this.href = "/clients/" + clientId + "?command=unassignStaff";
+        return this;
+    }
+
+    public CommandWrapperBuilder assignClientStaff(Long clientId) {
+        this.actionName = "ASSIGNSTAFF";
+        this.entityName = "CLIENT";
+        this.entityId = clientId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "?command=assignStaff";
         return this;
     }
 }

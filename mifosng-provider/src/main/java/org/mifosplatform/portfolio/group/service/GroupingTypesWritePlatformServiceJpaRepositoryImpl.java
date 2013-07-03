@@ -21,7 +21,6 @@ import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
-import org.mifosplatform.infrastructure.security.exception.PermissionDeniedException;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.office.domain.OfficeRepository;
@@ -41,12 +40,12 @@ import org.mifosplatform.portfolio.group.exception.GroupHasNoStaffException;
 import org.mifosplatform.portfolio.group.exception.GroupLoanExistsException;
 import org.mifosplatform.portfolio.group.exception.GroupMustBePendingToBeDeletedException;
 import org.mifosplatform.portfolio.group.exception.InvalidGroupLevelException;
+import org.mifosplatform.portfolio.group.exception.InvalidGroupStateTransitionException;
 import org.mifosplatform.portfolio.group.serialization.GroupingTypesDataValidator;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
 import org.mifosplatform.portfolio.note.domain.Note;
 import org.mifosplatform.portfolio.note.domain.NoteRepository;
-import org.mifosplatform.useradministration.domain.AppUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,7 +104,12 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
 
             final Office groupOffice = this.officeRepository.findOne(officeId);
             if (groupOffice == null) { throw new OfficeNotFoundException(officeId); }
-
+            
+            final LocalDate activationDate = command.localDateValueOfParameterNamed(GroupingTypesApiConstants.activationDateParamName);
+            final GroupLevel groupLevel = this.groupLevelRepository.findOne(groupingType.getId());
+            
+            validateOfficeOpeningDateisAfterGroupOrCenterOpeningDate(groupOffice, groupLevel, activationDate);
+            
             Staff staff = null;
             final Long staffId = command.longValueOfParameterNamed(GroupingTypesApiConstants.staffIdParamName);
             if (staffId != null) {
@@ -117,8 +121,6 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             final Set<Group> groupMembers = assembleSetOfChildGroups(officeId, command);
 
             final boolean active = command.booleanPrimitiveValueOfParameterNamed(GroupingTypesApiConstants.activeParamName);
-            final LocalDate activationDate = command.localDateValueOfParameterNamed(GroupingTypesApiConstants.activationDateParamName);
-            GroupLevel groupLevel = this.groupLevelRepository.findOne(groupingType.getId());
             final Group newGroup = Group.newGroup(groupOffice, staff, parentGroup, groupLevel, name, externalId, active, activationDate,
                     clientMembers, groupMembers);
 
@@ -177,7 +179,8 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             final Locale locale = command.extractLocale();
             final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
             final LocalDate activationDate = command.localDateValueOfParameterNamed("activationDate");
-
+            
+            validateOfficeOpeningDateisAfterGroupOrCenterOpeningDate(group.getOffice(), group.getGroupLevel(), activationDate);
             group.activate(fmt, activationDate);
 
             this.groupRepository.saveAndFlush(group);
@@ -188,7 +191,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
                     .withGroupId(groupId) //
                     .withEntityId(groupId) //
                     .build();
-        } catch (DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             handleGroupDataIntegrityIssues(command, dve, GroupTypes.GROUP);
             return CommandProcessingResult.empty();
         }
@@ -215,22 +218,18 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
     private CommandProcessingResult updateGroupingType(final Long groupId, final JsonCommand command, final GroupTypes groupingType) {
 
         try {
-            AppUser user = this.context.authenticatedUser();
+            this.context.authenticatedUser();
             final Group groupForUpdate = this.groupRepository.findOneWithNotFoundDetection(groupId);
             final Long officeId = groupForUpdate.officeId();
             final Office groupOffice = groupForUpdate.getOffice();
             final String groupHierarchy = groupOffice.getHierarchy();
-            
-            //Don't allow other office user to update 
-            final Office loginUserOffice = this.context.authenticatedUser().getOffice();
-            final String userHierarchy = loginUserOffice.getHierarchy();
-            
-            if (!groupHierarchy.startsWith(userHierarchy)) {
-                final String code = "error.msg.not.enough.permissions.to.access.resource";
-                final String defaultMessage = "The User with id "+user.getId()+" don't have permission to update this "+ groupingType.getValue();
-                throw new PermissionDeniedException(code, defaultMessage, user.getId());
-            }
 
+            this.context.validateAccessRights(groupHierarchy);
+            
+            final LocalDate activationDate = command.localDateValueOfParameterNamed(GroupingTypesApiConstants.activationDateParamName);
+
+            validateOfficeOpeningDateisAfterGroupOrCenterOpeningDate(groupOffice, groupForUpdate.getGroupLevel(), activationDate);
+            
             final Map<String, Object> actualChanges = groupForUpdate.update(command);
 
             if (actualChanges.containsKey(GroupingTypesApiConstants.staffIdParamName)) {
@@ -243,7 +242,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
                 groupForUpdate.updateStaff(newStaff);
             }
 
-            GroupLevel groupLevel = this.groupLevelRepository.findOne(groupForUpdate.getGroupLevel().getId());
+            final GroupLevel groupLevel = this.groupLevelRepository.findOne(groupForUpdate.getGroupLevel().getId());
 
             /*
              * Ignoring parentId param, if group for update is super parent.
@@ -464,9 +463,9 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
 
         final Group groupForUpdate = this.groupRepository.findOneWithNotFoundDetection(groupId);
         final Set<Client> clientMembers = assembleSetOfClients(groupForUpdate.officeId(), command);
-        Map<String, Object> actualChanges = new HashMap<String, Object>();
+        final Map<String, Object> actualChanges = new HashMap<String, Object>();
 
-        List<String> changes = groupForUpdate.associateClients(clientMembers);
+        final List<String> changes = groupForUpdate.associateClients(clientMembers);
         if (!changes.isEmpty()) {
             actualChanges.put(GroupingTypesApiConstants.clientMembersParamName, changes);
         }
@@ -492,9 +491,9 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
 
         // check if any client has got group loans
         validateForJLGLoan(groupForUpdate.getId(), clientMembers);
-        Map<String, Object> actualChanges = new HashMap<String, Object>();
+        final Map<String, Object> actualChanges = new HashMap<String, Object>();
 
-        List<String> changes = groupForUpdate.disassociateClients(clientMembers);
+        final List<String> changes = groupForUpdate.disassociateClients(clientMembers);
         if (!changes.isEmpty()) {
             actualChanges.put(GroupingTypesApiConstants.clientMembersParamName, changes);
         }
@@ -512,13 +511,24 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
 
     @Transactional
     private void validateForJLGLoan(final Long groupId, final Set<Client> clientMembers) {
-        for (Client client : clientMembers) {
-            Collection<Loan> loans = this.loanRepository.findByClientIdAndGroupId(client.getId(), groupId);
+        for (final Client client : clientMembers) {
+            final Collection<Loan> loans = this.loanRepository.findByClientIdAndGroupId(client.getId(), groupId);
             if (!CollectionUtils.isEmpty(loans)) {
                 final String defaultUserMessage = "Client with identifier " + client.getId()
                         + " cannot be disassociated it has group loans.";
                 throw new GroupLoanExistsException("disassociate", "client.has.group.loan", defaultUserMessage, client.getId(), groupId);
             }
+        }
+    }
+
+    public void validateOfficeOpeningDateisAfterGroupOrCenterOpeningDate(final Office groupOffice, final GroupLevel groupLevel,
+            final LocalDate activationDate) {
+        if (activationDate != null && groupOffice.getOpeningLocalDate().isAfter(activationDate)) {
+            final String levelName = groupLevel.getLevelName();
+            final String errorMessage = levelName
+                    + " activation date should be greater than or equal to the parent Office's creation date " + activationDate.toString();
+            throw new InvalidGroupStateTransitionException(levelName.toLowerCase(), "activate.date",
+                    "cannot.be.before.office.activation.date", errorMessage, activationDate, groupOffice.getOpeningLocalDate());
         }
     }
 

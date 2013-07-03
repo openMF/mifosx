@@ -13,11 +13,11 @@ import java.util.Map;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.mifosplatform.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
-import org.mifosplatform.infrastructure.security.exception.PermissionDeniedException;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.office.domain.OfficeRepository;
@@ -30,14 +30,19 @@ import org.mifosplatform.portfolio.client.domain.AccountNumberGenerator;
 import org.mifosplatform.portfolio.client.domain.AccountNumberGeneratorFactory;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
+import org.mifosplatform.portfolio.client.domain.ClientStatus;
 import org.mifosplatform.portfolio.client.exception.ClientHasNoStaffException;
 import org.mifosplatform.portfolio.client.exception.ClientMustBePendingToBeDeletedException;
+import org.mifosplatform.portfolio.client.exception.InvalidClientStateTransitionException;
 import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.group.domain.GroupRepository;
 import org.mifosplatform.portfolio.group.exception.GroupNotFoundException;
+import org.mifosplatform.portfolio.loanaccount.domain.Loan;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
 import org.mifosplatform.portfolio.note.domain.Note;
 import org.mifosplatform.portfolio.note.domain.NoteRepository;
-import org.mifosplatform.useradministration.domain.AppUser;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccountRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,12 +63,17 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private final ClientDataValidator fromApiJsonDeserializer;
     private final AccountNumberGeneratorFactory accountIdentifierGeneratorFactory;
     private final StaffRepositoryWrapper staffRepository;
+    private final CodeValueRepositoryWrapper codeValueRepository;
+    private final LoanRepository loanRepository;
+    private final SavingsAccountRepository savingsRepository;
 
     @Autowired
     public ClientWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
             final ClientRepositoryWrapper clientRepository, final OfficeRepository officeRepository, final NoteRepository noteRepository,
             final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGeneratorFactory accountIdentifierGeneratorFactory,
-            final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository) {
+            final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
+            final CodeValueRepositoryWrapper codeValueRepository, final LoanRepository loanRepository,
+            final SavingsAccountRepository savingsRepository) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.officeRepository = officeRepository;
@@ -72,6 +82,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.accountIdentifierGeneratorFactory = accountIdentifierGeneratorFactory;
         this.groupRepository = groupRepository;
         this.staffRepository = staffRepository;
+        this.codeValueRepository = codeValueRepository;
+        this.loanRepository = loanRepository;
+        this.savingsRepository = savingsRepository;
     }
 
     @Transactional
@@ -142,7 +155,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             Staff staff = null;
             final Long staffId = command.longValueOfParameterNamed(ClientApiConstants.staffIdParamName);
             if (staffId != null) {
-                staff = this.staffRepository.findByOfficeWithNotFoundDetection(staffId, officeId);
+                staff = this.staffRepository.findByOfficeHierarchyWithNotFoundDetection(staffId, clientOffice.getHierarchy());
             }
 
             final Client newClient = Client.createNew(clientOffice, clientParentGroup, staff, command);
@@ -174,22 +187,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     public CommandProcessingResult updateClient(final Long clientId, final JsonCommand command) {
 
         try {
-            AppUser user = context.authenticatedUser();
+            this.context.authenticatedUser();
 
             this.fromApiJsonDeserializer.validateForUpdate(command.json());
 
             final Client clientForUpdate = this.clientRepository.findOneWithNotFoundDetection(clientId);
             final String clientHierarchy = clientForUpdate.getOffice().getHierarchy();
 
-            // Don't allow other office user to update
-            final Office loginUserOffice = user.getOffice();
-            final String userHierarchy = loginUserOffice.getHierarchy();
-
-            if (!clientHierarchy.startsWith(userHierarchy)) {
-                final String code = "error.msg.not.enough.permissions.to.access.resource";
-                final String defaultMessage = "The User with id " + user.getId() + " don't have permission to update this client";
-                throw new PermissionDeniedException(code, defaultMessage, user.getId());
-            }
+            this.context.validateAccessRights(clientHierarchy);
 
             final Map<String, Object> changes = clientForUpdate.update(command);
 
@@ -198,7 +203,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.staffIdParamName);
                 Staff newStaff = null;
                 if (newValue != null) {
-                    newStaff = this.staffRepository.findByOfficeWithNotFoundDetection(newValue, clientForUpdate.officeId());
+                    newStaff = this.staffRepository.findByOfficeHierarchyWithNotFoundDetection(newValue, clientForUpdate.getOffice()
+                            .getHierarchy());
                 }
                 clientForUpdate.updateStaff(newStaff);
             }
@@ -284,4 +290,95 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 .with(actualChanges) //
                 .build();
     }
+
+    @Override
+    public CommandProcessingResult assignClientStaff(final Long clientId, final JsonCommand command) {
+
+        this.context.authenticatedUser();
+
+        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(5);
+
+        this.fromApiJsonDeserializer.validateForAssignStaff(command.json());
+
+        final Client clientForUpdate = this.clientRepository.findOneWithNotFoundDetection(clientId);
+
+        Staff staff = null;
+        final Long staffId = command.longValueOfParameterNamed(ClientApiConstants.staffIdParamName);
+        if (staffId != null) {
+            staff = this.staffRepository.findByOfficeHierarchyWithNotFoundDetection(staffId, clientForUpdate.getOffice().getHierarchy());
+            clientForUpdate.assignStaff(staff);
+        }
+
+        this.clientRepository.saveAndFlush(clientForUpdate);
+
+        actualChanges.put(ClientApiConstants.staffIdParamName, staffId);
+
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withOfficeId(clientForUpdate.officeId()) //
+                .withEntityId(clientForUpdate.getId()) //
+                .withClientId(clientId) //
+                .with(actualChanges) //
+                .build();
+    }
+
+    @Transactional
+    @Override
+    public CommandProcessingResult closeClient(final Long clientId, final JsonCommand command) {
+        try {
+            this.fromApiJsonDeserializer.validateClose(command);
+
+            Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
+            final LocalDate closureDate = command.localDateValueOfParameterNamed(ClientApiConstants.closureDateParamName);
+            final Long closureReasonId = command.longValueOfParameterNamed(ClientApiConstants.closureReasonIdParamName);
+
+            this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_CLOSURE_REASON, closureReasonId);
+
+            if (ClientStatus.fromInt(client.getStatus()).isClosed()) {
+                final String errorMessage = "Client is alread closed.";
+                throw new InvalidClientStateTransitionException("close", "is.already.closed", errorMessage);
+            }
+
+            if (client.isNotPending() && client.getActivationLocalDate().isAfter(closureDate)) {
+                final String errorMessage = "The client closureDate cannot be before the client ActivationDate.";
+                throw new InvalidClientStateTransitionException("close", "date.cannot.before.client.actvation.date", errorMessage,
+                        closureDate, client.getActivationLocalDate());
+            }
+
+            List<Loan> clientLoans = this.loanRepository.findLoanByClientId(clientId);
+
+            for (Loan loan : clientLoans) {
+                LoanStatusMapper loanStatus = new LoanStatusMapper(loan.status().getValue());
+                if (loanStatus.isOpen()) {
+                    final String errorMessage = "Client cannot be closed because of non-closed loans.";
+                    throw new InvalidClientStateTransitionException("close", "loan.non-closed", errorMessage);
+                } else if (loanStatus.isClosed() && loan.getClosedOnDate().after(closureDate.toDate())) {
+                    final String errorMessage = "The client closureDate cannot be before the loan closedOnDate.";
+                    throw new InvalidClientStateTransitionException("close", "date.cannot.before.loan.closed.date", errorMessage,
+                            closureDate, loan.getClosedOnDate());
+                }
+            }
+            List<SavingsAccount> clientSavingAccounts = this.savingsRepository.findSavingAccountByClientId(clientId);
+
+            for (SavingsAccount saving : clientSavingAccounts) {
+                if (saving.isActive()) {
+                    final String errorMessage = "Client cannot be closed because of non-closed savings account.";
+                    throw new InvalidClientStateTransitionException("close", "non-closed.savings.account", errorMessage);
+                }
+            }
+
+            client.close(closureReasonId, closureDate.toDate());
+            this.clientRepository.saveAndFlush(client);
+
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withClientId(clientId) //
+                    .withEntityId(clientId) //
+                    .build();
+        } catch (DataIntegrityViolationException dve) {
+            handleDataIntegrityIssues(command, dve);
+            return CommandProcessingResult.empty();
+        }
+    }
+
 }
