@@ -523,7 +523,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                     .append("l.loan_status_id as statusId, l.loan_type_enum as loanType, ")
                     .append("lc.running_count as loanCycle ").append(" from m_loan l ")
                     .append("LEFT JOIN m_product_loan AS lp ON lp.id = l.product_id ")
-                    .append("LEFT JOIN m_client_loan_counter lc on l.id = lc.loan_id ");
+                    .append("LEFT JOIN m_loan_counter lc on l.id = lc.loan_id ");
 
             return accountsSummary.toString();
         }
