@@ -1,4 +1,4 @@
-package org.mifosplatform.infrastructure.xbrl.domain;
+package org.mifosplatform.xbrl.mapping.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;

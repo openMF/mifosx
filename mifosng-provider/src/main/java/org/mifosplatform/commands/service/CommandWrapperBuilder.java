@@ -1023,7 +1023,7 @@ public class CommandWrapperBuilder {
         this.actionName = "UPDATE";
         this.entityName = "TAXONOMY";
         this.entityId = null;
-        this.href = "/taxonomy/";
+        this.href = "/xbrlmapping/";
         return this;
     }
 }

@@ -1,11 +1,12 @@
-package org.mifosplatform.infrastructure.xbrl.service;
+package org.mifosplatform.xbrl.taxonomy.service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
-import org.mifosplatform.infrastructure.xbrl.data.TaxonomyData;
+import org.mifosplatform.xbrl.mapping.data.TaxonomyMappingData;
+import org.mifosplatform.xbrl.taxonomy.data.TaxonomyData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -23,9 +24,8 @@ public class ReadTaxonomyServiceImpl implements ReadTaxonomyService {
 	private static final class TaxonomyMapper implements RowMapper<TaxonomyData> {
 
 		public String schema() {
-			return "tx.id as id, name as name, namespace as namespace, dimension as dimension, description as description, "
-					+ "mapping as mapping "
-					+ "from m_taxonomy tx left join m_taxonomy_mapping tm on tx.id=tm.taxonomyId";
+			return "id, name, namespace, dimension, description "
+					+ "from m_taxonomy";
 		}
 		
 		@Override
@@ -36,17 +36,15 @@ public class ReadTaxonomyServiceImpl implements ReadTaxonomyService {
 			final String namespace = rs.getString("namespace");
 			final String dimension = rs.getString("dimension");
 			final String desc = rs.getString("description");
-			final String mapping = rs.getString("mapping");
-			return new TaxonomyData(id,name,namespace,dimension,desc,mapping);
+			return new TaxonomyData(id,name,namespace,dimension,desc);
 		}
 		
 	}
 
 	@Override
-	public List<TaxonomyData> retrieveAllTaxonomyMapping() {
+	public List<TaxonomyData> retrieveAllTaxonomy() {
 		final TaxonomyMapper rm = new TaxonomyMapper();
 		String sql = "select " + rm.schema();
 		return this.jdbcTemplate.query(sql, rm);
 	}
-
 }

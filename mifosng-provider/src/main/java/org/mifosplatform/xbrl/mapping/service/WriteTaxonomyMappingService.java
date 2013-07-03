@@ -1,9 +1,9 @@
-package org.mifosplatform.infrastructure.xbrl.service;
+package org.mifosplatform.xbrl.mapping.service;
 
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 
-public interface WriteTaxonomyService {
+public interface WriteTaxonomyMappingService {
 	
 	CommandProcessingResult updateMapping(JsonCommand command);
 }

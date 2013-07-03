@@ -1,4 +1,4 @@
-package org.mifosplatform.infrastructure.xbrl.domain;
+package org.mifosplatform.xbrl.mapping.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,14 +11,15 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
 @Table(name="m_taxonomy_mapping")
 public class TaxonomyMapping extends AbstractPersistable<Long> {
 
-	@Column(name="taxonomyId")
-	private Long taxonomyId;
+	@Column(name="identifier")
+	private String identifier;
 	
-	@Column(name="mapping")
-	private String mapping;
+	@Column(name="config")
+	private String config;
 	
 	
 	public static TaxonomyMapping fromJson(final JsonCommand command) {
 		return null;
 	}
+	
 }

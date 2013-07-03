@@ -1,4 +1,4 @@
-package org.mifosplatform.infrastructure.xbrl.domain;
+package org.mifosplatform.xbrl.mapping.domain;
 
 import java.util.HashMap;
 import java.util.Map;

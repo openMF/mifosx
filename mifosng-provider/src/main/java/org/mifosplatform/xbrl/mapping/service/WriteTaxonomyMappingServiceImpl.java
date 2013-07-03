@@ -1,32 +1,35 @@
-package org.mifosplatform.infrastructure.xbrl.service;
+package org.mifosplatform.xbrl.mapping.service;
 
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
-import org.mifosplatform.infrastructure.xbrl.domain.TaxonomyMapping;
-import org.mifosplatform.infrastructure.xbrl.domain.TaxonomyMappingRepository;
+import org.mifosplatform.xbrl.mapping.domain.TaxonomyMapping;
+import org.mifosplatform.xbrl.mapping.domain.TaxonomyMappingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class WriteTaxonomyServiceImpl implements WriteTaxonomyService {
+public class WriteTaxonomyMappingServiceImpl implements WriteTaxonomyMappingService {
 
-	private final static Logger logger = LoggerFactory.getLogger(WriteTaxonomyServiceImpl.class);
+	private final static Logger logger = LoggerFactory.getLogger(WriteTaxonomyMappingServiceImpl.class);
 	
 	private final PlatformSecurityContext context;
 	private final TaxonomyMappingRepository mappingRepository;
 	
 	
 	@Autowired
-	public WriteTaxonomyServiceImpl(final PlatformSecurityContext context,
+	public WriteTaxonomyMappingServiceImpl(final PlatformSecurityContext context,
 			final TaxonomyMappingRepository mappingRepository) {
 		this.context = context;
 		this.mappingRepository = mappingRepository;
 	}
 	
+	@Transactional
 	@Override
 	public CommandProcessingResult updateMapping(JsonCommand command) {
 		try {
@@ -34,10 +37,13 @@ public class WriteTaxonomyServiceImpl implements WriteTaxonomyService {
 			
 			final TaxonomyMapping mapping = TaxonomyMapping.fromJson(command);
 			
-		} catch (DataIntegrityViolationException dve) {
+			this.mappingRepository.saveAndFlush(mapping);
 			
+			return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(mapping.getId()).build();
+			
+		} catch (DataIntegrityViolationException dve) {
+			return CommandProcessingResult.empty();
 		}
-		return null;
 	}
 
 }

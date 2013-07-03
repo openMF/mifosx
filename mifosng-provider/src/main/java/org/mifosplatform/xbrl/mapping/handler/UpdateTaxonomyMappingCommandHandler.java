@@ -1,9 +1,9 @@
-package org.mifosplatform.infrastructure.xbrl.handler;
+package org.mifosplatform.xbrl.mapping.handler;
 
 import org.mifosplatform.commands.handler.NewCommandSourceHandler;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
-import org.mifosplatform.infrastructure.xbrl.service.WriteTaxonomyService;
+import org.mifosplatform.xbrl.mapping.service.WriteTaxonomyMappingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,11 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdateTaxonomyMappingCommandHandler implements
 		NewCommandSourceHandler {
 
-	private final WriteTaxonomyService writeTaxonomyService;
+	private final WriteTaxonomyMappingService writeTaxonomyService;
 	
 	@Autowired
 	public UpdateTaxonomyMappingCommandHandler(
-			WriteTaxonomyService writeTaxonomyService) {
+			WriteTaxonomyMappingService writeTaxonomyService) {
 		this.writeTaxonomyService = writeTaxonomyService;
 	}
 

@@ -1,4 +1,4 @@
-package org.mifosplatform.infrastructure.xbrl.api;
+package org.mifosplatform.xbrl.taxonomy.api;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -12,7 +12,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
-import org.mifosplatform.infrastructure.xbrl.data.XBRLData;
+import org.mifosplatform.xbrl.taxonomy.data.XBRLData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
