@@ -35,6 +35,8 @@ public class TaxonomyMappingApiResource {
 	private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(
 			Arrays.asList("identifier", "config"));
 	
+	private final String resourceNameForPermission = "XBRLMAPPING";
+	
 	private final PlatformSecurityContext context;
 	private final ToApiJsonSerializer<TaxonomyMappingData> toApiJsonSerializer;
 	private final ReadTaxonomyMappingService readTaxonomyMappingService;
@@ -70,7 +72,8 @@ public class TaxonomyMappingApiResource {
 	@Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
 	public String updateTaxonomyMapping(final String jsonRequestBody) {
-		final CommandWrapper commandRequest = new CommandWrapperBuilder().updateTaxonomyMapping().withJson(jsonRequestBody).build();
+		final Long mappingId = (long) 1;
+		final CommandWrapper commandRequest = new CommandWrapperBuilder().updateTaxonomyMapping(mappingId).withJson(jsonRequestBody).build();
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 

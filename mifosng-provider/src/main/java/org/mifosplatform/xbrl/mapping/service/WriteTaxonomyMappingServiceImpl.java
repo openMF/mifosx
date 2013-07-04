@@ -31,11 +31,17 @@ public class WriteTaxonomyMappingServiceImpl implements WriteTaxonomyMappingServ
 	
 	@Transactional
 	@Override
-	public CommandProcessingResult updateMapping(JsonCommand command) {
+	public CommandProcessingResult updateMapping(final Long mappingId, final JsonCommand command) {
 		try {
 			context.authenticatedUser();
 			
-			final TaxonomyMapping mapping = TaxonomyMapping.fromJson(command);
+			TaxonomyMapping mapping = this.mappingRepository.findOne(mappingId);
+			if (mapping == null) {
+				mapping = TaxonomyMapping.fromJson(command);
+			} else {
+				mapping.update(command);
+			}
+			
 			
 			this.mappingRepository.saveAndFlush(mapping);
 			

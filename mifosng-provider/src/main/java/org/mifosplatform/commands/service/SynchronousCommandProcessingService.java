@@ -461,7 +461,14 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
 
-        }else {
+        } else if (wrapper.isXBRLMappingResource()) {
+        	if (wrapper.isUpdate()) {
+        		handler = applicationContext.getBean("updateTaxonomyMappingCommandHandler", NewCommandSourceHandler.class);
+        	} else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
+        }
+        else {
             throw new UnsupportedCommandException(wrapper.commandName());
         }
 

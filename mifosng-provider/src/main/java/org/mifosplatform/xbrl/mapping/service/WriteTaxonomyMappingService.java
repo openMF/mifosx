@@ -5,5 +5,5 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 
 public interface WriteTaxonomyMappingService {
 	
-	CommandProcessingResult updateMapping(JsonCommand command);
+	CommandProcessingResult updateMapping(Long mappingId, JsonCommand command);
 }

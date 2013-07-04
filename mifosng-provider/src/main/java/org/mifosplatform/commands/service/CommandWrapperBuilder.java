@@ -1019,11 +1019,11 @@ public class CommandWrapperBuilder {
         return this;
     }
     
-    public CommandWrapperBuilder updateTaxonomyMapping() {
+    public CommandWrapperBuilder updateTaxonomyMapping(final Long mappingId) {
         this.actionName = "UPDATE";
-        this.entityName = "TAXONOMY";
-        this.entityId = null;
-        this.href = "/xbrlmapping/";
+        this.entityName = "XBRLMAPPING";
+        this.entityId = mappingId;
+        this.href = "/xbrlmapping";
         return this;
     }
 }

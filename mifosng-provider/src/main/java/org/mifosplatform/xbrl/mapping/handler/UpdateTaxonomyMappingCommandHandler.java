@@ -23,7 +23,7 @@ public class UpdateTaxonomyMappingCommandHandler implements
 	@Transactional
 	@Override
 	public CommandProcessingResult processCommand(JsonCommand command) {
-		return this.writeTaxonomyService.updateMapping(command);
+		return this.writeTaxonomyService.updateMapping(command.entityId(), command);
 	}
 
 }
