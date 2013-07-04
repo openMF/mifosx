@@ -219,7 +219,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     @Override
     public Collection<ClientData> retrieveAllForLookupByOfficeId(final Long officeId) {
 
-        final String sql = "select " + this.lookupMapper.schema() + " and c.office_id = ?";
+        final String sql = "select " + this.lookupMapper.schema() + " and c.office_id = ? and c.status_enum = 300";
 
         return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[] { officeId });
     }
