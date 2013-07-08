@@ -147,8 +147,6 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         String extraCriteria = "";
         if (sqlSearch != null) {
-            sqlSearch = sqlSearch.replaceAll(" display_name ", " c.display_name ");
-            sqlSearch = sqlSearch.replaceAll("display_name ", "c.display_name ");
             extraCriteria = " and (" + sqlSearch + ")";
         }
 
