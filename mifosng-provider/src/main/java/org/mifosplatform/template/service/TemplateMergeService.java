@@ -1,32 +1,37 @@
 package org.mifosplatform.template.service;
 
+import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.Map;
 
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.exception.ParseErrorException;
+import org.mifosplatform.template.domain.Template;
 import org.springframework.stereotype.Service;
+
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
+
 
 @Service
 public class TemplateMergeService {
-
-	VelocityEngine velocityEngine = new VelocityEngine();
-	Template template = new Template();
 	
-	public static String merge(String template) {
+	public static String compile(Template template, Map<String, Object> scopes) {
 		
-		VelocityContext context = new VelocityContext();
-		context.put("key", "Hello");
+	    MustacheFactory mf = new DefaultMustacheFactory();
+		Mustache mustache = mf.compile(new StringReader(template.getText()),
+				template.getName());
+		
+		//TODO: convert map into relevant objcets and add them to scopes map
+		Map<String, String> data = template.getMetadata();
+		
+		if(data != null) {
+			for (Map.Entry<String, String> entry: data.entrySet()) {
+				scopes.put(entry.getKey(), entry.getValue());
+			}
+		}
 		
 		StringWriter stringWriter = new StringWriter();
-		try {
-			Velocity.evaluate(context, stringWriter, "logTag", template);
-        }
-        catch( ParseErrorException parseErrorException ) {
-            System.out.println("ParseErrorException : " + parseErrorException );
-        }
+		mustache.execute(stringWriter, scopes);
 
 		return stringWriter.toString();
 	}
