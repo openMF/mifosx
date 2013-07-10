@@ -13,7 +13,7 @@ import javax.persistence.Embeddable;
 
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
-import org.mifosplatform.scheduledjobs.UpdateLoanSummariesScheduledJob;
+import org.mifosplatform.scheduledjobs.jobs.UpdateLoanSummariesScheduledJob;
 
 /**
  * Encapsulates all the summary details of a {@link Loan}.
