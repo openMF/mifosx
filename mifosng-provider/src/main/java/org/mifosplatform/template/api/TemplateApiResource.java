@@ -1,8 +1,10 @@
 package org.mifosplatform.template.api;
 
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -24,11 +26,15 @@ import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
+import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.template.domain.Template;
 import org.mifosplatform.template.service.TemplateDomainService;
+import org.mifosplatform.template.service.TemplateMergeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import com.google.common.reflect.TypeToken;
 
 @Path("/templates")
 @Component
@@ -40,6 +46,7 @@ public class TemplateApiResource {
 	
 	private final DefaultToApiJsonSerializer<Template> toApiJsonSerializer;
 	private final ApiRequestParameterHelper apiRequestParameterHelper;
+	private final FromJsonHelper fromApiJsonHelper;
 	private final TemplateDomainService templateService;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
 
@@ -48,12 +55,14 @@ public class TemplateApiResource {
 			DefaultToApiJsonSerializer<Template> toApiJsonSerializer, 
 			ApiRequestParameterHelper apiRequestParameterHelper, 
 			TemplateDomainService templateService,
-			PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService) {
+			PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
+			FromJsonHelper fromApiJsonHelper) {
 		
 		this.toApiJsonSerializer = toApiJsonSerializer;
 		this.apiRequestParameterHelper = apiRequestParameterHelper;
 		this.templateService = templateService;
 		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
+		this.fromApiJsonHelper = fromApiJsonHelper;
 	}
 	
 	@GET
@@ -116,7 +125,9 @@ public class TemplateApiResource {
 	@POST
 	@Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String mergeTemplate(final String apiRequestBodyAsJson) {
+    public String createTemplate(final String apiRequestBodyAsJson) {
+		
+		System.out.println("POST:REQUESTBODY: "+apiRequestBodyAsJson);
 		
 		final CommandWrapper commandRequest = new CommandWrapperBuilder()
 						 			.createTemplate()
@@ -128,4 +139,20 @@ public class TemplateApiResource {
 
  		return this.toApiJsonSerializer.serialize(result);
     }
+	
+	@POST
+	@Path("{templateId}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_HTML})
+    public String mergeTemplate(@PathParam("templateId") final Long templateId,
+    							final String apiRequestBodyAsJson) {
+		
+		Template template = templateService.getById(templateId);
+		
+		final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+		final Map<String, Object> values = fromApiJsonHelper.extractObjectMap(typeOfMap, apiRequestBodyAsJson);
+		
+ 		return TemplateMergeService.compile(template, values);
+    }
+	
 }
