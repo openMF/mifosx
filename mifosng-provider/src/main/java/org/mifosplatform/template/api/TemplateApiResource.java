@@ -33,7 +33,6 @@ import org.mifosplatform.template.service.TemplateMergeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import com.google.common.reflect.TypeToken;
 
 @Path("/templates")
@@ -127,9 +126,7 @@ public class TemplateApiResource {
 	@POST
 	@Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String createTemplate(final String apiRequestBodyAsJson) {
-		
-		System.out.println("POST:REQUESTBODY: "+apiRequestBodyAsJson);
+    public String mergeTemplate(final String apiRequestBodyAsJson) {
 		
 		final CommandWrapper commandRequest = new CommandWrapperBuilder()
 						 			.createTemplate()
