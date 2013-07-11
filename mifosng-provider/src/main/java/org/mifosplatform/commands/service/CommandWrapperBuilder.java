@@ -1061,7 +1061,9 @@ public class CommandWrapperBuilder {
         this.entityId = clientId;
         this.clientId = clientId;
         this.href = "/clients/" + clientId + "?command=unassignStaff";
-
+        return this;
+    }
+    
     public CommandWrapperBuilder createTemplate() {
         this.actionName = "CREATE";
         this.entityName = "TEMPLATE";
