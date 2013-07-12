@@ -11,13 +11,15 @@ import java.util.List;
 import org.joda.time.LocalDate;
 import org.mifosplatform.organisation.holiday.domain.Holiday;
 import org.mifosplatform.organisation.holiday.service.HolidayUtil;
+import org.mifosplatform.organisation.workingdays.domain.WorkingDays;
+import org.mifosplatform.organisation.workingdays.service.WorkingDaysUtil;
 import org.mifosplatform.portfolio.loanproduct.domain.PeriodFrequencyType;
 
 public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
 
     @Override
     public List<LocalDate> generate(final LoanApplicationTerms loanApplicationTerms, final boolean isHolidayEnabled,
-            final List<Holiday> holidays) {
+            final List<Holiday> holidays, final WorkingDays workingDays) {
 
         final int numberOfRepayments = loanApplicationTerms.getNumberOfRepayments();
 
@@ -60,6 +62,9 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
             if(isHolidayEnabled){
                 dueRepaymentPeriodDate = HolidayUtil.getRepaymentRescheduleDateToIfHoliday(dueRepaymentPeriodDate, holidays);
             }
+            
+            //apply non working day
+            dueRepaymentPeriodDate = WorkingDaysUtil.getOffSetDateIfNonWorkingDay(dueRepaymentPeriodDate, workingDays);
             
             dueRepaymentPeriodDates.add(dueRepaymentPeriodDate);
         }

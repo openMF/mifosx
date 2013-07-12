@@ -171,7 +171,7 @@ public class CalendarHelper {
             for (@SuppressWarnings("rawtypes")
             final Iterator iterator = weekDayList.iterator(); iterator.hasNext();) {
                 final WeekDay weekDay = (WeekDay) iterator.next();
-                humanReadable += DayNameEnum.from(weekDay.getDay()).getValue();
+                humanReadable += DayNameEnum.from(weekDay.getDay()).getCode();
             }
 
         } else if (recur.getFrequency().equals(Recur.MONTHLY)) {
@@ -211,30 +211,35 @@ public class CalendarHelper {
     	final Recur recur = CalendarHelper.getICalRecur(recurringRule);
     	if (recur == null) { return false; }
     	
-    	return isValidRedurringDate(recur, seedDate, date);
+    	return isValidRecurringDate(recur, seedDate, date);
     }
     
-    public static boolean isValidRedurringDate(final Recur recur, final LocalDate seedDate, final LocalDate date){
+    public static boolean isValidRecurringDate(final Recur recur, final LocalDate seedDate, final LocalDate date){
         
         final Collection<LocalDate> recurDate = getRecurringDates(recur, seedDate, date, date.plusDays(1), 1);
         return (recurDate == null || recurDate.isEmpty()) ? false : true;
     }
     
     public static enum DayNameEnum{
-        MO("Monday"),TU("Tuesday"),WE("Wednesday"),TH("Thursday"),FR("Friday"),SA("Saturday"),SU("Sunday");
-        private final String value;
-        
-        private DayNameEnum(String value){
+        MO(1, "Monday"), TU(2, "Tuesday"), WE(3, "Wednesday"), TH(4, "Thursday"), FR(5, "Friday"), SA(6, "Saturday"), SU(7, "Sunday");
+        private final String code;
+        private final Integer value;
+        private DayNameEnum(final Integer value, final String code){
             this.value = value;
+            this.code = code;
         }
         
-        public String getValue(){
+        public String getCode(){
+            return this.code;
+        }
+        
+        public int getValue() {
             return this.value;
         }
-        
-        public static DayNameEnum from(String code){
+
+        public static DayNameEnum from(String name){
             for (DayNameEnum dayName : DayNameEnum.values()){
-                if(dayName.toString().equals(code)) return dayName;
+                if(dayName.toString().equals(name)) return dayName;
             }
             return DayNameEnum.MO;//Default it to Monday
         }
@@ -306,7 +311,7 @@ public class CalendarHelper {
         final Recur recur = CalendarHelper.getICalRecur(recurringRule);
         if (recur == null) { return null; }
         
-    	if(isValidRedurringDate(recur, seedDate, oldRepaymentDate)){
+    	if(isValidRecurringDate(recur, seedDate, oldRepaymentDate)){
     		return oldRepaymentDate;
     	}
     	/* Recurring dates should follow loanRepaymentInterval.
