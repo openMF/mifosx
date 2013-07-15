@@ -9,6 +9,14 @@ public class TaxonomyMappingData {
 		this.identifier = identifier;
 		this.config = config;
 	}
+
+	public String getIdentifier() {
+		return this.identifier;
+	}
+
+	public String getConfig() {
+		return this.config;
+	}
 	
 
 }
