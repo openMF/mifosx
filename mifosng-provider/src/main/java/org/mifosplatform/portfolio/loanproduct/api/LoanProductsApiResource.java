@@ -47,6 +47,8 @@ import org.mifosplatform.portfolio.fund.data.FundData;
 import org.mifosplatform.portfolio.fund.service.FundReadPlatformService;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
 import org.mifosplatform.portfolio.loanproduct.data.TransactionProcessingStrategyData;
+import org.mifosplatform.portfolio.loanproduct.productmix.data.ProductMixData;
+import org.mifosplatform.portfolio.loanproduct.productmix.service.ProductMixReadPlatformService;
 import org.mifosplatform.portfolio.loanproduct.service.LoanDropdownReadPlatformService;
 import org.mifosplatform.portfolio.loanproduct.service.LoanProductReadPlatformService;
 import org.mifosplatform.portfolio.paymentdetail.PaymentDetailConstants;
@@ -69,6 +71,9 @@ public class LoanProductsApiResource {
             "currencyOptions", "repaymentFrequencyTypeOptions", "interestRateFrequencyTypeOptions", "amortizationTypeOptions",
             "interestTypeOptions", "interestCalculationPeriodTypeOptions", "transactionProcessingStrategyOptions", "chargeOptions",
             "accountingOptions", "accountingRuleOptions", "accountingMappingOptions"));
+    
+    private final Set<String> PRODUCT_MIX_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("productId", "productName",
+            "restrictedProducts", "allowedProducts", "productOptions"));
 
     private final String resourceNameForPermissions = "LOANPRODUCT";
 
@@ -84,6 +89,8 @@ public class LoanProductsApiResource {
     private final ProductToGLAccountMappingReadPlatformService accountMappingReadPlatformService;
     private final CodeValueReadPlatformService codeValueReadPlatformService;
     private final AccountingDropdownReadPlatformService accountingDropdownReadPlatformService;
+    private final DefaultToApiJsonSerializer<ProductMixData> productMixDataApiJsonSerializer;
+    private final ProductMixReadPlatformService productMixReadPlatformService;
 
     @Autowired
     public LoanProductsApiResource(final PlatformSecurityContext context, final LoanProductReadPlatformService readPlatformService,
@@ -94,7 +101,9 @@ public class LoanProductsApiResource {
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final ProductToGLAccountMappingReadPlatformService accountMappingReadPlatformService,
             final CodeValueReadPlatformService codeValueReadPlatformService,
-            final AccountingDropdownReadPlatformService accountingDropdownReadPlatformService) {
+            final AccountingDropdownReadPlatformService accountingDropdownReadPlatformService,
+            final DefaultToApiJsonSerializer<ProductMixData> productMixDataApiJsonSerializer,
+            final ProductMixReadPlatformService productMixReadPlatformService) {
         this.context = context;
         this.loanProductReadPlatformService = readPlatformService;
         this.chargeReadPlatformService = chargeReadPlatformService;
@@ -107,6 +116,8 @@ public class LoanProductsApiResource {
         this.accountMappingReadPlatformService = accountMappingReadPlatformService;
         this.codeValueReadPlatformService = codeValueReadPlatformService;
         this.accountingDropdownReadPlatformService = accountingDropdownReadPlatformService;
+        this.productMixDataApiJsonSerializer = productMixDataApiJsonSerializer;
+        this.productMixReadPlatformService = productMixReadPlatformService;
     }
 
     @POST
@@ -236,5 +247,34 @@ public class LoanProductsApiResource {
                 amortizationTypeOptions, interestTypeOptions, interestCalculationPeriodTypeOptions, repaymentFrequencyTypeOptions,
                 interestRateFrequencyTypeOptions, fundOptions, transactionProcessingStrategyOptions, accountOptions,
                 accountingRuleTypeOptions);
+    }
+    
+    @GET
+    @Path("productmix/template")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveTemplateForProductMix(@Context final UriInfo uriInfo) {
+
+        context.authenticatedUser().validateHasReadPermission("PRODUCTMIX");
+
+        Collection<LoanProductData> productOptions = this.loanProductReadPlatformService.retrieveAvailableLoanProductsForMix();
+        ProductMixData productMixData = ProductMixData.template(productOptions);
+
+        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.productMixDataApiJsonSerializer.serialize(settings, productMixData, PRODUCT_MIX_DATA_PARAMETERS);
+    }
+    
+    @GET
+    @Path("productmix")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveProductMixesForAllProducts(@Context final UriInfo uriInfo) {
+        
+        context.authenticatedUser().validateHasReadPermission("PRODUCTMIX");
+        
+        Collection<ProductMixData> productMixes = this.productMixReadPlatformService.retrieveAllProductMixes();
+
+        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.productMixDataApiJsonSerializer.serialize(settings, productMixes, PRODUCT_MIX_DATA_PARAMETERS);
     }
 }
