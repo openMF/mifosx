@@ -7,10 +7,10 @@ package org.mifosplatform.scheduledjobs.service;
 
 import java.util.List;
 
-import org.mifosplatform.infrastructure.core.domain.MifosPlatformTenant;
-import org.mifosplatform.infrastructure.core.service.DataSourcePerTenantService;
+import org.mifosplatform.infrastructure.core.service.RoutingDataSourceServiceFactory;
 import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
-import org.mifosplatform.infrastructure.security.service.TenantDetailsService;
+import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
+import org.mifosplatform.infrastructure.jobs.service.JobName;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,28 +23,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService {
 
     private final static Logger logger = LoggerFactory.getLogger(ScheduledJobRunnerServiceImpl.class);
-
-    private final TenantDetailsService tenantDetailsService;
-    private final DataSourcePerTenantService dataSourcePerTenantService;
+    private final RoutingDataSourceServiceFactory dataSourceServiceFactory;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
 
     @Autowired
-    public ScheduledJobRunnerServiceImpl(final DataSourcePerTenantService dataSourcePerTenantService,
-            final TenantDetailsService tenantDetailsService, final SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
-        this.dataSourcePerTenantService = dataSourcePerTenantService;
-        this.tenantDetailsService = tenantDetailsService;
+    public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
+            final SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
+        this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
     }
 
     @Transactional
     @Override
+    @CronTarget(jobName = JobName.UPDATE_LOAN_SUMMARY)
     public void updateLoanSummaryDetails() {
 
-        final MifosPlatformTenant tenant = this.tenantDetailsService.loadTenantById("default");
-
-        ThreadLocalContextUtil.setTenant(tenant);
-
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSourcePerTenantService.retrieveTenantAwareDataSource());
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
 
         StringBuilder updateSqlBuilder = new StringBuilder(900);
         updateSqlBuilder.append("update m_loan ");
@@ -117,17 +111,15 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         int result = jdbcTemplate.update(updateSqlBuilder.toString());
 
-        logger.info("Results affected by update: " + result);
+        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + result);
     }
 
     @Transactional
     @Override
+    @CronTarget(jobName = JobName.UPDATE_LOAN_ARREARS_AGEING)
     public void updateLoanArrearsAgeingDetails() {
-        final MifosPlatformTenant tenant = this.tenantDetailsService.loadTenantById("default");
 
-        ThreadLocalContextUtil.setTenant(tenant);
-
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSourcePerTenantService.retrieveTenantAwareDataSource());
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
 
         jdbcTemplate.execute("truncate table m_loan_arrears_aging");
 
@@ -159,17 +151,50 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         int result = jdbcTemplate.update(updateSqlBuilder.toString());
 
-        logger.info("Results affected by update: " + result);
+        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + result);
     }
 
     @Transactional
     @Override
+    @CronTarget(jobName = JobName.UPDATE_LOAN_PAID_IN_ADVANCE)
+    public void updateLoanPaidInAdvance() {
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+
+        jdbcTemplate.execute("truncate table m_loan_paid_in_advance");
+
+        StringBuilder updateSqlBuilder = new StringBuilder(900);
+
+        updateSqlBuilder
+                .append("INSERT INTO m_loan_paid_in_advance(loan_id, principal_in_advance_derived, interest_in_advance_derived, fee_charges_in_advance_derived, penalty_charges_in_advance_derived, total_in_advance_derived)");
+        updateSqlBuilder.append(" select ml.id as loanId,");
+        updateSqlBuilder.append(" SUM(ifnull(mr.principal_completed_derived, 0)) as principal_in_advance_derived,");
+        updateSqlBuilder.append(" SUM(ifnull(mr.interest_completed_derived, 0)) as interest_in_advance_derived,");
+        updateSqlBuilder.append(" SUM(ifnull(mr.fee_charges_completed_derived, 0)) as fee_charges_in_advance_derived,");
+        updateSqlBuilder.append(" SUM(ifnull(mr.penalty_charges_completed_derived, 0)) as penalty_charges_in_advance_derived,");
+        updateSqlBuilder
+                .append(" (SUM(ifnull(mr.principal_completed_derived, 0)) + SUM(ifnull(mr.interest_completed_derived, 0)) + SUM(ifnull(mr.fee_charges_completed_derived, 0)) + SUM(ifnull(mr.penalty_charges_completed_derived, 0))) as total_in_advance_derived");
+        updateSqlBuilder.append(" FROM m_loan ml ");
+        updateSqlBuilder.append(" INNER JOIN m_loan_repayment_schedule mr on mr.loan_id = ml.id ");
+        updateSqlBuilder.append(" WHERE ml.loan_status_id = 300 ");
+        updateSqlBuilder.append(" and mr.duedate >= CURDATE() ");
+        updateSqlBuilder.append(" GROUP BY ml.id");
+        updateSqlBuilder
+                .append(" HAVING (SUM(ifnull(mr.principal_completed_derived, 0)) + SUM(ifnull(mr.interest_completed_derived, 0)) +");
+        updateSqlBuilder
+                .append(" SUM(ifnull(mr.fee_charges_completed_derived, 0)) + SUM(ifnull(mr.penalty_charges_completed_derived, 0))) > 0.0");
+
+        int result = jdbcTemplate.update(updateSqlBuilder.toString());
+
+        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + result);
+    }
+
+    @Transactional
+    @Override
+    @CronTarget(jobName = JobName.APPLY_ANNUAL_FEE_FOR_SAVINGS)
     public void applyAnnualFeeForSavings() {
-        final MifosPlatformTenant tenant = this.tenantDetailsService.loadTenantById("default");
 
-        ThreadLocalContextUtil.setTenant(tenant);
-
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSourcePerTenantService.retrieveTenantAwareDataSource());
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
 
         String sql = "SELECT ms.id as savingsAccountId FROM m_savings_account ms WHERE ms.annual_fee_next_due_date <= NOW() ";
         List<Long> savingsIds = jdbcTemplate.queryForList(sql, Long.class);
@@ -178,6 +203,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             this.savingsAccountWritePlatformService.applyAnnualFee(savingsId);
         }
 
-        logger.info("Results affected by update: " + savingsIds.size());
+        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + savingsIds.size());
     }
+
 }

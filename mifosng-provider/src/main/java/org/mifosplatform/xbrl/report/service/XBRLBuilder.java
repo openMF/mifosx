@@ -12,7 +12,6 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.mifosplatform.xbrl.report.data.ContextData;
-import org.mifosplatform.xbrl.report.data.NamespaceData;
 import org.mifosplatform.xbrl.taxonomy.data.TaxonomyData;
 import org.springframework.beans.factory.annotation.Autowired;
 

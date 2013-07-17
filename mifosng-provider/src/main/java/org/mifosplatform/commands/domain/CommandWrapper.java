@@ -109,18 +109,15 @@ public class CommandWrapper {
     }
 
     public boolean isCreateDatatable() {
-    	return (this.actionName.equalsIgnoreCase("CREATE") && this.href.startsWith("/datatables/")
-    			&& this.entityId == null);
+        return (this.actionName.equalsIgnoreCase("CREATE") && this.href.startsWith("/datatables/") && this.entityId == null);
     }
 
     public boolean isDeleteDatatable() {
-    	return (this.actionName.equalsIgnoreCase("DELETE") && this.href.startsWith("/datatables/")
-    			&& this.entityId == null);
+        return (this.actionName.equalsIgnoreCase("DELETE") && this.href.startsWith("/datatables/") && this.entityId == null);
     }
 
     public boolean isUpdateDatatable() {
-    	return (this.actionName.equalsIgnoreCase("UPDATE") && this.href.startsWith("/datatables/")
-    			&& this.entityId == null);
+        return (this.actionName.equalsIgnoreCase("UPDATE") && this.href.startsWith("/datatables/") && this.entityId == null);
     }
 
     public String getTaskPermissionName() {
@@ -415,7 +412,7 @@ public class CommandWrapper {
     }
 
     public boolean isUpdateOfOwnUserDetails(final Long loggedInUserId) {
-        return this.isUserResource() && isUpdate() && loggedInUserId.equals(this.entityId);
+        return isUserResource() && isUpdate() && loggedInUserId.equals(this.entityId);
     }
 
     public boolean isDepositProductResource() {
@@ -499,8 +496,8 @@ public class CommandWrapper {
     public boolean isGroupResource() {
         return this.entityName.equalsIgnoreCase("GROUP");
     }
-    
-    public boolean isSaveGroupCollectionSheet(){
+
+    public boolean isSaveGroupCollectionSheet() {
         return this.entityName.equalsIgnoreCase("GROUP") && this.actionName.equalsIgnoreCase("SAVECOLLECTIONSHEET");
     }
 
@@ -512,10 +509,10 @@ public class CommandWrapper {
         return this.entityName.equalsIgnoreCase("CENTER");
     }
 
-    public boolean isSaveCenterCollectionSheet(){
+    public boolean isSaveCenterCollectionSheet() {
         return this.entityName.equalsIgnoreCase("CENTER") && this.actionName.equalsIgnoreCase("SAVECOLLECTIONSHEET");
     }
-    
+
     public boolean isReportResource() {
         return this.entityName.equalsIgnoreCase("REPORT");
     }
@@ -528,11 +525,39 @@ public class CommandWrapper {
         return this.actionName.equalsIgnoreCase("DISASSOCIATECLIENTS");
     }
 
-	public boolean isAccountingRuleResource() {
-		return this.entityName.equalsIgnoreCase("ACCOUNTINGRULE");
-	}
-	
 	public boolean isXBRLMappingResource() {
 		return this.entityName.equalsIgnoreCase("XBRLMAPPING");
 	}
+
+    public boolean isHolidayResource() {
+        return this.entityName.equalsIgnoreCase("HOLIDAY");
+    }
+
+    public boolean isAccountingRuleResource() {
+        return this.entityName.equalsIgnoreCase("ACCOUNTINGRULE");
+    }
+    
+    public boolean isClientUnassignStaff() {
+        return this.actionName.equalsIgnoreCase("UNASSIGNSTAFF") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
+
+    public boolean isAssignGroupRole() {
+        return this.entityName.equalsIgnoreCase("GROUP") && this.actionName.equalsIgnoreCase("ASSIGNROLE");
+    }
+
+    public boolean isUnAssignGroupRole() {
+        return this.entityName.equalsIgnoreCase("GROUP") && this.actionName.equalsIgnoreCase("UNASSIGNROLE");
+    }
+
+    public boolean isUpdateGroupRole() {
+        return this.entityName.equalsIgnoreCase("GROUP") && this.actionName.equalsIgnoreCase("UPDATEROLE");
+    }
+
+    public boolean isClientAssignStaff() {
+        return this.actionName.equalsIgnoreCase("ASSIGNSTAFF") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
+  
+    public boolean isClientClose() {
+        return this.actionName.equalsIgnoreCase("CLOSE") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
 }

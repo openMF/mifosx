@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.loanaccount.api;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -72,6 +74,9 @@ import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
 import org.mifosplatform.portfolio.loanproduct.data.TransactionProcessingStrategyData;
 import org.mifosplatform.portfolio.loanproduct.service.LoanDropdownReadPlatformService;
 import org.mifosplatform.portfolio.loanproduct.service.LoanProductReadPlatformService;
+import org.mifosplatform.portfolio.note.data.NoteData;
+import org.mifosplatform.portfolio.note.domain.NoteType;
+import org.mifosplatform.portfolio.note.service.NoteReadPlatformServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -94,7 +99,8 @@ public class LoansApiResource {
             "summary", "repaymentSchedule", "transactions", "charges", "collateral", "guarantors", "meeting", "productOptions",
             "amortizationTypeOptions", "interestTypeOptions", "interestCalculationPeriodTypeOptions", "repaymentFrequencyTypeOptions",
             "termFrequencyTypeOptions", "interestRateFrequencyTypeOptions", "fundOptions", "repaymentStrategyOptions", "chargeOptions",
-            "loanOfficerOptions", "loanPurposeOptions", "loanCollateralOptions", "chargeTemplate", "calendarOptions"));
+            "loanOfficerOptions", "loanPurposeOptions", "loanCollateralOptions", "chargeTemplate", "calendarOptions", "syncDisbursementWithMeeting",
+            "loanCounter", "loanProductCounter", "notes"));
 
     private final String resourceNameForPermissions = "LOAN";
 
@@ -118,6 +124,7 @@ public class LoansApiResource {
     private final FromJsonHelper fromJsonHelper;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final CalendarReadPlatformService calendarReadPlatformService;
+    private final NoteReadPlatformServiceImpl noteReadPlatformService;
 
     @Autowired
     public LoansApiResource(final PlatformSecurityContext context, final LoanReadPlatformService loanReadPlatformService,
@@ -133,7 +140,7 @@ public class LoansApiResource {
             final DefaultToApiJsonSerializer<BulkTransferLoanOfficerData> loanOfficeTransferToApiJsonSerializer,
             final ApiRequestParameterHelper apiRequestParameterHelper, final FromJsonHelper fromJsonHelper,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-            final CalendarReadPlatformService calendarReadPlatformService) {
+            final CalendarReadPlatformService calendarReadPlatformService, final NoteReadPlatformServiceImpl noteReadPlatformService) {
         this.context = context;
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanProductReadPlatformService = loanProductReadPlatformService;
@@ -154,6 +161,7 @@ public class LoansApiResource {
         this.fromJsonHelper = fromJsonHelper;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.calendarReadPlatformService = calendarReadPlatformService;
+        this.noteReadPlatformService = noteReadPlatformService;
     }
 
     @GET
@@ -162,6 +170,7 @@ public class LoansApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String template(@QueryParam("clientId") final Long clientId, @QueryParam("groupId") final Long groupId,
             @QueryParam("productId") final Long productId, @QueryParam("templateType") final String templateType,
+            @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
             @Context final UriInfo uriInfo) {
 
         context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
@@ -184,6 +193,7 @@ public class LoansApiResource {
             final String errorMsg = "Loan template type must be provided";
             throw new LoanTemplateTypeRequiredException(errorMsg);
         } else if (templateType.equals("collateral")) {
+            loanCollateralOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanCollateral");
             newLoanAccount = LoanAccountData.collateralTemplate(loanCollateralOptions);
         } else {
             // for JLG loan both client and group details are required
@@ -223,7 +233,29 @@ public class LoansApiResource {
                 throw new NotSupportedLoanTemplateTypeException(errorMsg, templateType);
             }
 
-            if (officeId != null) allowedLoanOfficers = this.staffReadPlatformService.retrieveAllLoanOfficersByOffice(officeId);
+            if (officeId != null) {
+                if (staffInSelectedOfficeOnly) {
+                    // only bring back loan officers in selected branch/office
+                    Collection<StaffData> loanOfficersInBranch = this.staffReadPlatformService
+                            .retrieveAllLoanOfficersInOfficeById(officeId);
+
+                    if (!CollectionUtils.isEmpty(loanOfficersInBranch)) {
+                        allowedLoanOfficers = new ArrayList<StaffData>(loanOfficersInBranch);
+                    }
+                } else {
+                    // by default bring back all loan officers in selected
+                    // branch/office as well as loan officers in officer above
+                    // this office
+                    final boolean restrictToLoanOfficersOnly = true;
+                    Collection<StaffData> loanOfficersInHierarchy = this.staffReadPlatformService
+                            .retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(officeId, restrictToLoanOfficersOnly);
+
+                    if (!CollectionUtils.isEmpty(loanOfficersInHierarchy)) {
+                        allowedLoanOfficers = new ArrayList<StaffData>(loanOfficersInHierarchy);
+                    }
+                }
+            }
+
             // add product options, allowed loan officers and calendar options
             // (calendar options will be null in individual loan)
             newLoanAccount = LoanAccountData.associationsAndTemplate(newLoanAccount, productOptions, allowedLoanOfficers, calendarOptions);
@@ -248,13 +280,14 @@ public class LoansApiResource {
         Collection<GuarantorData> guarantors = null;
         Collection<CollateralData> collateral = null;
         CalendarData meeting = null;
+        Collection<NoteData> notes = null;
 
         final Set<String> mandatoryResponseParameters = new HashSet<String>();
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
         if (!associationParameters.isEmpty()) {
 
             if (associationParameters.contains("all")) {
-                associationParameters.addAll(Arrays.asList("repaymentSchedule", "transactions", "charges", "guarantors", "collateral"));
+                associationParameters.addAll(Arrays.asList("repaymentSchedule", "transactions", "charges", "guarantors", "collateral","notes"));
             }
 
             if (associationParameters.contains("guarantors")) {
@@ -300,6 +333,14 @@ public class LoansApiResource {
                 mandatoryResponseParameters.add("meeting");
                 meeting = this.calendarReadPlatformService.retrieveLoanCalendar(loanId);
             }
+            
+            if (associationParameters.contains("notes")) {
+                mandatoryResponseParameters.add("notes");
+                notes = this.noteReadPlatformService.retrieveNotesByResource(loanId, NoteType.LOAN.getValue());
+                if (CollectionUtils.isEmpty(notes)) {
+                    notes = null;
+                }
+            }
         }
 
         Collection<LoanProductData> productOptions = null;
@@ -336,9 +377,9 @@ public class LoansApiResource {
             chargeTemplate = this.loanChargeReadPlatformService.retrieveLoanChargeTemplate();
 
             if (loanBasicDetails.officeId() != null) {
-                allowedLoanOfficers = this.staffReadPlatformService.retrieveAllLoanOfficersByOffice(loanBasicDetails.officeId());
+                allowedLoanOfficers = this.staffReadPlatformService.retrieveAllLoanOfficersInOfficeById(loanBasicDetails.officeId());
             } else if (loanBasicDetails.groupOfficeId() != null) {
-                allowedLoanOfficers = this.staffReadPlatformService.retrieveAllLoanOfficersByOffice(loanBasicDetails.groupOfficeId());
+                allowedLoanOfficers = this.staffReadPlatformService.retrieveAllLoanOfficersInOfficeById(loanBasicDetails.groupOfficeId());
             }
 
             loanPurposeOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanPurpose");
@@ -354,7 +395,7 @@ public class LoansApiResource {
                 charges, collateral, guarantors, meeting, productOptions, loanTermFrequencyTypeOptions, repaymentFrequencyTypeOptions,
                 repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
                 interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, allowedLoanOfficers, loanPurposeOptions,
-                loanCollateralOptions, calendarOptions);
+                loanCollateralOptions, calendarOptions, notes);
 
         final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);
@@ -492,8 +533,8 @@ public class LoansApiResource {
         // for officeId and loanOfficerId in current way!
         final LoanAccountData loanBasicDetails = this.loanReadPlatformService.retrieveOne(loanId);
 
-        final Collection<StaffData> allowedLoanOfficers = this.staffReadPlatformService.retrieveAllLoanOfficersByOffice(loanBasicDetails
-                .officeId());
+        final Collection<StaffData> allowedLoanOfficers = this.staffReadPlatformService
+                .retrieveAllLoanOfficersInOfficeById(loanBasicDetails.officeId());
         final Long fromLoanOfficerId = loanBasicDetails.loanOfficerId();
 
         final BulkTransferLoanOfficerData loanReassignmentData = BulkTransferLoanOfficerData.template(fromLoanOfficerId,

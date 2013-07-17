@@ -5,8 +5,12 @@
  */
 package org.mifosplatform.infrastructure.documentmanagement.service;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
-import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
+import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.documentmanagement.contentrepository.ContentRepository;
 import org.mifosplatform.infrastructure.documentmanagement.contentrepository.ContentRepositoryFactory;
 import org.mifosplatform.infrastructure.documentmanagement.data.DocumentData;
@@ -19,10 +23,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-
 @Service
 public class DocumentReadPlatformServiceImpl implements DocumentReadPlatformService {
 
@@ -31,7 +31,7 @@ public class DocumentReadPlatformServiceImpl implements DocumentReadPlatformServ
     private final ContentRepositoryFactory contentRepositoryFactory;
 
     @Autowired
-    public DocumentReadPlatformServiceImpl(final PlatformSecurityContext context, final TenantAwareRoutingDataSource dataSource,
+    public DocumentReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
             final ContentRepositoryFactory documentStoreFactory) {
         this.context = context;
         this.jdbcTemplate = new JdbcTemplate(dataSource);

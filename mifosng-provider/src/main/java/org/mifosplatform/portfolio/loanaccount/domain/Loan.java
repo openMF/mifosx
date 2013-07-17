@@ -46,11 +46,14 @@ import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.security.service.RandomPasswordGenerator;
+import org.mifosplatform.organisation.holiday.domain.Holiday;
+import org.mifosplatform.organisation.holiday.service.HolidayUtil;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.organisation.staff.domain.Staff;
+import org.mifosplatform.portfolio.calendar.service.CalendarHelper;
 import org.mifosplatform.portfolio.charge.exception.LoanChargeCannotBeAddedException;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.collateral.data.CollateralData;
@@ -99,7 +102,6 @@ public class Loan extends AbstractPersistable<Long> {
     @JoinColumn(name = "group_id", nullable = true)
     private Group group;
 
-    @SuppressWarnings("unused")
     @Column(name = "loan_type_enum", nullable = false)
     private Integer loanType;
 
@@ -135,6 +137,9 @@ public class Loan extends AbstractPersistable<Long> {
     @Column(name = "loan_status_id", nullable = false)
     private Integer loanStatus;
 
+	@Column(name = "sync_disbursement_with_meeting", nullable = true)
+	private Boolean syncDisbursementWithMeeting;
+    
     // loan application states
     @Temporal(TemporalType.DATE)
     @Column(name = "submittedon_date")
@@ -187,7 +192,6 @@ public class Loan extends AbstractPersistable<Long> {
     @JoinColumn(name = "disbursedon_userid", nullable = true)
     private AppUser disbursedBy;
 
-    @SuppressWarnings("unused")
     @Temporal(TemporalType.DATE)
     @Column(name = "closedon_date")
     private Date closedOnDate;
@@ -227,6 +231,12 @@ public class Loan extends AbstractPersistable<Long> {
     @SuppressWarnings("unused")
     @Column(name = "total_overpaid_derived", scale = 6, precision = 19)
     private BigDecimal totalOverpaid;
+    
+    @Column(name = "loan_counter")
+    private Integer loanCounter;
+    
+    @Column(name = "loan_product_counter")
+    private Integer loanProductCounter;
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true)
@@ -276,31 +286,34 @@ public class Loan extends AbstractPersistable<Long> {
             final Set<LoanCollateral> collateral) {
         final LoanStatus status = null;
         final Group group = null;
+        final Boolean syncDisbursementWithMeeting = null;
         return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
-                loanRepaymentScheduleDetail, status, loanCharges, collateral);
+                loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting);
     }
 
     public static Loan newGroupLoanApplication(final String accountNo, final Group group, final Integer loanType,
             final LoanProduct loanProduct, final Fund fund, final Staff officer,
             final LoanTransactionProcessingStrategy transactionProcessingStrategy,
-            final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges) {
+            final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges, 
+            final Boolean syncDisbursementWithMeeting) {
         final LoanStatus status = null;
         final CodeValue loanPurpose = null;
         final Set<LoanCollateral> collateral = null;
         final Client client = null;
         return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
-                loanRepaymentScheduleDetail, status, loanCharges, collateral);
+                loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting);
     }
 
     public static Loan newIndividualLoanApplicationFromGroup(final String accountNo, final Client client, final Group group,
             final Integer loanType, final LoanProduct loanProduct, final Fund fund, final Staff officer,
             final LoanTransactionProcessingStrategy transactionProcessingStrategy,
-            final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges) {
+            final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges, 
+            final Boolean syncDisbursementWithMeeting) {
         final LoanStatus status = null;
         final CodeValue loanPurpose = null;
         final Set<LoanCollateral> collateral = null;
         return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
-                loanRepaymentScheduleDetail, status, loanCharges, collateral);
+                loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting);
     }
 
     protected Loan() {
@@ -310,7 +323,7 @@ public class Loan extends AbstractPersistable<Long> {
     private Loan(final String accountNo, final Client client, final Group group, final Integer loanType, final Fund fund,
             final Staff loanOfficer, final CodeValue loanPurpose, final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProduct loanProduct, final LoanProductRelatedDetail loanRepaymentScheduleDetail, final LoanStatus loanStatus,
-            final Set<LoanCharge> loanCharges, final Set<LoanCollateral> collateral) {
+            final Set<LoanCharge> loanCharges, final Set<LoanCollateral> collateral, final Boolean syncDisbursementWithMeeting) {
 
         this.loanRepaymentScheduleDetail = loanRepaymentScheduleDetail;
         this.loanRepaymentScheduleDetail.validateRepaymentPeriodWithGraceSettings();
@@ -348,6 +361,8 @@ public class Loan extends AbstractPersistable<Long> {
             this.collateral = null;
         }
         this.loanOfficerHistory = null;
+        
+        this.syncDisbursementWithMeeting = syncDisbursementWithMeeting;
     }
 
     private LoanSummary updateSummaryWithTotalFeeChargesDueAtDisbursement(final BigDecimal feeChargesDueAtDisbursement) {
@@ -815,8 +830,7 @@ public class Loan extends AbstractPersistable<Long> {
         }
 
         // add clientId, groupId and loanType changes to actual changes
-        // FIXME: AA - We may require separate api command to move loan from one
-        // client to another
+        
         final String clientIdParamName = "clientId";
         final Long clientId = this.client == null ? null : this.client.getId();
         if (command.isChangeInLongParameterNamed(clientIdParamName, clientId)) {
@@ -916,6 +930,13 @@ public class Loan extends AbstractPersistable<Long> {
             }
         }
 
+        final String syncDisbursementParameterName = "syncDisbursementWithMeeting";
+        if (command.isChangeInBooleanParameterNamed(syncDisbursementParameterName, isSyncDisbursementWithMeeting())) {
+        	final Boolean valueAsInput = command.booleanObjectValueOfParameterNamed(syncDisbursementParameterName);
+        	actualChanges.put(syncDisbursementParameterName, valueAsInput);
+        	this.syncDisbursementWithMeeting = valueAsInput;
+        }
+        
         final String interestChargedFromDateParamName = "interestChargedFromDate";
         if (command.isChangeInLocalDateParameterNamed(interestChargedFromDateParamName, getInterestChargedFromDate())) {
             final String valueAsInput = command.stringValueOfParameterNamed(interestChargedFromDateParamName);
@@ -981,6 +1002,21 @@ public class Loan extends AbstractPersistable<Long> {
             if (!possiblyModifedLoanCollateralItems.equals(this.collateral)) {
                 actualChanges.put(collateralParamName, listOfLoanCollateralData(possiblyModifedLoanCollateralItems));
             }
+        }
+        
+        final String loanTermFrequencyParamName = "loanTermFrequency";
+        if (command.isChangeInIntegerParameterNamed(loanTermFrequencyParamName, this.termFrequency)) {
+            final Integer newValue = command.integerValueOfParameterNamed(loanTermFrequencyParamName);
+            actualChanges.put(externalIdParamName, newValue);
+            this.termFrequency = newValue;
+        }
+        
+        final String loanTermFrequencyTypeParamName = "loanTermFrequencyType";
+        if (command.isChangeInIntegerParameterNamed(loanTermFrequencyTypeParamName, this.termPeriodFrequencyType)) {
+            final Integer newValue = command.integerValueOfParameterNamed(loanTermFrequencyTypeParamName);
+            final PeriodFrequencyType newTermPeriodFrequencyType = PeriodFrequencyType.fromInt(newValue);
+            actualChanges.put(loanTermFrequencyTypeParamName, newTermPeriodFrequencyType.getValue());
+            this.termPeriodFrequencyType = newValue;
         }
 
         return actualChanges;
@@ -1278,7 +1314,8 @@ public class Loan extends AbstractPersistable<Long> {
 
     public Map<String, Object> disburse(final LoanScheduleGeneratorFactory loanScheduleFactory, final AppUser currentUser,
             final JsonCommand command, final ApplicationCurrency currency, final List<Long> existingTransactionIds,
-            final List<Long> existingReversedTransactionIds, final Map<String, Object> actualChanges, final PaymentDetail paymentDetail) {
+            final List<Long> existingReversedTransactionIds, final Map<String, Object> actualChanges, final PaymentDetail paymentDetail,
+            final LocalDate firstRepaymentMeetingDate, final boolean isHolidayEnabled, final List<Holiday> holidays) {
 
         updateLoanToPreDisbursalState();
 
@@ -1304,7 +1341,7 @@ public class Loan extends AbstractPersistable<Long> {
             handleDisbursementTransaction(paymentDetail, actualDisbursementDate);
 
             if (isRepaymentScheduleRegenerationRequiredForDisbursement(actualDisbursementDate)) {
-                regenerateRepaymentSchedule(loanScheduleFactory, currency);
+                regenerateRepaymentSchedule(loanScheduleFactory, currency, firstRepaymentMeetingDate, isHolidayEnabled, holidays);
                 updateLoanRepaymentPeriodsDerivedFields(actualDisbursementDate);
             } else {
                 updateLoanRepaymentPeriodsDerivedFields(actualDisbursementDate);
@@ -1331,7 +1368,8 @@ public class Loan extends AbstractPersistable<Long> {
      * details/state.
      */
     private void regenerateRepaymentSchedule(final LoanScheduleGeneratorFactory loanScheduleFactory,
-            final ApplicationCurrency applicationCurrency) {
+            final ApplicationCurrency applicationCurrency, final LocalDate firstRepaymentMeetingDate, final boolean isHolidayEnabled,
+            final List<Holiday> holidays) {
 
         final InterestMethod interestMethod = this.loanRepaymentScheduleDetail.getInterestMethod();
         final LoanScheduleGenerator loanScheduleGenerator = loanScheduleFactory.create(interestMethod);
@@ -1341,12 +1379,14 @@ public class Loan extends AbstractPersistable<Long> {
 
         final Integer loanTermFrequency = this.termFrequency;
         final PeriodFrequencyType loanTermPeriodFrequencyType = PeriodFrequencyType.fromInt(this.termPeriodFrequencyType);
-
+        //If ExpectedFirstRepaymentOnDate is null and repayment is synced with meeting then use firstRepaymentMeetingDate
+        //to generate repayment schedule dates
+        final LocalDate firstRepaymentOnDate = (getExpectedFirstRepaymentOnDate() == null) ? firstRepaymentMeetingDate : getExpectedFirstRepaymentOnDate(); 
         LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms.assembleFrom(applicationCurrency, loanTermFrequency,
-                loanTermPeriodFrequencyType, getExpectedDisbursedOnLocalDate(), getExpectedFirstRepaymentOnDate(), getInArrearsTolerance(),
+                loanTermPeriodFrequencyType, getDisbursementDate(), firstRepaymentOnDate, getInArrearsTolerance(),
                 this.loanRepaymentScheduleDetail);
 
-        LoanScheduleModel loanSchedule = loanScheduleGenerator.generate(mc, applicationCurrency, loanApplicationTerms, this.charges);
+        LoanScheduleModel loanSchedule = loanScheduleGenerator.generate(mc, applicationCurrency, loanApplicationTerms, this.charges, isHolidayEnabled, holidays);
 
         updateLoanSchedule(loanSchedule);
     }
@@ -1993,7 +2033,7 @@ public class Loan extends AbstractPersistable<Long> {
         return expectedDisbursementDate;
     }
 
-    private LocalDate getDisbursementDate() {
+    public LocalDate getDisbursementDate() {
         LocalDate disbursementDate = getExpectedDisbursedOnLocalDate();
         if (this.actualDisbursementDate != null) {
             disbursementDate = new LocalDate(this.actualDisbursementDate);
@@ -2001,7 +2041,7 @@ public class Loan extends AbstractPersistable<Long> {
         return disbursementDate;
     }
 
-    private LocalDate getExpectedFirstRepaymentOnDate() {
+    public LocalDate getExpectedFirstRepaymentOnDate() {
         LocalDate firstRepaymentDate = null;
         if (this.expectedFirstRepaymentOnDate != null) {
             firstRepaymentDate = new LocalDate(this.expectedFirstRepaymentOnDate);
@@ -2299,4 +2339,102 @@ public class Loan extends AbstractPersistable<Long> {
         this.loanSummaryWrapper = loanSummaryWrapper;
         this.transactionProcessorFactory = transactionProcessorFactory;
     }
+
+    public boolean isSyncDisbursementWithMeeting() {
+        return this.syncDisbursementWithMeeting == null ? false : this.syncDisbursementWithMeeting;
+    }
+
+    public Date getClosedOnDate() {
+        return this.closedOnDate;
+    }
+
+    public void updateLoanRepaymentScheduleDates(final LocalDate meetingStartDate, final String recuringRule, final boolean isHolidayEnabled, final List<Holiday> holidays) {
+        //update repayment dates of repayment schedule installaments
+        LocalDate tmpFromDate = this.getDisbursementDate();//first repayment's from date is same as disbursement date.
+        LocalDate newRepaymentDate = null;
+        for (LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment : this.repaymentScheduleInstallments) {
+            final LocalDate oldDueDate = loanRepaymentScheduleInstallment.getDueDate();
+            //FIXME: AA this won't update repayment dates before current date.
+            if (oldDueDate.isAfter(meetingStartDate) && oldDueDate.isAfter(DateUtils.getLocalDateOfTenant())) {
+                final PeriodFrequencyType repaymentPeriodFrequencyType = this.loanRepaymentScheduleDetail.getRepaymentPeriodFrequencyType();
+                final String frequency = CalendarHelper.getMeetingFrequencyFromPeriodFrequencyType(repaymentPeriodFrequencyType);
+                final Integer loanRepaymentInterval = this.loanRepaymentScheduleDetail.getRepayEvery();
+                // reset repayment date with new meeting date
+                newRepaymentDate = CalendarHelper.getNewRepaymentMeetingDate(recuringRule, meetingStartDate, oldDueDate, loanRepaymentInterval, frequency);
+                if(isHolidayEnabled){
+                    newRepaymentDate = HolidayUtil.getRepaymentRescheduleDateToIfHoliday(newRepaymentDate, holidays);
+                }
+                loanRepaymentScheduleInstallment.updateDueDate(newRepaymentDate);
+                //reset from date to get actual daysInPeriod
+                loanRepaymentScheduleInstallment.updateFromDate(tmpFromDate);
+                tmpFromDate = newRepaymentDate;//update with new repayment date
+            }else{
+                tmpFromDate = oldDueDate;
+            }
+            
+        }
+    }
+    
+    
+
+    public void applyHolidayToRepaymentScheduleDates(final Holiday holiday) {
+        // first repayment's from date is same as disbursement date.
+        LocalDate tmpFromDate = this.getDisbursementDate();
+        // Loop through all loanRepayments
+        for (LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment : this.repaymentScheduleInstallments) {
+            final LocalDate oldDueDate = loanRepaymentScheduleInstallment.getDueDate();
+            
+            //update from date if it's not same as previous installament's due date.
+            if(!loanRepaymentScheduleInstallment.getFromDate().isEqual(tmpFromDate)){
+                loanRepaymentScheduleInstallment.updateFromDate(tmpFromDate);
+            }
+            if (oldDueDate.isAfter(holiday.getToDateLocalDate())) break;
+
+            if (oldDueDate.equals(holiday.getFromDateLocalDate()) || oldDueDate.equals(holiday.getToDateLocalDate())
+                    || (oldDueDate.isAfter(holiday.getFromDateLocalDate()) && oldDueDate.isBefore(holiday.getToDateLocalDate()))) {
+                // should be take from holiday
+                final LocalDate newRepaymentDate = holiday.getRepaymentsRescheduledToLocalDate();
+                loanRepaymentScheduleInstallment.updateDueDate(newRepaymentDate);
+            }
+            tmpFromDate = loanRepaymentScheduleInstallment.getDueDate();
+        }
+    }
+
+    public Group group() {
+        return this.group;
+    }
+
+    public Integer getCurrentLoanCounter() {
+        return this.loanCounter;
+    }
+
+    public Integer getLoanProductLoanCounter() {
+        return this.loanProductCounter;
+    }
+
+    public void updateClientLoanCounter(Integer newLoanCounter) {
+        this.loanCounter = newLoanCounter;
+    }
+
+    public void updateLoanProductLoanCounter(Integer newLoanProductLoanCounter) {
+        this.loanProductCounter = newLoanProductLoanCounter;
+    }
+
+    public boolean isGroupLoan() {
+        return LoanType.fromInt(this.loanType).isGroupLoan();
+    }
+
+    public void updateInterestRateFrequencyType() {
+        this.loanRepaymentScheduleDetail.updatenterestPeriodFrequencyType(this.loanProduct.getInterestPeriodFrequencyType());
+    }
+
+    public Integer getTermFrequency() {
+        return this.termFrequency;
+    }
+
+    
+    public Integer getTermPeriodFrequencyType() {
+        return this.termPeriodFrequencyType;
+    }
+
 }

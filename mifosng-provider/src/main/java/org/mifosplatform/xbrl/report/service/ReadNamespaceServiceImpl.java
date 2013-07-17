@@ -3,7 +3,6 @@ package org.mifosplatform.xbrl.report.service;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.xbrl.report.data.NamespaceData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;

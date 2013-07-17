@@ -44,4 +44,25 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     public boolean isAmazonS3Enabled(){
         return this.globalConfigurationRepository.findOneByName("amazon-S3").isEnabled();
     }
+
+    @Override
+    public boolean isRescheduleFutureRepaymentsEnabled() {
+        final String rescheduleRepaymentsConfigurationProperty = "reschedule-future-repayments";
+        final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByName(rescheduleRepaymentsConfigurationProperty);
+        if (property == null) { throw new GlobalConfigurationPropertyNotFoundException(rescheduleRepaymentsConfigurationProperty); }
+        return property.isEnabled();
+    }
+
+    /* (non-Javadoc)
+     * @see org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService#isHolidaysEnabled()
+     */
+    @Override
+    public boolean isRescheduleRepaymentsOnHolidaysEnabled() {
+        final String holidaysConfigurationProperty = "reschedule-repayments-on-holidays";
+        final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByName(holidaysConfigurationProperty);
+        if (property == null) { throw new GlobalConfigurationPropertyNotFoundException(holidaysConfigurationProperty); }
+        return property.isEnabled();
+    }
+    
+    
 }

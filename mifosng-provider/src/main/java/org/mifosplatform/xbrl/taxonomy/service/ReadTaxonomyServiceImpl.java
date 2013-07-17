@@ -4,8 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
-import org.mifosplatform.xbrl.report.data.NamespaceData;
+import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.xbrl.report.service.ReadNamespaceService;
 import org.mifosplatform.xbrl.taxonomy.data.TaxonomyData;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,13 +18,13 @@ public class ReadTaxonomyServiceImpl implements ReadTaxonomyService {
 	private final ReadNamespaceService readNamespaceService;
 	
 	@Autowired
-	public ReadTaxonomyServiceImpl(final TenantAwareRoutingDataSource dataSource, 
+	public ReadTaxonomyServiceImpl(final RoutingDataSource dataSource, 
 									final ReadNamespaceService readNamespaceService) {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 		this.readNamespaceService = readNamespaceService;
 	}
 	
-	private static final class TaxonomyMapper implements RowMapper<TaxonomyData> {
+	static final class TaxonomyMapper implements RowMapper<TaxonomyData> {
 
 		public String schema() {
 			return "tx.id as id, name, dimension, type, unit, period, description, prefix "

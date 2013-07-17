@@ -12,24 +12,30 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.journalentry.service.JournalEntryWritePlatformService;
+import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
+import org.mifosplatform.infrastructure.jobs.service.JobName;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+import org.mifosplatform.organisation.holiday.domain.Holiday;
+import org.mifosplatform.organisation.holiday.domain.HolidayRepository;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
+import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.calendar.domain.Calendar;
 import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
 import org.mifosplatform.portfolio.calendar.domain.CalendarInstance;
 import org.mifosplatform.portfolio.calendar.domain.CalendarInstanceRepository;
-import org.mifosplatform.portfolio.calendar.exception.NotValidRecurringDateException;
 import org.mifosplatform.portfolio.calendar.service.CalendarHelper;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.domain.ChargeRepositoryWrapper;
@@ -57,7 +63,7 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanSummaryWrapper;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionRepository;
-import org.mifosplatform.portfolio.loanaccount.exception.LoanApplicationDateException;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanType;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanNotFoundException;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanOfficerAssignmentException;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanOfficerUnassignmentException;
@@ -65,6 +71,7 @@ import org.mifosplatform.portfolio.loanaccount.exception.LoanTransactionNotFound
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
 import org.mifosplatform.portfolio.loanaccount.serialization.LoanEventApiJsonValidator;
 import org.mifosplatform.portfolio.loanaccount.serialization.LoanUpdateCommandFromApiJsonDeserializer;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRelatedDetail;
 import org.mifosplatform.portfolio.loanproduct.exception.InvalidCurrencyException;
 import org.mifosplatform.portfolio.note.domain.Note;
 import org.mifosplatform.portfolio.note.domain.NoteRepository;
@@ -74,7 +81,6 @@ import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 @Service
 public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatformService {
@@ -95,6 +101,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final LoanScheduleGeneratorFactory loanScheduleFactory;
     private final CalendarInstanceRepository calendarInstanceRepository;
     private final PaymentDetailWritePlatformService paymentDetailWritePlatformService;
+    private final HolidayRepository holidayRepository;
+    private final ConfigurationDomainService configurationDomainService;
 
     @Autowired
     public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -106,7 +114,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final JournalEntryWritePlatformService journalEntryWritePlatformService, final LoanSummaryWrapper loanSummaryWrapper,
             final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory,
             final LoanScheduleGeneratorFactory loanScheduleFactory, final CalendarInstanceRepository calendarInstanceRepository,
-            final PaymentDetailWritePlatformService paymentDetailWritePlatformService) {
+            final PaymentDetailWritePlatformService paymentDetailWritePlatformService, final HolidayRepository holidayRepository,
+            final ConfigurationDomainService configurationDomainService) {
         this.context = context;
         this.loanEventApiJsonValidator = loanEventApiJsonValidator;
         this.loanAssembler = loanAssembler;
@@ -123,6 +132,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.loanScheduleFactory = loanScheduleFactory;
         this.calendarInstanceRepository = calendarInstanceRepository;
         this.paymentDetailWritePlatformService = paymentDetailWritePlatformService;
+        this.holidayRepository = holidayRepository;
+        this.configurationDomainService = configurationDomainService;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -139,11 +150,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.loanEventApiJsonValidator.validateDisbursement(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
-
         // validate actual disbursement date against meeting date
-        Collection<CalendarInstance> calendarInstances = this.calendarInstanceRepository.findByEntityIdAndEntityTypeId(loan.getId(),
+        final CalendarInstance calendarInstance = this.calendarInstanceRepository.findCalendarInstaneByLoanId(loan.getId(),
                 CalendarEntityType.LOANS.getValue());
-        validateDisbursementDate(command.localDateValueOfParameterNamed("actualDisbursementDate"), calendarInstances);
+        if (loan.isSyncDisbursementWithMeeting()) {
+
+            final LocalDate actualDisbursementDate = command.localDateValueOfParameterNamed("actualDisbursementDate");
+            this.loanEventApiJsonValidator.validateDisbursementDateWithMeetingDate(actualDisbursementDate, calendarInstance);
+        }
 
         final MonetaryCurrency currency = loan.getCurrency();
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
@@ -155,8 +169,17 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         PaymentDetail paymentDetail = paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
+        // Recalculate first repayment date based in actual disbursement date.
+        final LocalDate actualDisbursementDate = command.localDateValueOfParameterNamed("actualDisbursementDate");
+        final LocalDate firstRepaymentMeetingDate = getFirstRepaymentMeetingDate(actualDisbursementDate, loan, calendarInstance);
+        final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
+        final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loan.getOfficeId(),
+                actualDisbursementDate.toDate());
+
+        updateLoanCounters(loan, actualDisbursementDate);
+
         loan.disburse(this.loanScheduleFactory, currentUser, command, applicationCurrency, existingTransactionIds,
-                existingReversedTransactionIds, changes, paymentDetail);
+                existingReversedTransactionIds, changes, paymentDetail, firstRepaymentMeetingDate, isHolidayEnabled, holidays);
 
         if (!changes.isEmpty()) {
             this.loanRepository.save(loan);
@@ -181,34 +204,31 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 .build();
     }
 
-    private void validateDisbursementDate(final LocalDate disbursementDate, final Collection<CalendarInstance> calendarInstances) {
-        if (!CollectionUtils.isEmpty(calendarInstances)) {
-            Calendar calendar = null;
-            for (CalendarInstance calendarInstance : calendarInstances) {
-                calendar = calendarInstance.getCalendar();
-                break;
-            }
-            if (calendar != null && disbursementDate != null) {
+    private LocalDate getFirstRepaymentMeetingDate(final LocalDate actualDisbursementDate, final Loan loan,
+            final CalendarInstance calendarInstance) {
+        final Calendar calendar = (calendarInstance == null) ? null : calendarInstance.getCalendar();
+        LocalDate firstRepaymentMeetingDate = null;
+        if (calendar != null) {// sync repayments
 
-                // Actual disbursement date cannot be before Meeting start
-                // date
-                if (disbursementDate.isBefore(calendar.getStartDateLocalDate())) {
-                    final String errorMessage = "Actual disbursement date '" + disbursementDate.toString()
-                            + "' cannot be before meeting start date '" + calendar.getStartDate().toString() + "' ";
-                    throw new LoanApplicationDateException("actual.disbursement.date.cannot.be.before.meeting.start.date", errorMessage,
-                            disbursementDate.toString(), calendar.getStartDate());
+            // TODO: AA - user provided first repayment date takes precedence
+            // over recalculated meeting date
+            if (loan.getExpectedFirstRepaymentOnDate() == null) {
+                // FIXME: AA - Possibility of having next meeting date
+                // immediately after disbursement date,
+                // need to have minimum number of days gap between disbursement
+                // and first repayment date.
+                final LoanProductRelatedDetail repaymentScheduleDetails = loan.repaymentScheduleDetail();
+                if (repaymentScheduleDetails != null) {// Not expecting to be
+                                                       // null
+                    final Integer repayEvery = repaymentScheduleDetails.getRepayEvery();
+                    final String frequency = CalendarHelper.getMeetingFrequencyFromPeriodFrequencyType(repaymentScheduleDetails
+                            .getRepaymentPeriodFrequencyType());
+                    firstRepaymentMeetingDate = CalendarHelper.getFirstRepaymentMeetingDate(calendar, actualDisbursementDate, repayEvery,
+                            frequency);
                 }
-
-                // Disbursement date should fall on a meeting date
-                if (!CalendarHelper.isValidRedurringDate(calendar.getRecurrence(), calendar.getStartDateLocalDate(), disbursementDate)) {
-                    final String errorMessage = "Expected disbursement date '" + disbursementDate.toString()
-                            + "' does not fall on a meeting date.";
-                    throw new NotValidRecurringDateException("loan.actual.disbursement.date", errorMessage, disbursementDate.toString(),
-                            calendar.getTitle());
-                }
-
             }
         }
+        return firstRepaymentMeetingDate;
     }
 
     /****
@@ -235,8 +255,17 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
             PaymentDetail paymentDetail = paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
+            // Bulk disbursement should happen on meeting date (mostly from
+            // collection sheet).
+            // FIXME: AA - this should be first meeting date based on
+            // disbursement date and next available meeting dates
+            // assuming repayment schedule won't regenerate because expected
+            // disbursement and actual disbursement happens on same date
+            final LocalDate firstRepaymentOnDate = null;
+            final boolean isHolidayEnabled = false;
+            final List<Holiday> holidays = null;
             loan.disburse(this.loanScheduleFactory, currentUser, command, applicationCurrency, existingTransactionIds,
-                    existingReversedTransactionIds, changes, paymentDetail);
+                    existingReversedTransactionIds, changes, paymentDetail, firstRepaymentOnDate, isHolidayEnabled, holidays);
 
             if (!changes.isEmpty()) {
                 this.loanRepository.save(loan);
@@ -260,6 +289,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         context.authenticatedUser();
 
         final Loan loan = retrieveLoanBy(loanId);
+        removeLoanCycle(loan);
         final List<Long> existingTransactionIds = new ArrayList<Long>();
         final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
         final Map<String, Object> changes = loan.undoDisbursal(existingTransactionIds, existingReversedTransactionIds);
@@ -327,6 +357,19 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private CommandProcessingResultBuilder saveLoanRepayment(final Long loanId, final PaymentDetail paymentDetail,
             final BigDecimal transactionAmount, final LocalDate transactionDate, final String noteText) {
         final Loan loan = retrieveLoanBy(loanId);
+
+        // TODO: Is it required to validate transaction date with meeting dates
+        // if repayments is synced with meeting?
+        /*
+         * if(loan.isSyncDisbursementWithMeeting()){ // validate actual
+         * disbursement date against meeting date CalendarInstance
+         * calendarInstance =
+         * this.calendarInstanceRepository.findCalendarInstaneByLoanId
+         * (loan.getId(), CalendarEntityType.LOANS.getValue());
+         * this.loanEventApiJsonValidator
+         * .validateRepaymentDateWithMeetingDate(transactionDate,
+         * calendarInstance); }
+         */
 
         final List<Long> existingTransactionIds = new ArrayList<Long>();
         final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
@@ -450,7 +493,16 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final String noteText = command.stringValueOfParameterNamed("note");
         if (StringUtils.isNotBlank(noteText)) {
             changes.put("note", noteText);
-            Note note = Note.loanTransactionNote(loan, newTransactionDetail, noteText);
+            Note note = null;
+            /**
+             * If a new transaction is not created, associate note with the
+             * transaction to be adjusted
+             **/
+            if (newTransactionDetail.isGreaterThanZero(loan.getPrincpal().getCurrency())) {
+                note = Note.loanTransactionNote(loan, newTransactionDetail, noteText);
+            } else {
+                note = Note.loanTransactionNote(loan, transactionToAdjust, noteText);
+            }
             this.noteRepository.save(note);
         }
 
@@ -544,6 +596,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         changes.put("dateFormat", command.dateFormat());
 
         final Loan loan = retrieveLoanBy(loanId);
+        removeLoanCycle(loan);
 
         final List<Long> existingTransactionIds = new ArrayList<Long>();
         final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
@@ -644,6 +697,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.loanEventApiJsonValidator.validateTransactionWithNoAmount(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
+        removeLoanCycle(loan);
 
         final Map<String, Object> changes = new LinkedHashMap<String, Object>();
         changes.put("transactionDate", command.stringValueOfParameterNamed("transactionDate"));
@@ -953,5 +1007,217 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(applicationCurrency.toData(),
                 existingTransactionIds, existingReversedTransactionIds);
         journalEntryWritePlatformService.createJournalEntriesForLoan(accountingBridgeData);
+    }
+
+    @Transactional
+    @Override
+    public void updateRepaymentsSchedule(final Calendar calendar, Collection<CalendarInstance> loanCalendarInstances) {
+
+        final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
+        final Collection<Integer> loanStatuses = new ArrayList<Integer>(Arrays.asList(LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue(),
+                LoanStatus.APPROVED.getValue(), LoanStatus.ACTIVE.getValue()));
+        final Collection<Integer> loanTypes = new ArrayList<Integer>(Arrays.asList(LoanType.GROUP.getValue(), LoanType.JLG.getValue()));
+        final Collection<Long> loanIds = new ArrayList<Long>(loanCalendarInstances.size());
+        // loop through loanCalendarInstances to get loan ids
+        for (CalendarInstance calendarInstance : loanCalendarInstances) {
+            loanIds.add(calendarInstance.getEntityId());
+        }
+
+        final List<Loan> loans = this.loanRepository.findByIdsAndLoanStatusAndLoanType(loanIds, loanStatuses, loanTypes);
+        List<Holiday> holidays = null;
+        // loop through each loan to reschedule the repayment dates
+        for (Loan loan : loans) {
+            if (loan != null) {
+                holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loan.getOfficeId(), loan.getDisbursementDate().toDate());
+                loan.updateLoanRepaymentScheduleDates(calendar.getStartDateLocalDate(), calendar.getRecurrence(), isHolidayEnabled,
+                        holidays);
+                this.loanRepository.save(loan);
+            }
+        }
+    }
+
+    private void removeLoanCycle(final Loan loan) {
+        final List<Loan> loansToUpdate;
+        if (loan.isGroupLoan()) {
+            if (loan.loanProduct().isIncludeInBorrowerCycle()) {
+                loansToUpdate = this.loanRepository.getGroupLoansToUpdateLoanCounter(loan.getCurrentLoanCounter(), loan.getGroupId(),
+                        LoanType.GROUP.getValue());
+            } else {
+                loansToUpdate = this.loanRepository.getGroupLoansToUpdateLoanProductCounter(loan.getLoanProductLoanCounter(),
+                        loan.getGroupId(), LoanType.GROUP.getValue());
+            }
+
+        } else {
+            if (loan.loanProduct().isIncludeInBorrowerCycle()) {
+                loansToUpdate = this.loanRepository
+                        .getClientOrJLGLoansToUpdateLoanCounter(loan.getCurrentLoanCounter(), loan.getClientId());
+            } else {
+                loansToUpdate = this.loanRepository.getClientLoansToUpdateLoanProductCounter(loan.getLoanProductLoanCounter(),
+                        loan.getClientId());
+            }
+
+        }
+        if (loansToUpdate != null) {
+            updateLoanCycleCounter(loansToUpdate, loan);
+        }
+        loan.updateClientLoanCounter(null);
+        loan.updateLoanProductLoanCounter(null);
+
+    }
+
+    private void updateLoanCounters(final Loan loan, final LocalDate actualDisbursementDate) {
+
+        if (loan.isGroupLoan()) {
+            final List<Loan> loansToUpdateForLoanCounter = this.loanRepository.getGroupLoansDisbursedAfter(actualDisbursementDate.toDate(),
+                    loan.getGroupId(), LoanType.GROUP.getValue());
+            final Integer newLoanCounter = getNewGroupLoanCounter(loan);
+            final Integer newLoanProductCounter = getNewGroupLoanProductCounter(loan);
+            updateLoanCounter(loan, loansToUpdateForLoanCounter, newLoanCounter, newLoanProductCounter);
+        } else {
+            final List<Loan> loansToUpdateForLoanCounter = this.loanRepository.getClientOrJLGLoansDisbursedAfter(
+                    actualDisbursementDate.toDate(), loan.getClientId());
+            final Integer newLoanCounter = getNewClientOrJLGLoanCounter(loan);
+            final Integer newLoanProductCounter = getNewClientOrJLGLoanProductCounter(loan);
+            updateLoanCounter(loan, loansToUpdateForLoanCounter, newLoanCounter, newLoanProductCounter);
+        }
+    }
+
+    private Integer getNewGroupLoanCounter(final Loan loan) {
+
+        Integer maxClientLoanCounter = this.loanRepository.getMaxGroupLoanCounter(loan.getGroupId(), LoanType.GROUP.getValue());
+        if (maxClientLoanCounter == null) {
+            maxClientLoanCounter = 1;
+        } else {
+            maxClientLoanCounter = maxClientLoanCounter + 1;
+        }
+        return maxClientLoanCounter;
+    }
+
+    private Integer getNewGroupLoanProductCounter(final Loan loan) {
+
+        Integer maxLoanProductLoanCounter = this.loanRepository.getMaxGroupLoanProductCounter(loan.loanProduct().getId(),
+                loan.getGroupId(), LoanType.GROUP.getValue());
+        if (maxLoanProductLoanCounter == null) {
+            maxLoanProductLoanCounter = 1;
+        } else {
+            maxLoanProductLoanCounter = maxLoanProductLoanCounter + 1;
+        }
+        return maxLoanProductLoanCounter;
+    }
+
+    private void updateLoanCounter(final Loan loan, final List<Loan> loansToUpdateForLoanCounter, Integer newLoanCounter,
+            Integer newLoanProductCounter) {
+
+        final boolean includeInBorrowerCycle = loan.loanProduct().isIncludeInBorrowerCycle();
+        for (final Loan loanToUpdate : loansToUpdateForLoanCounter) {
+            // Update client loan counter if loan product includeInBorrowerCycle
+            // is true
+            if (includeInBorrowerCycle) {
+                Integer currentLoanCounter = loanToUpdate.getCurrentLoanCounter();
+                if (newLoanCounter > currentLoanCounter) {
+                    newLoanCounter = currentLoanCounter;
+                }
+                loanToUpdate.updateClientLoanCounter(++currentLoanCounter);
+            }
+
+            if (loanToUpdate.loanProduct().getId().equals(loan.loanProduct().getId())) {
+                Integer loanProductLoanCounter = loanToUpdate.getLoanProductLoanCounter();
+                if (newLoanProductCounter > loanProductLoanCounter) {
+                    newLoanProductCounter = loanProductLoanCounter;
+                }
+                loanToUpdate.updateLoanProductLoanCounter(++loanProductLoanCounter);
+            }
+        }
+
+        if (includeInBorrowerCycle) {
+            loan.updateClientLoanCounter(newLoanCounter);
+        } else {
+            loan.updateClientLoanCounter(null);
+        }
+        loan.updateLoanProductLoanCounter(newLoanProductCounter);
+        this.loanRepository.save(loansToUpdateForLoanCounter);
+    }
+
+    private Integer getNewClientOrJLGLoanCounter(final Loan loan) {
+
+        Integer maxClientLoanCounter = this.loanRepository.getMaxClientOrJLGLoanCounter(loan.getClientId());
+        if (maxClientLoanCounter == null) {
+            maxClientLoanCounter = 1;
+        } else {
+            maxClientLoanCounter = maxClientLoanCounter + 1;
+        }
+        return maxClientLoanCounter;
+    }
+
+    private Integer getNewClientOrJLGLoanProductCounter(final Loan loan) {
+
+        Integer maxLoanProductLoanCounter = this.loanRepository.getMaxClientOrJLGLoanProductCounter(loan.loanProduct().getId(),
+                loan.getClientId());
+        if (maxLoanProductLoanCounter == null) {
+            maxLoanProductLoanCounter = 1;
+        } else {
+            maxLoanProductLoanCounter = maxLoanProductLoanCounter + 1;
+        }
+        return maxLoanProductLoanCounter;
+    }
+
+    private void updateLoanCycleCounter(final List<Loan> loansToUpdate, final Loan loan) {
+
+        final Integer currentLoancounter = loan.getCurrentLoanCounter();
+        final Integer currentLoanProductCounter = loan.getLoanProductLoanCounter();
+
+        for (final Loan loanToUpdate : loansToUpdate) {
+            if (loan.loanProduct().isIncludeInBorrowerCycle()) {
+                Integer runningLoancounter = loanToUpdate.getCurrentLoanCounter();
+                if (runningLoancounter > currentLoancounter) {
+                    loanToUpdate.updateClientLoanCounter(--runningLoancounter);
+                }
+            }
+            if (loan.loanProduct().getId().equals(loanToUpdate.loanProduct().getId())) {
+                Integer runningLoanProductCounter = loanToUpdate.getLoanProductLoanCounter();
+                if (runningLoanProductCounter > currentLoanProductCounter) {
+                    loanToUpdate.updateLoanProductLoanCounter(--runningLoanProductCounter);
+                }
+            }
+        }
+        this.loanRepository.save(loansToUpdate);
+    }
+
+    @Transactional
+    @Override
+    @CronTarget(jobName = JobName.APPLY_HOLIDAYS_TO_LOANS)
+    public void applyHolidaysToLoans() {
+
+        final Collection<Integer> loanStatuses = new ArrayList<Integer>(Arrays.asList(LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue(),
+                LoanStatus.APPROVED.getValue(), LoanStatus.ACTIVE.getValue()));
+        // Get all Holidays which are yet to applied to loans
+        List<Holiday> holidays = this.holidayRepository.findUnprocessed();
+
+        // Loop through all holidays
+        for (Holiday holiday : holidays) {
+            // All offices to which holiday is applied
+            final Set<Office> offices = holiday.getOffices();
+            Collection<Long> officeIds = new ArrayList<Long>(offices.size());
+            for (Office office : offices) {
+                officeIds.add(office.getId());
+            }
+
+            // get all loans
+            List<Loan> loans = new ArrayList<Loan>();
+            // get all individual and jlg loans
+            loans.addAll(this.loanRepository.findByClientOfficeIdsAndLoanStatus(officeIds, loanStatuses));
+            // FIXME: optimize to get all client and group loans belongs to a
+            // office id
+            // get all group loans
+            loans.addAll(this.loanRepository.findByGroupOfficeIdsAndLoanStatus(officeIds, loanStatuses));
+
+            for (Loan loan : loans) {
+                // apply holiday
+                loan.applyHolidayToRepaymentScheduleDates(holiday);
+            }
+            this.loanRepository.save(loans);
+            holiday.processed();
+        }
+        this.holidayRepository.save(holidays);
     }
 }

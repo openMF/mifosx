@@ -42,7 +42,7 @@ public final class CalculateLoanScheduleQueryFromApiJsonHelper {
             "loanTermFrequencyType", "repaymentFrequencyType", "interestRateFrequencyType", "amortizationType", "interestType",
             "interestCalculationPeriodType", "expectedDisbursementDate", "repaymentsStartingFromDate", "graceOnPrincipalPayment",
             "graceOnInterestPayment", "graceOnInterestCharged", "interestChargedFromDate", "submittedOnDate", "submittedOnNote", "locale",
-            "dateFormat", "charges", "collateral"));
+            "dateFormat", "charges", "collateral", "syncDisbursementWithMeeting"));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -179,12 +179,31 @@ public final class CalculateLoanScheduleQueryFromApiJsonHelper {
                 }
             }
         }
-
+        
+        boolean meetingIdRequired = false;
+        //validate syncDisbursement
+        final String syncDisbursementParameterName = "syncDisbursementWithMeeting";
+        if (fromApiJsonHelper.parameterExists(syncDisbursementParameterName, element)) {
+        	final Boolean syncDisbursement = fromApiJsonHelper.extractBooleanNamed(syncDisbursementParameterName, element);
+        	if(syncDisbursement == null){
+        		baseDataValidator.reset().parameter(syncDisbursementParameterName).value(syncDisbursement).trueOrFalseRequired(false);
+        	}else if(syncDisbursement.booleanValue()) {
+        		meetingIdRequired = true;
+        	}
+        }
+      
+        final String calendarIdParameterName = "calendarId";
+        //if disbursement is synced then must have a meeting (calendar)
+        if (meetingIdRequired || fromApiJsonHelper.parameterExists(syncDisbursementParameterName, element)) {
+        	final Long calendarId = fromApiJsonHelper.extractLongNamed(calendarIdParameterName, element);
+	        baseDataValidator.reset().parameter(calendarIdParameterName).value(calendarId).notNull().integerGreaterThanZero();
+        }
+                
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
                 "Validation errors exist.", dataValidationErrors); }
     }
 
-    private void validateSelectedPeriodFrequencyTypeIsTheSame(final List<ApiParameterError> dataValidationErrors,
+    public void validateSelectedPeriodFrequencyTypeIsTheSame(final List<ApiParameterError> dataValidationErrors,
             final Integer loanTermFrequency, final Integer loanTermFrequencyType, final Integer numberOfRepayments,
             final Integer repaymentEvery, final Integer repaymentEveryType) {
         if (loanTermFrequencyType != null && !loanTermFrequencyType.equals(repaymentEveryType)) {

@@ -6,6 +6,7 @@
 package org.mifosplatform.portfolio.loanproduct.domain;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,12 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingRuleType;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
@@ -72,7 +76,18 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
     @Column(name = "accounting_type", nullable = false)
     private Integer accountingRule;
+    
+    @Column(name = "include_in_borrower_cycle")
+    private boolean includeInBorrowerCycle;
 
+    @Column(name = "start_date", nullable = true)
+    @Temporal(TemporalType.DATE)
+    private Date startDate;
+    
+    @Column(name = "close_date", nullable = true)
+    @Temporal(TemporalType.DATE)
+    private Date closeDate;
+    
     public static LoanProduct assembleFromJson(final Fund fund, final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy,
             final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator) {
 
@@ -111,12 +126,16 @@ public class LoanProduct extends AbstractPersistable<Long> {
         final Integer graceOnInterestCharged = command.integerValueOfParameterNamed("graceOnInterestCharged");
 
         final AccountingRuleType accountingRuleType = AccountingRuleType.fromInt(command.integerValueOfParameterNamed("accountingRule"));
-
+        final boolean includeInBorrowerCycle = command.booleanPrimitiveValueOfParameterNamed("includeInBorrowerCycle");
+        
+        final LocalDate startDate = command.localDateValueOfParameterNamed("startDate");
+        final LocalDate closeDate = command.localDateValueOfParameterNamed("closeDate");
+        
         return new LoanProduct(fund, loanTransactionProcessingStrategy, name, description, currency, principal, minPrincipal, maxPrincipal,
                 interestRatePerPeriod, minInterestRatePerPeriod, maxInterestRatePerPeriod, interestFrequencyType, annualInterestRate,
                 interestMethod, interestCalculationPeriodMethod, repaymentEvery, repaymentFrequencyType, numberOfRepayments,
                 minNumberOfRepayments, maxNumberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged,
-                amortizationMethod, inArrearsTolerance, productCharges, accountingRuleType);
+                amortizationMethod, inArrearsTolerance, productCharges, accountingRuleType, includeInBorrowerCycle, startDate, closeDate);
     }
 
     protected LoanProduct() {
@@ -135,7 +154,8 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final Integer defaultMinNumberOfInstallments, final Integer defaultMaxNumberOfInstallments,
             final Integer graceOnPrincipalPayment, final Integer graceOnInterestPayment, final Integer graceOnInterestCharged,
             final AmortizationMethod amortizationMethod, final BigDecimal inArrearsTolerance, final List<Charge> charges,
-            final AccountingRuleType accountingRuleType) {
+            final AccountingRuleType accountingRuleType, final boolean includeInBorrowerCycle,  final LocalDate startDate,
+            final LocalDate closeDate) {
         this.fund = fund;
         this.transactionProcessingStrategy = transactionProcessingStrategy;
         this.name = name.trim();
@@ -162,6 +182,15 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
         if (accountingRuleType != null) {
             this.accountingRule = accountingRuleType.getValue();
+        }
+        this.includeInBorrowerCycle = includeInBorrowerCycle;
+        
+        if (startDate != null) {
+            this.startDate = startDate.toDateMidnight().toDate();
+        }
+        
+        if (closeDate != null) {
+            this.closeDate = closeDate.toDateMidnight().toDate();
         }
     }
 
@@ -239,7 +268,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final Long newValue = command.longValueOfParameterNamed(fundIdParamName);
             actualChanges.put(fundIdParamName, newValue);
         }
-
+        
         Long existingStrategyId = null;
         if (this.transactionProcessingStrategy != null) {
             existingStrategyId = this.transactionProcessingStrategy.getId();
@@ -257,7 +286,49 @@ public class LoanProduct extends AbstractPersistable<Long> {
                 actualChanges.put(chargesParamName, command.jsonFragment(chargesParamName));
             }
         }
+        
+        final String includeInBorrowerCycleParamName = "includeInBorrowerCycle";
+        if (command.isChangeInBooleanParameterNamed(includeInBorrowerCycleParamName, this.includeInBorrowerCycle)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(includeInBorrowerCycleParamName);
+            actualChanges.put(includeInBorrowerCycleParamName, newValue);
+            this.includeInBorrowerCycle = newValue;
+        }
+        
+        final String dateFormatAsInput = command.dateFormat();
+        final String localeAsInput = command.locale();
+        
+        final String localeParamName = "locale";
+        final String dateFormatParamName = "dateFormat";
 
+        final String startDateParamName = "startDate";
+        if (command.isChangeInLocalDateParameterNamed(startDateParamName, getStartDate())) {
+            final String valueAsInput = command.stringValueOfParameterNamed(startDateParamName);
+            actualChanges.put(startDateParamName, valueAsInput);
+            actualChanges.put(dateFormatParamName, dateFormatAsInput);
+            actualChanges.put(localeParamName, localeAsInput);
+
+            final LocalDate newValue = command.localDateValueOfParameterNamed(startDateParamName);
+            if (newValue != null) {
+                this.startDate = newValue.toDate();
+            } else {
+            	this.startDate = null;
+            }
+        }
+
+        final String closeDateParamName = "closeDate";
+        if (command.isChangeInLocalDateParameterNamed(closeDateParamName, getCloseDate())) {
+            final String valueAsInput = command.stringValueOfParameterNamed(closeDateParamName);
+            actualChanges.put(closeDateParamName, valueAsInput);
+            actualChanges.put(dateFormatParamName, dateFormatAsInput);
+            actualChanges.put(localeParamName, localeAsInput);
+
+            final LocalDate newValue = command.localDateValueOfParameterNamed(closeDateParamName);
+            if (newValue != null) {
+                this.closeDate = newValue.toDate();
+            } else {
+            	this.closeDate = null;
+            }
+        }
         return actualChanges;
     }
 
@@ -317,4 +388,25 @@ public class LoanProduct extends AbstractPersistable<Long> {
                 null, null, null, null) : this.loanProductMinMaxConstraints;
         return loanProductMinMaxConstraints;
     }
+
+    public boolean isIncludeInBorrowerCycle() {
+        return this.includeInBorrowerCycle;
+    }
+    
+    public LocalDate getStartDate() {
+        LocalDate startLocalDate = null;
+        if (this.startDate != null) {
+            startLocalDate = LocalDate.fromDateFields(this.startDate);
+        }
+        return startLocalDate;
+    }
+    
+    public LocalDate getCloseDate() {
+        LocalDate closeLocalDate = null;
+        if (this.closeDate != null) {
+            closeLocalDate = LocalDate.fromDateFields(this.closeDate);
+        }
+        return closeLocalDate;
+    }
+    
 }

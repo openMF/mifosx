@@ -5,10 +5,10 @@
  */
 package org.mifosplatform.portfolio.calendar.service;
 
-import org.mifosplatform.portfolio.calendar.data.CalendarData;
-
 import java.util.Collection;
 import java.util.List;
+
+import org.mifosplatform.portfolio.calendar.data.CalendarData;
 
 public interface CalendarReadPlatformService {
 

@@ -13,19 +13,24 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.mifosplatform.infrastructure.codes.data.CodeValueData;
+import org.mifosplatform.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.core.service.PaginationHelper;
-import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
+import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.data.OfficeData;
 import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
+import org.mifosplatform.organisation.staff.data.StaffData;
+import org.mifosplatform.organisation.staff.service.StaffReadPlatformService;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryCollectionData;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryData;
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.domain.ClientEnumerations;
+import org.mifosplatform.portfolio.client.domain.ClientStatus;
 import org.mifosplatform.portfolio.client.exception.ClientNotFoundException;
 import org.mifosplatform.portfolio.group.data.GroupGeneralData;
 import org.mifosplatform.portfolio.group.service.SearchParameters;
@@ -40,6 +45,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 @Service
 public class ClientReadPlatformServiceImpl implements ClientReadPlatformService {
@@ -47,7 +53,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final JdbcTemplate jdbcTemplate;
     private final PlatformSecurityContext context;
     private final OfficeReadPlatformService officeReadPlatformService;
-
+    private final StaffReadPlatformService staffReadPlatformService;
+    private final CodeValueReadPlatformService codeValueReadPlatformService;
     // data mappers
     private final PaginationHelper<ClientData> paginationHelper = new PaginationHelper<ClientData>();
     private final ClientMapper clientMapper = new ClientMapper();
@@ -56,23 +63,38 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final ParentGroupsMapper clientGroupsMapper = new ParentGroupsMapper();
 
     @Autowired
-    public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final TenantAwareRoutingDataSource dataSource,
-            final OfficeReadPlatformService officeReadPlatformService) {
+    public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
+            final OfficeReadPlatformService officeReadPlatformService, final StaffReadPlatformService staffReadPlatformService,
+            final CodeValueReadPlatformService codeValueReadPlatformService) {
         this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.staffReadPlatformService = staffReadPlatformService;
+        this.codeValueReadPlatformService = codeValueReadPlatformService;
     }
 
     @Override
-    public ClientData retrieveTemplate() {
+    public ClientData retrieveTemplate(final Long officeId, final boolean staffInSelectedOfficeOnly) {
+        this.context.authenticatedUser();
 
-        final AppUser currentUser = context.authenticatedUser();
+        final Long defaultOfficeId = defaultToUsersOfficeIfNull(officeId);
 
         final Collection<OfficeData> offices = officeReadPlatformService.retrieveAllOfficesForDropdown();
 
-        final Long officeId = currentUser.getOffice().getId();
+        Collection<StaffData> staffOptions = null;
 
-        return ClientData.template(officeId, new LocalDate(), offices);
+        final boolean loanOfficersOnly = false;
+        if (staffInSelectedOfficeOnly) {
+            staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(defaultOfficeId);
+        } else {
+            staffOptions = this.staffReadPlatformService.retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(defaultOfficeId,
+                    loanOfficersOnly);
+        }
+        if (CollectionUtils.isEmpty(staffOptions)) {
+            staffOptions = null;
+        }
+
+        return ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions, null);
     }
 
     @Override
@@ -115,7 +137,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
     private String buildSqlStringFromClientCriteria(final SearchParameters searchParameters) {
 
-        final String sqlSearch = searchParameters.getSqlSearch();
+        String sqlSearch = searchParameters.getSqlSearch();
         final Long officeId = searchParameters.getOfficeId();
         final String externalId = searchParameters.getExternalId();
         final String displayName = searchParameters.getName();
@@ -125,6 +147,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         String extraCriteria = "";
         if (sqlSearch != null) {
+            sqlSearch = sqlSearch.replaceAll(" display_name ", " c.display_name ");
+            sqlSearch = sqlSearch.replaceAll("display_name ", "c.display_name ");
             extraCriteria = " and (" + sqlSearch + ")";
         }
 
@@ -198,9 +222,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     @Override
     public Collection<ClientData> retrieveAllForLookupByOfficeId(final Long officeId) {
 
-        final String sql = "select " + this.lookupMapper.schema() + " and c.office_id = ?";
+        final String sql = "select " + this.lookupMapper.schema() + " where c.office_id = ? and c.status_enum != ?";
 
-        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[] { officeId });
+        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[] { officeId, ClientStatus.CLOSED.getValue()});
     }
 
     @Override
@@ -226,10 +250,12 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             sqlBuilder.append("c.office_id as officeId, o.name as officeName, ");
             sqlBuilder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, ");
             sqlBuilder.append("c.fullname as fullname, c.display_name as displayName, ");
-            sqlBuilder.append("c.activation_date as activationDate, c.image_id as imageId ");
+            sqlBuilder.append("c.activation_date as activationDate, c.image_id as imageId, ");
+            sqlBuilder.append("c.staff_id as staffId, s.display_name as staffName ");
             sqlBuilder.append("from m_client c ");
             sqlBuilder.append("join m_office o on o.id = c.office_id ");
-            sqlBuilder.append("join m_group_client pgc on pgc.client_id = c.id");
+            sqlBuilder.append("join m_group_client pgc on pgc.client_id = c.id ");
+            sqlBuilder.append("left join m_staff s on s.id = c.staff_id ");
 
             this.schema = sqlBuilder.toString();
         }
@@ -256,9 +282,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
             final Long imageId = JdbcSupport.getLong(rs, "imageId");
             final String officeName = rs.getString("officeName");
+            final Long staffId = JdbcSupport.getLong(rs, "staffId");
+            final String staffName = rs.getString("staffName");
 
             return ClientData.instance(accountNo, status, officeId, officeName, id, firstname, middlename, lastname, fullname, displayName,
-                    externalId, activationDate, imageId);
+                    externalId, activationDate, imageId, staffId, staffName);
         }
     }
 
@@ -274,9 +302,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("c.office_id as officeId, o.name as officeName, ");
             builder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, ");
             builder.append("c.fullname as fullname, c.display_name as displayName, ");
-            builder.append("c.activation_date as activationDate, c.image_id as imageId ");
+            builder.append("c.activation_date as activationDate, c.image_id as imageId, ");
+            builder.append("c.staff_id as staffId, s.display_name as staffName ");
             builder.append("from m_client c ");
             builder.append("join m_office o on o.id = c.office_id ");
+            builder.append("left join m_staff s on s.id = c.staff_id ");
 
             this.schema = builder.toString();
         }
@@ -304,9 +334,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
             final String officeName = rs.getString("officeName");
             final Long imageId = JdbcSupport.getLong(rs, "imageId");
+            final Long staffId = JdbcSupport.getLong(rs, "staffId");
+            final String staffName = rs.getString("staffName");
 
             return ClientData.instance(accountNo, status, officeId, officeName, id, firstname, middlename, lastname, fullname, displayName,
-                    externalId, activationDate, imageId);
+                    externalId, activationDate, imageId, staffId, staffName);
         }
     }
 
@@ -491,8 +523,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             StringBuilder accountsSummary = new StringBuilder("l.id as id, l.account_no as accountNo, l.external_id as externalId,");
             accountsSummary.append("l.product_id as productId, lp.name as productName,")
-                    .append("l.loan_status_id as statusId, l.loan_type_enum as loanType ").append("from m_loan l ")
-                    .append("LEFT JOIN m_product_loan AS lp ON lp.id = l.product_id ");
+                    .append("l.loan_status_id as statusId, l.loan_type_enum as loanType, ")
+                    .append("l.loan_product_counter as loanCycle ").append(" from m_loan l ")
+                    .append("LEFT JOIN m_product_loan AS lp ON lp.id = l.product_id");
 
             return accountsSummary.toString();
         }
@@ -509,8 +542,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final LoanStatusEnumData loanStatus = LoanEnumerations.status(loanStatusId);
             final Integer loanTypeId = JdbcSupport.getInteger(rs, "loanType");
             final EnumOptionData loanType = LoanEnumerations.loanType(loanTypeId);
+            final Integer loanCycle = JdbcSupport.getInteger(rs, "loanCycle");
 
-            return new ClientAccountSummaryData(id, accountNo, externalId, productId, loanProductName, loanStatus, loanType);
+            return new ClientAccountSummaryData(id, accountNo, externalId, productId, loanProductName, loanStatus, loanType, loanCycle);
         }
     }
 
@@ -560,4 +594,20 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                     officeName);
         }
     }
+
+    private Long defaultToUsersOfficeIfNull(final Long officeId) {
+        Long defaultOfficeId = officeId;
+        if (defaultOfficeId == null) {
+            defaultOfficeId = this.context.authenticatedUser().getOffice().getId();
+        }
+        return defaultOfficeId;
+    }
+
+    @Override
+    public ClientData retrieveAllClosureReasons(String clientClosureReason) {
+        final List<CodeValueData> closureReasons = new ArrayList<CodeValueData>(
+                codeValueReadPlatformService.retrieveCodeValuesByCode(clientClosureReason));
+        return ClientData.template(null, null, null, null, closureReasons);
+    }
+
 }

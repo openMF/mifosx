@@ -22,7 +22,7 @@ import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.core.service.PaginationHelper;
-import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
+import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
@@ -102,7 +102,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final LoanProductReadPlatformService loanProductReadPlatformService, final ClientReadPlatformService clientReadPlatformService,
             final GroupReadPlatformService groupReadPlatformService, final LoanDropdownReadPlatformService loanDropdownReadPlatformService,
             final FundReadPlatformService fundReadPlatformService, final ChargeReadPlatformService chargeReadPlatformService,
-            final CodeValueReadPlatformService codeValueReadPlatformService, final TenantAwareRoutingDataSource dataSource,
+            final CodeValueReadPlatformService codeValueReadPlatformService, final RoutingDataSource dataSource,
             final CalendarReadPlatformService calendarReadPlatformService) {
         this.context = context;
         this.loanRepository = loanRepository;
@@ -279,7 +279,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         // get group associations
         Collection<ClientData> membersOfGroup = this.clientReadPlatformService.retrieveClientMembersOfGroup(groupId);
         if (!CollectionUtils.isEmpty(membersOfGroup)) {
-            groupAccount = GroupGeneralData.withAssocations(groupAccount, membersOfGroup);
+            groupAccount = GroupGeneralData.withAssocations(groupAccount, membersOfGroup, null);
         }
 
         final LocalDate expectedDisbursementDate = DateUtils.getLocalDateOfTenant();
@@ -442,7 +442,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " la.fee_charges_overdue_derived as feeChargesOverdue,"
                     + " la.penalty_charges_overdue_derived as penaltyChargesOverdue,"
                     + " la.total_overdue_derived as totalOverdue,"
-                    + " la.overdue_since_date_derived as overdueSinceDate"
+                    + " la.overdue_since_date_derived as overdueSinceDate,"
+                    + " l.sync_disbursement_with_meeting as syncDisbursementWithMeeting,"
+                    + " l.loan_counter as loanCounter, l.loan_product_counter as loanProductCounter"
                     + " from m_loan l" //
                     + " join m_product_loan lp on lp.id = l.product_id" //
                     + " join m_currency rc on rc.`code` = l.currency_code" //
@@ -584,6 +586,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final LocalDate expectedFirstRepaymentOnDate = JdbcSupport.getLocalDate(rs, "expectedFirstRepaymentOnDate");
             final LocalDate interestChargedFromDate = JdbcSupport.getLocalDate(rs, "interestChargedFromDate");
 
+            final Boolean syncDisbursementWithMeeting = rs.getBoolean("syncDisbursementWithMeeting");
+            
             final BigDecimal feeChargesDueAtDisbursementCharged = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs,
                     "feeChargesDueAtDisbursementCharged");
             LoanSummaryData loanSummary = null;
@@ -645,6 +649,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 groupData = GroupGeneralData.instance(groupId, groupName, groupExternalId, groupStatus, activationDate, groupOfficeId,
                         null, groupParentId, null, groupStaffId, null, groupHierarchy);
             }
+            
+            final Integer loanCounter = JdbcSupport.getInteger(rs, "loanCounter");
+            final Integer loanProductCounter = JdbcSupport.getInteger(rs, "loanProductCounter");
 
             return LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientName, clientOfficeId, groupData,
                     loanType, loanProductId, loanProductName, loanProductDescription, fundId, fundName, loanPurposeId, loanPurposeName,
@@ -652,7 +659,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     termPeriodFrequencyType, numberOfRepayments, repaymentEvery, repaymentFrequencyType, transactionStrategyId,
                     amortizationType, interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType,
                     interestCalculationPeriodType, expectedFirstRepaymentOnDate, graceOnPrincipalPayment, graceOnInterestPayment,
-                    graceOnInterestCharged, interestChargedFromDate, timeline, loanSummary, feeChargesDueAtDisbursementCharged);
+                    graceOnInterestCharged, interestChargedFromDate, timeline, loanSummary, feeChargesDueAtDisbursementCharged, 
+                    syncDisbursementWithMeeting, loanCounter, loanProductCounter);
         }
     }
 
@@ -938,7 +946,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         // get group associations
         Collection<ClientData> membersOfGroup = this.clientReadPlatformService.retrieveClientMembersOfGroup(groupId);
         if (!CollectionUtils.isEmpty(membersOfGroup)) {
-            groupAccount = GroupGeneralData.withAssocations(groupAccount, membersOfGroup);
+            groupAccount = GroupGeneralData.withAssocations(groupAccount, membersOfGroup, null);
         }
 
         return LoanAccountData.groupDefaults(groupAccount, expectedDisbursementDate);

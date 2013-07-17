@@ -13,7 +13,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
-import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
+import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.portfolio.note.data.NoteData;
 import org.mifosplatform.portfolio.note.domain.NoteType;
 import org.mifosplatform.portfolio.note.exception.NoteNotFoundException;
@@ -29,7 +29,7 @@ public class NoteReadPlatformServiceImpl implements NoteReadPlatformService {
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public NoteReadPlatformServiceImpl(final TenantAwareRoutingDataSource dataSource) {
+    public NoteReadPlatformServiceImpl(final RoutingDataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
@@ -94,17 +94,17 @@ public class NoteReadPlatformServiceImpl implements NoteReadPlatformService {
 
         final String sql = rm.schema() + " where " + conditionSql + " order by n.created_date DESC";
 
-        return this.jdbcTemplate.query(sql, rm, new Object[] { resourceId });
+        return this.jdbcTemplate.query(sql, rm, new Object[] { resourceId});
     }
 
     public static String getResourceCondition(final NoteType noteType) {
         String conditionSql = "";
         switch (noteType) {
             case CLIENT:
-                conditionSql = " n.client_id = ? ";
+                conditionSql = " n.client_id = ? and note_type_enum = " + NoteType.CLIENT.getValue();
             break;
             case LOAN:
-                conditionSql = " n.loan_id = ? ";
+                conditionSql = " n.loan_id = ? and ( n.note_type_enum = " + NoteType.LOAN.getValue()+ " or n.note_type_enum = " + NoteType.LOAN_TRANSACTION.getValue() + " )";
             break;
             case LOAN_TRANSACTION:
                 conditionSql = " n.loan_transaction_id = ? ";

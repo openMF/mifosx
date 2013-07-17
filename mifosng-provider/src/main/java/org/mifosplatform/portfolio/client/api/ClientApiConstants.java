@@ -14,6 +14,7 @@ import org.mifosplatform.portfolio.client.data.ClientData;
 public class ClientApiConstants {
 
     public static final String CLIENT_RESOURCE_NAME = "client";
+    public static final String CLIENT_CLOSURE_REASON = "ClientClosureReason";
 
     // general
     public static final String localeParamName = "locale";
@@ -31,7 +32,9 @@ public class ClientApiConstants {
     public static final String officeIdParamName = "officeId";
     public static final String activeParamName = "active";
     public static final String activationDateParamName = "activationDate";
-
+    public static final String staffIdParamName = "staffId";
+    public static final String closureDateParamName = "closureDate";
+    public static final String closureReasonIdParamName = "closureReasonId";
     // response parameters
     public static final String statusParamName = "status";
     public static final String hierarchyParamName = "hierarchy";
@@ -45,14 +48,15 @@ public class ClientApiConstants {
 
     // template related part of response
     public static final String officeOptionsParamName = "officeOptions";
+    public static final String staffOptionsParamName = "staffOptions";
 
     public static final Set<String> CLIENT_CREATE_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
             dateFormatParamName, groupIdParamName, accountNoParamName, externalIdParamName, firstnameParamName, middlenameParamName,
-            lastnameParamName, fullnameParamName, officeIdParamName, activeParamName, activationDateParamName));
+            lastnameParamName, fullnameParamName, officeIdParamName, activeParamName, activationDateParamName, staffIdParamName));
 
     public static final Set<String> CLIENT_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
             dateFormatParamName, accountNoParamName, externalIdParamName, firstnameParamName, middlenameParamName,
-            lastnameParamName, fullnameParamName, activeParamName, activationDateParamName));
+            lastnameParamName, fullnameParamName, activeParamName, activationDateParamName, staffIdParamName));
 
     /**
      * These parameters will match the class level parameters of
@@ -62,8 +66,11 @@ public class ClientApiConstants {
     public static final Set<String> CLIENT_RESPONSE_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(idParamName, accountNoParamName,
             externalIdParamName, statusParamName, activeParamName, activationDateParamName, firstnameParamName, middlenameParamName,
             lastnameParamName, fullnameParamName, displayNameParamName, officeIdParamName, officeNameParamName, hierarchyParamName,
-            imageKeyParamName, imagePresentParamName, groupsParamName, officeOptionsParamName));
+            imageKeyParamName, imagePresentParamName, groupsParamName, officeOptionsParamName, staffOptionsParamName));
 
     public static final Set<String> ACTIVATION_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
             dateFormatParamName, activationDateParamName));
+    
+    public static final Set<String> CLIENT_CLOSE_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
+            dateFormatParamName, closureDateParamName, closureReasonIdParamName));
 }

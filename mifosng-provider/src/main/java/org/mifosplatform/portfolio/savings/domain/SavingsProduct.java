@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.savings.domain;
 
+import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.accountingRuleParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.annualFeeAmountParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.annualFeeOnMonthDayParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.currencyCodeParamName;
@@ -22,7 +23,6 @@ import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.namePa
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.nominalAnnualInterestRateParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.withdrawalFeeAmountParamName;
 import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.withdrawalFeeTypeParamName;
-import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.accountingRuleParamName;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;

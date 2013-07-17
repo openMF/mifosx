@@ -338,7 +338,7 @@ public class JsonParserHelper {
         return value;
     }
 
-    public LocalDate convertFrom(final String dateAsString, final String parameterName, final String dateFormat,
+    public static LocalDate convertFrom(final String dateAsString, final String parameterName, final String dateFormat,
             final Locale clientApplicationLocale) {
 
         if (StringUtils.isBlank(dateFormat) || clientApplicationLocale == null) {
@@ -518,7 +518,8 @@ public class JsonParserHelper {
         }
     }
 
-    private Locale localeFromString(final String localeAsString) {
+    /***TODO: Vishwas move all Locale related code to a separate Utils class***/
+    public static Locale localeFromString(final String localeAsString) {
 
         if (StringUtils.isBlank(localeAsString)) {
             List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
@@ -531,7 +532,7 @@ public class JsonParserHelper {
         }
 
         String languageCode = "";
-        String courntryCode = "";
+        String countryCode = "";
         String variantCode = "";
 
         String[] localeParts = localeAsString.split("_");
@@ -542,19 +543,19 @@ public class JsonParserHelper {
 
         if (localeParts != null && localeParts.length == 2) {
             languageCode = localeParts[0];
-            courntryCode = localeParts[1];
+            countryCode = localeParts[1];
         }
 
         if (localeParts != null && localeParts.length == 3) {
             languageCode = localeParts[0];
-            courntryCode = localeParts[1];
+            countryCode = localeParts[1];
             variantCode = localeParts[2];
         }
 
-        return localeFrom(languageCode, courntryCode, variantCode);
+        return localeFrom(languageCode, countryCode, variantCode);
     }
 
-    private Locale localeFrom(final String languageCode, final String courntryCode, final String variantCode) {
+    private static Locale localeFrom(final String languageCode, final String courntryCode, final String variantCode) {
 
         List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
 

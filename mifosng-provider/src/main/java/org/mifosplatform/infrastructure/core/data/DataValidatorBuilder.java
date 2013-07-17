@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.fortuna.ical4j.model.ValidationException;
 import net.fortuna.ical4j.model.property.RRule;
@@ -20,6 +22,7 @@ import com.google.gson.JsonArray;
 
 public class DataValidatorBuilder {
 
+    public static final String VALID_INPUT_SEPERATOR = "_";
     private final List<ApiParameterError> dataValidationErrors;
     private String resource;
     private String parameter;
@@ -79,7 +82,7 @@ public class DataValidatorBuilder {
 
     public void failWithCode(final String errorCode) {
         StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(this.parameter)
-                .append(errorCode);
+                .append(".").append(errorCode);
         StringBuilder defaultEnglishMessage = new StringBuilder("Failed data validation due to: ").append(errorCode).append(".");
         ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultEnglishMessage.toString(),
                 this.parameter, this.value);
@@ -592,5 +595,57 @@ public class DataValidatorBuilder {
         }
     	
     	return this;
+    }
+    
+    private DataValidatorBuilder validateStringFor(final String validInputs) {
+        if (this.value == null && this.ignoreNullValue) { return this; }
+        final String[] inputs = validInputs.split(VALID_INPUT_SEPERATOR);
+        boolean validationErr = true;
+        for (final String input : inputs) {
+            if (input.equalsIgnoreCase(this.value.toString().trim())) {
+                validationErr = false;
+                break;
+            }
+        }
+        if (validationErr) {
+            final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
+                    .append(this.parameter).append(".value.should.true.or.false");
+            final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(this.parameter)
+                    .append(" value should true or false ");
+            final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                    defaultEnglishMessage.toString(), this.parameter, this.value);
+            this.dataValidationErrors.add(error);
+        }
+        return this;
+    }
+    
+    public DataValidatorBuilder validateForBooleanValue() {
+        return validateStringFor("TRUE" + VALID_INPUT_SEPERATOR + "FALSE");
+    }
+
+    public DataValidatorBuilder validatePhoneNumber() {
+        if (this.value == null && this.ignoreNullValue) { return this; }
+        boolean validationErr = true;
+        /*
+         * supports numbers, parentheses(), hyphens and may contain + sign in
+         * the beginning and can contain whitespaces in between and length
+         * allowed is 0-25 chars.
+         */
+        String regex = "^\\+?[0-9. ()-]{0,25}$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(this.value.toString());
+        if (matcher.matches()) {
+            validationErr = false;
+        }
+        if (validationErr) {
+            final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
+                    .append(this.parameter).append(".format.is.invalid");
+            final StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(this.resource).append(this.parameter)
+                    .append(" is in invalid format, should contain '-','+','()' and numbers only.");
+            final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                    defaultEnglishMessage.toString(), this.parameter, this.value);
+            this.dataValidationErrors.add(error);
+        }
+        return this;
     }
 }
