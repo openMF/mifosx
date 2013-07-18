@@ -32,6 +32,8 @@ public class XBRLReportApiResource {
 	private final PlatformSecurityContext context;
 	private final ToApiJsonSerializer<XBRLData> toApiJsonSerializer;
 	private final ReadTaxonomyMappingService readTaxonomyMappingService;
+	@Autowired
+	private XBRLBuilder xbrlBuilder;
 
 	@Autowired
 	public XBRLReportApiResource(final PlatformSecurityContext context, 
@@ -54,9 +56,8 @@ public class XBRLReportApiResource {
 	public String retrieveXBRLReport(@QueryParam("startDate") final Date startDate, @QueryParam("endDate") final Date endDate, @Context final UriInfo uriInfo) {
 		context.authenticatedUser();
 
-		XBRLBuilder builder =  new XBRLBuilder();
 		HashMap<TaxonomyData,BigDecimal> map = this.readTaxonomyMappingService.retrieveTaxonomyConfig();
-		String xbrl = builder.buildWithMap(map,startDate,endDate);
+		String xbrl = xbrlBuilder.buildWithMap(map,startDate,endDate);
 		return xbrl;
 	}
 	

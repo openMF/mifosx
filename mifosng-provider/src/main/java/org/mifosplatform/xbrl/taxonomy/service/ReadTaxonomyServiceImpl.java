@@ -15,13 +15,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class ReadTaxonomyServiceImpl implements ReadTaxonomyService {
 	private final JdbcTemplate jdbcTemplate;
-	private final ReadNamespaceService readNamespaceService;
 	
 	@Autowired
+<<<<<<< Updated upstream
 	public ReadTaxonomyServiceImpl(final RoutingDataSource dataSource, 
 									final ReadNamespaceService readNamespaceService) {
+=======
+	public ReadTaxonomyServiceImpl(final TenantAwareRoutingDataSource dataSource) {
+>>>>>>> Stashed changes
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
-		this.readNamespaceService = readNamespaceService;
 	}
 	
 	static final class TaxonomyMapper implements RowMapper<TaxonomyData> {

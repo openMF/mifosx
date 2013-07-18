@@ -9,7 +9,7 @@ import com.jayway.restassured.specification.RequestSpecification;
 import com.jayway.restassured.specification.ResponseSpecification;
 
 @SuppressWarnings("rawtypes")
-public class XBRLHelper {
+public class XBRLIntegrationTestHelper {
 	
 	private final RequestSpecification requestSpec;
     private final ResponseSpecification responseSpec;
@@ -19,7 +19,7 @@ public class XBRLHelper {
 	private static final String GET_XBRL_URL = "/mifosng-provider/api/v1/xbrlreport?tenantIdentifier=default";
 	
 	
-	public XBRLHelper(RequestSpecification requestSpec,
+	public XBRLIntegrationTestHelper(RequestSpecification requestSpec,
 			ResponseSpecification responseSpec) {
 		this.requestSpec = requestSpec;
 		this.responseSpec = responseSpec;

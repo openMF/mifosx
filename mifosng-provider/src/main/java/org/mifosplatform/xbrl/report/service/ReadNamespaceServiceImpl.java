@@ -3,6 +3,7 @@ package org.mifosplatform.xbrl.report.service;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.xbrl.report.data.NamespaceData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,7 +16,7 @@ public class ReadNamespaceServiceImpl implements ReadNamespaceService {
 	private final JdbcTemplate jdbcTemplate;
 	
 	@Autowired
-	public ReadNamespaceServiceImpl(final TenantAwareRoutingDataSource dataSource) {
+	public ReadNamespaceServiceImpl(final RoutingDataSource dataSource) {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
 	private static final class NamespaceMapper implements RowMapper<NamespaceData> {

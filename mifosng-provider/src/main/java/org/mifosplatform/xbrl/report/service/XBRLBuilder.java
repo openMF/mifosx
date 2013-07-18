@@ -12,9 +12,12 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.mifosplatform.xbrl.report.data.ContextData;
+import org.mifosplatform.xbrl.report.data.NamespaceData;
 import org.mifosplatform.xbrl.taxonomy.data.TaxonomyData;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class XBRLBuilder {
 	
 	private static final String SCHEME_URL = "http://www.themix.org";
@@ -23,8 +26,8 @@ public class XBRLBuilder {
 	private Element root;
 //	private HashMap<String,String> namespaceMap;
 	private HashMap<ContextData,String> contextMap = new HashMap<ContextData,String>();
-	private Date startDate;
-	private Date endDate;
+	Date startDate;
+	Date endDate;
 	private Integer instantScenarioCounter = 1;
 	private Integer durationScenarioCounter = 1;
 	
@@ -46,7 +49,7 @@ public class XBRLBuilder {
 		for (Entry<TaxonomyData,BigDecimal> entry : map.entrySet()) {
 			TaxonomyData taxonomy = entry.getKey();
 			BigDecimal value = entry.getValue();
-			this.addTaxonomy(taxonomy, value);
+			this.addTaxonomy(root, taxonomy, value);
 
 		}
 		
@@ -57,17 +60,23 @@ public class XBRLBuilder {
 		return doc.asXML();
 	}
 	
-	public void addTaxonomy(TaxonomyData taxonomy, BigDecimal value) {
-		Element xmlElement = root.addElement(taxonomy.getName());
-//		String prefix = taxonomy.getNamespace();
-//		
-//		if (prefix != null && (!prefix.isEmpty())) {
-//			NamespaceData ns = readNamespaceService.retrieveNamespaceByPrefix(prefix);
-//			if (ns != null) {
-//				xmlElement.addNamespace(prefix, ns.getUrl());
-//			}
-//			
-//		}
+	Element addTaxonomy(Element rootElement, TaxonomyData taxonomy, BigDecimal value) {
+		
+		//throw an error is start / endate is null 
+		if (startDate == null || endDate == null) {
+			// TODO:
+			throw new RuntimeException("start date and end date should not be null");
+		}
+		Element xmlElement = rootElement.addElement(taxonomy.getName());
+		String prefix = taxonomy.getNamespace();
+		
+		if (prefix != null && (!prefix.isEmpty())) {
+			NamespaceData ns = readNamespaceService.retrieveNamespaceByPrefix(prefix);
+			if (ns != null) {
+				xmlElement.addNamespace(prefix, ns.getUrl());
+			}
+			
+		}
 		String dimension = taxonomy.getDimension();
 		SimpleDateFormat timeFormat=new SimpleDateFormat("MM_dd_yyyy");
 		
@@ -91,8 +100,10 @@ public class XBRLBuilder {
 		
 		if (!contextMap.containsKey(context)) {
 			
+			String startDateStr = timeFormat.format(startDate);
+			String endDateStr = timeFormat.format(endDate);
 			
-			String contextRefID = (context.getPeriodType() == 0) ? ("As_Of_"+timeFormat.format(endDate)+(instantScenarioCounter++)) : ("Duration_"+timeFormat.format(startDate)+"_To_"+timeFormat.format(endDate)+(durationScenarioCounter++));
+			String contextRefID = (context.getPeriodType() == 0) ? ("As_Of_"+endDateStr+(instantScenarioCounter++)) : ("Duration_"+startDateStr+"_To_"+endDateStr+(durationScenarioCounter++));
 
 			contextMap.put(context, contextRefID);
 		}
@@ -105,6 +116,7 @@ public class XBRLBuilder {
 		// add the child
 		xmlElement.addText(value.toPlainString());
 
+		return xmlElement;
 	}
 	
 	/**

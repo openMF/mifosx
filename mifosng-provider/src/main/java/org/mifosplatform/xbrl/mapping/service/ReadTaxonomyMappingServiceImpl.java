@@ -13,6 +13,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.xbrl.mapping.data.TaxonomyMappingData;
 import org.mifosplatform.xbrl.taxonomy.data.TaxonomyData;
 import org.mifosplatform.xbrl.taxonomy.service.ReadTaxonomyService;
@@ -34,7 +35,7 @@ ReadTaxonomyMappingService {
 	private final ReadTaxonomyService readTaxonomyService;
 	
 	@Autowired
-	public ReadTaxonomyMappingServiceImpl(final TenantAwareRoutingDataSource dataSource, final ReadTaxonomyService readTaxonomyService) {
+	public ReadTaxonomyMappingServiceImpl(final RoutingDataSource dataSource, final ReadTaxonomyService readTaxonomyService) {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 		this.readTaxonomyService = readTaxonomyService;
 	}
@@ -151,7 +152,7 @@ ReadTaxonomyMappingService {
 
 
 	// Calculate Taxonomy value from expression
-	private BigDecimal processMappingString(String mappingString) {
+	BigDecimal processMappingString(String mappingString) {
 		ArrayList<String> glCodes = this.getGLCodes(mappingString);
 		HashMap<String,BigDecimal> balanceMap = this.setupBalanceMap();
 		for (String glcode : glCodes) {
@@ -177,7 +178,7 @@ ReadTaxonomyMappingService {
 
 
 
-	private ArrayList<String> getGLCodes(String template) {
+	ArrayList<String> getGLCodes(String template) {
 
 		ArrayList<String> placeholders = new ArrayList<String>();
 

@@ -8,7 +8,7 @@ import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mifosplatform.integrationtests.common.Utils;
-import org.mifosplatform.integrationtests.common.xbrl.XBRLHelper;
+import org.mifosplatform.integrationtests.common.xbrl.XBRLIntegrationTestHelper;
 
 import com.jayway.restassured.builder.RequestSpecBuilder;
 import com.jayway.restassured.builder.ResponseSpecBuilder;
@@ -22,7 +22,7 @@ public class XBRLIntegrationTest {
 	private RequestSpecification requestSpec;
 	private ResponseSpecification responseSpec;
     
-    private XBRLHelper xbrlHelper;
+    private XBRLIntegrationTestHelper xbrlHelper;
     
 	@Before
 	public void setUp() throws Exception {
@@ -34,8 +34,8 @@ public class XBRLIntegrationTest {
 
 	
 	@Test
-	public void test() {
-		xbrlHelper = new XBRLHelper(requestSpec,responseSpec);
+	public void shouldRetrieveTaxonomyList() {
+		xbrlHelper = new XBRLIntegrationTestHelper(requestSpec,responseSpec);
 		
 		ArrayList<HashMap> taxonomyList = xbrlHelper.getTaxonomyList();
 		this.verifyTaxonomyList(taxonomyList);
