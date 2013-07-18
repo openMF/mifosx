@@ -47,11 +47,8 @@
     <jpa:repositories base-package="org.mifosplatform.useradministration.domain" />
     <jpa:repositories base-package="org.mifosplatform.organisation.*.domain" />
     <jpa:repositories base-package="org.mifosplatform.portfolio.*" />
-<<<<<<< HEAD
     <jpa:repositories base-package="org.mifosplatform.xbrl.*.domain" />
-=======
     <jpa:repositories base-package="org.mifosplatform.scheduledjobs.domain" />
->>>>>>> master
 
     <import resource="infrastructure.xml" />
 		
