@@ -96,14 +96,14 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         loanTransactionHelper.verifyRepaymentScheduleEntryFor(1, 4000.0F, loanID);
         loanTransactionHelper.makeRepayment("1 January 2011",repayment_with_interest, loanID);
         loanTransactionHelper.makeRepayment("1 March 2011", repayment_with_interest, loanID);
-        loanTransactionHelper.waiveInterest("1 May 2011", INTEREST_VALUE_AMOUNT, loanID);
-        loanTransactionHelper.makeRepayment("1 May 2011", repayment_without_interest, loanID);
+        loanTransactionHelper.waiveInterest("2 May 2011", INTEREST_VALUE_AMOUNT, loanID);
+        loanTransactionHelper.makeRepayment("2 May 2011", repayment_without_interest, loanID);
         loanTransactionHelper.makeRepayment("1 July 2011", repayment_with_interest, loanID);
         loanTransactionHelper.waiveInterest("1 September 2011", INTEREST_VALUE_AMOUNT, loanID);
         loanTransactionHelper.makeRepayment("1 September 2011", repayment_without_interest, loanID);
         loanTransactionHelper.makeRepayment("1 November 2011", repayment_with_interest, loanID);
-        loanTransactionHelper.waiveInterest("1 January 2012", INTEREST_VALUE_AMOUNT, loanID);
-        loanTransactionHelper.makeRepayment("1 January 2012", repayment_without_interest, loanID);
+        loanTransactionHelper.waiveInterest("2 January 2012", INTEREST_VALUE_AMOUNT, loanID);
+        loanTransactionHelper.makeRepayment("2 January 2012", repayment_without_interest, loanID);
         loanTransactionHelper.verifyRepaymentScheduleEntryFor(7, 1000.0f, loanID);
 
         // WRITE OFF LOAN AND CHECK ACCOUNT IS CLOSED
