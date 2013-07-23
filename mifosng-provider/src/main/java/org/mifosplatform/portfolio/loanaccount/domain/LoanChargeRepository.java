@@ -7,7 +7,11 @@ package org.mifosplatform.portfolio.loanaccount.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface LoanChargeRepository extends JpaRepository<LoanCharge, Long>, JpaSpecificationExecutor<LoanCharge> {
-    // no added behaviour
+
+    @Query("select count(*) from LoanCharge lc where lc.charge.id = :chargeId")
+    Long countLoansByChargeId(@Param("chargeId") Long chargeId);
 }
