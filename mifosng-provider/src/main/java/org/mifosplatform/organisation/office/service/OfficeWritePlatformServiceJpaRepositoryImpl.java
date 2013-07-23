@@ -238,4 +238,8 @@ public class OfficeWritePlatformServiceJpaRepositoryImpl implements OfficeWriteP
 
         return officeToReturn;
     }
+    
+    public PlatformSecurityContext getContext() {
+        return this.context;
+    }
 }

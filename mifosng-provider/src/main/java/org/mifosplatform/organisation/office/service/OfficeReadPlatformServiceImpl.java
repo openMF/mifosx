@@ -227,4 +227,9 @@ public class OfficeReadPlatformServiceImpl implements OfficeReadPlatformService 
 
         return OfficeTransactionData.template(new LocalDate(), parentLookups, currencyOptions);
     }
+    
+    public PlatformSecurityContext getContext() {
+        return this.context;
+    }
+    
 }
