@@ -5,8 +5,8 @@
  */
 package org.mifosplatform.accounting.producttoaccountmapping.serialization;
 
-import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME;
-import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.accountingRuleParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.accountingRuleParamName;
 
 import java.util.ArrayList;
 import java.util.List;

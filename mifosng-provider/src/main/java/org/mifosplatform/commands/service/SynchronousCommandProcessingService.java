@@ -70,7 +70,7 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
         }
         commandSourceResult.updateResourceId(result.resourceId());
         commandSourceResult.updateForAudit(result.getOfficeId(), result.getGroupId(), result.getClientId(), result.getLoanId(),
-                result.getSavingsId());
+                result.getSavingsId(), result.getProductId());
 
         String changesOnlyJson = null;
         if (result.hasChanges()) {
@@ -374,11 +374,23 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             }
         } else if (wrapper.isSavingsAccountResource()) {
             if (wrapper.isCreate()) {
-                handler = this.applicationContext.getBean("createSavingsAccountCommandHandler", NewCommandSourceHandler.class);
+                handler = this.applicationContext
+                        .getBean("savingsAccountApplicationSubmittalCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isUpdate()) {
-                handler = this.applicationContext.getBean("updateSavingsAccountCommandHandler", NewCommandSourceHandler.class);
+                handler = this.applicationContext.getBean("savingsAccountApplicationModificationCommandHandler",
+                        NewCommandSourceHandler.class);
             } else if (wrapper.isDelete()) {
-                handler = this.applicationContext.getBean("deleteSavingsAccountCommandHandler", NewCommandSourceHandler.class);
+                handler = this.applicationContext.getBean("savingsAccountApplicationDeletionCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isRejectionOfSavingsAccountApplication()) {
+                handler = this.applicationContext.getBean("savingsAccountApplicationRejectedCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isWithdrawFromSavingsAccountApplicationByApplicant()) {
+                handler = this.applicationContext.getBean("savingsAccountApplicationWithdrawnByApplicantCommandHandler",
+                        NewCommandSourceHandler.class);
+            } else if (wrapper.isApprovalOfSavingsAccountApplication()) {
+                handler = this.applicationContext.getBean("savingsAccountApplicationApprovalCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUndoApprovalOfSavingsAccountApplication()) {
+                handler = this.applicationContext.getBean("savingsAccountApplicationApprovalUndoCommandHandler",
+                        NewCommandSourceHandler.class);
             } else if (wrapper.isSavingsAccountDeposit()) {
                 handler = this.applicationContext.getBean("depositSavingsAccountCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isSavingsAccountWithdrawal()) {
@@ -389,6 +401,8 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 handler = this.applicationContext.getBean("calculateInterestSavingsAccountCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isSavingsAccountInterestPosting()) {
                 handler = this.applicationContext.getBean("postInterestSavingsAccountCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isSavingsAccountUndoTransaction()) {
+                handler = this.applicationContext.getBean("undoTransactionSavingsAccountCommandHandler", NewCommandSourceHandler.class);
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
@@ -484,6 +498,22 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
 
             if (wrapper.isCreate()) {
                 handler = this.applicationContext.getBean("createHolidayCommandHandler", NewCommandSourceHandler.class);
+            }
+        } else if (wrapper.isProductMixResource()) {
+            if (wrapper.isCreate()) {
+                handler = this.applicationContext.getBean("createProductMixCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdateOperation()) {
+                handler = this.applicationContext.getBean("updateProductMixCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isDeleteOperation()) {
+                handler = this.applicationContext.getBean("deleteProductMixCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
+        } else if (wrapper.isSchedulerResource()) {
+            if (wrapper.isUpdate()) {
+                handler = this.applicationContext.getBean("updateJobDetailCommandhandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
             }
         } else {
 

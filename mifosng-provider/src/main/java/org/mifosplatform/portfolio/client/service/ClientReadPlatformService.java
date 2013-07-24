@@ -9,7 +9,7 @@ import java.util.Collection;
 
 import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.portfolio.client.data.ClientAccountSummaryCollectionData;
-import org.mifosplatform.portfolio.client.data.ClientAccountSummaryData;
+import org.mifosplatform.portfolio.client.data.ClientLoanAccountSummaryData;
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.group.service.SearchParameters;
 
@@ -27,11 +27,13 @@ public interface ClientReadPlatformService {
 
     ClientAccountSummaryCollectionData retrieveClientAccountDetails(Long clientId);
 
-    Collection<ClientAccountSummaryData> retrieveClientLoanAccountsByLoanOfficerId(Long clientId, Long loanOfficerId);
+    Collection<ClientLoanAccountSummaryData> retrieveClientLoanAccountsByLoanOfficerId(Long clientId, Long loanOfficerId);
 
     ClientData retrieveClientByIdentifier(Long identifierTypeId, String identifierKey);
 
     Collection<ClientData> retrieveClientMembersOfGroup(Long groupId);
+    
+    Collection<ClientData> retrieveActiveClientMembersOfGroup(Long groupId);
 
     ClientData retrieveAllClosureReasons(String clientClosureReason);
 }

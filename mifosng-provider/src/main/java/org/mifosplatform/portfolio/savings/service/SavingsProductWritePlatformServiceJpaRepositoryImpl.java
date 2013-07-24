@@ -5,7 +5,7 @@
  */
 package org.mifosplatform.portfolio.savings.service;
 
-import static org.mifosplatform.portfolio.savings.api.SavingsApiConstants.accountingRuleParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.accountingRuleParamName;
 
 import java.util.Map;
 

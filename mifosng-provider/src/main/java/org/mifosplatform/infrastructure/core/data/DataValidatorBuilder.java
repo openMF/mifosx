@@ -16,6 +16,7 @@ import net.fortuna.ical4j.model.ValidationException;
 import net.fortuna.ical4j.model.property.RRule;
 
 import org.apache.commons.lang.StringUtils;
+import org.quartz.CronExpression;
 import org.springframework.util.ObjectUtils;
 
 import com.google.gson.JsonArray;
@@ -83,6 +84,14 @@ public class DataValidatorBuilder {
     public void failWithCode(final String errorCode) {
         StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(this.parameter)
                 .append(".").append(errorCode);
+        StringBuilder defaultEnglishMessage = new StringBuilder("Failed data validation due to: ").append(errorCode).append(".");
+        ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultEnglishMessage.toString(),
+                this.parameter, this.value);
+        dataValidationErrors.add(error);
+    }
+
+    public void failWithCodeNoParameterAddedToErrorCode(final String errorCode) {
+        StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(errorCode);
         StringBuilder defaultEnglishMessage = new StringBuilder("Failed data validation due to: ").append(errorCode).append(".");
         ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultEnglishMessage.toString(),
                 this.parameter, this.value);
@@ -209,25 +218,24 @@ public class DataValidatorBuilder {
     public DataValidatorBuilder isOneOfTheseValues(final Object... values) {
         if (value == null && ignoreNullValue) { return this; }
 
-        if (value != null) {
-            List<Object> valuesList = Arrays.asList(values);
-            String valuesListStr = StringUtils.join(valuesList, ", ");
+        List<Object> valuesList = Arrays.asList(values);
+        String valuesListStr = StringUtils.join(valuesList, ", ");
 
-            if (!valuesList.contains(this.value)) {
-                StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
-                        .append(".is.not.one.of.expected.enumerations");
-                StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter).append(" must be one of [ ")
-                        .append(valuesListStr).append(" ] ").append(".");
+        if (this.value == null || !valuesList.contains(this.value)) {
+            StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
+                    .append(".is.not.one.of.expected.enumerations");
+            StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter).append(" must be one of [ ")
+                    .append(valuesListStr).append(" ] ").append(".");
 
-                ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
-                        defaultEnglishMessage.toString(), parameter, this.value, values);
+            ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultEnglishMessage.toString(),
+                    parameter, this.value, values);
 
-                dataValidationErrors.add(error);
-            }
+            dataValidationErrors.add(error);
         }
+
         return this;
     }
-    
+
     public DataValidatorBuilder isNotOneOfTheseValues(final Object... values) {
         if (value == null && ignoreNullValue) { return this; }
 
@@ -238,8 +246,8 @@ public class DataValidatorBuilder {
             if (valuesList.contains(this.value)) {
                 StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                         .append(".is.one.of.unwanted.enumerations");
-                StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter).append(" must not be any of [ ")
-                        .append(valuesListStr).append(" ] ").append(".");
+                StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter)
+                        .append(" must not be any of [ ").append(valuesListStr).append(" ] ").append(".");
 
                 ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
                         defaultEnglishMessage.toString(), parameter, this.value, values);
@@ -268,6 +276,9 @@ public class DataValidatorBuilder {
         return this;
     }
 
+    /*
+     * should be used with .notNull() before it
+     */
     public DataValidatorBuilder zeroOrPositiveAmount() {
         if (value == null && ignoreNullValue) { return this; }
 
@@ -286,6 +297,30 @@ public class DataValidatorBuilder {
         return this;
     }
 
+    /*
+     * should be used with .notNull() before it
+     */
+    public DataValidatorBuilder integerZeroOrGreater() {
+        if (value == null && ignoreNullValue) { return this; }
+
+        if (value != null) {
+            Integer number = Integer.valueOf(value.toString());
+            if (number < 0) {
+                StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
+                        .append(".not.zero.or.greater");
+                StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter).append(
+                        " must be zero or greater.");
+                ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                        defaultEnglishMessage.toString(), parameter, number, 0);
+                dataValidationErrors.add(error);
+            }
+        }
+        return this;
+    }
+
+    /*
+     * should be used with .notNull() before it
+     */
     public DataValidatorBuilder integerGreaterThanZero() {
         if (value == null && ignoreNullValue) { return this; }
 
@@ -304,6 +339,9 @@ public class DataValidatorBuilder {
         return this;
     }
 
+    /*
+     * should be used with .notNull() before it
+     */
     public DataValidatorBuilder longGreaterThanZero() {
         if (value == null && ignoreNullValue) { return this; }
 
@@ -337,11 +375,11 @@ public class DataValidatorBuilder {
         }
         return this;
     }
-    
+
     public DataValidatorBuilder jsonArrayNotEmpty() {
         if (value == null && ignoreNullValue) { return this; }
 
-        JsonArray array = (JsonArray)value;
+        JsonArray array = (JsonArray) value;
         if (value != null && !array.iterator().hasNext()) {
             StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                     .append(".cannot.be.empty");
@@ -427,14 +465,14 @@ public class DataValidatorBuilder {
         dataValidationErrors.add(error);
         return this;
     }
-    
+
     public DataValidatorBuilder cantBeBlankWhenParameterProvidedIs(final String parameterName, final Object parameterValue) {
         if (value != null && StringUtils.isNotBlank(value.toString())) { return this; }
 
         StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                 .append(".must.be.provided.when.").append(parameterName).append(".is.").append(parameterValue);
-        StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter)
-                .append(" must be provided when ").append(parameterName).append(" is ").append(parameterValue);
+        StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter).append(" must be provided when ")
+                .append(parameterName).append(" is ").append(parameterValue);
         ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultEnglishMessage.toString(),
                 parameter, value, parameterName, parameterValue);
         dataValidationErrors.add(error);
@@ -457,12 +495,12 @@ public class DataValidatorBuilder {
     }
 
     public DataValidatorBuilder inMinAndMaxAmountRange(final BigDecimal minimumAmount, final BigDecimal maximumAmount) {
-        if (minimumAmount != null && maximumAmount != null && value != null){
+        if (minimumAmount != null && maximumAmount != null && value != null) {
             BigDecimal amount = BigDecimal.valueOf(Double.valueOf(value.toString()));
             if (amount.compareTo(minimumAmount) == -1 || amount.compareTo(maximumAmount) == 1) {
                 StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                         .append(".amount.is.not.within.min.max.range");
-                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter) .append(" amount ").append(amount)
+                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter).append(" amount ").append(amount)
                         .append(" must be between ").append(minimumAmount).append(" and ").append(maximumAmount).append(" .");
                 ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
                         defaultEnglishMessage.toString(), parameter, amount, minimumAmount, maximumAmount);
@@ -472,14 +510,14 @@ public class DataValidatorBuilder {
         }
         return this;
     }
-    
+
     public DataValidatorBuilder notLessThanMin(final BigDecimal min) {
-        if (min != null && value != null){
+        if (min != null && value != null) {
             BigDecimal amount = BigDecimal.valueOf(Double.valueOf(value.toString()));
             if (amount.compareTo(min) == -1) {
                 StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                         .append(".is.less.than.min");
-                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter) .append(" value ").append(amount)
+                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter).append(" value ").append(amount)
                         .append(" must not be less than minimum value ").append(min);
                 ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
                         defaultEnglishMessage.toString(), parameter, amount, min);
@@ -489,14 +527,14 @@ public class DataValidatorBuilder {
         }
         return this;
     }
-    
+
     public DataValidatorBuilder notGreaterThanMax(final BigDecimal max) {
-        if (max != null && value != null){
+        if (max != null && value != null) {
             BigDecimal amount = BigDecimal.valueOf(Double.valueOf(value.toString()));
             if (amount.compareTo(max) == 1) {
                 StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                         .append(".is.greater.than.max");
-                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter) .append(" value ").append(amount)
+                StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(parameter).append(" value ").append(amount)
                         .append(" must not be more than maximum value ").append(max);
                 ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
                         defaultEnglishMessage.toString(), parameter, amount, max);
@@ -541,7 +579,7 @@ public class DataValidatorBuilder {
         }
         return this;
     }
-    
+
     public DataValidatorBuilder notLessThanMin(final Integer min) {
         if (value == null && ignoreNullValue) { return this; }
 
@@ -559,7 +597,7 @@ public class DataValidatorBuilder {
         }
         return this;
     }
-    
+
     public DataValidatorBuilder notGreaterThanMax(final Integer max) {
         if (value == null && ignoreNullValue) { return this; }
 
@@ -577,26 +615,25 @@ public class DataValidatorBuilder {
         }
         return this;
     }
-    
-    public DataValidatorBuilder matchesRegularExpression(final String expression) {
-    	if (value == null && ignoreNullValue) { return this; }
 
-    	if (value != null && !value.toString().matches(expression)) {
-    		StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
+    public DataValidatorBuilder matchesRegularExpression(final String expression) {
+        if (value == null && ignoreNullValue) { return this; }
+
+        if (value != null && !value.toString().matches(expression)) {
+            StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
                     .append(".does.not.match.regexp");
             StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter)
-            		.append(" must match the provided regular expression [ ")
-                    .append(expression).append(" ] ").append(".");
+                    .append(" must match the provided regular expression [ ").append(expression).append(" ] ").append(".");
 
-            ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
-                    defaultEnglishMessage.toString(), parameter, this.value, expression);
+            ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultEnglishMessage.toString(),
+                    parameter, this.value, expression);
 
             dataValidationErrors.add(error);
         }
-    	
-    	return this;
+
+        return this;
     }
-    
+
     private DataValidatorBuilder validateStringFor(final String validInputs) {
         if (this.value == null && this.ignoreNullValue) { return this; }
         final String[] inputs = validInputs.split(VALID_INPUT_SEPERATOR);
@@ -610,15 +647,15 @@ public class DataValidatorBuilder {
         if (validationErr) {
             final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
                     .append(this.parameter).append(".value.should.true.or.false");
-            final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(this.parameter)
-                    .append(" value should true or false ");
+            final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(this.parameter).append(
+                    " value should true or false ");
             final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
                     defaultEnglishMessage.toString(), this.parameter, this.value);
             this.dataValidationErrors.add(error);
         }
         return this;
     }
-    
+
     public DataValidatorBuilder validateForBooleanValue() {
         return validateStringFor("TRUE" + VALID_INPUT_SEPERATOR + "FALSE");
     }
@@ -648,4 +685,18 @@ public class DataValidatorBuilder {
         }
         return this;
     }
+
+    public DataValidatorBuilder validateCronExpression() {
+        if (value != null && !CronExpression.isValidExpression(this.value.toString().trim())) {
+            final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(resource).append(".").append(parameter)
+                    .append(".invalid");
+            final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(parameter).append(
+                    " value is not a valid cron expression");
+            final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                    defaultEnglishMessage.toString(), parameter, this.value);
+            dataValidationErrors.add(error);
+        }
+        return this;
+    }
+
 }

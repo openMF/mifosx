@@ -138,7 +138,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
     @Transactional
     @Override
-    public CommandProcessingResult submitLoanApplication(final JsonCommand command) {
+    public CommandProcessingResult submitApplication(final JsonCommand command) {
 
         final AppUser currentUser = context.authenticatedUser();
 
@@ -205,7 +205,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
     @Transactional
     @Override
-    public CommandProcessingResult modifyLoanApplication(final Long loanId, final JsonCommand command) {
+    public CommandProcessingResult modifyApplication(final Long loanId, final JsonCommand command) {
 
         try {
             context.authenticatedUser();
@@ -213,7 +213,9 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             this.fromApiJsonDeserializer.validateForModify(command.json());
 
             final Loan existingLoanApplication = retrieveLoanBy(loanId);
-
+            
+            validateSubmittedOnDate(command, existingLoanApplication.loanProduct());
+            
             if (!existingLoanApplication.isSubmittedAndPendingApproval()) { throw new LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeModified(
                     loanId); }
 
@@ -384,7 +386,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
     @Transactional
     @Override
-    public CommandProcessingResult deleteLoanApplication(final Long loanId) {
+    public CommandProcessingResult deleteApplication(final Long loanId) {
 
         context.authenticatedUser();
 
@@ -408,7 +410,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
     @Transactional
     @Override
-    public CommandProcessingResult approveLoanApplication(final Long loanId, final JsonCommand command) {
+    public CommandProcessingResult approveApplication(final Long loanId, final JsonCommand command) {
 
         final AppUser currentUser = context.authenticatedUser();
 
@@ -441,7 +443,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
     @Transactional
     @Override
-    public CommandProcessingResult undoLoanApplicationApproval(final Long loanId, final JsonCommand command) {
+    public CommandProcessingResult undoApplicationApproval(final Long loanId, final JsonCommand command) {
 
         context.authenticatedUser();
 
@@ -473,7 +475,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
     @Transactional
     @Override
-    public CommandProcessingResult rejectLoanApplication(final Long loanId, final JsonCommand command) {
+    public CommandProcessingResult rejectApplication(final Long loanId, final JsonCommand command) {
 
         final AppUser currentUser = context.authenticatedUser();
 
@@ -505,7 +507,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
     @Transactional
     @Override
-    public CommandProcessingResult applicantWithdrawsFromLoanApplication(final Long loanId, final JsonCommand command) {
+    public CommandProcessingResult applicantWithdrawsFromApplication(final Long loanId, final JsonCommand command) {
 
         final AppUser currentUser = context.authenticatedUser();
 
