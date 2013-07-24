@@ -14,6 +14,7 @@ import org.dom4j.Element;
 import org.mifosplatform.xbrl.report.data.ContextData;
 import org.mifosplatform.xbrl.report.data.NamespaceData;
 import org.mifosplatform.xbrl.taxonomy.data.TaxonomyData;
+import org.mifosplatform.xbrl.taxonomy.data.XBRLData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,8 @@ public class XBRLBuilder {
 	
 	private static final String SCHEME_URL = "http://www.themix.org";
 	private static final String IDENTIFIER = "000000";
+	private static final String UNITID_PURE = "Unit1";
+	private static final String UNITID_CUR = "Unit2";
 	
 	private Element root;
 //	private HashMap<String,String> namespaceMap;
@@ -30,11 +33,15 @@ public class XBRLBuilder {
 	Date endDate;
 	private Integer instantScenarioCounter = 1;
 	private Integer durationScenarioCounter = 1;
-	
+
 	@Autowired
 	private ReadNamespaceService readNamespaceService;
 	
-	public String buildWithMap(Map<TaxonomyData,BigDecimal> map, Date startDate, Date endDate) {
+	public String build(XBRLData xbrlData) {
+		return this.build(xbrlData.getResultMap(), xbrlData.getStartDate(), xbrlData.getEndDate(), xbrlData.getCurrency());
+	}
+	
+	public String build(Map<TaxonomyData,BigDecimal> map, Date startDate, Date endDate, String currency) {
 		
 		Document doc = DocumentHelper.createDocument();
 		root = doc.addElement("xbrl");
@@ -45,7 +52,7 @@ public class XBRLBuilder {
 		
 		this.startDate = startDate;
 		this.endDate = endDate;
-		
+
 		for (Entry<TaxonomyData,BigDecimal> entry : map.entrySet()) {
 			TaxonomyData taxonomy = entry.getKey();
 			BigDecimal value = entry.getValue();
@@ -54,6 +61,8 @@ public class XBRLBuilder {
 		}
 		
 		this.addContexts();
+		this.addCurrencyUnit(currency);
+		this.addNumberUnit();
 		
 		doc.setXMLEncoding("UTF-8");
 
@@ -110,7 +119,7 @@ public class XBRLBuilder {
 		
 
 		xmlElement.addAttribute("contextRef", contextMap.get(context));
-//		xmlElement.addAttribute("unitRef", getUnitRef(element));
+		xmlElement.addAttribute("unitRef", getUnitRef(taxonomy));
 		xmlElement.addAttribute("decimals", getNumberOfDecimalPlaces(value).toString());
 		
 		// add the child
@@ -119,12 +128,17 @@ public class XBRLBuilder {
 		return xmlElement;
 	}
 	
+	private String getUnitRef(TaxonomyData tx) {
+		return tx.isPortfolio() ? UNITID_PURE : UNITID_CUR;
+	}
+	
+	
 	/**
 	 * Adds the generic number unit
 	 */
 	void addNumberUnit() {
 		Element numerUnit = root.addElement("unit");
-//		numerUnit.addAttribute("id", numericUnit);
+		numerUnit.addAttribute("id", UNITID_PURE);
 		Element measure = numerUnit.addElement("measure");
 		measure.addText("xbrli:pure");
 
@@ -137,7 +151,7 @@ public class XBRLBuilder {
 	 */
 	public void addCurrencyUnit(String currencyCode) {
 		Element currencyUnitElement = root.addElement("unit");
-		currencyUnitElement.addAttribute("id", currencyCode);
+		currencyUnitElement.addAttribute("id", UNITID_CUR);
 		Element measure = currencyUnitElement.addElement("measure");
 		measure.addText("iso4217:" + currencyCode);
 

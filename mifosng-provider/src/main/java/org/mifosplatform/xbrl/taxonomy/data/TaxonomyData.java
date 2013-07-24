@@ -58,5 +58,8 @@ public class TaxonomyData {
 		return this.period;
 	}
 	
+	public boolean isPortfolio() {
+		return this.type == 5;
+	}
 	
 }

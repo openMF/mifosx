@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
-import org.mifosplatform.xbrl.report.service.ReadNamespaceService;
 import org.mifosplatform.xbrl.taxonomy.data.TaxonomyData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,12 +16,7 @@ public class ReadTaxonomyServiceImpl implements ReadTaxonomyService {
 	private final JdbcTemplate jdbcTemplate;
 	
 	@Autowired
-<<<<<<< Updated upstream
-	public ReadTaxonomyServiceImpl(final RoutingDataSource dataSource, 
-									final ReadNamespaceService readNamespaceService) {
-=======
-	public ReadTaxonomyServiceImpl(final TenantAwareRoutingDataSource dataSource) {
->>>>>>> Stashed changes
+	public ReadTaxonomyServiceImpl(final RoutingDataSource dataSource) {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
 	

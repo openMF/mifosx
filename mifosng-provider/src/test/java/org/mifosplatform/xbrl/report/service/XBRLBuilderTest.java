@@ -48,7 +48,7 @@ public class XBRLBuilderTest {
 		TaxonomyData data1 = Mockito.mock(TaxonomyData.class);
 		when(data1.getName()).thenReturn("Assets");
 		map.put(data1, new BigDecimal(10000));
-		String result = xbrlBuilder.buildWithMap(map, Date.valueOf("2005-11-11"), Date.valueOf("2013-07-17"));
+		String result = xbrlBuilder.build(map, Date.valueOf("2005-11-11"), Date.valueOf("2013-07-17"), "USD");
 		System.out.println(result);
 		NodeList nodes = null;
 		try {
