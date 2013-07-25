@@ -214,8 +214,6 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             final Loan existingLoanApplication = retrieveLoanBy(loanId);
             
-            validateSubmittedOnDate(command, existingLoanApplication.loanProduct());
-            
             if (!existingLoanApplication.isSubmittedAndPendingApproval()) { throw new LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeModified(
                     loanId); }
 
@@ -245,7 +243,12 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                     existingLoanApplication.updateInterestRateFrequencyType();
                 }
             }
-
+            
+            final String submittedOnDateParamName = "submittedOnDate";
+            if (changes.containsKey(productIdParamName) || changes.containsKey(submittedOnDateParamName)) {
+                validateSubmittedOnDate(command, existingLoanApplication.loanProduct());
+            }
+            
             // validate min and maximum constraints
             this.fromApiJsonDeserializer.validateForModify(command.json());
             final LoanProductRelatedDetail productRelatedDetail = existingLoanApplication.repaymentScheduleDetail();
