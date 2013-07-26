@@ -214,8 +214,6 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             final Loan existingLoanApplication = retrieveLoanBy(loanId);
             
-            validateSubmittedOnDate(command, existingLoanApplication.loanProduct());
-            
             if (!existingLoanApplication.isSubmittedAndPendingApproval()) { throw new LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeModified(
                     loanId); }
 
@@ -235,17 +233,25 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             }
 
             final String productIdParamName = "productId";
+            final String submittedOnDateParamName = "submittedOnDate";
+            if (changes.containsKey(submittedOnDateParamName) && !changes.containsKey(productIdParamName)) {
+                validateSubmittedOnDate(command, existingLoanApplication.loanProduct());
+            }
+            
             if (changes.containsKey(productIdParamName)) {
                 final Long productId = command.longValueOfParameterNamed(productIdParamName);
                 final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
                 if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
-
+                if (changes.containsKey(submittedOnDateParamName)) {
+                    validateSubmittedOnDate(command, loanProduct);
+                }
+                
                 existingLoanApplication.updateLoanProduct(loanProduct);
                 if (!changes.containsKey("interestRateFrequencyType")) {
                     existingLoanApplication.updateInterestRateFrequencyType();
                 }
             }
-
+            
             // validate min and maximum constraints
             this.fromApiJsonDeserializer.validateForModify(command.json());
             final LoanProductRelatedDetail productRelatedDetail = existingLoanApplication.repaymentScheduleDetail();
@@ -551,13 +557,13 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         final LocalDate submittedOnDate = command.localDateValueOfParameterNamed("submittedOnDate");
 
         String defaultUserMessage = "";
-        if (startDate != null && submittedOnDate.isBefore(startDate)) {
+        if (startDate != null && submittedOnDate != null && submittedOnDate.isBefore(startDate)) {
             defaultUserMessage = "submittedOnDate cannot be before the loan product startDate.";
             throw new LoanApplicationDateException("submitted.on.date.cannot.be.before.the.loan.product.start.date", defaultUserMessage,
                     submittedOnDate.toString(), startDate.toString());
         }
         
-        if (closeDate != null && submittedOnDate.isAfter(closeDate)) {
+        if (closeDate != null && submittedOnDate != null && submittedOnDate.isAfter(closeDate)) {
             defaultUserMessage = "submittedOnDate cannot be after the loan product closeDate.";
             throw new LoanApplicationDateException("submitted.on.date.cannot.be.after.the.loan.product.close.date", defaultUserMessage,
                     submittedOnDate.toString(), closeDate.toString());
