@@ -5,11 +5,11 @@ CREATE TABLE `m_template` (
 	PRIMARY KEY (`id`)
 	)ENGINE=InnoDB DEFAULT CHARSET=utf8;
 	
-CREATE TABLE `m_template_resource_address_mapping` (
-	`metadata_id` bigint(20) NOT NULL AUTO_INCREMENT, 
+CREATE TABLE `m_template_mappers` (
+	`mapper_id` bigint(20) NOT NULL AUTO_INCREMENT, 
 	`resource` VARCHAR(100) NOT NULL, 
 	`address` VARCHAR(100) NOT NULL,
-	PRIMARY KEY (`metadata_id`)
+	PRIMARY KEY (`mapper_id`)
 	)ENGINE=InnoDB DEFAULT CHARSET=utf8;
 	
 	
