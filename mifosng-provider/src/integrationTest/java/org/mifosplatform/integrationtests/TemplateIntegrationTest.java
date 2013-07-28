@@ -42,8 +42,8 @@ public class TemplateIntegrationTest {
 		metadata.put("user", "resource_url");
 		HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("name", "foo");
-        map.put("text", "bar");
-        map.put("metadata", metadata);
+        map.put("text", "Hello {{template}}");
+        map.put("mappers", metadata);
 		
         ArrayList get = Utils.performServerGet(requestSpec, responseSpec, GET_TEMPLATES_URL, "");
         int entriesBeforeTest = get.size();
