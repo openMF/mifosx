@@ -27,15 +27,15 @@ public class Template extends AbstractPersistable<Long>{
     @ElementCollection(targetClass=String.class, fetch = FetchType.EAGER)
     @MapKeyColumn(name="resource")
     @Column(name="address")
-    @CollectionTable(name="m_template_resource_address_mapping", 
+    @CollectionTable(name="m_template_mappers", 
     				 joinColumns=
-    				 @JoinColumn(name="metadata_id"))
-    private Map<String, String> metadata;
+    				 @JoinColumn(name="mapper_id"))
+    private Map<String, String> mappers;
     
-    public Template(String name, String text, Map<String, String> metadata) {
+    public Template(String name, String text, Map<String, String> mappers) {
     	this.name = name;
     	this.text = text;
-    	this.metadata = metadata;
+    	this.mappers = mappers;
     }
     
     protected Template() {
@@ -45,18 +45,18 @@ public class Template extends AbstractPersistable<Long>{
     	String name = command.stringValueOfParameterNamed("name");
     	String text = command.stringValueOfParameterNamed("text");
     	
-    	String metadata = command.jsonFragment("metadata");    	
-    	Map<String, String> metadataMap = command.mapValueOfParameterNamed(metadata);
+    	String mappers = command.jsonFragment("mappers");    	
+    	Map<String, String> mappersMap = command.mapValueOfParameterNamed(mappers);
     	
-    	return new Template(name, text, metadataMap); 
+    	return new Template(name, text, mappersMap); 
     }
 
-	public Map<String, String> getMetadata() {
-		return this.metadata;
+	public Map<String, String> getMappers() {
+		return this.mappers;
 	}
 
-	public void setMetadata(Map<String, String> metadata) {
-		this.metadata = metadata;
+	public void setMappers(Map<String, String> mappers) {
+		this.mappers = mappers;
 	}
 
 	public String getName() {

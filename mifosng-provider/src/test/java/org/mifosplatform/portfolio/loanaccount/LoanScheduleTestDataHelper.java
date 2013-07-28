@@ -89,4 +89,28 @@ public class LoanScheduleTestDataHelper {
 		return Arrays.asList(firstInstallment, secondInstallment, thirdInstallment);
 	}
 
+	public static List<LoanRepaymentScheduleInstallment> createSimpleLoanScheduleWithLoan(final LocalDate firstDueDate, final MonetaryCurrency currency) {
+		LoanRepaymentScheduleInstallment firstInstallment = new LoanRepaymentScheduleInstallmentBuilder(currency)
+		.withInstallmentNumber(1)
+		.withDueDate(firstDueDate)
+		.withPrincipal("1000.00")
+		.withInterest("200.00")
+		.build();
+
+		LoanRepaymentScheduleInstallment secondInstallment = new LoanRepaymentScheduleInstallmentBuilder(currency)
+			.withInstallmentNumber(2)
+			.withDueDate(firstDueDate.plusMonths(1))
+			.withPrincipal("1000.00")
+			.withInterest("200.00")
+			.build();
+		
+		LoanRepaymentScheduleInstallment thirdInstallment = new LoanRepaymentScheduleInstallmentBuilder(currency)
+		.withInstallmentNumber(3)
+		.withDueDate(firstDueDate.plusMonths(2))
+		.withPrincipal("1000.00")
+		.withInterest("200.00")
+		.build();
+		
+		return Arrays.asList(firstInstallment, secondInstallment, thirdInstallment);
+	}
 }
