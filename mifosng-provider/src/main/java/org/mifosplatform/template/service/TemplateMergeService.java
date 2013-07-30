@@ -72,8 +72,12 @@ public class TemplateMergeService {
 				StringWriter stringWriter = new StringWriter();
 				
 				mappersMustache.execute(stringWriter, this.scopes);
+				String url = stringWriter.toString();
+				if(!url.startsWith("http")) {
+					url = this.scopes.get("BASE_URI")+url;
+				}
+				
 				try {
-					String url = this.scopes.get("BASE_URI")+stringWriter.toString();
 					this.scopes.put(entry.getKey(), getMapFromUrl(url));
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
