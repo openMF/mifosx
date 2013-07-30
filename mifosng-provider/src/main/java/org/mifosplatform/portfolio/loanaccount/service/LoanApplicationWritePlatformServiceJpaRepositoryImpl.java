@@ -224,6 +224,10 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final Map<String, Object> changes = existingLoanApplication.loanApplicationModification(command, possiblyModifedLoanCharges,
                     possiblyModifedLoanCollateralItems, this.aprCalculator);
 
+            if (changes.containsKey("expectedDisbursementDate")) {
+                this.loanAssembler.validateExpectedDisbursementForHolidayAndNonWorkingDay(existingLoanApplication);
+            }
+
             final String clientIdParamName = "clientId";
             if (changes.containsKey(clientIdParamName)) {
                 final Long clientId = command.longValueOfParameterNamed(clientIdParamName);
