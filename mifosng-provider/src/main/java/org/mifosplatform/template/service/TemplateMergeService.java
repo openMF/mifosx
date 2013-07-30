@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.template.domain.Template;
+import org.mifosplatform.template.domain.TemplateFunctions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ public class TemplateMergeService {
 	public String compile(Template template, Map<String, Object> scopes) throws MalformedURLException, IOException {
 		
 		this.scopes = scopes;
+		this.scopes.put("static", new TemplateFunctions());
 		
 	    MustacheFactory mf = new DefaultMustacheFactory();
 	    Mustache mustache = mf.compile(new StringReader(
