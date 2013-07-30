@@ -18,12 +18,14 @@ import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.organisation.holiday.domain.Holiday;
 import org.mifosplatform.organisation.holiday.domain.HolidayRepository;
+import org.mifosplatform.organisation.holiday.service.HolidayUtil;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepository;
 import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
 import org.mifosplatform.organisation.staff.exception.StaffRoleException;
-import org.mifosplatform.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDays;
+import org.mifosplatform.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
+import org.mifosplatform.organisation.workingdays.service.WorkingDaysUtil;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
 import org.mifosplatform.portfolio.collateral.domain.LoanCollateral;
@@ -43,6 +45,7 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleTrans
 import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanSummaryWrapper;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionProcessingStrategyRepository;
+import org.mifosplatform.portfolio.loanaccount.exception.LoanApplicationDateException;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanTransactionProcessingStrategyNotFoundException;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanApplicationTerms;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
@@ -194,6 +197,8 @@ public class LoanAssembler {
         loanApplication.loanApplicationSubmittal(currentUser, loanScheduleModel, loanApplicationTerms, defaultLoanLifecycleStateMachine(),
                 submittedOnDate, externalId, isHolidayEnabled, holidays, workingDays);
 
+        validateExpectedDisbursementForHolidayAndNonWorkingDay(loanApplication);
+
         return loanApplication;
     }
 
@@ -237,5 +242,26 @@ public class LoanAssembler {
             if (strategy == null) { throw new LoanTransactionProcessingStrategyNotFoundException(transactionProcessingStrategyId); }
         }
         return strategy;
+    }
+
+    public void validateExpectedDisbursementForHolidayAndNonWorkingDay(final Loan loanApplication) {
+
+        final LocalDate expectedDisbursmentDate = loanApplication.getExpectedDisbursedOnLocalDate();
+        final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
+        final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loanApplication.getOfficeId(),
+                loanApplication.getExpectedDisbursedOnLocalDate().toDate());
+        final WorkingDays workingDays = this.workingDaysRepository.findOne();
+        final boolean isWorkingDay = WorkingDaysUtil.isWorkingDay(workingDays, expectedDisbursmentDate);
+        if (!isWorkingDay) {
+            final String errorMessage = "The expected disbursement date cannot be on a non working day";
+            throw new LoanApplicationDateException("disbursement.date.on.non.working.day", errorMessage, expectedDisbursmentDate);
+        }
+
+        if (isHolidayEnabled) {
+            if (HolidayUtil.isHoliday(expectedDisbursmentDate, holidays)) {
+                final String errorMessage = "The expected disbursement date cannot be on a holiday";
+                throw new LoanApplicationDateException("disbursement.date.on.holiday", errorMessage, expectedDisbursmentDate);
+            }
+        }
     }
 }
