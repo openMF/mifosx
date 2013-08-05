@@ -6,10 +6,11 @@ CREATE TABLE `m_template` (
 	)ENGINE=InnoDB DEFAULT CHARSET=utf8;
 	
 CREATE TABLE `m_template_mappers` (
-	`mapper_id` bigint(20) NOT NULL AUTO_INCREMENT, 
+	`id` bigint(20) NOT NULL AUTO_INCREMENT,
+	`mapper_id` bigint(20) NOT NULL, 
 	`resource` VARCHAR(100) NOT NULL, 
 	`address` VARCHAR(100) NOT NULL,
-	PRIMARY KEY (`mapper_id`)
+	PRIMARY KEY (`id`)
 	)ENGINE=InnoDB DEFAULT CHARSET=utf8;
 	
 	
