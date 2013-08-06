@@ -19,9 +19,7 @@ public class TemplateIntegrationTest {
 	
 	private final String GET_TEMPLATES_URL = "/mifosng-provider/api/v1/templates?tenantIdentifier=default";
 	private final String GET_TEMPLATE_ID_URL = "/mifosng-provider/api/v1/templates/%s?tenantIdentifier=default";
-    private final String RESPONSE_ATTRIBUTE_ID = "id";
     private final String RESPONSE_ATTRIBUTE_NAME = "name";
-    private final String RESPONSE_ATTRIBUTE_TEXT = "text";
 
 	private ResponseSpecification responseSpec;
     private RequestSpecification requestSpec;
@@ -52,7 +50,7 @@ public class TemplateIntegrationTest {
 		
 		String templateUrlForId = String.format(GET_TEMPLATE_ID_URL, id);
 		
-		String getrequest2 = Utils.performServerGet(requestSpec, responseSpec, templateUrlForId, "name");
+		String getrequest2 = Utils.performServerGet(requestSpec, responseSpec, templateUrlForId, RESPONSE_ATTRIBUTE_NAME);
         
         Assert.assertTrue(getrequest2.equals("foo"));
         
