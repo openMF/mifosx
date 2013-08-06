@@ -78,6 +78,8 @@ public class TemplateMergeServiceTest {
 		
 		String output = tms.compile(template, scopes);
 		
+		dis.close();
+		
 		System.out.println(output);
 	}
 

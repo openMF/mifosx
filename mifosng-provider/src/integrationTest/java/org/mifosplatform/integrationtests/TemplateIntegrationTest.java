@@ -43,7 +43,7 @@ public class TemplateIntegrationTest {
         map.put("text", "Hello {{template}}");
         map.put("mappers", metadata);
 		
-        ArrayList get = Utils.performServerGet(requestSpec, responseSpec, GET_TEMPLATES_URL, "");
+        ArrayList<?> get = Utils.performServerGet(requestSpec, responseSpec, GET_TEMPLATES_URL, "");
         int entriesBeforeTest = get.size();
         
 		Integer id = Utils.performServerPost(requestSpec, responseSpec, GET_TEMPLATES_URL, new Gson().toJson(map), "resourceId");
