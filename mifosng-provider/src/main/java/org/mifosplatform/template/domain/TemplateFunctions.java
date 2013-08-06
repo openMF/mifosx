@@ -7,7 +7,7 @@ import java.util.Date;
 public class TemplateFunctions {
 
 	public static String now() {
-		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm");
 		Date date = new Date();
 		
 		return dateFormat.format(date);
