@@ -56,7 +56,7 @@ public class JpaTemplateDomainService implements TemplateDomainService{
         template.setName(command.stringValueOfParameterNamed(PROPERTY_NAME));
         template.setText(command.stringValueOfParameterNamed(PROPERTY_TEXT));
         
-        String mappers = command.jsonFragment("mappers");    	
+        String mappers = command.jsonFragment(PROPERTY_MAPPERS);    	
         template.setMappers(command.mapValueOfParameterNamed(mappers));
         
         this.templateRepository.saveAndFlush(template);
