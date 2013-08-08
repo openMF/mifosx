@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd">
+	<defaultCache eternal="true" maxElementsInMemory="100"
+		overflowToDisk="false" />
+	<cache name="users" maxElementsInMemory="10000" eternal="true"
+		overflowToDisk="false" />
+	<cache name="tenants" maxElementsInMemory="10000" eternal="true"
+		overflowToDisk="false" />
+	<cache name="offices" maxElementsInMemory="10000" eternal="true"
+		overflowToDisk="false" />
+	<cache name="office_template" maxElementsInMemory="10000"
+		eternal="true" overflowToDisk="false" />
+	<cache name="charges" maxElementsInMemory="10000" eternal="true"
+		overflowToDisk="false" />
+	<cache name="funds" maxElementsInMemory="10000" eternal="true"
+		overflowToDisk="false" />
+	<cache name="code_values" maxElementsInMemory="10000" eternal="true"
+		overflowToDisk="false" />
+	<cache name="codes" maxElementsInMemory="10000" eternal="true"
+		overflowToDisk="false" />
+</ehcache>

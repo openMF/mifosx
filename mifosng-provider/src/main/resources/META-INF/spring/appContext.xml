@@ -27,9 +27,15 @@
 	
 	<cache:annotation-driven />
 
+	 <bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager" 
+ 		 p:cacheManager-ref="ehcache"/>
+ 
+	 <bean id="ehcache" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" 
+     p:configLocation="classpath:/META-INF/spring/ehcache.xml" p:shared="true"/> 
+     
 	<!-- generic cache manager -->
 
-	<bean id="cacheManager" class="org.springframework.cache.support.SimpleCacheManager">
+	<!-- <bean id="cacheManager" class="org.springframework.cache.support.SimpleCacheManager">
 		<property name="caches">
 			<set>
 				<bean
@@ -58,7 +64,7 @@
 					p:name="codes" />
 			</set>
 		</property>
-	</bean>
+	</bean>-->
 	
 	<context:component-scan base-package="org.mifosplatform.accounting.*,
 									      org.mifosplatform.commands.handler.*,
