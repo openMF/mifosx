@@ -1134,6 +1134,7 @@ public class CommandWrapperBuilder {
         this.href = "/clients/" + clientId + "?command=unassignStaff";
         return this;
     }
+    
 
     public CommandWrapperBuilder assignClientStaff(final Long clientId) {
         this.actionName = "ASSIGNSTAFF";

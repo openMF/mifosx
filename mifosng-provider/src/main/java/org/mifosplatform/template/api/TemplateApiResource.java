@@ -30,7 +30,6 @@ import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
-import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.template.domain.Template;
 import org.mifosplatform.template.service.TemplateDomainService;
@@ -51,7 +50,6 @@ public class TemplateApiResource {
 	
 	private final DefaultToApiJsonSerializer<Template> toApiJsonSerializer;
 	private final ApiRequestParameterHelper apiRequestParameterHelper;
-	private final FromJsonHelper fromApiJsonHelper;
 	private final TemplateDomainService templateService;
 	private final TemplateMergeService templateMergeService;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
@@ -64,8 +62,7 @@ public class TemplateApiResource {
 			ApiRequestParameterHelper apiRequestParameterHelper, 
 			TemplateDomainService templateService,
 			TemplateMergeService templateMergeService,
-			PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-			FromJsonHelper fromApiJsonHelper) {
+			PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService) {
 		
 		this.context = context;
 		this.toApiJsonSerializer = toApiJsonSerializer;
@@ -73,8 +70,8 @@ public class TemplateApiResource {
 		this.templateService = templateService;
 		this.templateMergeService = templateMergeService;
 		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
-		this.fromApiJsonHelper = fromApiJsonHelper;
 	}
+	
 	
 	@GET
 	@Produces({ MediaType.APPLICATION_JSON })
@@ -120,7 +117,6 @@ public class TemplateApiResource {
 	
 	@DELETE
 	@Path("{templateId}")
-	@Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String deleteTemplate(@PathParam("templateId") final Long templateId) {
 		
@@ -136,10 +132,7 @@ public class TemplateApiResource {
 	@POST
 	@Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String createTemplate(final String apiRequestBodyAsJson) {
-		
-		System.out.println("POST:REQUESTBODY: "+apiRequestBodyAsJson);
-		
+    public String mergeTemplate(final String apiRequestBodyAsJson) {
 		final CommandWrapper commandRequest = new CommandWrapperBuilder()
 						 			.createTemplate()
 						 			.withJson(apiRequestBodyAsJson)
