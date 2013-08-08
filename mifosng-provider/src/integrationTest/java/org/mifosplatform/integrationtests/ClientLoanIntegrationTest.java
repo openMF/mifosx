@@ -24,7 +24,6 @@ import com.jayway.restassured.specification.ResponseSpecification;
  * Client Loan Integration Test for checking Loan Application Repayment
  * Schedule.
  */
-
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ClientLoanIntegrationTest {
 
