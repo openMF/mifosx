@@ -50,28 +50,26 @@ public final class JsonCommand {
     private final String transactionId;
     private final String url;
     private final Long productId;
-    private final Long templateId;
 
     public static JsonCommand from(final String jsonCommand, final JsonElement parsedCommand, final FromJsonHelper fromApiJsonHelper,
             final String entityName, final Long resourceId, final Long subresourceId, final Long groupId, final Long clientId,
             final Long loanId, final Long savingsId, final Long codeId, final String supportedEntityType, final Long supportedEntityId,
-            final String transactionId, final String url, final Long productId, final Long templateID) {
+            final String transactionId, final String url, final Long productId) {
         return new JsonCommand(null, jsonCommand, parsedCommand, fromApiJsonHelper, entityName, resourceId, subresourceId, groupId,
-                clientId, loanId, savingsId, codeId, supportedEntityType, supportedEntityId, transactionId, url, productId, templateID);
+                clientId, loanId, savingsId, codeId, supportedEntityType, supportedEntityId, transactionId, url, productId);
     }
 
     public static JsonCommand fromExistingCommand(final Long commandId, final String jsonCommand, final JsonElement parsedCommand,
             final FromJsonHelper fromApiJsonHelper, final String entityName, final Long resourceId, final Long subresourceId,
             final String url, final Long productId) {
         return new JsonCommand(commandId, jsonCommand, parsedCommand, fromApiJsonHelper, entityName, resourceId, subresourceId, null, null,
-                null, null, null, null, null, null, url, productId, null);
+                null, null, null, null, null, null, url, productId);
     }
 
     public JsonCommand(final Long commandId, final String jsonCommand, final JsonElement parsedCommand,
             final FromJsonHelper fromApiJsonHelper, final String entityName, final Long resourceId, final Long subresourceId,
             final Long groupId, final Long clientId, final Long loanId, final Long savingsId, final Long codeId,
-            final String supportedEntityType, final Long supportedEntityId, final String transactionId,
-            final String url, final Long productId, final Long templateId) {
+            final String supportedEntityType, final Long supportedEntityId, final String transactionId, final String url, final Long productId) {
         this.commandId = commandId;
         this.jsonCommand = jsonCommand;
         this.parsedCommand = parsedCommand;
@@ -89,7 +87,6 @@ public final class JsonCommand {
         this.transactionId = transactionId;
         this.url = url;
         this.productId = productId;
-        this.templateId = templateId;
     }
 
     public String json() {
@@ -312,12 +309,13 @@ public final class JsonCommand {
         final String value = this.fromApiJsonHelper.extractStringNamed(parameterName, parsedCommand);
         return StringUtils.defaultIfEmpty(value, "");
     }
+
     public Map<String, String> mapValueOfParameterNamed(final String json) {
     	final Type typeOfMap = new TypeToken<Map<String, String>>() {}.getType();
     	final Map<String, String> value = this.fromApiJsonHelper.extractDataMap(typeOfMap, json);
     	return value;
     }
-
+    
     public boolean isChangeInBigDecimalParameterNamedDefaultingZeroToNull(final String parameterName, final BigDecimal existingValue) {
         boolean isChanged = false;
         if (parameterExists(parameterName)) {

@@ -33,8 +33,6 @@ import com.google.common.reflect.TypeToken;
 
 @Service
 public class TemplateMergeService {
-	
-	
 	private final FromJsonHelper fromApiJsonHelper;
 	private Map<String, Object> scopes;
 	

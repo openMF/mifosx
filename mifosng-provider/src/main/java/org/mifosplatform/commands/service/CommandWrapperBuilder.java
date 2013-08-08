@@ -24,13 +24,12 @@ public class CommandWrapperBuilder {
     private String transactionId;
     private String supportedEntityType;
     private Long supportedEntityId;
-    private Long productId;
     private Long templateId;
 
     public CommandWrapper build() {
         return new CommandWrapper(this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId, this.actionName,
                 this.entityName, this.entityId, this.subentityId, this.codeId, this.supportedEntityType, this.supportedEntityId, this.href,
-                this.json, this.transactionId, this.productId, this.templateId);
+                this.json, this.transactionId, this.templateId);
     }
 
     public CommandWrapperBuilder withLoanId(final Long withLoanId) {
@@ -1132,55 +1131,6 @@ public class CommandWrapperBuilder {
         this.entityId = clientId;
         this.clientId = clientId;
         this.href = "/clients/" + clientId + "?command=unassignStaff";
-        return this;
-    }
-
-    public CommandWrapperBuilder assignClientStaff(final Long clientId) {
-        this.actionName = "ASSIGNSTAFF";
-        this.entityName = "CLIENT";
-        this.entityId = clientId;
-        this.clientId = clientId;
-        this.href = "/clients/" + clientId + "?command=assignStaff";
-        return this;
-    }
-
-    public CommandWrapperBuilder createProductMix(final Long productId) {
-        this.actionName = "CREATE";
-        this.entityName = "PRODUCTMIX";
-        this.entityId = null;
-        this.productId = productId;
-        this.href = "/loanproducts/" + productId + "/productmix";
-        return this;
-    }
-
-    public CommandWrapperBuilder updateProductMix(final Long productId) {
-        this.actionName = "UPDATE";
-        this.entityName = "PRODUCTMIX";
-        this.entityId = null;
-        this.productId = productId;
-        this.href = "/loanproducts/" + productId + "/productmix";
-        return this;
-    }
-    
-    public CommandWrapperBuilder deleteProductMix(final Long productId) {
-        this.actionName = "DELETE";
-        this.entityName = "PRODUCTMIX";
-        this.entityId = null;
-        this.productId = productId;
-        this.href = "/loanproducts/" + productId + "/productmix";
-        return this;
-    }
-    
-    public CommandWrapperBuilder withProduct(final Long productId) {
-        this.productId = productId;
-        return this;
-    }
-    
-    public CommandWrapperBuilder updateJobDetail(final Long jobId) {
-        this.actionName = "UPDATE";
-        this.entityName = "SCHEDULER";
-        this.entityId = jobId;
-        this.href = "/updateJobDetail/" + jobId+"/updateJobDetail";
         return this;
     }
     

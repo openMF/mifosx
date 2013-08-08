@@ -19,9 +19,8 @@ public class TemplateIntegrationTest {
 	
 	private final String GET_TEMPLATES_URL = "/mifosng-provider/api/v1/templates?tenantIdentifier=default";
 	private final String GET_TEMPLATE_ID_URL = "/mifosng-provider/api/v1/templates/%s?tenantIdentifier=default";
-    private final String RESPONSE_ATTRIBUTE_ID = "id";
+
     private final String RESPONSE_ATTRIBUTE_NAME = "name";
-    private final String RESPONSE_ATTRIBUTE_TEXT = "text";
 
 	private ResponseSpecification responseSpec;
     private RequestSpecification requestSpec;
@@ -45,14 +44,14 @@ public class TemplateIntegrationTest {
         map.put("text", "Hello {{template}}");
         map.put("mappers", metadata);
 		
-        ArrayList get = Utils.performServerGet(requestSpec, responseSpec, GET_TEMPLATES_URL, "");
+        ArrayList<?> get = Utils.performServerGet(requestSpec, responseSpec, GET_TEMPLATES_URL, "");
         int entriesBeforeTest = get.size();
         
 		Integer id = Utils.performServerPost(requestSpec, responseSpec, GET_TEMPLATES_URL, new Gson().toJson(map), "resourceId");
 		
 		String templateUrlForId = String.format(GET_TEMPLATE_ID_URL, id);
 		
-		String getrequest2 = Utils.performServerGet(requestSpec, responseSpec, templateUrlForId, "name");
+		String getrequest2 = Utils.performServerGet(requestSpec, responseSpec, templateUrlForId, RESPONSE_ATTRIBUTE_NAME);
         
         Assert.assertTrue(getrequest2.equals("foo"));
         

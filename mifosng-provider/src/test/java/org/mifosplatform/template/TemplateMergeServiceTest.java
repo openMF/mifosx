@@ -6,7 +6,6 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -33,8 +32,7 @@ public class TemplateMergeServiceTest {
 	}
 	
 	@Test
-	public void compileHelloTemplate() {
-		
+	public void compileHelloTemplate() throws Exception {
 		String name = "TemplateName";
 		String text = "Hello Test for Template {{template.name}}!";
 		
@@ -44,16 +42,7 @@ public class TemplateMergeServiceTest {
 	    scopes.put("template", template);
 		
 		String output ="";
-		try {
-			output = tms.compile(template, scopes);
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
+		output = tms.compile(template, scopes);
 		assertEquals("Hello Test for Template TemplateName!", output);
 	}
 	
@@ -79,6 +68,8 @@ public class TemplateMergeServiceTest {
 	    scopes.put("installments", installments);
 		
 		String output = tms.compile(template, scopes);
+		
+		dis.close();
 		
 		System.out.println(output);
 	}

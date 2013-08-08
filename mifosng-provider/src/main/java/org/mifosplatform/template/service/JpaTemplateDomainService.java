@@ -14,14 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class JpaTemplateDomainService implements TemplateDomainService {
+	
+	private static final String PROPERTY_NAME = "name"; 
+	private static final String PROPERTY_TEXT = "text"; 
+	private static final String PROPERTY_MAPPERS = "mappers"; 
 
 	@Autowired
 	private TemplateRepository templateRepository;
-	
-	@Override
-	public Template save(Template template) {
-		return templateRepository.save(template);
-	}
 
 	@Override
 	public List<Template> getAll() {
@@ -33,27 +32,14 @@ public class JpaTemplateDomainService implements TemplateDomainService {
 		return templateRepository.findOne(id);
 	}
 
-	@Override
-	public void delete(Long id) {
-		templateRepository.delete(id);
-	}
-
 	@Transactional
 	@Override
 	public CommandProcessingResult createTemplate(JsonCommand command) {
-		
-		// TODO:
-		// context.authenticatedUser();
-        // this.fromApiJsonDeserializer.validateForCreate(command.json());
-
-        //final SavingsProduct product = this.savingsProductAssembler.assemble(command);
-		
 		final Template template = Template.fromJson(command);
 
         this.templateRepository.saveAndFlush(template);
-
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(template.getId()) //
+        return new CommandProcessingResultBuilder()
+                .withEntityId(template.getId())
                 .build();
 	}
 
@@ -61,40 +47,33 @@ public class JpaTemplateDomainService implements TemplateDomainService {
 	@Override
 	public CommandProcessingResult updateTemplate(Long templateId,
 			JsonCommand command) {
-		
-		// TODO:
-		// context.authenticatedUser();
-        // this.fromApiJsonDeserializer.validateForCreate(command.json());
-		
 		final Template template = this.templateRepository.findOne(templateId);
         if (template == null ) { throw new TemplateNotFoundException(templateId); }
         
-        //final Template template = Template.fromJson(command);
-        template.setName(command.stringValueOfParameterNamed("name"));
-        template.setText(command.stringValueOfParameterNamed("text"));
+        template.setName(command.stringValueOfParameterNamed(PROPERTY_NAME));
+        template.setText(command.stringValueOfParameterNamed(PROPERTY_TEXT));
         
-        this.templateRepository.save(template);
+        String mappers = command.jsonFragment(PROPERTY_MAPPERS);    	
+        template.setMappers(command.mapValueOfParameterNamed(mappers));
+        
+        this.templateRepository.saveAndFlush(template);
 
-        return new CommandProcessingResultBuilder() //
-                .withCommandId(command.commandId()) //
-                .withEntityId(template.getId()) //
+        return new CommandProcessingResultBuilder() 
+                .withCommandId(command.commandId()) 
+                .withEntityId(template.getId())
                 .build();
 	}
 
 	@Transactional
 	@Override
 	public CommandProcessingResult removeTemplate(Long templateId) {
-
-        // TODO:
-		// this.context.authenticatedUser();
-		
 		final Template template = this.templateRepository.findOne(templateId);
         if (template == null ) { throw new TemplateNotFoundException(templateId); }
 
         this.templateRepository.delete(template);
 
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(templateId) //
+        return new CommandProcessingResultBuilder()
+                .withEntityId(templateId)
                 .build();
 	}
 }

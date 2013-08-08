@@ -8,14 +8,10 @@ import org.mifosplatform.template.domain.Template;
 
 
 public interface TemplateDomainService {
-
-	Template save(Template template);
 	
 	List<Template> getAll();
 	
 	Template getById(Long id);
-	
-	void delete(Long id);
 	
     CommandProcessingResult createTemplate(final JsonCommand command);
 
