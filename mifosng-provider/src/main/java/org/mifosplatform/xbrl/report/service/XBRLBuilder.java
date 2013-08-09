@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.mifosplatform.xbrl.report.data.ContextData;
 import org.mifosplatform.xbrl.report.data.NamespaceData;
 import org.mifosplatform.xbrl.taxonomy.data.TaxonomyData;
@@ -28,7 +29,7 @@ public class XBRLBuilder {
 	
 	private Element root;
 //	private HashMap<String,String> namespaceMap;
-	private HashMap<ContextData,String> contextMap = new HashMap<ContextData,String>();
+	private HashMap<ContextData,String> contextMap;
 	Date startDate;
 	Date endDate;
 	private Integer instantScenarioCounter = 1;
@@ -42,7 +43,9 @@ public class XBRLBuilder {
 	}
 	
 	public String build(Map<TaxonomyData,BigDecimal> map, Date startDate, Date endDate, String currency) {
-		
+		instantScenarioCounter = 1;
+		durationScenarioCounter = 1;
+		contextMap = new HashMap<ContextData,String>();
 		Document doc = DocumentHelper.createDocument();
 		root = doc.addElement("xbrl");
 		
@@ -76,22 +79,26 @@ public class XBRLBuilder {
 			// TODO:
 			throw new RuntimeException("start date and end date should not be null");
 		}
-		Element xmlElement = rootElement.addElement(taxonomy.getName());
-		String prefix = taxonomy.getNamespace();
 		
+		String prefix = taxonomy.getNamespace();
+		String qname = taxonomy.getName();
 		if (prefix != null && (!prefix.isEmpty())) {
 			NamespaceData ns = readNamespaceService.retrieveNamespaceByPrefix(prefix);
 			if (ns != null) {
-				xmlElement.addNamespace(prefix, ns.getUrl());
+				
+				root.addNamespace(prefix, ns.getUrl());
 			}
+			qname = prefix + ":" + taxonomy.getName();
 			
 		}
+		Element xmlElement = rootElement.addElement(qname);
+		
 		String dimension = taxonomy.getDimension();
 		SimpleDateFormat timeFormat=new SimpleDateFormat("MM_dd_yyyy");
 		
 		ContextData context = null;
 		if (dimension != null) {
-			String[] dims = dimension.split("\\.");
+			String[] dims = dimension.split(":");
 			
 			if (dims.length == 2) {
 				context = new ContextData(dims[0],dims[1],taxonomy.getPeriod());
