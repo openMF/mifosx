@@ -6,9 +6,10 @@ public class MonetaryCurrencyBuilder {
 
     private String code = "XOF";
     private int digitsAfterDecimal = 0;
+    private int multiplesofDecimal = 0;
 
     public MonetaryCurrency build() {
-        return new MonetaryCurrency(code, digitsAfterDecimal);
+        return new MonetaryCurrency(code, digitsAfterDecimal,multiplesofDecimal);
     }
 
     public MonetaryCurrencyBuilder withCode(final String withCode) {

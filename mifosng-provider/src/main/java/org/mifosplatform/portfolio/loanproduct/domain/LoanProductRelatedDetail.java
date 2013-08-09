@@ -206,6 +206,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
         String currencyCode = this.currency.getCode();
         Integer digitsAfterDecimal = this.currency.getDigitsAfterDecimal();
+        Integer multiplesofDecimal = this.currency.getMultiplesofDecimal();
 
         final String digitsAfterDecimalParamName = "digitsAfterDecimal";
         if (command.isChangeInIntegerParameterNamed(digitsAfterDecimalParamName, digitsAfterDecimal)) {
@@ -213,7 +214,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
             actualChanges.put(digitsAfterDecimalParamName, newValue);
             actualChanges.put("locale", localeAsInput);
             digitsAfterDecimal = newValue;
-            this.currency = new MonetaryCurrency(currencyCode, digitsAfterDecimal);
+            this.currency = new MonetaryCurrency(currencyCode, digitsAfterDecimal,multiplesofDecimal);
         }
 
         final String currencyCodeParamName = "currencyCode";
@@ -221,9 +222,17 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
             final String newValue = command.stringValueOfParameterNamed(currencyCodeParamName);
             actualChanges.put(currencyCodeParamName, newValue);
             currencyCode = newValue;
-            this.currency = new MonetaryCurrency(currencyCode, digitsAfterDecimal);
+            this.currency = new MonetaryCurrency(currencyCode, digitsAfterDecimal,multiplesofDecimal);
         }
-        
+
+        final String multiplesofDecimalParamName = "multiplesofDecimal";
+        if (command.isChangeInStringParameterNamed(multiplesofDecimalParamName, currencyCode)) {
+            final Integer newValue = command.integerValueOfParameterNamed(multiplesofDecimalParamName);
+            actualChanges.put(multiplesofDecimalParamName, newValue);
+            multiplesofDecimal = newValue;
+            this.currency = new MonetaryCurrency(currencyCode, digitsAfterDecimal,multiplesofDecimal);
+        }
+
         final Map<String, Object> loanApplicationAttributeChanges = updateLoanApplicationAttributes(command, aprCalculator);
 
         actualChanges.putAll(loanApplicationAttributeChanges);
