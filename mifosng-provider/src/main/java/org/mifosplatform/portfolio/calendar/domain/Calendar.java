@@ -100,7 +100,7 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
         this.secondReminder = secondReminder;
     }
 
-    public static Calendar fromJson(final JsonCommand command) {
+    public static Calendar fromJson(final JsonCommand command, final String recurrence) {
 
         // final Long entityId = command.getSupportedEntityId();
         // final Integer entityTypeId =
@@ -113,7 +113,6 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
         final Integer duration = command.integerValueSansLocaleOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue());
         final Integer typeId = command.integerValueSansLocaleOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.TYPE_ID.getValue());
         final boolean repeating = command.booleanPrimitiveValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.REPEATING.getValue());
-        final String recurrence = command.stringValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.RECURRENCE.getValue());
         final Integer remindById = command.integerValueSansLocaleOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.REMIND_BY_ID.getValue());
         final Integer firstReminder = command.integerValueSansLocaleOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.FIRST_REMINDER
                 .getValue());
@@ -124,7 +123,7 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
                 remindById, firstReminder, secondReminder);
     }
 
-    public Map<String, Object> update(final JsonCommand command) {
+    public Map<String, Object> update(final JsonCommand command, final String newReccurrence) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(9);
 
@@ -205,27 +204,23 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
             this.repeating = newValue;
         }
 
-        //FIXME: AA Construct recurrence rule in API rather than getting it from UI
-        final String recurrenceParamName = CALENDAR_SUPPORTED_PARAMETERS.RECURRENCE.getValue();
-        if (command.isChangeInStringParameterNamed(recurrenceParamName, this.recurrence)) {
-            final String newValue = command.stringValueOfParameterNamed(recurrenceParamName);
+        if (!newReccurrence.equalsIgnoreCase(this.recurrence)) {
 
             //FIXME: AA - Is this restriction required only for collection type meetings or for all?. 
             //Do not allow to change meeting frequency
             
-            if(!CalendarHelper.isFrequencySame(this.recurrence, newValue)){
+            if(!CalendarHelper.isFrequencySame(this.recurrence, newReccurrence)){
                 final String defaultUserMessage = "Update of meeting frequency is not supported";
                 throw new CalendarParameterUpdateNotSupportedException("meeting.frequency", defaultUserMessage);
             }
             
             //Do not allow to change meeting interval
-            if(!CalendarHelper.isIntervalSame(this.recurrence, newValue)){
+            if(!CalendarHelper.isIntervalSame(this.recurrence, newReccurrence)){
                 final String defaultUserMessage = "Update of meeting interval is not supported";
                 throw new CalendarParameterUpdateNotSupportedException("meeting.interval", defaultUserMessage);
             }
-            
-            actualChanges.put(recurrenceParamName, newValue);
-            this.recurrence = StringUtils.defaultIfEmpty(newValue, null);
+            actualChanges.put("recurrence", newReccurrence);
+            this.recurrence = StringUtils.defaultIfEmpty(newReccurrence, null);
         }
 
         final String remindByParamName = CALENDAR_SUPPORTED_PARAMETERS.REMIND_BY_ID.getValue();

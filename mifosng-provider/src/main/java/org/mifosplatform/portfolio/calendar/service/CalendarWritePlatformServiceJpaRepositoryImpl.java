@@ -12,6 +12,7 @@ import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomain
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.mifosplatform.portfolio.calendar.CalendarConstants.CALENDAR_SUPPORTED_PARAMETERS;
 import org.mifosplatform.portfolio.calendar.domain.Calendar;
 import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
 import org.mifosplatform.portfolio.calendar.domain.CalendarInstance;
@@ -49,7 +50,8 @@ public class CalendarWritePlatformServiceJpaRepositoryImpl implements CalendarWr
 
         this.fromApiJsonDeserializer.validateForCreate(command.json());
 
-        final Calendar newCalendar = Calendar.fromJson(command);
+        final String reccurrence = constructReccurence(command);
+        final Calendar newCalendar = Calendar.fromJson(command, reccurrence);
         this.calendarRepository.save(newCalendar);
 
         final CalendarInstance newCalendarInstance = CalendarInstance.fromJson(newCalendar, command);
@@ -71,7 +73,8 @@ public class CalendarWritePlatformServiceJpaRepositoryImpl implements CalendarWr
         final Calendar calendarForUpdate = this.calendarRepository.findOne(calendarId);
         if (calendarForUpdate == null) { throw new CalendarNotFoundException(calendarId); }
 
-        final Map<String, Object> changes = calendarForUpdate.update(command);
+        final String reccurrence = constructReccurence(command);
+        final Map<String, Object> changes = calendarForUpdate.update(command, reccurrence);
 
         if (!changes.isEmpty()) {
             this.calendarRepository.saveAndFlush(calendarForUpdate);
@@ -136,5 +139,23 @@ public class CalendarWritePlatformServiceJpaRepositoryImpl implements CalendarWr
         .build();
     }
 
-    
+    private String constructReccurence(final JsonCommand command) {
+        StringBuilder recurrenceBuilder = new StringBuilder(200);
+        final String repeats = command.stringValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.REPEATS.getValue());
+        recurrenceBuilder.append("FREQ=");
+        recurrenceBuilder.append(repeats.toUpperCase());
+        final Integer repeatsEvery = command.integerValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.REPEATS_EVERY.getValue());
+        if (repeatsEvery > 1) {
+            recurrenceBuilder.append(";INTERVAL=");
+            recurrenceBuilder.append(repeatsEvery);
+        }
+        if (repeats.equalsIgnoreCase("Weekly")) {
+            final String repeatsOnDay = command.stringValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.REPEATS_ON_DAY.getValue());
+            if (repeatsOnDay != null && repeatsOnDay != "") {
+                recurrenceBuilder.append(";BYDAY=");
+                recurrenceBuilder.append(repeatsOnDay);
+            }
+        }
+        return recurrenceBuilder.toString();
+    }
 }
