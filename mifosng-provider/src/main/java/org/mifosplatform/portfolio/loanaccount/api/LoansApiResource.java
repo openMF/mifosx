@@ -533,8 +533,9 @@ public class LoansApiResource {
         // for officeId and loanOfficerId in current way!
         final LoanAccountData loanBasicDetails = this.loanReadPlatformService.retrieveOne(loanId);
 
-        final Collection<StaffData> allowedLoanOfficers = this.staffReadPlatformService
-                .retrieveAllLoanOfficersInOfficeById(loanBasicDetails.officeId());
+        final Long officeId = loanBasicDetails.officeId() == null ? loanBasicDetails.groupOfficeId() : loanBasicDetails.officeId();
+
+        final Collection<StaffData> allowedLoanOfficers = this.staffReadPlatformService.retrieveAllLoanOfficersInOfficeById(officeId);
         final Long fromLoanOfficerId = loanBasicDetails.loanOfficerId();
 
         final BulkTransferLoanOfficerData loanReassignmentData = BulkTransferLoanOfficerData.template(fromLoanOfficerId,
