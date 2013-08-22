@@ -120,7 +120,8 @@ public class ClientsApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOne(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo,
-            @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly) {
+            @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
+            @QueryParam("officeId") final Long officeId) {
 
         context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
@@ -128,7 +129,8 @@ public class ClientsApiResource {
 
         ClientData clientData = this.clientReadPlatformService.retrieveOne(clientId);
         if (settings.isTemplate()) {
-            final ClientData templateData = this.clientReadPlatformService.retrieveTemplate(clientData.officeId(),
+            final Long tempOfficeId = officeId == null ? clientData.officeId() : officeId;
+            final ClientData templateData = this.clientReadPlatformService.retrieveTemplate(tempOfficeId,
                     staffInSelectedOfficeOnly);
             clientData = ClientData.templateOnTop(clientData, templateData);
         }
