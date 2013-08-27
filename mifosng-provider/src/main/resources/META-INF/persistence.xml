@@ -14,7 +14,7 @@
 		<provider>org.hibernate.ejb.HibernatePersistence</provider>
 		<properties>
 			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLInnoDBDialect" />
-			<!-- <property name="hibernate.hbm2ddl.auto" value="update"/> -->
+			<property name="hibernate.hbm2ddl.auto" value="update"/>
 			<property name="hibernate.jdbc.batch_size" value="100" />
 			<property name="hibernate.order_inserts" value="true" />
 		</properties>

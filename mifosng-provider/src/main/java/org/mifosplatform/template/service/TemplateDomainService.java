@@ -13,6 +13,8 @@ public interface TemplateDomainService {
 	
 	Template getById(Long id);
 	
+	Template updateTemplate(Template template);
+	
     CommandProcessingResult createTemplate(final JsonCommand command);
 
     CommandProcessingResult updateTemplate(final Long templateId, final JsonCommand command);

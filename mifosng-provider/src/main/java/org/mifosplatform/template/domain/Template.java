@@ -1,5 +1,6 @@
 package org.mifosplatform.template.domain;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.persistence.CollectionTable;
@@ -17,7 +18,7 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
 @Entity
 @Table(name = "m_template")
 public class Template extends AbstractPersistable<Long>{
-
+	
 	@Column(name = "name", nullable = false)
     private String name;
 
@@ -52,6 +53,10 @@ public class Template extends AbstractPersistable<Long>{
     }
 
 	public Map<String, String> getMappers() {
+		
+		if(this.mappers == null)
+			this.mappers = new HashMap<String, String>();
+		
 		return this.mappers;
 	}
 

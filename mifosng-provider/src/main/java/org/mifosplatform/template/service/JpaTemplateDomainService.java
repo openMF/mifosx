@@ -80,4 +80,10 @@ public class JpaTemplateDomainService implements TemplateDomainService{
                 .withEntityId(templateId)
                 .build();
 	}
+
+	@Override
+	public Template updateTemplate(Template template) {
+		
+		return this.templateRepository.saveAndFlush(template);
+	}
 }

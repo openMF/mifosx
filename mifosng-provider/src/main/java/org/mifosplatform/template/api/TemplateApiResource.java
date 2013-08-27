@@ -30,7 +30,6 @@ import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
-import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.template.domain.Template;
 import org.mifosplatform.template.service.TemplateDomainService;
 import org.mifosplatform.template.service.TemplateMergeService;
@@ -52,18 +51,15 @@ public class TemplateApiResource {
 	private final TemplateDomainService templateService;
 	private final TemplateMergeService templateMergeService;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
-    private final PlatformSecurityContext context;
 
 	@Autowired
 	public TemplateApiResource(
-			PlatformSecurityContext context,
 			DefaultToApiJsonSerializer<Template> toApiJsonSerializer, 
 			ApiRequestParameterHelper apiRequestParameterHelper, 
 			TemplateDomainService templateService,
 			TemplateMergeService templateMergeService,
 			PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService) {
 		
-		this.context = context;
 		this.toApiJsonSerializer = toApiJsonSerializer;
 		this.apiRequestParameterHelper = apiRequestParameterHelper;
 		this.templateService = templateService;
@@ -131,9 +127,6 @@ public class TemplateApiResource {
 	@Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String createTemplate(final String apiRequestBodyAsJson) {
-		
-		System.out.println("POST:REQUESTBODY: "+apiRequestBodyAsJson);
-		
 		final CommandWrapper commandRequest = new CommandWrapperBuilder()
 						 			.createTemplate()
 						 			.withJson(apiRequestBodyAsJson)
@@ -151,8 +144,6 @@ public class TemplateApiResource {
     @Produces({ MediaType.TEXT_HTML})
     public String mergeTemplate(@PathParam("templateId") final Long templateId,
     		@Context final UriInfo uriInfo, final String apiRequestBodyAsJson) throws MalformedURLException, IOException {
-		
-		this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermission);
 
 		Template template = templateService.getById(templateId);
 		
