@@ -226,4 +226,5 @@ public class GroupReadPlatformServiceImpl implements GroupReadPlatformService {
             return GroupGeneralData.lookup(id, displayName);
         }
     }
+
 }
