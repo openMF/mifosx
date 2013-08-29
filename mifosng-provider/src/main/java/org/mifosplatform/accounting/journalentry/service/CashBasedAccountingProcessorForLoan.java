@@ -29,11 +29,13 @@ public class CashBasedAccountingProcessorForLoan implements AccountingProcessorF
     @Override
     public void createJournalEntriesForLoan(LoanDTO loanDTO) {
         final GLClosure latestGLClosure = this.helper.getLatestClosureByBranch(loanDTO.getOfficeId());
-        final Office office = this.helper.getOfficeById(loanDTO.getOfficeId());
+        // final Office office =
+        // this.helper.getOfficeById(loanDTO.getOfficeId());
         final Long loanProductId = loanDTO.getLoanProductId();
         for (final LoanTransactionDTO loanTransactionDTO : loanDTO.getNewLoanTransactions()) {
             final Date transactionDate = loanTransactionDTO.getTransactionDate();
             final String transactionId = loanTransactionDTO.getTransactionId();
+            final Office office = this.helper.getOfficeById(loanTransactionDTO.getOfficeId());
             final Long paymentTypeId = loanTransactionDTO.getPaymentTypeId();
             final Long loanId = loanDTO.getLoanId();
 
@@ -61,6 +63,9 @@ public class CashBasedAccountingProcessorForLoan implements AccountingProcessorF
                 helper.createCashBasedJournalEntriesAndReversalsForLoan(office, CASH_ACCOUNTS_FOR_LOAN.LOSSES_WRITTEN_OFF,
                         CASH_ACCOUNTS_FOR_LOAN.LOAN_PORTFOLIO, loanProductId, paymentTypeId, loanId, transactionId, transactionDate,
                         principalAmount, false);
+            } else if (loanTransactionDTO.getTransactionType().isInitiateTransfer()
+                    || loanTransactionDTO.getTransactionType().isApproveTransfer()) {
+                createJournalEntriesForTransfers(loanDTO, loanTransactionDTO, office);
             }
         }
     }
@@ -148,5 +153,41 @@ public class CashBasedAccountingProcessorForLoan implements AccountingProcessorF
         /*** create a single debit entry (or reversal) for the entire amount **/
         helper.createDebitJournalEntryOrReversalForLoan(office, CASH_ACCOUNTS_FOR_LOAN.FUND_SOURCE, loanProductId, paymentTypeId, loanId,
                 transactionId, transactionDate, totalDebitAmount, isReversal);
+    }
+
+    /**
+     * Credit loan Portfolio and Debit Suspense Account for a Transfer
+     * Initiation. A Transfer acceptance would be treated the opposite i.e Debit
+     * Loan Portfolio and Credit Suspense Account <br/>
+     * 
+     * All debits are turned into credits and vice versa in case of Transfer
+     * Initiation disbursals
+     * 
+     * 
+     * @param loanDTO
+     * @param loanTransactionDTO
+     * @param office
+     */
+    private void createJournalEntriesForTransfers(final LoanDTO loanDTO, final LoanTransactionDTO loanTransactionDTO, final Office office) {
+        // loan properties
+        final Long loanProductId = loanDTO.getLoanProductId();
+        final Long loanId = loanDTO.getLoanId();
+
+        // transaction properties
+        final String transactionId = loanTransactionDTO.getTransactionId();
+        final Date transactionDate = loanTransactionDTO.getTransactionDate();
+        final BigDecimal principalAmount = loanTransactionDTO.getPrincipal();
+        final boolean isReversal = loanTransactionDTO.isReversed();
+        // final Long paymentTypeId = loanTransactionDTO.getPaymentTypeId();
+
+        if (loanTransactionDTO.getTransactionType().isInitiateTransfer()) {
+            helper.createCashBasedJournalEntriesAndReversalsForLoan(office, CASH_ACCOUNTS_FOR_LOAN.TRANSFERS_SUSPENSE,
+                    CASH_ACCOUNTS_FOR_LOAN.LOAN_PORTFOLIO, loanProductId, null, loanId, transactionId, transactionDate, principalAmount,
+                    isReversal);
+        } else if (loanTransactionDTO.getTransactionType().isApproveTransfer()) {
+            helper.createCashBasedJournalEntriesAndReversalsForLoan(office, CASH_ACCOUNTS_FOR_LOAN.LOAN_PORTFOLIO,
+                    CASH_ACCOUNTS_FOR_LOAN.TRANSFERS_SUSPENSE, loanProductId, null, loanId, transactionId, transactionDate,
+                    principalAmount, isReversal);
+        }
     }
 }

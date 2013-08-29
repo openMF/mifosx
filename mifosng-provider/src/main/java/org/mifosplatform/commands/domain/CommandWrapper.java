@@ -457,6 +457,10 @@ public class CommandWrapper {
     public boolean isSavingsAccountDeposit() {
         return this.actionName.equalsIgnoreCase("DEPOSIT") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNT");
     }
+    
+    public boolean isSavingsAccountClose() {
+        return this.actionName.equalsIgnoreCase("CLOSE") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNT");
+    }
 
     public boolean isSavingsAccountWithdrawal() {
         return this.actionName.equalsIgnoreCase("WITHDRAWAL") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNT");
@@ -564,8 +568,20 @@ public class CommandWrapper {
         return this.actionName.equalsIgnoreCase("CLOSE") && this.entityName.equalsIgnoreCase("CLIENT");
     }
     
-    public boolean isClientTransfer() {
-        return this.actionName.equalsIgnoreCase("TRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
+    public boolean isProposeClientTransfer() {
+        return this.actionName.equalsIgnoreCase("PROPOSETRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
+    
+    public boolean isWithdrawClientTransfer() {
+        return this.actionName.equalsIgnoreCase("WITHDRAWTRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
+    
+    public boolean isAcceptClientTransfer() {
+        return this.actionName.equalsIgnoreCase("ACCEPTTRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
+    
+    public boolean isRejectClientTransfer() {
+        return this.actionName.equalsIgnoreCase("REJECTTRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
     }
 
     public boolean isProductMixResource() {
