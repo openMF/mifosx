@@ -42,6 +42,7 @@ import org.mifosplatform.useradministration.domain.AppUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -95,6 +96,8 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
     }
 
     @Override
+    //cache A
+    //@Cacheable(value = "datatable_names", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getName().concat(#root.target.context.authenticatedUser().getId())")
     public List<DatatableData> retrieveDatatableNames(final String appTable) {
 
         String andClause;
@@ -128,6 +131,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
     }
 
     @Override
+    //cache datar
     public DatatableData retrieveDatatable(final String datatable) {
 
         // PERMITTED datatables
@@ -159,6 +163,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
     @Transactional
     @Override
+    //evict cache A
     public void registerDatatable(final String dataTableName, final String applicationTableName) {
 
         validateAppTable(applicationTableName);
@@ -242,6 +247,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
     @Transactional
     @Override
+    //evict cache A
     public void deregisterDatatable(final String datatable) {
         final String permissionList = "('CREATE_" + datatable + "', 'CREATE_" + datatable + "_CHECKER', 'READ_" + datatable + "', 'UPDATE_"
                 + datatable + "', 'UPDATE_" + datatable + "_CHECKER', 'DELETE_" + datatable + "', 'DELETE_" + datatable + "_CHECKER')";
@@ -370,6 +376,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
     @Transactional
     @Override
+    //evict dtatables cache
     public CommandProcessingResult createDatatable(final JsonCommand command) {
 
         String datatableName = null;
@@ -551,6 +558,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
     @Transactional
     @Override
+    //evict cache datatables
     public void updateDatatable(final String datatableName, final JsonCommand command) {
 
         try {
@@ -674,6 +682,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
     @Transactional
     @Override
+    //evict cache datatables
     public void deleteDatatable(final String datatableName) {
 
         try {

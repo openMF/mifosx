@@ -128,6 +128,7 @@ dependencies {
 
 	            [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.5'],
 	            [group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.5'],
+	            [group: 'org.slf4j', name: 'slf4j-jdk14', version: '1.7.5'],
 
 	            [group: 'ch.qos.logback', name: 'logback-core', version: '1.0.13'],
 	            [group: 'ch.qos.logback', name: 'logback-classic', version: '1.0.13'],
@@ -161,7 +162,9 @@ dependencies {
 				[group: 'org.mnode.ical4j', name: 'ical4j', version: '1.0.4'],
                 [group: 'com.googlecode.flyway', name: 'flyway-maven-plugin', version: '2.1.1'],
                 [group: 'org.quartz-scheduler', name: 'quartz', version: '2.1.7'],
-                [group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.2.1']
+                [group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.2.1'],
+                
+                [group: 'net.sf.ehcache', name: 'ehcache', version: '2.7.2']
  	        )
 
  	 testCompile 'junit:junit:4.10',

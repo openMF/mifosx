@@ -64,7 +64,7 @@ public class DatatablesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String getDatatables(@QueryParam("apptable") final String apptable, @Context final UriInfo uriInfo) {
 
-        final List<DatatableData> result = this.readWriteNonCoreDataService.retrieveDatatableNames(apptable);
+        final List<DatatableData> result = this.readWriteNonCoreDataService.retrieveDatatableNames(apptable); //cache > datatable_names
 
         final boolean prettyPrint = ApiParameterHelper.prettyPrint(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serializePretty(prettyPrint, result);
@@ -141,7 +141,7 @@ public class DatatablesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String getDatatable(@PathParam("datatable") final String datatable, @Context final UriInfo uriInfo) {
 
-        final DatatableData result = this.readWriteNonCoreDataService.retrieveDatatable(datatable);
+        final DatatableData result = this.readWriteNonCoreDataService.retrieveDatatable(datatable); //cache > datatables
 
         final boolean prettyPrint = ApiParameterHelper.prettyPrint(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serializePretty(prettyPrint, result);
