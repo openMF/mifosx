@@ -11,7 +11,6 @@ import java.util.Map.Entry;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.QName;
 import org.mifosplatform.xbrl.report.data.ContextData;
 import org.mifosplatform.xbrl.report.data.NamespaceData;
 import org.mifosplatform.xbrl.taxonomy.data.TaxonomyData;
@@ -28,7 +27,6 @@ public class XBRLBuilder {
 	private static final String UNITID_CUR = "Unit2";
 	
 	private Element root;
-//	private HashMap<String,String> namespaceMap;
 	private HashMap<ContextData,String> contextMap;
 	Date startDate;
 	Date endDate;
@@ -76,7 +74,6 @@ public class XBRLBuilder {
 		
 		//throw an error is start / endate is null 
 		if (startDate == null || endDate == null) {
-			// TODO:
 			throw new RuntimeException("start date and end date should not be null");
 		}
 		
@@ -191,7 +188,6 @@ public class XBRLBuilder {
 			if (dimType != null && dimension != null) {
 				contextElement.addElement("scenario")
 				.addElement("explicitMember")
-//				.addNamespace("xbrldi", readNamespaceService.retrieveNamespaceByPrefix("xbrldi").getUrl())
 				.addAttribute("dimension", dimType)
 				.addText(dimension);
 			}

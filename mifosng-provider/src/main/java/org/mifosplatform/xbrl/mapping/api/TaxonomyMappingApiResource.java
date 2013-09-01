@@ -31,53 +31,51 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope("singleton")
 public class TaxonomyMappingApiResource {
-	
-	private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(
-			Arrays.asList("identifier", "config"));
-	
-	private final String resourceNameForPermission = "XBRLMAPPING";
-	
-	private final PlatformSecurityContext context;
-	private final ToApiJsonSerializer<TaxonomyMappingData> toApiJsonSerializer;
-	private final ReadTaxonomyMappingService readTaxonomyMappingService;
-	private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
-	private final ApiRequestParameterHelper apiRequestParameterHelper;
-	
-	@Autowired
-	public TaxonomyMappingApiResource(
-			PlatformSecurityContext context,
-			ToApiJsonSerializer<TaxonomyMappingData> toApiJsonSerializer,
-			ReadTaxonomyMappingService readTaxonomyMappingService,
-			PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-			ApiRequestParameterHelper apiRequestParameterHelper) {
 
-		this.context = context;
-		this.toApiJsonSerializer = toApiJsonSerializer;
-		this.readTaxonomyMappingService = readTaxonomyMappingService;
-		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
-		this.apiRequestParameterHelper = apiRequestParameterHelper;
-	}
+    private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("identifier", "config"));
 
-	@GET
-	@Consumes({ MediaType.APPLICATION_JSON })
+    private final String resourceNameForPermission = "XBRLMAPPING";
+
+    private final PlatformSecurityContext context;
+    private final ToApiJsonSerializer<TaxonomyMappingData> toApiJsonSerializer;
+    private final ReadTaxonomyMappingService readTaxonomyMappingService;
+    private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
+    private final ApiRequestParameterHelper apiRequestParameterHelper;
+
+    @Autowired
+    public TaxonomyMappingApiResource(PlatformSecurityContext context, ToApiJsonSerializer<TaxonomyMappingData> toApiJsonSerializer,
+            ReadTaxonomyMappingService readTaxonomyMappingService,
+            PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
+            ApiRequestParameterHelper apiRequestParameterHelper) {
+
+        this.context = context;
+        this.toApiJsonSerializer = toApiJsonSerializer;
+        this.readTaxonomyMappingService = readTaxonomyMappingService;
+        this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
+        this.apiRequestParameterHelper = apiRequestParameterHelper;
+    }
+
+    @GET
+    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-	public String retrieveTaxonomyMapping(@Context final UriInfo uriInfo) {
-		context.authenticatedUser();
-		TaxonomyMappingData mappingData = this.readTaxonomyMappingService.retrieveTaxonomyMapping();
-		final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-		return this.toApiJsonSerializer.serialize(settings, mappingData, RESPONSE_DATA_PARAMETERS);
-	}
-	
-	@PUT
-	@Consumes({ MediaType.APPLICATION_JSON })
+    public String retrieveTaxonomyMapping(@Context final UriInfo uriInfo) {
+        context.authenticatedUser();
+        TaxonomyMappingData mappingData = this.readTaxonomyMappingService.retrieveTaxonomyMapping();
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, mappingData, RESPONSE_DATA_PARAMETERS);
+    }
+
+    @PUT
+    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-	public String updateTaxonomyMapping(final String jsonRequestBody) {
-		final Long mappingId = (long) 1;
-		final CommandWrapper commandRequest = new CommandWrapperBuilder().updateTaxonomyMapping(mappingId).withJson(jsonRequestBody).build();
+    public String updateTaxonomyMapping(final String jsonRequestBody) {
+        final Long mappingId = (long) 1;
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().updateTaxonomyMapping(mappingId).withJson(jsonRequestBody)
+                .build();
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return this.toApiJsonSerializer.serialize(result);
-	}
-	
+    }
+
 }

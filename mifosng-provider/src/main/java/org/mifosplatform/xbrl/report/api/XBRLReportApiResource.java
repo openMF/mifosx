@@ -27,49 +27,32 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope("singleton")
 public class XBRLReportApiResource {
-	private final PlatformSecurityContext context;
-	private final ToApiJsonSerializer<XBRLData> toApiJsonSerializer;
-	private final ReadTaxonomyMappingService readTaxonomyMappingService;
-	private final XBRLResultService xbrlResultService;
-	@Autowired
-	private XBRLBuilder xbrlBuilder;
 
-	@Autowired
-	public XBRLReportApiResource(final PlatformSecurityContext context, 
-			final ToApiJsonSerializer<XBRLData> toApiJsonSerializer,
-			final ReadTaxonomyMappingService readTaxonomyMappingService,
-			final XBRLResultService xbrlResultService) {
-		this.context = context;
-		this.toApiJsonSerializer = toApiJsonSerializer;
-		this.readTaxonomyMappingService = readTaxonomyMappingService;
-		this.xbrlResultService = xbrlResultService;
-	}
-	
-	@POST
-	@Consumes({ MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.APPLICATION_JSON })
-	public String updateXBRLReport(final String apiRequestBodyAsJson) {
-		return null;
-	}
-	
-	@GET
-	@Produces({ MediaType.APPLICATION_XML })
-	public String retrieveXBRLReport(@QueryParam("startDate") final Date startDate, 
-			@QueryParam("endDate") final Date endDate, 
-			@QueryParam("currency") final String currency, 
-			@Context final UriInfo uriInfo) {
-		
-		context.authenticatedUser();
+    private final PlatformSecurityContext context;
+    private final ToApiJsonSerializer<XBRLData> toApiJsonSerializer;
+    private final ReadTaxonomyMappingService readTaxonomyMappingService;
+    private final XBRLResultService xbrlResultService;
+    @Autowired
+    private XBRLBuilder xbrlBuilder;
 
-		String xbrl = xbrlBuilder.build(this.xbrlResultService.getXBRLResult(startDate, endDate, currency));
-		return xbrl;
-	}
-	
-	@GET
-	@Path("file")
-	public Response downloadXBRLFile(@Context final UriInfo uriInfo) {
-		context.authenticatedUser();
-		return null;
-	}
-	
+    @Autowired
+    public XBRLReportApiResource(final PlatformSecurityContext context, final ToApiJsonSerializer<XBRLData> toApiJsonSerializer,
+            final ReadTaxonomyMappingService readTaxonomyMappingService, final XBRLResultService xbrlResultService) {
+        this.context = context;
+        this.toApiJsonSerializer = toApiJsonSerializer;
+        this.readTaxonomyMappingService = readTaxonomyMappingService;
+        this.xbrlResultService = xbrlResultService;
+    }
+
+    @GET
+    @Produces({ MediaType.APPLICATION_XML })
+    public String retrieveXBRLReport(@QueryParam("startDate") final Date startDate, @QueryParam("endDate") final Date endDate,
+            @QueryParam("currency") final String currency, @Context final UriInfo uriInfo) {
+
+        context.authenticatedUser();
+
+        String xbrl = xbrlBuilder.build(this.xbrlResultService.getXBRLResult(startDate, endDate, currency));
+        return xbrl;
+    }
+
 }
