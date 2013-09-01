@@ -11,6 +11,7 @@ import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.jobs.data.JobDetailData;
 import org.mifosplatform.infrastructure.jobs.data.JobDetailHistoryData;
 import org.mifosplatform.infrastructure.jobs.exception.JobNotFoundException;
+import org.mifosplatform.infrastructure.jobs.exception.OperationNotAllowedException;
 import org.mifosplatform.portfolio.group.service.SearchParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -52,9 +53,11 @@ public class SchedulerJobRunnerReadServiceImpl implements SchedulerJobRunnerRead
 
     @Override
     public Page<JobDetailHistoryData> retrieveJobHistory(Long jobId, SearchParameters searchParameters) {
-        retrieveOne(jobId);
+        if (!isJobExist(jobId)) { throw new JobNotFoundException(String.valueOf(jobId)); }
         JobHistoryMapper jobHistoryMapper = new JobHistoryMapper();
-        StringBuilder sqlBuilder = new StringBuilder(jobHistoryMapper.schema());
+        StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+        sqlBuilder.append(jobHistoryMapper.schema());
         sqlBuilder.append(" where job.id=?");
         if (searchParameters.isOrderByRequested()) {
             sqlBuilder.append(" order by ").append(searchParameters.getOrderBy());
@@ -75,10 +78,32 @@ public class SchedulerJobRunnerReadServiceImpl implements SchedulerJobRunnerRead
         return paginationHelper.fetchPage(jdbcTemplate, sqlCountRows, sqlBuilder.toString(), new Object[] { jobId }, jobHistoryMapper);
     }
 
+    @Override
+    public boolean isUpdatesAllowed() {
+        String sql = "select job.display_name from job job where job.currently_running=true and job.updates_allowed=false";
+        List<String> names = jdbcTemplate.queryForList(sql, String.class);
+        if (names != null && names.size() > 0) {
+            String listVals = names.toString();
+            String jobNames = listVals.substring(listVals.indexOf("[") + 1, listVals.indexOf("]"));
+            throw new OperationNotAllowedException(jobNames);
+        }
+        return true;
+    }
+
+    private boolean isJobExist(Long jobId) {
+        boolean isJobPresent = false;
+        String sql = "select count(*) from job job where job.id=" + jobId;
+        int count = jdbcTemplate.queryForInt(sql);
+        if (count == 1) {
+            isJobPresent = true;
+        }
+        return isJobPresent;
+    }
+
     private static final class JobDetailMapper implements RowMapper<JobDetailData> {
 
         private StringBuilder sqlBuilder = new StringBuilder("select")
-                .append(" job.id,job.display_name as displayName,job.next_run_time as nextRunTime,job.initializing_errorlog as initializingError,job.is_active as active,job.currently_running as currentlyRunning,")
+                .append(" job.id,job.display_name as displayName,job.next_run_time as nextRunTime,job.initializing_errorlog as initializingError,job.cron_expression as cronExpression,job.is_active as active,job.currently_running as currentlyRunning,")
                 .append(" runHistory.version,runHistory.start_time as lastRunStartTime,runHistory.end_time as lastRunEndTime,runHistory.`status`,runHistory.error_message as jobRunErrorMessage,runHistory.trigger_type as triggerType,runHistory.error_log as jobRunErrorLog ")
                 .append(" from job job  left join job_run_history runHistory ON job.id=runHistory.job_id and job.previous_run_start_time=runHistory.start_time ");
 
@@ -92,6 +117,7 @@ public class SchedulerJobRunnerReadServiceImpl implements SchedulerJobRunnerRead
             String displayName = rs.getString("displayName");
             Date nextRunTime = rs.getTimestamp("nextRunTime");
             String initializingError = rs.getString("initializingError");
+            String cronExpression = rs.getString("cronExpression");
             boolean active = rs.getBoolean("active");
             boolean currentlyRunning = rs.getBoolean("currentlyRunning");
 
@@ -108,8 +134,8 @@ public class SchedulerJobRunnerReadServiceImpl implements SchedulerJobRunnerRead
                 lastRunHistory = new JobDetailHistoryData(version, jobRunStartTime, jobRunEndTime, status, jobRunErrorMessage, triggerType,
                         jobRunErrorLog);
             }
-            JobDetailData jobDetail = new JobDetailData(id, displayName, nextRunTime, initializingError, active, currentlyRunning,
-                    lastRunHistory);
+            JobDetailData jobDetail = new JobDetailData(id, displayName, nextRunTime, initializingError, cronExpression, active,
+                    currentlyRunning, lastRunHistory);
             return jobDetail;
         }
 
@@ -117,7 +143,7 @@ public class SchedulerJobRunnerReadServiceImpl implements SchedulerJobRunnerRead
 
     private static final class JobHistoryMapper implements RowMapper<JobDetailHistoryData> {
 
-        private StringBuilder sqlBuilder = new StringBuilder("select")
+        private StringBuilder sqlBuilder = new StringBuilder(200)
                 .append(" runHistory.version,runHistory.start_time as runStartTime,runHistory.end_time as runEndTime,runHistory.`status`,runHistory.error_message as jobRunErrorMessage,runHistory.trigger_type as triggerType,runHistory.error_log as jobRunErrorLog ")
                 .append(" from job job join job_run_history runHistory ON job.id=runHistory.job_id");
 
