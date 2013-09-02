@@ -528,6 +528,10 @@ public class CommandWrapper {
         return this.actionName.equalsIgnoreCase("DISASSOCIATECLIENTS");
     }
 
+	public boolean isXBRLMappingResource() {
+		return this.entityName.equalsIgnoreCase("XBRLMAPPING");
+	}
+
     public boolean isHolidayResource() {
         return this.entityName.equalsIgnoreCase("HOLIDAY");
     }
