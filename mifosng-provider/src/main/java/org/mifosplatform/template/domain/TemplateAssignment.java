@@ -4,8 +4,8 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
-import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 
 import org.springframework.data.jpa.domain.AbstractPersistable;
@@ -21,7 +21,7 @@ public class TemplateAssignment extends AbstractPersistable<Long>{
 	private TemplateType type;
 	
 	@OneToOne(cascade= {CascadeType.MERGE,CascadeType.REFRESH}, fetch=FetchType.EAGER)
-	@PrimaryKeyJoinColumn
+    @JoinColumn(name = "template_id", referencedColumnName = "id")
 	private Template template;
 	
 	protected TemplateAssignment() {
@@ -56,7 +56,7 @@ public class TemplateAssignment extends AbstractPersistable<Long>{
 		return this.template;
 	}
 
-	public void setTemplates(Template template) {
+	public void setTemplate(Template template) {
 		this.template = template;
 	}
 

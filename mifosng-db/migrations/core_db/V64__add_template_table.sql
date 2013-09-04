@@ -26,13 +26,6 @@ CREATE TABLE `m_template_assignment` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `entity` int(11) DEFAULT NULL,
   `type` int(11) DEFAULT NULL,
+  `template_id` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
-
-CREATE TABLE `m_template_assignment_m_template` (
-  `m_template_assignment_id` bigint(20) NOT NULL,
-  `templates_id` bigint(20) NOT NULL,
-  UNIQUE KEY `templates_id` (`templates_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-

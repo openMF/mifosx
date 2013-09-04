@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.ws.rs.DELETE;
@@ -107,7 +106,7 @@ public class TemplateAssignmentApi {
 		assignment.setType(TemplateType.values()[typeId]);
 		
 		Template template = updateTemplate(templateId, apiRequestBodyAsJson);
-		assignment.setTemplates(template);
+		assignment.setTemplate(template);
 
 		templateAssignmentService.save(assignment);
 		return assignment;
@@ -142,25 +141,16 @@ public class TemplateAssignmentApi {
 	@POST
 	@Produces({ MediaType.APPLICATION_JSON })
     public TemplateAssignment getTemplateForEntity(@QueryParam("entityId") int entityId,
-			@QueryParam("typeId") int typeId, @Context final UriInfo uriInfo,
+			@QueryParam("typeId") int typeId,
 			final String apiRequestBodyAsJson) {
 		
 		TemplateEntity entity = TemplateEntity.values()[entityId]; 
 		TemplateType type = TemplateType.values()[typeId];
 		
 		Template template = createTemplate(apiRequestBodyAsJson);
-		template = setDefaultMapper(entity, template);
 		
 		return templateAssignmentService.save(new TemplateAssignment(entity, type, template));
     }
-	
-	
-	private Template setDefaultMapper(TemplateEntity entity, Template template ){
-		
-		Map<String, String> mappers =  template.getMappers();
-		mappers.put(entity.getName(), entity.getUrl());
-		return templateService.updateTemplate(template);
-	}
 	
 	private Template createTemplate(String apiRequestBodyAsJson) {
 		
