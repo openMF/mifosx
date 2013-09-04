@@ -6,6 +6,7 @@
 package org.mifosplatform.commands.service;
 
 import org.mifosplatform.commands.domain.CommandWrapper;
+import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
 
 public class CommandWrapperBuilder {
 
@@ -351,13 +352,40 @@ public class CommandWrapperBuilder {
         this.href = "/clients/" + clientId + "?command=close&template=true";
         return this;
     }
-    
-    public CommandWrapperBuilder transferClient(final Long clientId) {
-        this.actionName = "TRANSFER";
+
+    public CommandWrapperBuilder proposeClientTransfer(final Long clientId) {
+        this.actionName = "PROPOSETRANSFER";
         this.entityName = "CLIENT";
         this.entityId = clientId;
         this.clientId = clientId;
-        this.href = "/clientId/" + clientId + "?command=transfer";
+        this.href = "/clientId/" + clientId + "?command=proposeTransfer";
+        return this;
+    }
+
+    public CommandWrapperBuilder withdrawClientTransferRequest(final Long clientId) {
+        this.actionName = "WITHDRAWTRANSFER";
+        this.entityName = "CLIENT";
+        this.entityId = clientId;
+        this.clientId = clientId;
+        this.href = "/clientId/" + clientId + "?command=withdrawTransfer";
+        return this;
+    }
+
+    public CommandWrapperBuilder acceptClientTransfer(final Long clientId) {
+        this.actionName = "ACCEPTTRANSFER";
+        this.entityName = "CLIENT";
+        this.entityId = clientId;
+        this.clientId = clientId;
+        this.href = "/clientId/" + clientId + "?command=acceptTransfer";
+        return this;
+    }
+
+    public CommandWrapperBuilder rejectClientTransfer(final Long clientId) {
+        this.actionName = "REJECTTRANSFER";
+        this.entityName = "CLIENT";
+        this.entityId = clientId;
+        this.clientId = clientId;
+        this.href = "/clientId/" + clientId + "?command=rejectTransfer";
         return this;
     }
 
@@ -816,6 +844,16 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "?command=activate";
         return this;
     }
+    
+    public CommandWrapperBuilder closeSavingsAccountApplication(final Long accountId) {
+        this.actionName = "CLOSE";
+        this.entityName = "SAVINGSACCOUNT";
+        this.entityId = accountId;
+        this.savingsId = accountId;
+        this.href = "/savingsaccounts/" + accountId + "?command=close";
+        return this;
+    }
+
 
     public CommandWrapperBuilder createAccountTransfer() {
         this.actionName = "CREATE";
@@ -979,6 +1017,8 @@ public class CommandWrapperBuilder {
         this.entityName = "GROUP";
         this.entityId = groupId;
         this.groupId = groupId;
+        this.supportedEntityId = groupId;
+        this.supportedEntityType = CalendarEntityType.GROUPS.name();
         this.href = "/groups/" + groupId + "?command=saveCollectionSheet";
         return this;
     }
@@ -1009,7 +1049,7 @@ public class CommandWrapperBuilder {
         this.href = "/groups/" + groupId + "?command=disassociateClients";
         return this;
     }
-    
+
     public CommandWrapperBuilder transferClientsBetweenGroups(final Long sourceGroupId) {
         this.actionName = "TRANSFERCLIENTS";
         this.entityName = "GROUP";
@@ -1108,6 +1148,8 @@ public class CommandWrapperBuilder {
         this.actionName = "SAVECOLLECTIONSHEET";
         this.entityName = "CENTER";
         this.entityId = centerId;
+        this.supportedEntityId = centerId;
+        this.supportedEntityType = CalendarEntityType.CENTERS.name();
         this.href = "/centers/" + centerId + "?command=saveCollectionSheet";
         return this;
     }
@@ -1253,7 +1295,7 @@ public class CommandWrapperBuilder {
         this.href = "/" + supportedEntityType + "/" + supportedEntityId + "/meetings/" + meetingId;
         return this;
     }
-    
+
     public CommandWrapperBuilder saveOrUpdateAttendance(final Long entityId, final String supportedEntityType, final Long supportedEntityId) {
         this.actionName = "SAVEORUPDATEATTENDANCE";
         this.entityName = "MEETING";

@@ -15,6 +15,7 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -29,6 +30,7 @@ import javax.persistence.UniqueConstraint;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
+import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
@@ -53,6 +55,10 @@ public final class Client extends AbstractPersistable<Long> {
     @JoinColumn(name = "office_id", nullable = false)
     private Office office;
 
+    @ManyToOne
+    @JoinColumn(name = "transfer_to_office_id", nullable = true)
+    private Office transferToOffice;
+
     @OneToOne(optional = true)
     @JoinColumn(name = "image_id", nullable = true)
     private Image image;
@@ -66,6 +72,10 @@ public final class Client extends AbstractPersistable<Long> {
     @Column(name = "activation_date", nullable = true)
     @Temporal(TemporalType.DATE)
     private Date activationDate;
+
+    @Column(name = "office_joining_date", nullable = true)
+    @Temporal(TemporalType.DATE)
+    private Date officeJoiningDate;
 
     @Column(name = "firstname", length = 50)
     private String firstname;
@@ -95,10 +105,11 @@ public final class Client extends AbstractPersistable<Long> {
 
     @Transient
     private boolean accountNumberRequiresAutoGeneration = false;
-    
-    @Column(name = "closure_reason_cv_id", nullable = true)
-    private Long closureReasonId;
-    
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "closure_reason_cv_id", nullable = true)
+    private CodeValue closureReason;
+
     @Column(name = "closedon_date", nullable = true)
     @Temporal(TemporalType.DATE)
     private Date closureDate;
@@ -120,13 +131,15 @@ public final class Client extends AbstractPersistable<Long> {
         }
 
         LocalDate activationDate = null;
+        LocalDate officeJoiningDate = null;
         if (active) {
             status = ClientStatus.ACTIVE;
             activationDate = command.localDateValueOfParameterNamed(ClientApiConstants.activationDateParamName);
+            officeJoiningDate = activationDate;
         }
 
         return new Client(status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname, activationDate,
-                externalId, staff);
+                officeJoiningDate, externalId, staff);
     }
 
     protected Client() {
@@ -135,7 +148,7 @@ public final class Client extends AbstractPersistable<Long> {
 
     private Client(final ClientStatus status, final Office office, final Group clientParentGroup, final String accountNo,
             final String firstname, final String middlename, final String lastname, final String fullname, final LocalDate activationDate,
-            final String externalId, final Staff staff) {
+            final LocalDate officeJoiningDate, final String externalId, final Staff staff) {
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();
             this.accountNumberRequiresAutoGeneration = true;
@@ -151,6 +164,9 @@ public final class Client extends AbstractPersistable<Long> {
         }
         if (activationDate != null) {
             this.activationDate = activationDate.toDateMidnight().toDate();
+        }
+        if (officeJoiningDate != null) {
+            this.officeJoiningDate = officeJoiningDate.toDateMidnight().toDate();
         }
         if (StringUtils.isNotBlank(firstname)) {
             this.firstname = firstname.trim();
@@ -240,6 +256,7 @@ public final class Client extends AbstractPersistable<Long> {
         }
 
         this.activationDate = activationLocalDate.toDate();
+        this.officeJoiningDate = activationDate;
         this.status = ClientStatus.ACTIVE.getValue();
 
         validate();
@@ -251,6 +268,18 @@ public final class Client extends AbstractPersistable<Long> {
 
     public boolean isActive() {
         return ClientStatus.fromInt(this.status).isActive();
+    }
+
+    public boolean isTransferInProgress() {
+        return ClientStatus.fromInt(this.status).isTransferInProgress();
+    }
+
+    public boolean isTransferOnHold() {
+        return ClientStatus.fromInt(this.status).isTransferOnHold();
+    }
+
+    public boolean isTransferInProgressOrOnHold() {
+        return isTransferInProgress() || isTransferOnHold();
     }
 
     public boolean isNotPending() {
@@ -327,6 +356,7 @@ public final class Client extends AbstractPersistable<Long> {
 
             final LocalDate newValue = command.localDateValueOfParameterNamed(ClientApiConstants.activationDateParamName);
             this.activationDate = newValue.toDate();
+            this.officeJoiningDate = activationDate;
         }
 
         validate();
@@ -425,13 +455,25 @@ public final class Client extends AbstractPersistable<Long> {
     public void setDisplayName(final String displayName) {
         this.displayName = displayName;
     }
-    
+
     public Office getOffice() {
         return this.office;
     }
-    
+
+    public Office getTransferToOffice() {
+        return this.transferToOffice;
+    }
+
     public void updateOffice(final Office office) {
         this.office = office;
+    }
+
+    public void updateTransferToOffice(final Office office) {
+        this.transferToOffice = office;
+    }
+
+    public void updateOfficeJoiningDate(final Date date) {
+        this.officeJoiningDate = date;
     }
 
     private Long staffId() {
@@ -457,26 +499,29 @@ public final class Client extends AbstractPersistable<Long> {
     public void assignStaff(final Staff staff) {
         this.staff = staff;
     }
-    
-    public Set<Group> getGroups(){
+
+    public Set<Group> getGroups() {
         return this.groups;
     }
 
-    
-    public void close(final Long closureReasonId, final Date closureDate) {
-        this.closureReasonId = closureReasonId;
+    public void close(final CodeValue closureReason, final Date closureDate) {
+        this.closureReason = closureReason;
         this.closureDate = closureDate;
         this.status = ClientStatus.CLOSED.getValue();
     }
-    
+
     public Integer getStatus() {
         return this.status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 
     public boolean isActivatedAfter(final LocalDate submittedOn) {
         return getActivationLocalDate().isAfter(submittedOn);
     }
-    
+
     public boolean isChildOfGroup(final Long groupId) {
         if (groupId != null && this.groups != null && !this.groups.isEmpty()) {
             for (Group group : this.groups) {

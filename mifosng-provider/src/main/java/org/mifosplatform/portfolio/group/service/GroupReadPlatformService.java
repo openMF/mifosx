@@ -17,6 +17,6 @@ public interface GroupReadPlatformService {
     Page<GroupGeneralData> retrieveAll(SearchParameters searchParameters);
 
     GroupGeneralData retrieveOne(Long groupId);
-    
-    Collection<GroupGeneralData> retrieveGroupsForLookup(Long officeId, Long groupId);
+
+    Collection<GroupGeneralData> retrieveGroupsForLookup(Long officeId);
 }

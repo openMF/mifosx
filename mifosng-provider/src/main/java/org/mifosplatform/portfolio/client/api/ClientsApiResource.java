@@ -86,6 +86,8 @@ public class ClientsApiResource {
         context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
         if (is(commandParam, "close")) {
             clientData = this.clientReadPlatformService.retrieveAllClosureReasons(ClientApiConstants.CLIENT_CLOSURE_REASON);
+        } else if (is(commandParam, "acceptTransfer")) {
+            clientData = this.clientReadPlatformService.retrieveAllClosureReasons(ClientApiConstants.CLIENT_CLOSURE_REASON);
         } else {
             clientData = this.clientReadPlatformService.retrieveTemplate(officeId, staffInSelectedOfficeOnly);
         }
@@ -207,13 +209,22 @@ public class ClientsApiResource {
         } else if (is(commandParam, "close")) {
             commandRequest = builder.closeClient(clientId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-        }else if (is(commandParam, "transfer")) {
-            commandRequest = builder.transferClient(clientId).build();
+        } else if (is(commandParam, "proposeTransfer")) {
+            commandRequest = builder.proposeClientTransfer(clientId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "withdrawTransfer")) {
+            commandRequest = builder.withdrawClientTransferRequest(clientId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "acceptTransfer")) {
+            commandRequest = builder.acceptClientTransfer(clientId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "rejectTransfer")) {
+            commandRequest = builder.rejectClientTransfer(clientId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 
         if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "activate",
-                "unassignStaff", "assignStaff" }); }
+                "unassignStaff", "assignStaff", "close", "proposeTransfer", "withdrawTransfer", "acceptTransfer", "rejectTransfer" }); }
 
         return this.toApiJsonSerializer.serialize(result);
     }
