@@ -83,14 +83,6 @@ public class Utils {
         return (T) from(json).get(jsonAttributeToGetBack);
     }
 
-    public static String convertDateToURLFormat(String dateToBeConvert) throws ParseException {
-        SimpleDateFormat oldFormat = new SimpleDateFormat("dd MMMMMM yyyy");
-        SimpleDateFormat newFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String reformattedStr="";
-        reformattedStr = newFormat.format(oldFormat.parse(dateToBeConvert));
-        return reformattedStr;
-    }
-
     public static String randomStringGenerator(final String prefix, final int len, final String sourceSetString) {
         int lengthOfSource = sourceSetString.length();
         Random rnd = new Random();
