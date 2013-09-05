@@ -6,6 +6,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import java.util.Random;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.conn.HttpHostConnectException;
 
@@ -13,11 +15,6 @@ import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.jayway.restassured.specification.ResponseSpecification;
-
-import java.lang.System;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Random;
 
 @SuppressWarnings("unchecked")
 public class Utils {
@@ -81,18 +78,6 @@ public class Utils {
                 .when().delete(deleteURL)
                 .andReturn().asString();
         return (T) from(json).get(jsonAttributeToGetBack);
-    }
-
-    public static String convertDateToURLFormat(String dateToBeConvert){
-        SimpleDateFormat oldFormat = new SimpleDateFormat("dd MMMMMM yyyy");
-        SimpleDateFormat newFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String reformattedStr="";
-        try {
-            reformattedStr = newFormat.format(oldFormat.parse(dateToBeConvert));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return reformattedStr;
     }
 
     public static String randomStringGenerator(final String prefix, final int len, final String sourceSetString) {
