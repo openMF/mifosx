@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class JpaTemplateDomainService implements TemplateDomainService{
+public class JpaTemplateDomainService implements TemplateDomainService {
 	
 	private static final String PROPERTY_NAME = "name"; 
 	private static final String PROPERTY_TEXT = "text"; 
@@ -35,11 +35,9 @@ public class JpaTemplateDomainService implements TemplateDomainService{
 	@Transactional
 	@Override
 	public CommandProcessingResult createTemplate(JsonCommand command) {
-		
 		final Template template = Template.fromJson(command);
 
         this.templateRepository.saveAndFlush(template);
-
         return new CommandProcessingResultBuilder()
                 .withEntityId(template.getId())
                 .build();
@@ -49,7 +47,6 @@ public class JpaTemplateDomainService implements TemplateDomainService{
 	@Override
 	public CommandProcessingResult updateTemplate(Long templateId,
 			JsonCommand command) {
-		
 		final Template template = this.templateRepository.findOne(templateId);
         if (template == null ) { throw new TemplateNotFoundException(templateId); }
         
@@ -70,7 +67,6 @@ public class JpaTemplateDomainService implements TemplateDomainService{
 	@Transactional
 	@Override
 	public CommandProcessingResult removeTemplate(Long templateId) {
-		
 		final Template template = this.templateRepository.findOne(templateId);
         if (template == null ) { throw new TemplateNotFoundException(templateId); }
 

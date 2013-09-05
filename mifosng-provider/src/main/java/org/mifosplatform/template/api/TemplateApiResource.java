@@ -45,7 +45,6 @@ public class TemplateApiResource {
 	private final Set<String> RESPONSE_DATA_PARAMETERS = 
 			new HashSet<String>(Arrays.asList("id", "name", "text"));
 	
-	private final String resourceNameForPermission = "TEMPLATE";
 	private final DefaultToApiJsonSerializer<Template> toApiJsonSerializer;
 	private final ApiRequestParameterHelper apiRequestParameterHelper;
 	private final TemplateDomainService templateService;
