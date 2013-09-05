@@ -29,7 +29,9 @@ public class JpaTemplateDomainService implements TemplateDomainService {
 
 	@Override
 	public Template getById(Long id) {
-		return templateRepository.findOne(id);
+		final Template template = templateRepository.findOne(id);
+        if (template == null ) { throw new TemplateNotFoundException(id); }
+		return template;
 	}
 
 	@Transactional
@@ -47,8 +49,7 @@ public class JpaTemplateDomainService implements TemplateDomainService {
 	@Override
 	public CommandProcessingResult updateTemplate(Long templateId,
 			JsonCommand command) {
-		final Template template = this.templateRepository.findOne(templateId);
-        if (template == null ) { throw new TemplateNotFoundException(templateId); }
+		final Template template = this.getById(templateId);
         
         template.setName(command.stringValueOfParameterNamed(PROPERTY_NAME));
         template.setText(command.stringValueOfParameterNamed(PROPERTY_TEXT));
@@ -67,8 +68,7 @@ public class JpaTemplateDomainService implements TemplateDomainService {
 	@Transactional
 	@Override
 	public CommandProcessingResult removeTemplate(Long templateId) {
-		final Template template = this.templateRepository.findOne(templateId);
-        if (template == null ) { throw new TemplateNotFoundException(templateId); }
+		final Template template = this.getById(templateId);
 
         this.templateRepository.delete(template);
 
@@ -79,7 +79,6 @@ public class JpaTemplateDomainService implements TemplateDomainService {
 
 	@Override
 	public Template updateTemplate(Template template) {
-		
 		return this.templateRepository.saveAndFlush(template);
 	}
 }
