@@ -11,8 +11,8 @@ public class TemplateTypeSerializer extends JsonSerializer<TemplateType>{
 
 	@Override
     public void serialize(TemplateType value, JsonGenerator generator,
-	            SerializerProvider provider) throws IOException,
-	            JsonProcessingException {
+	            @SuppressWarnings("unused") SerializerProvider provider) 
+	            		throws IOException, JsonProcessingException {
 		
 		generator.writeStartObject();
 	    generator.writeFieldName("id");
