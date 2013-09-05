@@ -83,15 +83,11 @@ public class Utils {
         return (T) from(json).get(jsonAttributeToGetBack);
     }
 
-    public static String convertDateToURLFormat(String dateToBeConvert){
+    public static String convertDateToURLFormat(String dateToBeConvert) throws ParseException {
         SimpleDateFormat oldFormat = new SimpleDateFormat("dd MMMMMM yyyy");
         SimpleDateFormat newFormat = new SimpleDateFormat("yyyy-MM-dd");
         String reformattedStr="";
-        try {
-            reformattedStr = newFormat.format(oldFormat.parse(dateToBeConvert));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        reformattedStr = newFormat.format(oldFormat.parse(dateToBeConvert));
         return reformattedStr;
     }
 
