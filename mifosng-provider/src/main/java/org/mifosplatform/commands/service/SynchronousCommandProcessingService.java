@@ -145,7 +145,6 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
         } else if (wrapper.isClientIdentifierResource()) {
-
             if (wrapper.isCreate()) {
                 handler = this.applicationContext.getBean("createClientIdentifierCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isUpdate()) {
@@ -488,15 +487,12 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
         } else if (wrapper.isCollectionSheetResource()) {
-
             if (wrapper.isUpdate()) {
                 handler = this.applicationContext.getBean("updateCollectionSheetCommandHandler", NewCommandSourceHandler.class);
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
-
         } else if (wrapper.isReportResource()) {
-
             if (wrapper.isCreate()) {
                 handler = this.applicationContext.getBean("createReportCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isUpdate()) {
@@ -506,9 +502,7 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
-
         } else if (wrapper.isAccountingRuleResource()) {
-
             if (wrapper.isCreate()) {
                 handler = this.applicationContext.getBean("createAccountingRuleCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isUpdate()) {
@@ -526,10 +520,10 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
         } else if (wrapper.isHolidayResource()) {
-
             if (wrapper.isCreate()) {
                 handler = this.applicationContext.getBean("createHolidayCommandHandler", NewCommandSourceHandler.class);
             }
+
         } else if (wrapper.isProductMixResource()) {
             if (wrapper.isCreate()) {
                 handler = this.applicationContext.getBean("createProductMixCommandHandler", NewCommandSourceHandler.class);
@@ -552,6 +546,7 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
+
         } else if (wrapper.isMeetingResource()) {
             if (wrapper.isCreate()) {
                 handler = this.applicationContext.getBean("createMeetingCommandHandler", NewCommandSourceHandler.class);
@@ -564,6 +559,29 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
+        } else if (wrapper.isTemplateRessource()) {
+
+            if (wrapper.isCreate()) {
+                handler = applicationContext.getBean("createTemplateCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdate()) {
+                handler = applicationContext.getBean("updateTemplateCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isDelete()) {
+                handler = applicationContext.getBean("deleteTemplateCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
+
+        } else if (wrapper.isTemplateRessource()) {
+            if (wrapper.isCreate()) {
+                handler = applicationContext.getBean("createTemplateCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdate()) {
+                handler = applicationContext.getBean("updateTemplateCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isDelete()) {
+                handler = applicationContext.getBean("deleteTemplateCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
+
         } else {
 
             throw new UnsupportedCommandException(wrapper.commandName());

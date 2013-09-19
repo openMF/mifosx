@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Set;
+import java.util.Map;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -23,6 +24,7 @@ import org.mifosplatform.infrastructure.security.service.PlatformPasswordEncoder
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * Immutable representation of a command.
@@ -313,6 +315,12 @@ public final class JsonCommand {
         return this.fromApiJsonHelper.extractStringNamed(parameterName, this.parsedCommand);
     }
 
+    public Map<String, String> mapValueOfParameterNamed(final String json) {
+    	final Type typeOfMap = new TypeToken<Map<String, String>>() {}.getType();
+    	final Map<String, String> value = this.fromApiJsonHelper.extractDataMap(typeOfMap, json);
+    	return value;
+    }
+    
     public boolean isChangeInBigDecimalParameterNamedDefaultingZeroToNull(final String parameterName, final BigDecimal existingValue) {
         boolean isChanged = false;
         if (parameterExists(parameterName)) {

@@ -49,7 +49,7 @@
 		<beans:property name="saltSource" ref="saltSource" />
 	</beans:bean>
 
-	<authentication-manager alias="authenticationManager">
+	<authentication-manager alias="authenticationManager" erase-credentials="false">
 		<authentication-provider ref="customAuthenticationProvider" />
 	</authentication-manager>
 </beans:beans>
