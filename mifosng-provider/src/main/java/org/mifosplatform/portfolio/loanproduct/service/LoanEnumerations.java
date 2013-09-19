@@ -302,6 +302,10 @@ public class LoanEnumerations {
                 optionData = new LoanTransactionEnumData(LoanTransactionType.REFUND.getValue().longValue(),
                         LoanTransactionType.REFUND.getCode(), "Transfer Refund");
             break;
+            case CHARGE_PAYMENT:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.CHARGE_PAYMENT.getValue().longValue(),
+                        LoanTransactionType.CHARGE_PAYMENT.getCode(), "Charge Payment");
+            break;
             default:
             break;
         }
@@ -357,7 +361,7 @@ public class LoanEnumerations {
             break;
             case TRANSFER_ON_HOLD:
                 optionData = new LoanStatusEnumData(LoanStatus.TRANSFER_ON_HOLD.getValue().longValue(),
-                        LoanStatus.TRANSFER_ON_HOLD.getCode(), "Transfer in hold");
+                        LoanStatus.TRANSFER_ON_HOLD.getCode(), "Transfer on hold");
             break;
             default:
             break;
