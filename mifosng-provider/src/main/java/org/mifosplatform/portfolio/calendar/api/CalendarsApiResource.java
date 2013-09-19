@@ -5,6 +5,27 @@
  */
 package org.mifosplatform.portfolio.calendar.api;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
+
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
@@ -25,12 +46,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
-import java.util.*;
-
 @Path("/{entityType}/{entityId}/calendars")
 @Component
 @Scope("singleton")
@@ -42,7 +57,7 @@ public class CalendarsApiResource {
     private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("id", "entityId", "entityType", "title",
             "description", "location", "startDate", "endDate", "duration", "type", "repeating", "recurrence", "remindBy", "firstReminder",
             "secondReminder", "humanReadable", "createdDate", "lastUpdatedDate", "createdByUserId", "createdByUsername",
-            "lastUpdatedByUserId", "lastUpdatedByUsername", "recurringDates","nextTenRecurringDates"));
+            "lastUpdatedByUserId", "lastUpdatedByUsername", "recurringDates", "nextTenRecurringDates"));
     private final String resourceNameForPermissions = "CALENDAR";
 
     private final PlatformSecurityContext context;
@@ -86,7 +101,6 @@ public class CalendarsApiResource {
         return this.toApiJsonSerializer.serialize(settings, calendarData, this.RESPONSE_DATA_PARAMETERS);
     }
 
-
     /**
      * @param entityType
      * @param entityId
@@ -98,7 +112,7 @@ public class CalendarsApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveCalendarsByEntity(@PathParam("entityType") final String entityType, @PathParam("entityId") final Long entityId,
-                                            @Context final UriInfo uriInfo,@DefaultValue("all") @QueryParam("calendarType") String calendarType) {
+            @Context final UriInfo uriInfo, @DefaultValue("all") @QueryParam("calendarType") final String calendarType) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
@@ -106,18 +120,17 @@ public class CalendarsApiResource {
 
         Collection<CalendarData> calendarsData = new ArrayList<CalendarData>();
 
-        List<Integer>  calendarTypeOptions = CalendarUtils.createIntegerListFromQueryParameter(calendarType);
-
+        final List<Integer> calendarTypeOptions = CalendarUtils.createIntegerListFromQueryParameter(calendarType);
 
         if (!associationParameters.isEmpty()) {
             if (associationParameters.contains("parentCalendars")) {
                 calendarsData.addAll(this.readPlatformService.retrieveParentCalendarsByEntity(entityId,
-                        CalendarEntityType.valueOf(entityType.toUpperCase()).getValue(),calendarTypeOptions));
+                        CalendarEntityType.valueOf(entityType.toUpperCase()).getValue(), calendarTypeOptions));
             }
         }
 
         calendarsData.addAll(this.readPlatformService.retrieveCalendarsByEntity(entityId,
-                CalendarEntityType.valueOf(entityType.toUpperCase()).getValue(),calendarTypeOptions));
+                CalendarEntityType.valueOf(entityType.toUpperCase()).getValue(), calendarTypeOptions));
 
         // Add recurring dates
         calendarsData = this.readPlatformService.generateRecurringDates(calendarsData);

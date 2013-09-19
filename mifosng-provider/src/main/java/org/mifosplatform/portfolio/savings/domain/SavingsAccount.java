@@ -59,6 +59,7 @@ import org.mifosplatform.infrastructure.security.service.RandomPasswordGenerator
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
+import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
 import org.mifosplatform.portfolio.client.domain.Client;
@@ -168,7 +169,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     /**
      * The interest period is the span of time at the end of which savings in a
      * client's account earn interest.
-     *
+     * 
      * A value from the {@link SavingsCompoundingInterestPeriodType}
      * enumeration.
      */
@@ -376,7 +377,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
                 final SavingsAccountTransaction postingTransaction = findInterestPostingTransactionFor(interestPostingTransactionDate);
                 if (postingTransaction == null) {
-                    final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this,
+                    final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                             interestPostingTransactionDate, interestEarnedToBePostedForPeriod);
                     this.transactions.add(newPostingTransaction);
                     recalucateDailyBalanceDetails = true;
@@ -384,7 +385,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                     final boolean correctionRequired = postingTransaction.hasNotAmount(interestEarnedToBePostedForPeriod);
                     if (correctionRequired) {
                         postingTransaction.reverse();
-                        final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this,
+                        final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                                 interestPostingTransactionDate, interestEarnedToBePostedForPeriod);
                         this.transactions.add(newPostingTransaction);
                         recalucateDailyBalanceDetails = true;
@@ -423,11 +424,11 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     /**
      * All interest calculation based on END-OF-DAY-BALANCE.
-     *
+     * 
      * Interest calculation is performed on-the-fly over all account
      * transactions.
-     *
-     *
+     * 
+     * 
      * 1. Calculate Interest From Beginning Of Account 1a. determine the
      * 'crediting' periods that exist for this savings acccount 1b. determine
      * the 'compounding' periods that exist within each 'crediting' period
@@ -590,7 +591,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
         final Money amount = Money.of(this.currency, transactionDTO.getTransactionAmount());
 
-        final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(this, transactionDTO.getPaymentDetail(),
+        final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(this, office(), transactionDTO.getPaymentDetail(),
                 transactionDTO.getTransactionDate(), amount);
         this.transactions.add(transaction);
 
@@ -663,8 +664,8 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         transactionDTO.getExistingReversedTransactionIds().addAll(findExistingReversedTransactionIds());
 
         final Money transactionAmountMoney = Money.of(this.currency, transactionDTO.getTransactionAmount());
-        final SavingsAccountTransaction transaction = SavingsAccountTransaction.withdrawal(this, transactionDTO.getPaymentDetail(),
-                transactionDTO.getTransactionDate(), transactionAmountMoney);
+        final SavingsAccountTransaction transaction = SavingsAccountTransaction.withdrawal(this, office(),
+                transactionDTO.getPaymentDetail(), transactionDTO.getTransactionDate(), transactionAmountMoney);
         this.transactions.add(transaction);
 
         if (applyWithdrawFee && isAutomaticWithdrawalFee()) {
@@ -676,14 +677,16 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                 break;
                 case FLAT:
                     feeAmount = Money.of(this.currency, this.withdrawalFeeAmount);
-                    withdrawalFeeTransaction = SavingsAccountTransaction.fee(this, transactionDTO.getTransactionDate(), feeAmount);
+                    withdrawalFeeTransaction = SavingsAccountTransaction
+                            .fee(this, office(), transactionDTO.getTransactionDate(), feeAmount);
                     this.transactions.add(withdrawalFeeTransaction);
                 break;
                 case PERCENT_OF_AMOUNT:
                     final BigDecimal feeAmountDecimal = transactionDTO.getTransactionAmount().multiply(this.withdrawalFeeAmount)
                             .divide(BigDecimal.valueOf(100l));
                     feeAmount = Money.of(this.currency, feeAmountDecimal);
-                    withdrawalFeeTransaction = SavingsAccountTransaction.fee(this, transactionDTO.getTransactionDate(), feeAmount);
+                    withdrawalFeeTransaction = SavingsAccountTransaction
+                            .fee(this, office(), transactionDTO.getTransactionDate(), feeAmount);
                     this.transactions.add(withdrawalFeeTransaction);
                 break;
             }
@@ -722,8 +725,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             if (runningBalance.isLessThanZero()) {
                 //
                 final BigDecimal withdrawalFee = null;
-                throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee,
-                        transactionAmount);
+                throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee, transactionAmount);
             }
         }
     }
@@ -806,8 +808,8 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         existingReversedTransactionIds.addAll(findExistingReversedTransactionIds());
 
         final Money annualFee = Money.of(this.currency, this.annualFeeAmount);
-        final SavingsAccountTransaction annualFeeTransaction = SavingsAccountTransaction.annualFee(this, annualFeeTransactionDate,
-                annualFee);
+        final SavingsAccountTransaction annualFeeTransaction = SavingsAccountTransaction.annualFee(this, office(),
+                annualFeeTransactionDate, annualFee);
         this.transactions.add(annualFeeTransaction);
 
         validateAccountBalanceDoesNotBecomeNegative(SavingsApiConstants.applyAnnualFeeTransactionAction);
@@ -1159,6 +1161,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         final Map<String, Object> accountingBridgeData = new LinkedHashMap<String, Object>();
         accountingBridgeData.put("savingsId", getId());
         accountingBridgeData.put("savingsProductId", productId());
+        accountingBridgeData.put("currency", currencyData);
         accountingBridgeData.put("officeId", officeId());
         accountingBridgeData.put("cashBasedAccountingEnabled", isCashBasedAccountingEnabledOnSavingsProduct());
         accountingBridgeData.put("accrualBasedAccountingEnabled", isAccrualBasedAccountingEnabledOnSavingsProduct());
@@ -1176,7 +1179,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return accountingBridgeData;
     }
 
-    private Collection<Long> findExistingTransactionIds() {
+    public Collection<Long> findExistingTransactionIds() {
 
         final Collection<Long> ids = new ArrayList<Long>();
 
@@ -1187,7 +1190,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return ids;
     }
 
-    private Collection<Long> findExistingReversedTransactionIds() {
+    public Collection<Long> findExistingReversedTransactionIds() {
 
         final Collection<Long> ids = new ArrayList<Long>();
 
@@ -1245,6 +1248,16 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             officeId = this.group.officeId();
         }
         return officeId;
+    }
+
+    public Office office() {
+        Office office = null;
+        if (this.client != null) {
+            office = this.client.getOffice();
+        } else {
+            office = this.group.getOffice();
+        }
+        return office;
     }
 
     public Long clientId() {
@@ -1669,11 +1682,12 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         // activating account.
         final Money minRequiredOpeningBalance = Money.of(this.currency, this.minRequiredOpeningBalance);
         if (minRequiredOpeningBalance.isGreaterThanZero()) {
-            final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, activationDate, minRequiredOpeningBalance.getAmount(),
-                    existingTransactionIds, existingReversedTransactionIds, null);
+            final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, activationDate,
+                    minRequiredOpeningBalance.getAmount(), existingTransactionIds, existingReversedTransactionIds, null);
             deposit(transactionDTO);
 
-            // no openingBalance concept supported yet but probably will to allow
+            // no openingBalance concept supported yet but probably will to
+            // allow
             // for migrations.
             final Money openingAccountBalance = Money.zero(this.currency);
 
@@ -1783,4 +1797,17 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     public LocalDate getClosedOnDate() {
         return (LocalDate) ObjectUtils.defaultIfNull(new LocalDate(this.closedOnDate), null);
     }
+
+    public SavingsAccountSummary getSummary() {
+        return this.summary;
+    }
+
+    public List<SavingsAccountTransaction> getTransactions() {
+        return this.transactions;
+    }
+
+    public void setStatus(final Integer status) {
+        this.status = status;
+    }
+
 }

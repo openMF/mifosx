@@ -25,7 +25,7 @@ import org.mifosplatform.useradministration.data.RoleData;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 @Entity
-@Table(name = "m_role",  uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }, name = "unq_name")})
+@Table(name = "m_role", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }, name = "unq_name") })
 public class Role extends AbstractPersistable<Long> {
 
     @Column(name = "name", unique = true, nullable = false, length = 100)
@@ -99,7 +99,7 @@ public class Role extends AbstractPersistable<Long> {
 
     public boolean hasPermissionTo(final String permissionCode) {
         boolean match = false;
-        for (Permission permission : this.permissions) {
+        for (final Permission permission : this.permissions) {
             if (permission.hasCode(permissionCode)) {
                 match = true;
                 break;
@@ -109,6 +109,6 @@ public class Role extends AbstractPersistable<Long> {
     }
 
     public RoleData toData() {
-        return new RoleData(this.getId(), this.name, this.description);
+        return new RoleData(getId(), this.name, this.description);
     }
 }

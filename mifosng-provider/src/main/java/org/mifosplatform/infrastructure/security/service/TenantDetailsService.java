@@ -14,5 +14,4 @@ public interface TenantDetailsService {
     MifosPlatformTenant loadTenantById(String tenantId);
 
     List<MifosPlatformTenant> findAllTenants();
-
 }

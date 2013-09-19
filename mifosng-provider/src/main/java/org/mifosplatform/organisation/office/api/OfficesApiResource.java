@@ -74,12 +74,12 @@ public class OfficesApiResource {
     public String retrieveOffices(@Context final UriInfo uriInfo,
             @DefaultValue("false") @QueryParam("includeAllOffices") final boolean onlyManualEntries) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         final Collection<OfficeData> offices = this.readPlatformService.retrieveAllOffices(onlyManualEntries);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, offices, RESPONSE_DATA_PARAMETERS);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, offices, this.RESPONSE_DATA_PARAMETERS);
     }
 
     @GET
@@ -88,15 +88,15 @@ public class OfficesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOfficeTemplate(@Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         OfficeData office = this.readPlatformService.retrieveNewOfficeTemplate();
 
         final Collection<OfficeData> allowedParents = this.readPlatformService.retrieveAllOfficesForDropdown();
         office = OfficeData.appendedTemplate(office, allowedParents);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, office, RESPONSE_DATA_PARAMETERS);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, office, this.RESPONSE_DATA_PARAMETERS);
     }
 
     @POST
@@ -120,17 +120,17 @@ public class OfficesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retreiveOffice(@PathParam("officeId") final Long officeId, @Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
         OfficeData office = this.readPlatformService.retrieveOffice(officeId);
         if (settings.isTemplate()) {
-            Collection<OfficeData> allowedParents = this.readPlatformService.retrieveAllowedParents(officeId);
+            final Collection<OfficeData> allowedParents = this.readPlatformService.retrieveAllowedParents(officeId);
             office = OfficeData.appendedTemplate(office, allowedParents);
         }
 
-        return this.toApiJsonSerializer.serialize(settings, office, RESPONSE_DATA_PARAMETERS);
+        return this.toApiJsonSerializer.serialize(settings, office, this.RESPONSE_DATA_PARAMETERS);
     }
 
     @PUT

@@ -99,6 +99,7 @@ dependencies {
 	   			[group: 'org.springframework', name: 'spring-core', version: springVersion],
 	   			[group: 'org.springframework', name: 'spring-aspects', version: springVersion],
 	   			[group: 'org.springframework', name: 'spring-web', version: springVersion],
+	   			[group: 'org.springframework', name: 'spring-test', version: springVersion],
 	   			[group: 'org.springframework.security', name: 'spring-security-core', version: springSecurityVersion],
 	   			[group: 'org.springframework.security', name: 'spring-security-web', version: springSecurityVersion],
 	   			[group: 'org.springframework.security', name: 'spring-security-config', version: springSecurityVersion],
@@ -161,7 +162,10 @@ dependencies {
 				[group: 'org.mnode.ical4j', name: 'ical4j', version: '1.0.4'],
                 [group: 'com.googlecode.flyway', name: 'flyway-maven-plugin', version: '2.1.1'],
                 [group: 'org.quartz-scheduler', name: 'quartz', version: '2.1.7'],
-                [group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.2.1']
+                [group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.2.1'],
+                
+                [group: 'net.sf.ehcache', name: 'ehcache', version: '2.7.2'],
+                [group: 'com.github.spullara.mustache.java', name: 'compiler', version: '0.8.12']
  	        )
 
  	 testCompile 'junit:junit:4.10',
@@ -391,6 +395,20 @@ task showTenantListDBInfo<<{
     flyway.url= "jdbc:mysql://localhost:3306/$tenantsDbName"
     flyway.locations= [filePath]
     flywayInfo.execute()
+}
+
+task repairTenantDB<<{
+    description="repair migrate"
+    
+    def filePath = "filesystem:$projectDir" + System.properties['file.separator'] + '..' + System.properties['file.separator'] + 'mifosng-db' + System.properties['file.separator'] + 'migrations/list_db'
+    def tenantsDbName = 'mifosplatform-tenants';
+    if (rootProject.hasProperty("dbName")) {
+        tenantsDbName = rootProject.getProperty("dbName")
+    }
+    
+    flyway.url= "jdbc:mysql://localhost:3306/$tenantsDbName"
+    flyway.locations= [filePath]
+    flywayRepair.execute()
 }
 
 /*
