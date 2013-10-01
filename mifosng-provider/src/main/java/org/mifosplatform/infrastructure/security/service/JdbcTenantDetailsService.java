@@ -38,7 +38,7 @@ public class JdbcTenantDetailsService implements TenantDetailsService {
     private static final class TenantMapper implements RowMapper<MifosPlatformTenant> {
 
         private final StringBuilder sqlBuilder = new StringBuilder(
-                "id, name,identifier, schema_name as schemaName, schema_server as schemaServer, schema_server_port as schemaServerPort, auto_update as autoUpdate, ")//
+                "id, name,identifier, schema_name as schemaName, schema_driver_class_name as schemaDriverClassName, schema_url_prefix as schemaURLPrefix, schema_server as schemaServer, schema_server_port as schemaServerPort, auto_update as autoUpdate, ")//
                 .append(" schema_username as schemaUsername, schema_password as schemaPassword , timezone_id as timezoneId ")//
                 .append(" from tenants t");//
 
@@ -53,6 +53,8 @@ public class JdbcTenantDetailsService implements TenantDetailsService {
             final String tenantIdentifier = rs.getString("identifier");
             final String name = rs.getString("name");
             final String schemaName = rs.getString("schemaName");
+            final String schemaDriverClassName = rs.getString("schemaDriverClassName");
+            final String schemaURLPrefix = rs.getString("schemaURLPrefix");
             final String schemaServer = rs.getString("schemaServer");
             final String schemaServerPort = rs.getString("schemaServerPort");
             final String schemaUsername = rs.getString("schemaUsername");
@@ -60,7 +62,7 @@ public class JdbcTenantDetailsService implements TenantDetailsService {
             final String timezoneId = rs.getString("timezoneId");
             final boolean autoUpdateEnabled = rs.getBoolean("autoUpdate");
 
-            return new MifosPlatformTenant(id, tenantIdentifier, name, schemaName, schemaServer, schemaServerPort, schemaUsername,
+            return new MifosPlatformTenant(id, tenantIdentifier, name, schemaName, schemaDriverClassName, schemaURLPrefix, schemaServer, schemaServerPort, schemaUsername,
                     schemaPassword, timezoneId, autoUpdateEnabled);
         }
     }
@@ -88,3 +90,4 @@ public class JdbcTenantDetailsService implements TenantDetailsService {
         return mifosPlatformTenants;
     }
 }
+

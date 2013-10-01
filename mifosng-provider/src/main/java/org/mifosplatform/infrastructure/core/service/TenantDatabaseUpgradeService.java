@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.googlecode.flyway.core.Flyway;
+import com.googlecode.flyway.core.util.jdbc.DriverDataSource;
+
 
 /**
  * A service that picks up on tenants that are configured to auto-update their
@@ -36,7 +38,7 @@ public class TenantDatabaseUpgradeService {
         for (final MifosPlatformTenant tenant : tenants) {
             if (tenant.isAutoUpdateEnabled()) {
                 final Flyway flyway = new Flyway();
-                flyway.setDataSource(tenant.databaseURL(), tenant.getSchemaUsername(), tenant.getSchemaPassword());
+                flyway.setDataSource(new DriverDataSource(tenant.getSchemaDriverClassName(), tenant.databaseURL(), tenant.getSchemaUsername(), tenant.getSchemaPassword()));
                 flyway.setLocations("sql");
                 flyway.setOutOfOrder(true);
                 flyway.migrate();
@@ -44,3 +46,4 @@ public class TenantDatabaseUpgradeService {
         }
     }
 }
+

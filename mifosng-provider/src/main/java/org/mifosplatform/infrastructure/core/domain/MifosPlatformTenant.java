@@ -10,6 +10,8 @@ public class MifosPlatformTenant {
     private final Long id;
     private final String tenantIdentifier;
     private final String name;
+    private final String schemaDriverClassName;
+    private final String schemaURLPrefix;
     private final String schemaName;
     private final String schemaServer;
     private final String schemaServerPort;
@@ -24,6 +26,8 @@ public class MifosPlatformTenant {
         this.id = id;
         this.tenantIdentifier = tenantIdentifier;
         this.name = name;
+        this.schemaDriverClassName = "com.mysql.jdbc.Driver";
+        this.schemaURLPrefix = "jdbc:mysql://";
         this.schemaName = schemaName;
         this.schemaServer = schemaServer;
         this.schemaServerPort = schemaServerPort;
@@ -33,9 +37,28 @@ public class MifosPlatformTenant {
         this.autoUpdateEnabled = autoUpdateEnabled;
     }
 
+    public MifosPlatformTenant(final Long id, final String tenantIdentifier, final String name, final String schemaName,
+            final String schemaDriverClassName, final String schemaURLPrefix, final String schemaServer, final String schemaServerPort,
+            final String schemaUsername, final String schemaPassword, final String timezoneId, final boolean autoUpdateEnabled) {
+        this.id = id;
+        this.tenantIdentifier = tenantIdentifier;
+        this.name = name;
+        this.schemaDriverClassName = schemaDriverClassName;
+        this.schemaURLPrefix = schemaURLPrefix;
+        this.schemaName = schemaName;
+        this.schemaServer = schemaServer;
+        this.schemaServerPort = schemaServerPort;
+        this.schemaUsername = schemaUsername;
+        this.schemaPassword = schemaPassword;
+        this.timezoneId = timezoneId;
+        this.autoUpdateEnabled = autoUpdateEnabled;
+    }
+   
+
     public String databaseURL() {
-        final String url = new StringBuilder("jdbc:mysql://").append(this.schemaServer).append(':').append(this.schemaServerPort)
+        final String url = new StringBuilder(this.schemaURLPrefix).append(this.schemaServer).append(':').append(this.schemaServerPort)
                 .append('/').append(this.schemaName).toString();
+
         return url;
     }
 
@@ -55,6 +78,14 @@ public class MifosPlatformTenant {
         return this.schemaName;
     }
 
+    public String getSchemaDriverClassName() {
+        return this.schemaDriverClassName;
+    }
+
+    public String getSchemaURLPrefix() {
+        return this.schemaURLPrefix;
+    }
+
     public String getSchemaUsername() {
         return this.schemaUsername;
     }
@@ -72,3 +103,4 @@ public class MifosPlatformTenant {
     }
 
 }
+
