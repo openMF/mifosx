@@ -41,12 +41,23 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
 
     private static final class GLAccountMapper implements RowMapper<GLAccountData> {
 
+//        public String schema() {
+//            return " gl.id as id, name as name, parent_id as parentId, gl_code as glCode, disabled as disabled, manual_journal_entries_allowed as manualEntriesAllowed, "
+//                    + "classification_enum as classification, account_usage as accountUsage, description as description, "
+//                    + nameDecoratedBaseOnHierarchy
+//                    + "as nameDecorated, "
+//                    + "cv.id as codeId, cv.code_value as codeValue from acc_gl_account gl left join m_code_value cv on tag_id=cv.id";
+//        }
+
         public String schema() {
             return " gl.id as id, name as name, parent_id as parentId, gl_code as glCode, disabled as disabled, manual_journal_entries_allowed as manualEntriesAllowed, "
-                    + "classification_enum as classification, account_usage as accountUsage, description as description, "
+                    + "classification_enum as classification, account_usage as accountUsage, gl.description as description, "
                     + nameDecoratedBaseOnHierarchy
                     + "as nameDecorated, "
-                    + "cv.id as codeId, cv.code_value as codeValue from acc_gl_account gl left join m_code_value cv on tag_id=cv.id";
+                    + "cv.id as codeId, cv.code_value as codeValue,acc_gl.office_running_balance as officeRunningBalance,acc_gl.organization_running_balance as organizationRunningBalance "
+                    + "from acc_gl_account gl left join m_code_value cv on tag_id=cv.id "
+                    + "left Join acc_gl_journal_entry acc_gl on acc_gl.account_id = gl.id";
+
         }
 
         @Override
@@ -67,8 +78,10 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
             final Long codeId = rs.wasNull() ? null : rs.getLong("codeId");
             final String codeValue = rs.getString("codeValue");
             final CodeValueData tagId = CodeValueData.instance(codeId, codeValue);
+            final Long officeRunningBalance = rs.getLong("officeRunningBalance");
+            final Long organizationRunningBalance =  rs.getLong("organizationRunningBalance");
             return new GLAccountData(id, name, parentId, glCode, disabled, manualEntriesAllowed, accountType, usage, description,
-                    nameDecorated, tagId);
+                    nameDecorated, tagId, officeRunningBalance,organizationRunningBalance);
         }
     }
 
@@ -160,9 +173,10 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
         try {
 
             final GLAccountMapper rm = new GLAccountMapper();
-            final String sql = "select " + rm.schema() + " where gl.id = ?";
+            final String sql = "select " + rm.schema() + " where gl.id = ? and acc_gl.id = (select max(id) from acc_gl_journal_entry  where " +
+                    "acc_gl_journal_entry.account_id = ?)";
 
-            final GLAccountData glAccountData = this.jdbcTemplate.queryForObject(sql, rm, new Object[] { glAccountId });
+            final GLAccountData glAccountData = this.jdbcTemplate.queryForObject(sql, rm, new Object[] { glAccountId,glAccountId});
 
             return glAccountData;
         } catch (final EmptyResultDataAccessException e) {
