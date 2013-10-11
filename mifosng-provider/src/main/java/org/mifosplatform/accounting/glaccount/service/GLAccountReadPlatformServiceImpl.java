@@ -40,15 +40,6 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
     }
 
     private static final class GLAccountMapper implements RowMapper<GLAccountData> {
-
-//        public String schema() {
-//            return " gl.id as id, name as name, parent_id as parentId, gl_code as glCode, disabled as disabled, manual_journal_entries_allowed as manualEntriesAllowed, "
-//                    + "classification_enum as classification, account_usage as accountUsage, description as description, "
-//                    + nameDecoratedBaseOnHierarchy
-//                    + "as nameDecorated, "
-//                    + "cv.id as codeId, cv.code_value as codeValue from acc_gl_account gl left join m_code_value cv on tag_id=cv.id";
-//        }
-
         public String schema() {
             return " gl.id as id, name as name, parent_id as parentId, gl_code as glCode, disabled as disabled, manual_journal_entries_allowed as manualEntriesAllowed, "
                     + "classification_enum as classification, account_usage as accountUsage, gl.description as description, "
