@@ -45,9 +45,9 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
                     + "classification_enum as classification, account_usage as accountUsage, gl.description as description, "
                     + nameDecoratedBaseOnHierarchy
                     + "as nameDecorated, "
-                    + "cv.id as codeId, cv.code_value as codeValue,acc_gl.office_running_balance as officeRunningBalance,acc_gl.organization_running_balance as organizationRunningBalance "
+                    + "cv.id as codeId, cv.code_value as codeValue,gl_j.office_running_balance as officeRunningBalance,gl_j.organization_running_balance as organizationRunningBalance "
                     + "from acc_gl_account gl left join m_code_value cv on tag_id=cv.id "
-                    + "left Join acc_gl_journal_entry acc_gl on acc_gl.account_id = gl.id";
+                    + "left outer Join acc_gl_journal_entry gl_j on gl_j.account_id = gl.id";
 
         }
 
@@ -153,8 +153,9 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
                 firstWhereConditionAdded = true;
             }
         }
-
-        sql = sql + " order by glCode";
+        sql = sql + " and gl_j.id in (select t1.id from (SELECT t2.id , max(concat(t2.entry_date,t2.id)) " +
+                "FROM acc_gl_journal_entry t2 " +
+                "GROUP BY t2.account_id DESC) t1)";
         final Object[] finalObjectArray = Arrays.copyOf(paramaterArray, arrayPos);
         return this.jdbcTemplate.query(sql, rm, finalObjectArray);
     }
@@ -164,10 +165,9 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
         try {
 
             final GLAccountMapper rm = new GLAccountMapper();
-            final String sql = "select " + rm.schema() + " where gl.id = ? and acc_gl.id = (select max(id) from acc_gl_journal_entry  where " +
-                    "acc_gl_journal_entry.account_id = ?)";
+            final String sql = "select " + rm.schema() + " where gl.id = gl_j.account_id and gl.id = ? ORDER BY entry_date DESC,id DESC LIMIT 1";
 
-            final GLAccountData glAccountData = this.jdbcTemplate.queryForObject(sql, rm, new Object[] { glAccountId,glAccountId});
+            final GLAccountData glAccountData = this.jdbcTemplate.queryForObject(sql, rm, new Object[] { glAccountId});
 
             return glAccountData;
         } catch (final EmptyResultDataAccessException e) {
