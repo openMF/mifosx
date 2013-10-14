@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.MonthDay;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
@@ -37,7 +38,7 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
      */
     private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("name", "amount", "locale", "currencyCode",
             "currencyOptions", "chargeAppliesTo", "chargeTimeType", "chargeCalculationType", "chargeCalculationTypeOptions", "penalty",
-            "active", "chargePaymentMode"));
+            "active", "chargePaymentMode", "feeOnMonthDay", "feeInterval", "monthDayFormat"));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -78,9 +79,12 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
                 Locale.getDefault());
         baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType).notNull().inMinMaxRange(1, 4);
 
-        final Integer chargePaymentMode = this.fromApiJsonHelper.extractIntegerNamed("chargePaymentMode", element, Locale.getDefault());
-        baseDataValidator.reset().parameter("chargePaymentMode").value(chargePaymentMode).notNull().inMinMaxRange(0, 1);
-
+        ChargeAppliesTo appliesTo = ChargeAppliesTo.fromInt(chargeAppliesTo);
+        if (appliesTo.isLoanCharge()) {
+            final Integer chargePaymentMode = this.fromApiJsonHelper.extractIntegerNamed("chargePaymentMode", element, Locale.getDefault());
+            baseDataValidator.reset().parameter("chargePaymentMode").value(chargePaymentMode).notNull().inMinMaxRange(0, 1);
+        }
+        
         if (this.fromApiJsonHelper.parameterExists("penalty", element)) {
             final Boolean penalty = this.fromApiJsonHelper.extractBooleanNamed("penalty", element);
             baseDataValidator.reset().parameter("penalty").value(penalty).notNull();
@@ -89,6 +93,20 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
         if (this.fromApiJsonHelper.parameterExists("active", element)) {
             final Boolean active = this.fromApiJsonHelper.extractBooleanNamed("active", element);
             baseDataValidator.reset().parameter("active").value(active).notNull();
+        }
+        
+        final ChargeTimeType ctt = ChargeTimeType.fromInt(chargeTimeType);
+        if(ctt.isMonthlyFee()){
+            final MonthDay monthDay = this.fromApiJsonHelper.extractMonthDayNamed("feeOnMonthDay", element); 
+            baseDataValidator.reset().parameter("feeOnMonthDay").value(monthDay).notNull();
+            
+            final Integer feeInterval = this.fromApiJsonHelper.extractIntegerNamed("feeInterval", element, Locale.getDefault());
+            baseDataValidator.reset().parameter("feeInterval").value(feeInterval).notNull().inMinMaxRange(1, 12);
+        }
+        
+        if(ctt.isAnnualFee()){
+            final MonthDay monthDay = this.fromApiJsonHelper.extractMonthDayNamed("feeOnMonthDay", element); 
+            baseDataValidator.reset().parameter("feeOnMonthDay").value(monthDay).notNull();
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
@@ -129,6 +147,16 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
             final Integer chargeTimeType = this.fromApiJsonHelper.extractIntegerNamed("chargeTimeType", element, Locale.getDefault());
             baseDataValidator.reset().parameter("chargeTimeType").value(chargeTimeType).notNull()
                     .inMinMaxRange(ChargeTimeType.minValue(), ChargeTimeType.maxValue());
+        }
+        
+        if (this.fromApiJsonHelper.parameterExists("feeOnMonthDay", element)) {
+            final MonthDay monthDay = this.fromApiJsonHelper.extractMonthDayNamed("feeOnMonthDay", element); 
+            baseDataValidator.reset().parameter("feeOnMonthDay").value(monthDay).notNull();
+        }
+        
+        if (this.fromApiJsonHelper.parameterExists("feeInterval", element)) {
+            final Integer feeInterval = this.fromApiJsonHelper.extractIntegerNamed("feeInterval", element, Locale.getDefault());
+            baseDataValidator.reset().parameter("feeInterval").value(feeInterval).notNull().inMinMaxRange(1, 12);
         }
 
         if (this.fromApiJsonHelper.parameterExists("chargeCalculationType", element)) {
