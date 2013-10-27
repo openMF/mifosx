@@ -69,6 +69,14 @@ public class GLClosuresApiResource {
         this.officeReadPlatformService = officeReadPlatformService;
     }
 
+    /**
+     * Retrieve all GL closures, which already exist against a given officeId
+     * 
+     * @param officeId id of the office
+     * @return json string containing GL closures list
+     * 
+     * @errorResponse 404 not found, may be officeId provided is wrong
+     */
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
