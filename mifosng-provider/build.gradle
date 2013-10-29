@@ -5,7 +5,6 @@ gradle clean tomcatrunwar
 
 buildscript {
   repositories {
-     mavenLocal()
      mavenCentral()
      mavenRepo(name: 'zt-public-snapshots',
                url: 'http://repos.zeroturnaround.com/nexus/content/groups/zt-public/')
@@ -17,22 +16,14 @@ buildscript {
 }
 
 buildscript {
- 	repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'org.gradle.api.plugins:gradle-tomcat-plugin:0.9.8'
-  	}
-}
-
-buildscript {
     repositories {
         mavenCentral()
     }
 
     dependencies {
-        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.5.0'
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.5.0',
+                  'org.gradle.api.plugins:gradle-tomcat-plugin:0.9.8',
+                  'com.hypnoticocelot:jaxrs-doclet:0.0.3-SNAPSHOT'
     }
 }
 
@@ -409,6 +400,27 @@ task repairTenantDB<<{
     flyway.locations= [filePath]
     flywayRepair.execute()
 }
+
+/** two resources are currently required to be removed manually from build/swagger/service.json
+ *   - entityType_entityId_documents
+ *   - clients_clientId_images
+**/
+task apiDocs(type: Javadoc) {
+   source = sourceSets.main.allJava
+   options.docletpath = buildscript.configurations.classpath.files.asType(List)
+   options.classpath = configurations.compile.files.asType(List)
+   options.doclet = "com.hypnoticocelot.jaxrs.doclet.ServiceDoclet"
+   options.addStringOption("d","build/swagger")
+   options.addStringOption("apiVersion","v1")
+   options.addStringOption("apiBasePath","https://demo.openmf.org/mifosng-provider/api/v1")
+   options.addStringOption("docBasePath","http://localhost:8080")
+   // https://github.com/ryankennedy/swagger-jaxrs-doclet/issues/54
+   // the title has to be null due to an issue
+   title = null
+ }
+
+task createSwaggerDir(type: Directory) { dir = file('build/swagger') }
+apiDocs.dependsOn("classes", "createSwaggerDir")
 
 /*
 * Support publication of artifacts versioned by topic branch.
