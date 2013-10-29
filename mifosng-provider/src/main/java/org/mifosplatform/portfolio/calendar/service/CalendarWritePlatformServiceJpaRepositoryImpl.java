@@ -106,6 +106,11 @@ public class CalendarWritePlatformServiceJpaRepositoryImpl implements CalendarWr
         final Calendar calendarForDelete = this.calendarRepository.findOne(calendarId);
         if (calendarForDelete == null) { throw new CalendarNotFoundException(calendarId); }
 
+        final Collection<CalendarInstance> calendarInstances  = this.calendarInstanceRepository.findByCalendarId(calendarId);
+        if(!calendarInstances.isEmpty()) {
+            for(CalendarInstance cs : calendarInstances){ this.calendarInstanceRepository.delete(cs);}
+        }
+
         this.calendarRepository.delete(calendarForDelete);
         return new CommandProcessingResultBuilder() //
                 .withCommandId(null) //
