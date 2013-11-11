@@ -86,7 +86,7 @@ CREATE TABLE `tenants` (
 LOCK TABLES `tenants` WRITE;
 /*!40000 ALTER TABLE `tenants` DISABLE KEYS */;
 INSERT INTO `tenants` VALUES 
-(1,'default','default','mifostenant-default','com.mysql.jdbc.Driver','jdbc:mysql://','Asia/Kolkata',NULL,NULL,NULL,NULL,'localhost','3306','root','mysql',1);
+(1,'default','default','mifostenant-default','org.mariadb.jdbc.Driver','jdbc:mariadb://','Asia/Kolkata',NULL,NULL,NULL,NULL,'localhost','3306','root','mysql',1);
 /*!40000 ALTER TABLE `tenants` ENABLE KEYS */;
 UNLOCK TABLES;
 

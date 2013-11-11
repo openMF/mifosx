@@ -137,11 +137,15 @@ public final class ResultsetColumnHeaderData {
     }
 
     private boolean isAnyInteger() {
-        return isInt() || isSmallInt() || isTinyInt() || isMediumInt() || isBigInt();
+        return isInt() || isSmallInt() || isTinyInt() || isMediumInt() || isBigInt() || isInteger();
     }
 
     private boolean isInt() {
         return "int".equalsIgnoreCase(this.columnType);
+    }
+
+    private boolean isInteger() {
+        return "integer".equalsIgnoreCase(this.columnType);
     }
 
     private boolean isSmallInt() {
