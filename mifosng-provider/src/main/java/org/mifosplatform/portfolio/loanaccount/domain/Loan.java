@@ -906,7 +906,7 @@ public class Loan extends AbstractPersistable<Long> {
     }
     
     private void clearInstallmentLoanCharge(){
-        for(LoanCharge loanCharge:this.charges){
+        for(LoanCharge loanCharge:this.setOfLoanCharges()){
             if(loanCharge.isInstalmentFee()){
                 loanCharge.clearLoanInstallmentCharges();
             }
@@ -1573,7 +1573,7 @@ public class Loan extends AbstractPersistable<Long> {
                 loanTermPeriodFrequencyType, getDisbursementDate(), getExpectedFirstRepaymentOnDate(),
                 calculatedRepaymentsStartingFromDate, getInArrearsTolerance(), this.loanRepaymentScheduleDetail);
 
-        final LoanScheduleModel loanSchedule = loanScheduleGenerator.generate(mc, applicationCurrency, loanApplicationTerms, this.charges,
+        final LoanScheduleModel loanSchedule = loanScheduleGenerator.generate(mc, applicationCurrency, loanApplicationTerms, this.setOfLoanCharges(),
                 isHolidayEnabled, holidays, workingDays);
 
         updateLoanSchedule(loanSchedule);
@@ -1646,7 +1646,7 @@ public class Loan extends AbstractPersistable<Long> {
         existingTransactionIds.addAll(findExistingTransactionIds());
         existingReversedTransactionIds.addAll(findExistingReversedTransactionIds());
         LoanCharge charge = null;
-        for (final LoanCharge loanCharge : this.charges) {
+        for (final LoanCharge loanCharge : this.setOfLoanCharges()) {
             if (chargeId.equals(loanCharge.getId())) {
                 charge = loanCharge;
             }
@@ -1764,7 +1764,7 @@ public class Loan extends AbstractPersistable<Long> {
         existingTransactionIds.addAll(findExistingTransactionIds());
         existingReversedTransactionIds.addAll(findExistingReversedTransactionIds());
         LoanCharge charge = null;
-        for (final LoanCharge loanCharge : this.charges) {
+        for (final LoanCharge loanCharge : this.setOfLoanCharges()) {
             if (chargeId.equals(loanCharge.getId())) {
                 charge = loanCharge;
             }
@@ -1904,7 +1904,7 @@ public class Loan extends AbstractPersistable<Long> {
     private void handleLoanRepaymentInFull(final LocalDate transactionDate, final LoanLifecycleStateMachine loanLifecycleStateMachine) {
 
         boolean isAllChargesPaid = true;
-        for (final LoanCharge loanCharge : this.charges) {
+        for (final LoanCharge loanCharge : this.setOfLoanCharges()) {
             if (!(loanCharge.isPaid() || loanCharge.isWaived())) {
                 isAllChargesPaid = false;
                 break;
@@ -2986,7 +2986,7 @@ public class Loan extends AbstractPersistable<Long> {
     }
 
     public Set<LoanCharge> charges() {
-        return this.charges;
+        return this.setOfLoanCharges();
     }
     
     public Set<LoanInstallmentCharge> generateInstallmentLoanCharges(final LoanCharge loanCharge){
