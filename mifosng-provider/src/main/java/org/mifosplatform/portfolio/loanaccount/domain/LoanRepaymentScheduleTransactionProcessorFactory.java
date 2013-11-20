@@ -10,6 +10,7 @@ import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.impl.
 import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.impl.HeavensFamilyLoanRepaymentScheduleTransactionProcessor;
 import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.impl.InterestPrincipalPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor;
 import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.impl.MifosStyleLoanRepaymentScheduleTransactionProcessor;
+import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.impl.OverdueInterestOverduePrincipalOverduePenaltyOverdueFeesOrderLoanRepaymentScheduleTransactionProcessor;
 import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.impl.PrincipalInterestPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor;
 import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.impl.RBILoanRepaymentScheduleTransactionProcessor;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanTransactionProcessingStrategy;
@@ -47,6 +48,10 @@ public class LoanRepaymentScheduleTransactionProcessorFactory {
 
             if (transactionProcessingStrategy.isInterestPrincipalPenaltiesFeesOrderStrategy()) {
                 processor = new InterestPrincipalPenaltyFeesOrderLoanRepaymentScheduleTransactionProcessor();
+            }
+            
+            if (transactionProcessingStrategy.isOverdueInterestOverduePrincipalOverduePenaltiesOverdueFeesOrderStrategy()) {
+                processor = new OverdueInterestOverduePrincipalOverduePenaltyOverdueFeesOrderLoanRepaymentScheduleTransactionProcessor();
             }
         }
 

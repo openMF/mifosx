@@ -1,0 +1,1 @@
+INSERT INTO `ref_loan_transaction_processing_strategy` (`code`, `name`) VALUES ('overdue_interest-overdue_principal-overdue_penalties-overdue_fees-order-strategy', 'Overdue_Interest Overdue_Principal Overdue_Penalties Overdue_Fees Order');
