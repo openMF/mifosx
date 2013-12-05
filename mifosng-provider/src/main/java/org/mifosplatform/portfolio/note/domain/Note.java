@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.note.domain;
 
+import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -17,6 +18,7 @@ import javax.persistence.Table;
 import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.domain.AbstractAuditableCustom;
+import org.mifosplatform.infrastructure.core.exception.PlatformInternalServerException;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
@@ -45,7 +47,7 @@ public class Note extends AbstractAuditableCustom<AppUser, Long> {
     private LoanTransaction loanTransaction;
 
     @Column(name = "note", length = 1000)
-    private String note;
+    private byte[] note;
 
     @Column(name = "note_type_enum")
     private final Integer noteTypeId;
@@ -78,13 +80,13 @@ public class Note extends AbstractAuditableCustom<AppUser, Long> {
 
     public Note(final Client client, final String note) {
         this.client = client;
-        this.note = note;
+        this.note = getAsUtf8(note);
         this.noteTypeId = NoteType.CLIENT.getValue();
     }
 
     private Note(final Group group, final String note) {
         this.group = group;
-        this.note = note;
+        this.note = getAsUtf8(note);
         this.client = null;
         this.noteTypeId = NoteType.GROUP.getValue();
     }
@@ -92,7 +94,7 @@ public class Note extends AbstractAuditableCustom<AppUser, Long> {
     private Note(final Loan loan, final String note) {
         this.loan = loan;
         this.client = loan.client();
-        this.note = note;
+        this.note = getAsUtf8(note);
         this.noteTypeId = NoteType.LOAN.getValue();
     }
 
@@ -100,7 +102,7 @@ public class Note extends AbstractAuditableCustom<AppUser, Long> {
         this.loan = loan;
         this.loanTransaction = loanTransaction;
         this.client = loan.client();
-        this.note = note;
+        this.note = getAsUtf8(note);
         this.noteTypeId = NoteType.LOAN_TRANSACTION.getValue();
     }
 
@@ -116,7 +118,7 @@ public class Note extends AbstractAuditableCustom<AppUser, Long> {
     public Note(final SavingsAccount account, final String note) {
         this.savingsAccount = account;
         this.client = account.getClient();
-        this.note = note;
+        this.note = getAsUtf8(note);
         this.noteTypeId = NoteType.SAVING_ACCOUNT.getValue();
     }
 
@@ -124,10 +126,11 @@ public class Note extends AbstractAuditableCustom<AppUser, Long> {
         final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(7);
 
         final String noteParamName = "note";
-        if (command.isChangeInStringParameterNamed(noteParamName, this.note)) {
+        final String string = getAsStringFromUtf8(this.note);
+        if (command.isChangeInStringParameterNamed(noteParamName, string)) {
             final String newValue = command.stringValueOfParameterNamed(noteParamName);
             actualChanges.put(noteParamName, newValue);
-            this.note = StringUtils.defaultIfEmpty(newValue, null);
+            this.note = getAsUtf8(newValue);
         }
         return actualChanges;
     }
@@ -136,4 +139,27 @@ public class Note extends AbstractAuditableCustom<AppUser, Long> {
         return !this.client.identifiedBy(clientId);
     }
 
+    private byte[] getAsUtf8(final String string) {
+        byte[] utf8 = null;
+        if (StringUtils.isNotBlank(string)) {
+            try {
+                utf8 = string.getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                throw new PlatformInternalServerException("error.msg.notes.unsupported.encoding", string);
+            }
+        }
+        return utf8;
+    }
+    
+    private String getAsStringFromUtf8(final byte[] utf8) {
+        String string = null;
+        if (utf8 != null) {
+            try {
+                string = new String(utf8, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                throw new PlatformInternalServerException("error.msg.notes.unsupported.encoding", utf8.toString());
+            }
+        }
+        return string;
+    }
 }
