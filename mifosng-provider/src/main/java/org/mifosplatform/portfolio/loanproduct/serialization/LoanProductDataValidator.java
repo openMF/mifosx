@@ -56,7 +56,10 @@ public final class LoanProductDataValidator {
             LOAN_PRODUCT_ACCOUNTING_PARAMS.FEE_INCOME_ACCOUNT_MAPPING.getValue(),
             LOAN_PRODUCT_ACCOUNTING_PARAMS.PENALTY_INCOME_ACCOUNT_MAPPING.getValue(),LoanProductConstants.useBorrowerCycleParameterName, 
             LoanProductConstants.principalVariationsForBorrowerCycleParameterName,LoanProductConstants.interestRateVariationsForBorrowerCycleParameterName,
-            LoanProductConstants.numberOfRepaymentVariationsForBorrowerCycleParameterName, LoanProductConstants.shortName));
+            LoanProductConstants.numberOfRepaymentVariationsForBorrowerCycleParameterName,LoanProductConstants.shortName,
+            LoanProductConstants.fixedEmiParameterName,
+            LoanProductConstants.multiDisburseLoanParameterName,LoanProductConstants.outstandingLoanBalanceParameterName,
+            LoanProductConstants.maxTrancheCountParameterName));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -322,11 +325,39 @@ public final class LoanProductDataValidator {
             baseDataValidator.reset().parameter(LoanProductConstants.useBorrowerCycleParameterName).value(useBorrowerCycle).ignoreIfNull()
                     .validateForBooleanValue();
         }
-
+        
+        validateMultiDisburseLoanData(baseDataValidator, element);
 
         validateBorrowerCycleVariations(element, baseDataValidator);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    private void validateMultiDisburseLoanData(final DataValidatorBuilder baseDataValidator, final JsonElement element) {
+        Boolean multiDisburseLoan = false;
+        if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.multiDisburseLoanParameterName, element)) {
+            multiDisburseLoan = this.fromApiJsonHelper.extractBooleanNamed(LoanProductConstants.multiDisburseLoanParameterName, element);
+            baseDataValidator.reset().parameter(LoanProductConstants.multiDisburseLoanParameterName).value(multiDisburseLoan).ignoreIfNull()
+                    .validateForBooleanValue();
+        }
+        
+        if(multiDisburseLoan){
+            if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.fixedEmiParameterName, element)) {
+                final Boolean fixedEmi = this.fromApiJsonHelper.extractBooleanNamed(LoanProductConstants.fixedEmiParameterName, element);
+                baseDataValidator.reset().parameter(LoanProductConstants.fixedEmiParameterName).value(fixedEmi).ignoreIfNull()
+                        .validateForBooleanValue();
+            }
+            
+            if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.outstandingLoanBalanceParameterName, element)) {
+                final BigDecimal outstandingLoanBalance = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanProductConstants.outstandingLoanBalanceParameterName,
+                        element);
+                baseDataValidator.reset().parameter(LoanProductConstants.outstandingLoanBalanceParameterName).value(outstandingLoanBalance).ignoreIfNull()
+                        .zeroOrPositiveAmount();
+            }
+            
+            final Integer maxTrancheCount = this.fromApiJsonHelper.extractIntegerNamed(LoanProductConstants.maxTrancheCountParameterName, element,Locale.getDefault());
+            baseDataValidator.reset().parameter(LoanProductConstants.maxTrancheCountParameterName).value(maxTrancheCount).notNull().integerGreaterThanZero();
+        }
     }
 
     public void validateForUpdate(final String json, final LoanProduct loanProduct) {
@@ -576,6 +607,8 @@ public final class LoanProductDataValidator {
             baseDataValidator.reset().parameter(LoanProductConstants.useBorrowerCycleParameterName).value(useBorrowerCycle).ignoreIfNull()
                     .validateForBooleanValue();
         }
+        
+        validateMultiDisburseLoanData(baseDataValidator, element);
 
         validateBorrowerCycleVariations(element, baseDataValidator);
 
