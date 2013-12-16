@@ -26,7 +26,6 @@ public class OverdueInterestOverduePrincipalOverduePenaltyOverdueFeesOrderLoanRe
      * For early/'in advance' repayments, pay off in the same way as on-time
      * payments, interest first, principal, penalties and charges.
      */
-    @SuppressWarnings("unused")
     @Override
     protected Money handleTransactionThatIsPaymentInAdvanceOfInstallment(final LoanRepaymentScheduleInstallment currentInstallment,
             final List<LoanRepaymentScheduleInstallment> installments, final LoanTransaction loanTransaction,
@@ -74,7 +73,8 @@ public class OverdueInterestOverduePrincipalOverduePenaltyOverdueFeesOrderLoanRe
             for (final LoanRepaymentScheduleInstallment installment : installments) {
                 if (transactionAmountRemaining.isGreaterThanZero()) {
                     if (installment.getInstallmentNumber() >= currentInstallment.getInstallmentNumber()) {
-                        if (loanTransaction.getTransactionDate().isAfter(installment.getDueDate())) {
+                        if (loanTransaction.getTransactionDate().isAfter(installment.getDueDate()) || 
+                        		loanTransaction.getTransactionDate().isEqual(installment.getDueDate())) {
                             if (installment.isInterestDue(currency)) {
 
                                 // Make sure only interest is updating.
@@ -96,7 +96,8 @@ public class OverdueInterestOverduePrincipalOverduePenaltyOverdueFeesOrderLoanRe
             for (final LoanRepaymentScheduleInstallment installment : installments) {
                 if (transactionAmountRemaining.isGreaterThanZero()) {
                     if (installment.getInstallmentNumber() >= currentInstallment.getInstallmentNumber()) {
-                        if (loanTransaction.getTransactionDate().isAfter(installment.getDueDate())) {
+                    	if (loanTransaction.getTransactionDate().isAfter(installment.getDueDate()) || 
+                        		loanTransaction.getTransactionDate().isEqual(installment.getDueDate())) {
                             if (installment.isPrincipalNotCompleted(currency)) {
 
                                 // Make sure only principal is updating.
@@ -118,7 +119,8 @@ public class OverdueInterestOverduePrincipalOverduePenaltyOverdueFeesOrderLoanRe
             for (final LoanRepaymentScheduleInstallment installment : installments) {
                 if (transactionAmountRemaining.isGreaterThanZero()) {
                     if (installment.getInstallmentNumber() >= currentInstallment.getInstallmentNumber()) {
-                        if (loanTransaction.getTransactionDate().isAfter(installment.getDueDate())) {
+                    	if (loanTransaction.getTransactionDate().isAfter(installment.getDueDate()) || 
+                        		loanTransaction.getTransactionDate().isEqual(installment.getDueDate())) {
                             if (installment.isPenaltyDue(currency)) {
 
                                 // Make sure only penalty is updating.
@@ -140,7 +142,8 @@ public class OverdueInterestOverduePrincipalOverduePenaltyOverdueFeesOrderLoanRe
             for (final LoanRepaymentScheduleInstallment installment : installments) {
                 if (transactionAmountRemaining.isGreaterThanZero()) {
                     if (installment.getInstallmentNumber() >= currentInstallment.getInstallmentNumber()) {
-                        if (loanTransaction.getTransactionDate().isAfter(installment.getDueDate())) {
+                    	if (loanTransaction.getTransactionDate().isAfter(installment.getDueDate()) || 
+                        		loanTransaction.getTransactionDate().isEqual(installment.getDueDate())) {
                             if (installment.isChargesDue(currency)) {
 
                                 // Make sure only Fee is updating.
