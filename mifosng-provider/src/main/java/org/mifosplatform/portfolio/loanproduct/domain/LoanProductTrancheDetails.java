@@ -18,9 +18,6 @@ public class LoanProductTrancheDetails {
     @Column(name = "max_tranche_count", nullable = false)
     private Integer maxTrancheCount;
 
-    @Column(name = "fixed_emi")
-    private boolean fixedEmi;
-
     @Column(name = "outstanding_loan_balance", scale = 6, precision = 19, nullable = false)
     private BigDecimal outstandingLoanBalance;
 
@@ -28,11 +25,9 @@ public class LoanProductTrancheDetails {
         // TODO Auto-generated constructor stub
     }
 
-    public LoanProductTrancheDetails(final boolean multiDisburseLoan, final Integer maxTrancheCount, final boolean fixedEmi,
-            final BigDecimal outstandingLoanBalance) {
+    public LoanProductTrancheDetails(final boolean multiDisburseLoan, final Integer maxTrancheCount, final BigDecimal outstandingLoanBalance) {
         this.multiDisburseLoan = multiDisburseLoan;
         this.maxTrancheCount = maxTrancheCount;
-        this.fixedEmi = fixedEmi;
         this.outstandingLoanBalance = outstandingLoanBalance;
     }
 
@@ -49,11 +44,6 @@ public class LoanProductTrancheDetails {
                 actualChanges.put(LoanProductConstants.maxTrancheCountParameterName, newValue);
                 this.maxTrancheCount = newValue;
             }
-            if (command.isChangeInBooleanParameterNamed(LoanProductConstants.fixedEmiParameterName, this.fixedEmi)) {
-                final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.fixedEmiParameterName);
-                actualChanges.put(LoanProductConstants.fixedEmiParameterName, newValue);
-                this.fixedEmi = newValue;
-            }
 
             if (command.isChangeInBigDecimalParameterNamed(LoanProductConstants.outstandingLoanBalanceParameterName,
                     this.outstandingLoanBalance)) {
@@ -66,8 +56,22 @@ public class LoanProductTrancheDetails {
         } else {
             this.maxTrancheCount = null;
             this.outstandingLoanBalance = null;
-            this.fixedEmi = false;
         }
+    }
+
+    
+    public boolean isMultiDisburseLoan() {
+        return this.multiDisburseLoan;
+    }
+
+    
+    public BigDecimal outstandingLoanBalance() {
+        return this.outstandingLoanBalance;
+    }
+
+    
+    public Integer maxTrancheCount() {
+        return this.maxTrancheCount;
     }
 
 }

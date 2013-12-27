@@ -171,10 +171,8 @@ public class LoanProduct extends AbstractPersistable<Long> {
         
        final boolean multiDisburseLoan = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.multiDisburseLoanParameterName);
        Integer maxTrancheCount = null;
-       boolean fixedEmi = false;
        BigDecimal outstandingLoanBalance = null;
        if(multiDisburseLoan){
-           fixedEmi = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.fixedEmiParameterName);
            outstandingLoanBalance = command.bigDecimalValueOfParameterNamed(LoanProductConstants.outstandingLoanBalanceParameterName);
            maxTrancheCount = command.integerValueOfParameterNamed(LoanProductConstants.maxTrancheCountParameterName);
        }
@@ -185,7 +183,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
                 interestMethod, interestCalculationPeriodMethod, repaymentEvery, repaymentFrequencyType, numberOfRepayments,
                 minNumberOfRepayments, maxNumberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged,
                 amortizationMethod, inArrearsTolerance, productCharges, accountingRuleType, includeInBorrowerCycle, startDate, closeDate,
-                externalId, useBorrowerCycle, loanProductBorrowerCycleVariations,multiDisburseLoan,maxTrancheCount,fixedEmi,outstandingLoanBalance);
+                externalId, useBorrowerCycle, loanProductBorrowerCycleVariations,multiDisburseLoan,maxTrancheCount,outstandingLoanBalance);
     }
 
     /**
@@ -395,8 +393,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final AccountingRuleType accountingRuleType, final boolean includeInBorrowerCycle, final LocalDate startDate,
             final LocalDate closeDate, final String externalId, final boolean useBorrowerCycle,
             final Set<LoanProductBorrowerCycleVariations> loanProductBorrowerCycleVariations,
-            final boolean multiDisburseLoan,final Integer maxTrancheCount, final boolean fixedEmi,
-            final BigDecimal outstandingLoanBalance) {
+            final boolean multiDisburseLoan,final Integer maxTrancheCount, final BigDecimal outstandingLoanBalance) {
         this.fund = fund;
         this.transactionProcessingStrategy = transactionProcessingStrategy;
         this.name = name.trim();
@@ -441,7 +438,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
         for (LoanProductBorrowerCycleVariations borrowerCycleVariations : this.borrowerCycleVariations) {
             borrowerCycleVariations.updateLoanProduct(this);
         }
-        this.loanProducTrancheDetails   = new LoanProductTrancheDetails(multiDisburseLoan, maxTrancheCount, fixedEmi, outstandingLoanBalance);
+        this.loanProducTrancheDetails   = new LoanProductTrancheDetails(multiDisburseLoan, maxTrancheCount, outstandingLoanBalance);
     }
 
     public MonetaryCurrency getCurrency() {
@@ -697,6 +694,18 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
     public boolean useBorrowerCycle() {
         return this.useBorrowerCycle;
+    }
+    
+    public boolean isMultiDisburseLoan(){
+        return this.loanProducTrancheDetails.isMultiDisburseLoan();
+    }
+    
+    public BigDecimal outstandingLoanBalance() {
+        return this.loanProducTrancheDetails.outstandingLoanBalance();
+    }
+    
+    public Integer maxTrancheCount() {
+        return this.loanProducTrancheDetails.maxTrancheCount();
     }
 
     public LoanProductBorrowerCycleVariations fetchLoanProductBorrowerCycleVariationById(Long id) {

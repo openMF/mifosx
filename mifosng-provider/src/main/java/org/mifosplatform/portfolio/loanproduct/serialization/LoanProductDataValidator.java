@@ -24,6 +24,7 @@ import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.portfolio.loanproduct.LoanProductConstants;
+import org.mifosplatform.portfolio.loanproduct.domain.InterestMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductValueConditionType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,6 @@ public final class LoanProductDataValidator {
             LOAN_PRODUCT_ACCOUNTING_PARAMS.PENALTY_INCOME_ACCOUNT_MAPPING.getValue(),LoanProductConstants.useBorrowerCycleParameterName, 
             LoanProductConstants.principalVariationsForBorrowerCycleParameterName,LoanProductConstants.interestRateVariationsForBorrowerCycleParameterName,
             LoanProductConstants.numberOfRepaymentVariationsForBorrowerCycleParameterName,LoanProductConstants.shortName,
-            LoanProductConstants.fixedEmiParameterName,
             LoanProductConstants.multiDisburseLoanParameterName,LoanProductConstants.outstandingLoanBalanceParameterName,
             LoanProductConstants.maxTrancheCountParameterName));
 
@@ -342,12 +342,6 @@ public final class LoanProductDataValidator {
         }
         
         if(multiDisburseLoan){
-            if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.fixedEmiParameterName, element)) {
-                final Boolean fixedEmi = this.fromApiJsonHelper.extractBooleanNamed(LoanProductConstants.fixedEmiParameterName, element);
-                baseDataValidator.reset().parameter(LoanProductConstants.fixedEmiParameterName).value(fixedEmi).ignoreIfNull()
-                        .validateForBooleanValue();
-            }
-            
             if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.outstandingLoanBalanceParameterName, element)) {
                 final BigDecimal outstandingLoanBalance = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanProductConstants.outstandingLoanBalanceParameterName,
                         element);
@@ -357,6 +351,9 @@ public final class LoanProductDataValidator {
             
             final Integer maxTrancheCount = this.fromApiJsonHelper.extractIntegerNamed(LoanProductConstants.maxTrancheCountParameterName, element,Locale.getDefault());
             baseDataValidator.reset().parameter(LoanProductConstants.maxTrancheCountParameterName).value(maxTrancheCount).notNull().integerGreaterThanZero();
+            
+            final Integer interestType = this.fromApiJsonHelper.extractIntegerNamed("interestType", element, Locale.getDefault());
+            baseDataValidator.reset().parameter("interestType").value(interestType).ignoreIfNull().integerSameAsNumber(InterestMethod.DECLINING_BALANCE.getValue());
         }
     }
 

@@ -11,6 +11,7 @@ import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.portfolio.calendar.data.CalendarData;
 import org.mifosplatform.portfolio.group.service.SearchParameters;
+import org.mifosplatform.portfolio.loanaccount.data.DisbursementData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanAccountData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionData;
 import org.mifosplatform.portfolio.loanaccount.data.RepaymentScheduleRelatedLoanData;
@@ -21,7 +22,7 @@ public interface LoanReadPlatformService {
 
     LoanAccountData retrieveOne(Long loanId);
 
-    LoanScheduleData retrieveRepaymentSchedule(Long loanId, RepaymentScheduleRelatedLoanData repaymentScheduleRelatedData);
+    LoanScheduleData retrieveRepaymentSchedule(Long loanId, RepaymentScheduleRelatedLoanData repaymentScheduleRelatedData, Collection<DisbursementData> disbursementData);
 
     Collection<LoanTransactionData> retrieveLoanTransactions(Long loanId);
 
@@ -65,4 +66,6 @@ public interface LoanReadPlatformService {
     Integer retriveLoanCounter(Long groupId, Integer loanType, Long productId);
 
     Integer retriveLoanCounter(Long clientId, Long productId);
+
+    Collection<DisbursementData> retrieveLoanDisbursementDetails(Long loanId);
 }

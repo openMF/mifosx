@@ -247,12 +247,12 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final boolean allowTransactionsOnNonWorkingDay = this.configurationDomainService.allowTransactionsOnNonWorkingDayEnabled();
         updateLoanCounters(loan, actualDisbursementDate);
 
-        loan.disburse(this.loanScheduleFactory, currentUser, command, applicationCurrency, existingTransactionIds,
-                existingReversedTransactionIds, changes, paymentDetail, calculatedRepaymentsStartingFromDate, isHolidayEnabled, holidays,
-                workingDays, allowTransactionsOnHoliday, allowTransactionsOnNonWorkingDay);
+        loan.disburse(this.loanScheduleFactory, currentUser, command, applicationCurrency, 
+                existingTransactionIds, existingReversedTransactionIds, changes, paymentDetail, calculatedRepaymentsStartingFromDate, isHolidayEnabled, 
+                holidays,workingDays, allowTransactionsOnHoliday, allowTransactionsOnNonWorkingDay);
 
         if (!changes.isEmpty()) {
-            try {
+            try{
                 this.loanRepository.saveAndFlush(loan);
             } catch (final DataIntegrityViolationException e) {
                 final Throwable realCause = e.getCause();
@@ -265,10 +265,34 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                         "validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors); }
             }
 
+
             final String noteText = command.stringValueOfParameterNamed("note");
             if (StringUtils.isNotBlank(noteText)) {
                 final Note note = Note.loanNote(loan, noteText);
                 this.noteRepository.save(note);
+            }
+            
+            //fix me
+            //adding loan installment charges along with the actual disbursement, is trying to add 2 extra entries with null values. which is causing issues
+            ChangedTransactionDetail changedTransactionDetail = loan.reprocessTransactionForDisbursement();
+            try{
+                this.loanRepository.saveAndFlush(loan);
+            } catch (final DataIntegrityViolationException e) {
+                final Throwable realCause = e.getCause();
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+                final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan.transaction");
+                if (realCause.getMessage().toLowerCase().contains("external_id_unique")) {
+                    baseDataValidator.reset().parameter("externalId").failWithCode("value.must.be.unique");
+                }
+                if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(
+                        "validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors); }
+            }
+            
+            if (changedTransactionDetail != null) {
+                for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
+                    this.loanTransactionRepository.save(mapEntry.getValue());
+                    this.accountTransfersWritePlatformService.updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
+                }
             }
 
             postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds);
@@ -277,14 +301,12 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final Set<LoanCharge> loanCharges = loan.charges();
         final Map<Long, BigDecimal> disBuLoanCharges = new HashMap<Long, BigDecimal>();
         for (final LoanCharge loanCharge : loanCharges) {
-            if (loanCharge.isDueAtDisbursement() && loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer()) {
-                disBuLoanCharges.put(loanCharge.getId(), loanCharge.amount());
-            } else if (loanCharge.isInstalmentFee() && loanCharge.hasNoLoanInstallmentCharges()) {
-                final Set<LoanInstallmentCharge> chargePerInstallments = loan.generateInstallmentLoanCharges(loanCharge);
-                loanCharge.addLoanInstallmentCharges(chargePerInstallments);
-                this.loanChargeRepository.save(loanCharge);
-            }
+            if (loanCharge.isDueAtDisbursement() && loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer() 
+                    && loanCharge.isNotFullyPaid() && !loanCharge.isWaived()) {
+                disBuLoanCharges.put(loanCharge.getId(), loanCharge.amountOutstanding());
+            } 
         }
+        
         final Locale locale = command.extractLocale();
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
         for (final Map.Entry<Long, BigDecimal> entrySet : disBuLoanCharges.entrySet()) {
@@ -398,19 +420,38 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                     final Note note = Note.loanNote(loan, noteText);
                     this.noteRepository.save(note);
                 }
+                
+                //fix me
+                //adding loan installment charges along with the actual disbursement, is trying to add 2 extra entries with null values. which is causing issues
+                ChangedTransactionDetail changedTransactionDetail = loan.reprocessTransactionForDisbursement();
+                try{
+                    this.loanRepository.saveAndFlush(loan);
+                } catch (final DataIntegrityViolationException e) {
+                    final Throwable realCause = e.getCause();
+                    final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+                    final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan.transaction");
+                    if (realCause.getMessage().toLowerCase().contains("external_id_unique")) {
+                        baseDataValidator.reset().parameter("externalId").failWithCode("value.must.be.unique");
+                    }
+                    if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(
+                            "validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors); }
+                }
+                if (changedTransactionDetail != null) {
+                    for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
+                        this.loanTransactionRepository.save(mapEntry.getValue());
+                        this.accountTransfersWritePlatformService.updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
+                    }
+                }
 
                 postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds);
             }
             final Set<LoanCharge> loanCharges = loan.charges();
             final Map<Long, BigDecimal> disBuLoanCharges = new HashMap<Long, BigDecimal>();
             for (final LoanCharge loanCharge : loanCharges) {
-                if (loanCharge.isDueAtDisbursement() && loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer()) {
-                    disBuLoanCharges.put(loanCharge.getId(), loanCharge.amount());
-                } else if (loanCharge.isInstalmentFee() && loanCharge.hasNoLoanInstallmentCharges()) {
-                    final Set<LoanInstallmentCharge> chargePerInstallments = loan.generateInstallmentLoanCharges(loanCharge);
-                    loanCharge.addLoanInstallmentCharges(chargePerInstallments);
-                    this.loanChargeRepository.save(loanCharge);
-                }
+                if (loanCharge.isDueAtDisbursement() && loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer() 
+                        && loanCharge.isNotFullyPaid() && !loanCharge.isWaived()) {
+                    disBuLoanCharges.put(loanCharge.getId(), loanCharge.amountOutstanding());
+                } 
             }
             final Locale locale = command.extractLocale();
             final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
