@@ -11830,7 +11830,7 @@ Request Body:
 							<td>isActive</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>Indicates whether the employee account is to be created as <b>Active</b>. If isActive=true, then employee is active. If isActive=false, then employee is inactive.</td>
+							<td class=fielddesc>Indicates whether the employee account is to be created as <b>Active</b>. If isActive=true, then employee is active. If isActive=false, then employee is inactive. The existing employees will be marked as <b>Active</b> by <b>default</b>.</td>
 						</tr>
 					</table>
 				</div>
@@ -11909,7 +11909,8 @@ GET https://DomainName/api/v1/staff
         "officeId": 1,
         "officeName": "Head Office",
         "isLoanOfficer": true,
-	"externalId": "17H"
+	"externalId": "17H",
+	"isActive": "true"
     }
 ]
 					</code>
@@ -11935,7 +11936,8 @@ GET https://DomainName/api/v1/staff
     "officeId": 1,
     "officeName": "Head Office",
     "isLoanOfficer": true,
-    "externalId": "17H"
+    "externalId": "17H",
+    "isActive": "true"
 }
 					</code>
 				</div>
