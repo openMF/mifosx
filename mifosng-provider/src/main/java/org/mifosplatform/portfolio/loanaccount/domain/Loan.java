@@ -1665,7 +1665,7 @@ public class Loan extends AbstractPersistable<Long> {
                 LoanStatus.fromInt(this.loanStatus));
         boolean isMultiTrancheDisburse = false;
         final LocalDate actualDisbursementDate = command.localDateValueOfParameterNamed("actualDisbursementDate");
-        if(isAllTranchesNotDisbursed()){
+        if(LoanStatus.fromInt(this.loanStatus).isActive() && isAllTranchesNotDisbursed()){
             LoanDisbursementDetails details = fetchLastDisburseDetail();
             
             if(details != null){
@@ -2697,7 +2697,8 @@ public class Loan extends AbstractPersistable<Long> {
     
     private boolean isAllTranchesNotDisbursed(){
         return this.loanProduct.isMultiDisburseLoan() 
-                && LoanStatus.fromInt(this.loanStatus).isActive() 
+                && (LoanStatus.fromInt(this.loanStatus).isActive()
+                        ||LoanStatus.fromInt(this.loanStatus).isApproved())
                 && isDisbursementAllowed();
     }
 
