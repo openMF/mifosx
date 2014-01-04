@@ -1791,6 +1791,25 @@ public class Loan extends AbstractPersistable<Long> {
         return details;
     }
     
+    private BigDecimal getDisbursedAmount(){
+        BigDecimal principal = BigDecimal.ZERO;
+        for(LoanDisbursementDetails disbursementDetail:this.disbursementDetails){
+            if(disbursementDetail.actualDisbursementDate() != null){
+                principal = principal.add(disbursementDetail.principal());
+            }
+        }
+        return principal;
+    }
+    
+    private void removeDisbursementDetail(){
+        Set<LoanDisbursementDetails> details = new HashSet<LoanDisbursementDetails>(this.disbursementDetails);
+        for(LoanDisbursementDetails disbursementDetail:details){
+            if(disbursementDetail.actualDisbursementDate() == null){
+                this.disbursementDetails.remove(disbursementDetail);
+            }
+        }
+    }
+    
     private boolean isDisbursementAllowed(){
         boolean isAllowed = false;
         for(LoanDisbursementDetails disbursementDetail:this.disbursementDetails){
@@ -2461,7 +2480,9 @@ public class Loan extends AbstractPersistable<Long> {
 
     public LoanTransaction closeAsWrittenOff(final JsonCommand command, final LoanLifecycleStateMachine loanLifecycleStateMachine,
             final Map<String, Object> changes, final List<Long> existingTransactionIds, final List<Long> existingReversedTransactionIds,
-            final AppUser currentUser) {
+            final AppUser currentUser,final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency currency, 
+            final LocalDate calculatedRepaymentsStartingFromDate, final boolean isHolidayEnabled, final List<Holiday> holidays,
+            final WorkingDays workingDays) {
 
         validateAccountStatus(LoanEvent.WRITE_OFF_OUTSTANDING);
         
@@ -2498,6 +2519,11 @@ public class Loan extends AbstractPersistable<Long> {
                 final String errorMessage = "The date on which a loan is written off cannot be in the future.";
                 throw new InvalidLoanStateTransitionException("writeoff", "cannot.be.a.future.date", errorMessage, writtenOffOnLocalDate);
             }
+            
+            final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
+                    .determineProcessor(this.transactionProcessingStrategy);
+            reprocessLoanForWriteoff(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled, holidays,
+                    workingDays, loanRepaymentScheduleTransactionProcessor);
 
             loanTransaction = LoanTransaction.writeoff(this, getOffice(), writtenOffOnLocalDate, txnExternalId);
             final boolean isLastTransaction = isChronologicallyLatestTransaction(loanTransaction, this.loanTransactions);
@@ -2509,8 +2535,6 @@ public class Loan extends AbstractPersistable<Long> {
 
             this.loanTransactions.add(loanTransaction);
 
-            final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
-                    .determineProcessor(this.transactionProcessingStrategy);
             loanRepaymentScheduleTransactionProcessor.handleWriteOff(loanTransaction, loanCurrency(), this.repaymentScheduleInstallments);
 
             updateLoanSummaryDerivedFields();
@@ -2519,8 +2543,26 @@ public class Loan extends AbstractPersistable<Long> {
         return loanTransaction;
     }
 
+    private void reprocessLoanForWriteoff(final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency currency,
+            final LocalDate calculatedRepaymentsStartingFromDate, final boolean isHolidayEnabled, final List<Holiday> holidays,
+            final WorkingDays workingDays, final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor) {
+        if(isDisbursementAllowed()){
+            this.loanRepaymentScheduleDetail.setPrincipal(getDisbursedAmount());
+            removeDisbursementDetail();
+            regenerateRepaymentSchedule(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled,
+                    holidays, workingDays);
+   
+            final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
+            loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(),
+                    allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, setOfLoanCharges());
+        }
+    }
+
     public LoanTransaction close(final JsonCommand command, final LoanLifecycleStateMachine loanLifecycleStateMachine,
-            final Map<String, Object> changes, final List<Long> existingTransactionIds, final List<Long> existingReversedTransactionIds) {
+            final Map<String, Object> changes, final List<Long> existingTransactionIds, final List<Long> existingReversedTransactionIds,
+            final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency currency, 
+            final LocalDate calculatedRepaymentsStartingFromDate, final boolean isHolidayEnabled, final List<Holiday> holidays,
+            final WorkingDays workingDays) {
         
         validateAccountStatus(LoanEvent.LOAN_CLOSED);
         
@@ -2558,7 +2600,10 @@ public class Loan extends AbstractPersistable<Long> {
                     changes.put("status", LoanEnumerations.status(this.loanStatus));
                 }
                 this.closedOnDate = closureDate.toDate();
-
+                final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
+                        .determineProcessor(this.transactionProcessingStrategy);
+                reprocessLoanForWriteoff(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled, holidays,
+                        workingDays, loanRepaymentScheduleTransactionProcessor);
                 loanTransaction = LoanTransaction.writeoff(this, getOffice(), closureDate, txnExternalId);
                 final boolean isLastTransaction = isChronologicallyLatestTransaction(loanTransaction, this.loanTransactions);
                 if (!isLastTransaction) {
@@ -2569,8 +2614,6 @@ public class Loan extends AbstractPersistable<Long> {
 
                 this.loanTransactions.add(loanTransaction);
 
-                final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
-                        .determineProcessor(this.transactionProcessingStrategy);
                 loanRepaymentScheduleTransactionProcessor.handleWriteOff(loanTransaction, loanCurrency(),
                         this.repaymentScheduleInstallments);
 
@@ -3213,6 +3256,9 @@ public class Loan extends AbstractPersistable<Long> {
     }
 
     public Integer getLoanProductLoanCounter() {
+        if(this.loanProductCounter == null){
+            return 0;
+        }
         return this.loanProductCounter;
     }
 
