@@ -197,6 +197,7 @@ public class LoanScheduleAssembler {
         final Money inArrearsToleranceMoney = Money.of(currency, inArrearsTolerance);
         
         final BigDecimal emiAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanApiConstants.emiAmountParameterName, element);
+        final BigDecimal maxOutstandingBalance = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanApiConstants.maxOutstandingBalanceParameterName, element);
         
         final List<DisbursementData>  disbursementDatas = fetchDisbursementData(element.getAsJsonObject());
         
@@ -206,7 +207,7 @@ public class LoanScheduleAssembler {
                 interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod, principalMoney,
                 expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate, graceOnPrincipalPayment,
                 graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsToleranceMoney,loanProduct.isMultiDisburseLoan(),
-                emiAmount,disbursementDatas, loanProduct.outstandingLoanBalance());
+                emiAmount,disbursementDatas, maxOutstandingBalance);
     }
     
     private List<DisbursementData> fetchDisbursementData(final JsonObject command) {

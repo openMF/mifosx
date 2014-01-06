@@ -4,6 +4,9 @@ package org.mifosplatform.portfolio.loanaccount.api;
 public interface LoanApiConstants {
 
     public static final String emiAmountParameterName = "fixedEmiAmount";
+    
+    public static final String maxOutstandingBalanceParameterName = "maxOutstandingLoanBalance";
+    
     public static final String disbursementDataParameterName = "disbursementData";
     
     public static final String disbursementDateParameterName = "expectedDisbursementDate";

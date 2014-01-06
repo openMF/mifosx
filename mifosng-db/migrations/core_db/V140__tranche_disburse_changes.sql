@@ -16,4 +16,5 @@ COLLATE='utf8_general_ci'
 ENGINE=InnoDB;
 
 ALTER TABLE `m_loan`
-	ADD COLUMN `fixed_emi_amount` DECIMAL(19,6) NULL AFTER `loan_product_counter`;
+	ADD COLUMN `fixed_emi_amount` DECIMAL(19,6) NULL AFTER `loan_product_counter`,
+	ADD COLUMN `max_outstanding_loan_balance` DECIMAL(19,6) NULL DEFAULT NULL AFTER `fixed_emi_amount`;

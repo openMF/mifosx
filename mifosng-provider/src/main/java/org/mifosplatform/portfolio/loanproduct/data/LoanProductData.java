@@ -637,4 +637,9 @@ public class LoanProductData {
     public Boolean getMultiDisburseLoan() {
         return this.multiDisburseLoan;
     }
+
+    
+    public BigDecimal getOutstandingLoanBalance() {
+        return this.outstandingLoanBalance;
+    }
 }

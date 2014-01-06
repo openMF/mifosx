@@ -53,7 +53,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             "transactionProcessingStrategyId", // settings
             "calendarId", // optional
             "syncDisbursementWithMeeting",// optional
-            "linkAccountId",LoanApiConstants.disbursementDataParameterName,LoanApiConstants.emiAmountParameterName));
+            "linkAccountId",LoanApiConstants.disbursementDataParameterName,LoanApiConstants.emiAmountParameterName,
+            LoanApiConstants.maxOutstandingBalanceParameterName));
 
     private final FromJsonHelper fromApiJsonHelper;
     private final CalculateLoanScheduleQueryFromApiJsonHelper apiJsonHelper;
@@ -336,6 +337,10 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         if(this.fromApiJsonHelper.parameterExists(LoanApiConstants.emiAmountParameterName, element)){
             final BigDecimal emiAnount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanApiConstants.emiAmountParameterName, element);
             baseDataValidator.reset().parameter(LoanApiConstants.emiAmountParameterName).value(emiAnount).ignoreIfNull().positiveAmount();
+        }
+        if(this.fromApiJsonHelper.parameterExists(LoanApiConstants.maxOutstandingBalanceParameterName, element)){
+            final BigDecimal maxOutstandingBalance = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanApiConstants.maxOutstandingBalanceParameterName, element);
+            baseDataValidator.reset().parameter(LoanApiConstants.maxOutstandingBalanceParameterName).value(maxOutstandingBalance).ignoreIfNull().positiveAmount();
         }
         validateLoanMultiDisbursementdate(element, baseDataValidator, expectedDisbursementDate, principal);
         
@@ -664,6 +669,11 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         if(this.fromApiJsonHelper.parameterExists(LoanApiConstants.emiAmountParameterName, element)){
             final BigDecimal emiAnount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanApiConstants.emiAmountParameterName, element);
             baseDataValidator.reset().parameter(LoanApiConstants.emiAmountParameterName).value(emiAnount).ignoreIfNull().positiveAmount();
+        }
+        
+        if(this.fromApiJsonHelper.parameterExists(LoanApiConstants.maxOutstandingBalanceParameterName, element)){
+            final BigDecimal maxOutstandingBalance = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanApiConstants.maxOutstandingBalanceParameterName, element);
+            baseDataValidator.reset().parameter(LoanApiConstants.maxOutstandingBalanceParameterName).value(maxOutstandingBalance).ignoreIfNull().positiveAmount();
         }
         
         validateLoanMultiDisbursementdate(element, baseDataValidator, expectedDisbursementDate, principal);

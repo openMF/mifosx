@@ -287,6 +287,10 @@ public class Loan extends AbstractPersistable<Long> {
 
     @Column(name = "fixed_emi_amount", scale = 6, precision = 19, nullable = true)
     private BigDecimal fixedEmiAmount;
+    
+    @Column(name = "max_outstanding_loan_balance", scale = 6, precision = 19, nullable = false)
+    private BigDecimal maxOutstandingLoanBalance;
+
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true)
@@ -296,13 +300,14 @@ public class Loan extends AbstractPersistable<Long> {
             final LoanProduct loanProduct, final Fund fund, final Staff officer, final CodeValue loanPurpose,
             final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges,
-            final Set<LoanCollateral> collateral, final BigDecimal fixedEmiAmount, final Set<LoanDisbursementDetails> disbursementDetails) {
+            final Set<LoanCollateral> collateral, final BigDecimal fixedEmiAmount, final Set<LoanDisbursementDetails> disbursementDetails,
+            final BigDecimal maxOutstandingLoanBalance) {
         final LoanStatus status = null;
         final Group group = null;
         final Boolean syncDisbursementWithMeeting = null;
         return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting, fixedEmiAmount,
-                disbursementDetails);
+                disbursementDetails,maxOutstandingLoanBalance);
     }
 
     public static Loan newGroupLoanApplication(final String accountNo, final Group group, final Integer loanType,
@@ -310,14 +315,14 @@ public class Loan extends AbstractPersistable<Long> {
             final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges,
             final Boolean syncDisbursementWithMeeting, final BigDecimal fixedEmiAmount,
-            final Set<LoanDisbursementDetails> disbursementDetails) {
+            final Set<LoanDisbursementDetails> disbursementDetails,final BigDecimal maxOutstandingLoanBalance) {
         final LoanStatus status = null;
         final CodeValue loanPurpose = null;
         final Set<LoanCollateral> collateral = null;
         final Client client = null;
         return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting, fixedEmiAmount,
-                disbursementDetails);
+                disbursementDetails,maxOutstandingLoanBalance);
     }
 
     public static Loan newIndividualLoanApplicationFromGroup(final String accountNo, final Client client, final Group group,
@@ -325,13 +330,13 @@ public class Loan extends AbstractPersistable<Long> {
             final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges,
             final Boolean syncDisbursementWithMeeting, final BigDecimal fixedEmiAmount,
-            final Set<LoanDisbursementDetails> disbursementDetails) {
+            final Set<LoanDisbursementDetails> disbursementDetails,final BigDecimal maxOutstandingLoanBalance) {
         final LoanStatus status = null;
         final CodeValue loanPurpose = null;
         final Set<LoanCollateral> collateral = null;
         return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting, fixedEmiAmount,
-                disbursementDetails);
+                disbursementDetails,maxOutstandingLoanBalance);
     }
 
     protected Loan() {
@@ -342,7 +347,8 @@ public class Loan extends AbstractPersistable<Long> {
             final Staff loanOfficer, final CodeValue loanPurpose, final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProduct loanProduct, final LoanProductRelatedDetail loanRepaymentScheduleDetail, final LoanStatus loanStatus,
             final Set<LoanCharge> loanCharges, final Set<LoanCollateral> collateral, final Boolean syncDisbursementWithMeeting,
-            final BigDecimal fixedEmiAmount, final Set<LoanDisbursementDetails> disbursementDetails) {
+            final BigDecimal fixedEmiAmount, final Set<LoanDisbursementDetails> disbursementDetails,
+            final BigDecimal maxOutstandingLoanBalance) {
 
         this.loanRepaymentScheduleDetail = loanRepaymentScheduleDetail;
         this.loanRepaymentScheduleDetail.validateRepaymentPeriodWithGraceSettings();
@@ -383,6 +389,7 @@ public class Loan extends AbstractPersistable<Long> {
 
         this.syncDisbursementWithMeeting = syncDisbursementWithMeeting;
         this.fixedEmiAmount = fixedEmiAmount;
+        this.maxOutstandingLoanBalance = maxOutstandingLoanBalance;
         this.disbursementDetails = disbursementDetails;
     }
 
@@ -1211,6 +1218,9 @@ public class Loan extends AbstractPersistable<Long> {
             if (command.isChangeInBigDecimalParameterNamed(LoanApiConstants.emiAmountParameterName, this.fixedEmiAmount)) {
                 this.fixedEmiAmount = command.bigDecimalValueOfParameterNamed(LoanApiConstants.emiAmountParameterName);
             }
+            if (command.isChangeInBigDecimalParameterNamed(LoanApiConstants.maxOutstandingBalanceParameterName, this.maxOutstandingLoanBalance)) {
+                this.maxOutstandingLoanBalance = command.bigDecimalValueOfParameterNamed(LoanApiConstants.maxOutstandingBalanceParameterName);
+            }
             if (this.disbursementDetails.isEmpty()) {
                 final String errorMessage = "For this loan product, disbursement details must be provided";
                 throw new MultiDisbursementDataRequiredException(LoanApiConstants.disbursementDataParameterName, errorMessage);
@@ -1853,7 +1863,7 @@ public class Loan extends AbstractPersistable<Long> {
                 .assembleFrom(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, getDisbursementDate(),
                         getExpectedFirstRepaymentOnDate(), calculatedRepaymentsStartingFromDate, getInArrearsTolerance(),
                         this.loanRepaymentScheduleDetail, this.loanProduct.isMultiDisburseLoan(), this.fixedEmiAmount, disbursementData,
-                        this.loanProduct.outstandingLoanBalance());
+                        this.maxOutstandingLoanBalance);
 
         final LoanScheduleModel loanSchedule = loanScheduleGenerator.generate(mc, applicationCurrency, loanApplicationTerms, this.charges,
                 isHolidayEnabled, holidays, workingDays);
@@ -2786,6 +2796,34 @@ public class Loan extends AbstractPersistable<Long> {
             disbursementDate = new LocalDate(this.actualDisbursementDate);
         }
         return disbursementDate;
+    }
+    
+    public LocalDate getExpectedDisbursedOnLocalDateForTemplate(){
+
+        LocalDate expectedDisbursementDate = null;
+        if (this.expectedDisbursementDate != null) {
+            expectedDisbursementDate = new LocalDate(this.expectedDisbursementDate);
+        }
+        
+        Collection<LoanDisbursementDetails> details = fetchUndisbursedDetail();
+        if(!details.isEmpty()){
+            for(LoanDisbursementDetails disbursementDetails:details){
+                expectedDisbursementDate = new LocalDate(disbursementDetails.expectedDisbursementDate());
+            }
+        }
+        return expectedDisbursementDate;
+    }
+    
+    public BigDecimal getDisburseAmountForTemplate(){
+        BigDecimal principal = this.loanRepaymentScheduleDetail.getPrincipal().getAmount();
+        Collection<LoanDisbursementDetails> details = fetchUndisbursedDetail();
+        if(!details.isEmpty()){
+            principal =BigDecimal.ZERO;
+            for(LoanDisbursementDetails disbursementDetails:details){
+                principal = principal.add(disbursementDetails.principal());
+            }
+        }
+        return principal;
     }
 
     public LocalDate getExpectedFirstRepaymentOnDate() {
