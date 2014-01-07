@@ -1830,6 +1830,17 @@ public class Loan extends AbstractPersistable<Long> {
         }
         return isAllowed;
     }
+    
+    private boolean atleastOnceDisbursed(){
+        boolean isDisbursed = false;
+        for(LoanDisbursementDetails disbursementDetail:this.disbursementDetails){
+            if(disbursementDetail.actualDisbursementDate() != null){
+                isDisbursed = true;
+                break;
+            }
+        }
+        return isDisbursed;
+    }
 
     private void updateLoanRepaymentPeriodsDerivedFields(final LocalDate actualDisbursementDate) {
 
@@ -2169,13 +2180,8 @@ public class Loan extends AbstractPersistable<Long> {
             }
         }
         
-        if(this.loanProduct.isMultiDisburseLoan()){
-            BigDecimal totalDisbursed = BigDecimal.ZERO;
-            for(LoanDisbursementDetails disbursementDetails:this.disbursementDetails){
-                if(disbursementDetails.actualDisbursementDate() != null){
-                    totalDisbursed = totalDisbursed.add(disbursementDetails.principal());
-                }
-            }
+        if(this.loanProduct.isMultiDisburseLoan() && adjustedTransaction == null){
+            BigDecimal totalDisbursed = getDisbursedAmount();
             if(totalDisbursed.compareTo(this.summary.getTotalPrincipalRepaid())<0){
                 final String errorMessage = "The transaction cannot be done before the loan disbursement: "
                         + getApprovedOnDate().toString();
@@ -2488,11 +2494,17 @@ public class Loan extends AbstractPersistable<Long> {
         return this.loanRepaymentScheduleDetail.getCurrency();
     }
 
-    public LoanTransaction closeAsWrittenOff(final JsonCommand command, final LoanLifecycleStateMachine loanLifecycleStateMachine,
+    public ChangedTransactionDetail closeAsWrittenOff(final JsonCommand command, final LoanLifecycleStateMachine loanLifecycleStateMachine,
             final Map<String, Object> changes, final List<Long> existingTransactionIds, final List<Long> existingReversedTransactionIds,
             final AppUser currentUser,final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency currency, 
             final LocalDate calculatedRepaymentsStartingFromDate, final boolean isHolidayEnabled, final List<Holiday> holidays,
             final WorkingDays workingDays) {
+
+        
+        final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
+                .determineProcessor(this.transactionProcessingStrategy);
+        ChangedTransactionDetail changedTransactionDetail = closeDisbursements(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled, holidays,
+                workingDays, loanRepaymentScheduleTransactionProcessor);
 
         validateAccountStatus(LoanEvent.WRITE_OFF_OUTSTANDING);
         
@@ -2530,11 +2542,6 @@ public class Loan extends AbstractPersistable<Long> {
                 throw new InvalidLoanStateTransitionException("writeoff", "cannot.be.a.future.date", errorMessage, writtenOffOnLocalDate);
             }
             
-            final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
-                    .determineProcessor(this.transactionProcessingStrategy);
-            reprocessLoanForWriteoff(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled, holidays,
-                    workingDays, loanRepaymentScheduleTransactionProcessor);
-
             loanTransaction = LoanTransaction.writeoff(this, getOffice(), writtenOffOnLocalDate, txnExternalId);
             final boolean isLastTransaction = isChronologicallyLatestTransaction(loanTransaction, this.loanTransactions);
             if (!isLastTransaction) {
@@ -2549,30 +2556,54 @@ public class Loan extends AbstractPersistable<Long> {
 
             updateLoanSummaryDerivedFields();
         }
-
-        return loanTransaction;
+        if(changedTransactionDetail == null){
+            changedTransactionDetail = new ChangedTransactionDetail();
+        }
+        changedTransactionDetail.getNewTransactionMappings().put(0L, loanTransaction);
+        return changedTransactionDetail;
     }
 
-    private void reprocessLoanForWriteoff(final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency currency,
+    private ChangedTransactionDetail closeDisbursements(final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency currency,
             final LocalDate calculatedRepaymentsStartingFromDate, final boolean isHolidayEnabled, final List<Holiday> holidays,
             final WorkingDays workingDays, final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor) {
-        if(isDisbursementAllowed()){
+        ChangedTransactionDetail changedTransactionDetail = null;
+        if(isDisbursementAllowed() && atleastOnceDisbursed()){
             this.loanRepaymentScheduleDetail.setPrincipal(getDisbursedAmount());
             removeDisbursementDetail();
             regenerateRepaymentSchedule(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled,
                     holidays, workingDays);
    
             final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
-            loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(),
+            changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(),
                     allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, setOfLoanCharges());
+            for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
+                mapEntry.getValue().updateLoan(this);
+                this.loanTransactions.add(mapEntry.getValue());
+            }
+            updateLoanSummaryDerivedFields();
+            LoanTransaction loanTransaction = findlatestTransaction();
+            doPostLoanTransactionChecks(loanTransaction.getTransactionDate(), loanLifecycleStateMachine);
         }
+        return changedTransactionDetail;
+    }
+    
+    private LoanTransaction findlatestTransaction(){
+        LoanTransaction transaction = null;
+        for(LoanTransaction loanTransaction:this.loanTransactions){
+            if(!loanTransaction.isReversed() && 
+                    (transaction == null || transaction.getTransactionDate().isBefore(loanTransaction.getTransactionDate()))){
+                transaction = loanTransaction;
+            }
+        }
+        return transaction;
     }
 
-    public LoanTransaction close(final JsonCommand command, final LoanLifecycleStateMachine loanLifecycleStateMachine,
+    public ChangedTransactionDetail close(final JsonCommand command, final LoanLifecycleStateMachine loanLifecycleStateMachine,
             final Map<String, Object> changes, final List<Long> existingTransactionIds, final List<Long> existingReversedTransactionIds,
             final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency currency, 
             final LocalDate calculatedRepaymentsStartingFromDate, final boolean isHolidayEnabled, final List<Holiday> holidays,
             final WorkingDays workingDays) {
+
         
         validateAccountStatus(LoanEvent.LOAN_CLOSED);
         
@@ -2597,6 +2628,10 @@ public class Loan extends AbstractPersistable<Long> {
             final String errorMessage = "The date on which a loan is closed cannot be in the future.";
             throw new InvalidLoanStateTransitionException("close", "cannot.be.a.future.date", errorMessage, closureDate);
         }
+        final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
+                .determineProcessor(this.transactionProcessingStrategy);
+        ChangedTransactionDetail changedTransactionDetail = closeDisbursements(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled, holidays,
+                workingDays, loanRepaymentScheduleTransactionProcessor);
 
         LoanTransaction loanTransaction = null;
         if (isOpen()) {
@@ -2610,10 +2645,6 @@ public class Loan extends AbstractPersistable<Long> {
                     changes.put("status", LoanEnumerations.status(this.loanStatus));
                 }
                 this.closedOnDate = closureDate.toDate();
-                final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
-                        .determineProcessor(this.transactionProcessingStrategy);
-                reprocessLoanForWriteoff(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled, holidays,
-                        workingDays, loanRepaymentScheduleTransactionProcessor);
                 loanTransaction = LoanTransaction.writeoff(this, getOffice(), closureDate, txnExternalId);
                 final boolean isLastTransaction = isChronologicallyLatestTransaction(loanTransaction, this.loanTransactions);
                 if (!isLastTransaction) {
@@ -2653,8 +2684,12 @@ public class Loan extends AbstractPersistable<Long> {
                 throw new InvalidLoanStateTransitionException("close", "loan.is.overpaid", errorMessage, totalLoanOverpayment.toString());
             }
         }
-
-        return loanTransaction;
+        
+       if(changedTransactionDetail == null){
+            changedTransactionDetail = new ChangedTransactionDetail();
+        }
+        changedTransactionDetail.getNewTransactionMappings().put(0L, loanTransaction);
+        return changedTransactionDetail;
     }
 
     /**
@@ -3524,7 +3559,7 @@ public class Loan extends AbstractPersistable<Long> {
                 }
             break;
             case LOAN_CLOSED:
-                if (!isClosedWrittenOff()) {
+                if (!isOpen()) {
                     final String defaultUserMessage = "Closing Loan Account is not allowed. Loan Account is not Active.";
                     final ApiParameterError error = ApiParameterError.generalError("error.msg.loan.close.account.is.not.active",
                             defaultUserMessage);
