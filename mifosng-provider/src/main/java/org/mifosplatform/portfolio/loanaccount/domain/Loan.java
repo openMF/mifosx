@@ -3559,7 +3559,7 @@ public class Loan extends AbstractPersistable<Long> {
                 }
             break;
             case LOAN_CLOSED:
-                if (!isOpen()) {
+                if (!isClosedWrittenOff()) {
                     final String defaultUserMessage = "Closing Loan Account is not allowed. Loan Account is not Active.";
                     final ApiParameterError error = ApiParameterError.generalError("error.msg.loan.close.account.is.not.active",
                             defaultUserMessage);
