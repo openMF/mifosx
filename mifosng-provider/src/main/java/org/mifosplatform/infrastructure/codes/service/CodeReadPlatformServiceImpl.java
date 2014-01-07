@@ -87,4 +87,15 @@ public class CodeReadPlatformServiceImpl implements CodeReadPlatformService {
             throw new CodeNotFoundException(codeName);
         }
     }
+    
+    @Override
+    @Cacheable(value = "codes", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat('CD')")
+    public Collection<CodeData> retrieveAllCategoryLoanPurposeCodes() {
+        this.context.authenticatedUser();
+
+        final CodeMapper rm = new CodeMapper();
+        final String sql = "select " + rm.schema() + " where c.category_id != 'Null'";
+
+        return this.jdbcTemplate.query(sql, rm, new Object[] {});
+    }
 }
