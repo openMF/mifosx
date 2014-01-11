@@ -14,18 +14,23 @@ import org.joda.time.LocalDate;
  */
 public class DisbursementData implements Comparable<DisbursementData>{
 
+    @SuppressWarnings("unused")
     private final Long id;
     private final LocalDate expectedDisbursementDate;
     private final LocalDate actualDisbursementDate;
     private final BigDecimal principal;
+    @SuppressWarnings("unused")
+    private final BigDecimal approvedPrincipal;
     
 
     public DisbursementData(Long id, final LocalDate expectedDisbursementDate,
-            final LocalDate actualDisbursementDate, final BigDecimal principalDisbursed) {
+            final LocalDate actualDisbursementDate, final BigDecimal principalDisbursed,
+            final BigDecimal approvedPrincipal) {
         this.id = id;
         this.expectedDisbursementDate = expectedDisbursementDate;
         this.actualDisbursementDate = actualDisbursementDate;
         this.principal = principalDisbursed;
+        this.approvedPrincipal = approvedPrincipal;
     }
 
     public LocalDate disbursementDate() {

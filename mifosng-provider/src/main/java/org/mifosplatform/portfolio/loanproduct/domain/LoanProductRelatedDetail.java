@@ -38,7 +38,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
     @Column(name = "principal_amount", scale = 6, precision = 19, nullable = false)
     private BigDecimal principal;
-
+    
     @Column(name = "nominal_interest_rate_per_period", scale = 6, precision = 19, nullable = false)
     private BigDecimal nominalInterestRatePerPeriod;
 

@@ -284,6 +284,9 @@ public class Loan extends AbstractPersistable<Long> {
     private LoanLifecycleStateMachine loanLifecycleStateMachine;
     @Transient
     private LoanSummaryWrapper loanSummaryWrapper;
+    
+    @Column(name = "approved_principal", scale = 6, precision = 19, nullable = false)
+    private BigDecimal approvedPrincipal;
 
     @Column(name = "fixed_emi_amount", scale = 6, precision = 19, nullable = true)
     private BigDecimal fixedEmiAmount;
@@ -391,6 +394,7 @@ public class Loan extends AbstractPersistable<Long> {
         this.fixedEmiAmount = fixedEmiAmount;
         this.maxOutstandingLoanBalance = maxOutstandingLoanBalance;
         this.disbursementDetails = disbursementDetails;
+        this.approvedPrincipal = this.loanRepaymentScheduleDetail.getPrincipal().getAmount();
     }
 
     private LoanSummary updateSummaryWithTotalFeeChargesDueAtDisbursement(final BigDecimal feeChargesDueAtDisbursement) {
@@ -1213,6 +1217,13 @@ public class Loan extends AbstractPersistable<Long> {
             actualChanges.put(loanTermFrequencyTypeParamName, newTermPeriodFrequencyType.getValue());
             this.termPeriodFrequencyType = newValue;
         }
+        
+        final String principalParamName = "principal";
+        if (command.isChangeInBigDecimalParameterNamed(principalParamName, this.approvedPrincipal)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(principalParamName);
+            this.approvedPrincipal = newValue;
+        }
+        
         if (loanProduct.isMultiDisburseLoan()) {
             updateDisbursementDetails(command, actualChanges);
             if (command.isChangeInBigDecimalParameterNamed(LoanApiConstants.emiAmountParameterName, this.fixedEmiAmount)) {
@@ -1697,16 +1708,39 @@ public class Loan extends AbstractPersistable<Long> {
 
             
             final String txnExternalId = command.stringValueOfParameterNamedAllowingNull("externalId");
-            Money disburseAmount = this.loanRepaymentScheduleDetail.getPrincipal();
+            Money disburseAmount =  this.loanRepaymentScheduleDetail.getPrincipal().zero();
+            BigDecimal principalDisbursed = command.bigDecimalValueOfParameterNamed(LoanApiConstants.principalDisbursedParameterName);
             if(this.actualDisbursementDate == null){
                 this.actualDisbursementDate = actualDisbursementDate.toDate();
             }
+            BigDecimal diff =  BigDecimal.ZERO;
             Collection<LoanDisbursementDetails> details = fetchUndisbursedDetail();
-            if(!details.isEmpty()){
-                disburseAmount = disburseAmount.zero();
-                for(LoanDisbursementDetails disbursementDetails:details){
-                    disbursementDetails.updateActualDisbursementDate(actualDisbursementDate.toDate());
-                    disburseAmount = disburseAmount.plus(disbursementDetails.principal());
+            if(principalDisbursed == null){
+                disburseAmount = this.loanRepaymentScheduleDetail.getPrincipal();
+                if(!details.isEmpty()){
+                    disburseAmount = disburseAmount.zero();
+                    for(LoanDisbursementDetails disbursementDetails:details){
+                        disbursementDetails.updateActualDisbursementDate(actualDisbursementDate.toDate());
+                        disburseAmount = disburseAmount.plus(disbursementDetails.principal());
+                    }
+                }
+            }else{
+                disburseAmount = disburseAmount.plus(principalDisbursed);
+                
+                if(details.isEmpty()){
+                    diff = this.loanRepaymentScheduleDetail.getPrincipal().minus(principalDisbursed).getAmount();
+                }else{
+                    for(LoanDisbursementDetails disbursementDetails:details){
+                        disbursementDetails.updateActualDisbursementDate(actualDisbursementDate.toDate());
+                        diff = diff.add(disbursementDetails.principal().subtract(principalDisbursed));
+                        disbursementDetails.updatePrincipal(principalDisbursed);
+                    }
+                }
+                this.loanRepaymentScheduleDetail.setPrincipal(this.loanRepaymentScheduleDetail.getPrincipal().minus(diff).getAmount());
+                if(diff.compareTo(BigDecimal.ZERO) == -1){
+                    final String errorMsg = "Loan can't be disbursed,disburse amount is exceeding approved amount ";
+                    throw new LoanDisbursalException(errorMsg, "disburse.amount.must.be.less.than.approved.amount", principalDisbursed,
+                            this.loanRepaymentScheduleDetail.getPrincipal().getAmount());
                 }
             }
             this.disbursedBy = currentUser;
@@ -1722,7 +1756,7 @@ public class Loan extends AbstractPersistable<Long> {
 
             handleDisbursementTransaction(paymentDetail, actualDisbursementDate, txnExternalId,disburseAmount);
 
-            if (isRepaymentScheduleRegenerationRequiredForDisbursement(actualDisbursementDate)) {
+            if (isRepaymentScheduleRegenerationRequiredForDisbursement(actualDisbursementDate) || diff.compareTo(BigDecimal.ZERO) !=0) {
                 regenerateRepaymentSchedule(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled,
                         holidays, workingDays);
                 updateLoanRepaymentPeriodsDerivedFields(actualDisbursementDate);
@@ -1986,9 +2020,11 @@ public class Loan extends AbstractPersistable<Long> {
             final boolean isScheduleRegenerateRequired = isRepaymentScheduleRegenerationRequiredForDisbursement(actualDisbursementDate);
             this.actualDisbursementDate = null;
             this.disbursedBy = null;
+            this.loanRepaymentScheduleDetail.setPrincipal(this.approvedPrincipal);
             if(this.loanProduct.isMultiDisburseLoan()){
                 for(final LoanDisbursementDetails details:this.disbursementDetails){
                     details.updateActualDisbursementDate(null);
+                    details.resetPrincipal();
                 }
             }
             updateLoanToPreDisbursalState();

@@ -9,6 +9,7 @@ CREATE TABLE `m_loan_disbursement_detail` (
 	`expected_disburse_date` DATETIME NOT NULL,
 	`disbursedon_date` DATETIME NULL,
 	`principal` DECIMAL(19,6) NOT NULL,
+	`approved_principal` DECIMAL(19,6) NOT NULL,
 	PRIMARY KEY (`id`),
 	CONSTRAINT `FK_loan_disbursement_detail_loan_id` FOREIGN KEY (`loan_id`) REFERENCES `m_loan` (`id`)
 )
@@ -17,4 +18,7 @@ ENGINE=InnoDB;
 
 ALTER TABLE `m_loan`
 	ADD COLUMN `fixed_emi_amount` DECIMAL(19,6) NULL AFTER `loan_product_counter`,
+	ADD COLUMN `approved_principal` DECIMAL(19,6) NOT NULL AFTER `principal_amount`,
 	ADD COLUMN `max_outstanding_loan_balance` DECIMAL(19,6) NULL DEFAULT NULL AFTER `fixed_emi_amount`;
+	
+UPDATE m_loan ml  SET ml.approved_principal = ml.principal_amount;	

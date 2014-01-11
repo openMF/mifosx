@@ -72,6 +72,7 @@ public class LoanAccountData {
     // terms
     private final CurrencyData currency;
     private final BigDecimal principal;
+    private final BigDecimal approvedPrincipal;
     private final Integer termFrequency;
     private final EnumOptionData termPeriodFrequencyType;
     private final Integer numberOfRepayments;
@@ -227,7 +228,7 @@ public class LoanAccountData {
         final BigDecimal maxOutstandingLoanBalance = null;
         return new LoanAccountData(id, accountNo, status, externalId, clientId, clientName, clientOfficeId, group, loanType, loanProductId,
                 loanProductName, loanProductDescription, fundId, fundName, loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName,
-                currencyData, principal, totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments,
+                currencyData, principal,principal, totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments,
                 repaymentEvery, repaymentFrequencyType, transactionProcessingStrategyId, transactionProcessingStrategyName,
                 amortizationType, interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType,
                 interestCalculationPeriodType, expectedFirstRepaymentOnDate, graceOnPrincipalPayment, graceOnInterestPayment,
@@ -322,7 +323,7 @@ public class LoanAccountData {
 
         return new LoanAccountData(id, accountNo, status, externalId, clientId, clientName, clientOfficeId, group, loanType, loanProductId,
                 loanProductName, loanProductDescription, fundId, fundName, loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName,
-                currencyData, principal, totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments,
+                currencyData, principal,principal, totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments,
                 repaymentEvery, repaymentFrequencyType, transactionProcessingStrategyId, transactionProcessingStrategyName,
                 amortizationType, interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType,
                 interestCalculationPeriodType, expectedFirstRepaymentOnDate, graceOnPrincipalPayment, graceOnInterestPayment,
@@ -339,7 +340,7 @@ public class LoanAccountData {
         return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, clientAcc.clientId, clientAcc.clientName,
                 clientAcc.clientOfficeId, acc.group, acc.loanType, acc.loanProductId, acc.loanProductName, acc.loanProductDescription,
                 acc.fundId, acc.fundName, acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId, acc.loanOfficerName, acc.currency,
-                acc.principal, acc.totalOverpaid, acc.inArrearsTolerance, acc.termFrequency, acc.termPeriodFrequencyType,
+                acc.principal,acc.approvedPrincipal, acc.totalOverpaid, acc.inArrearsTolerance, acc.termFrequency, acc.termPeriodFrequencyType,
                 acc.numberOfRepayments, acc.repaymentEvery, acc.repaymentFrequencyType, acc.transactionProcessingStrategyId,
                 acc.transactionProcessingStrategyName, acc.amortizationType, acc.interestRatePerPeriod, acc.interestRateFrequencyType,
                 acc.annualInterestRate, acc.interestType, acc.interestCalculationPeriodType, acc.expectedFirstRepaymentOnDate,
@@ -436,7 +437,7 @@ public class LoanAccountData {
 
         return new LoanAccountData(id, accountNo, status, externalId, clientId, clientName, clientOfficeId, group, loanType, loanProductId,
                 loanProductName, loanProductDescription, fundId, fundName, loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName,
-                currencyData, principal, totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments,
+                currencyData, principal,principal, totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments,
                 repaymentEvery, repaymentFrequencyType, transactionProcessingStrategyId, transactionProcessingStrategyName,
                 amortizationType, interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType,
                 interestCalculationPeriodType, expectedFirstRepaymentOnDate, graceOnPrincipalPayment, graceOnInterestPayment,
@@ -452,7 +453,7 @@ public class LoanAccountData {
 
         return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientName, acc.clientOfficeId,
                 groupAcc.group, acc.loanType, acc.loanProductId, acc.loanProductName, acc.loanProductDescription, acc.fundId, acc.fundName,
-                acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId, acc.loanOfficerName, acc.currency, acc.principal,
+                acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId, acc.loanOfficerName, acc.currency, acc.principal,acc.approvedPrincipal,
                 acc.totalOverpaid, acc.inArrearsTolerance, acc.termFrequency, acc.termPeriodFrequencyType, acc.numberOfRepayments,
                 acc.repaymentEvery, acc.repaymentFrequencyType, acc.transactionProcessingStrategyId, acc.transactionProcessingStrategyName,
                 acc.amortizationType, acc.interestRatePerPeriod, acc.interestRateFrequencyType, acc.annualInterestRate, acc.interestType,
@@ -569,7 +570,7 @@ public class LoanAccountData {
 
         return new LoanAccountData(id, accountNo, status, externalId, clientId, clientName, clientOfficeId, group, loanType,
                 product.getId(), product.getName(), product.getDescription(), product.getFundId(), product.getFundName(), loanPurposeId,
-                loanPurposeName, loanOfficerId, loanOfficerName, product.getCurrency(), principal, totalOverpaid,
+                loanPurposeName, loanOfficerId, loanOfficerName, product.getCurrency(), principal,principal, totalOverpaid,
                 product.getInArrearsTolerance(), termFrequency, termPeriodFrequencyType, numberOfRepayments, product.getRepaymentEvery(),
                 product.getRepaymentFrequencyType(), product.getTransactionProcessingStrategyId(), transactionProcessingStrategyName,
                 product.getAmortizationType(), interestRatePerPeriod, product.getInterestRateFrequencyType(),
@@ -618,7 +619,7 @@ public class LoanAccountData {
         return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientName, acc.clientOfficeId,
                 acc.group, acc.loanType, product.getId(), product.getName(), product.getDescription(), product.getFundId(),
                 product.getFundName(), acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId, acc.loanOfficerName,
-                product.getCurrency(), product.getPrincipal(), acc.totalOverpaid, product.getInArrearsTolerance(), termFrequency,
+                product.getCurrency(), product.getPrincipal(),product.getPrincipal(), acc.totalOverpaid, product.getInArrearsTolerance(), termFrequency,
                 termPeriodFrequencyType, product.getNumberOfRepayments(), product.getRepaymentEvery(), product.getRepaymentFrequencyType(),
                 product.getTransactionProcessingStrategyId(), product.getTransactionProcessingStrategyName(),
                 product.getAmortizationType(), product.getInterestRatePerPeriod(), product.getInterestRateFrequencyType(),
@@ -641,8 +642,9 @@ public class LoanAccountData {
             final String externalId, final Long clientId, final String clientName, final Long clientOfficeId, final GroupGeneralData group,
             final EnumOptionData loanType, final Long loanProductId, final String loanProductName, final String loanProductDescription,
             final Long fundId, final String fundName, final Long loanPurposeId, final String loanPurposeName, final Long loanOfficerId,
-            final String loanOfficerName, final CurrencyData currencyData, final BigDecimal principal, final BigDecimal totalOverpaid,
-            final BigDecimal inArrearsTolerance, final Integer termFrequency, final EnumOptionData termPeriodFrequencyType,
+            final String loanOfficerName, final CurrencyData currencyData, final BigDecimal principal,final BigDecimal approvedPrincipal,
+            final BigDecimal totalOverpaid,  final BigDecimal inArrearsTolerance, 
+            final Integer termFrequency, final EnumOptionData termPeriodFrequencyType,
             final Integer numberOfRepayments, final Integer repaymentEvery, final EnumOptionData repaymentFrequencyType,
             final Long transactionStrategyId, final String transactionStrategyName, final EnumOptionData amortizationType,
             final BigDecimal interestRatePerPeriod, final EnumOptionData interestRateFrequencyType, final BigDecimal annualInterestRate,
@@ -681,7 +683,7 @@ public class LoanAccountData {
 
         return new LoanAccountData(id, accountNo, status, externalId, clientId, clientName, clientOfficeId, group, loanType, loanProductId,
                 loanProductName, loanProductDescription, fundId, fundName, loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName,
-                currencyData, principal, totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments,
+                currencyData, principal,approvedPrincipal, totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments,
                 repaymentEvery, repaymentFrequencyType, transactionStrategyId, transactionStrategyName, amortizationType,
                 interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType, interestCalculationPeriodType,
                 expectedFirstRepaymentOnDate, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged,
@@ -712,7 +714,7 @@ public class LoanAccountData {
             final PortfolioAccountData linkedAccount,final Collection<DisbursementData> disbursementDetails) {
         return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientName, acc.clientOfficeId,
                 acc.group, acc.loanType, acc.loanProductId, acc.loanProductName, acc.loanProductDescription, acc.fundId, acc.fundName,
-                acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId, acc.loanOfficerName, acc.currency, acc.principal,
+                acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId, acc.loanOfficerName, acc.currency, acc.principal,acc.approvedPrincipal,
                 acc.totalOverpaid, acc.inArrearsTolerance, acc.termFrequency, acc.termPeriodFrequencyType, acc.numberOfRepayments,
                 acc.repaymentEvery, acc.repaymentFrequencyType, acc.transactionProcessingStrategyId, acc.transactionProcessingStrategyName,
                 acc.amortizationType, acc.interestRatePerPeriod, acc.interestRateFrequencyType, acc.annualInterestRate, acc.interestType,
@@ -740,7 +742,7 @@ public class LoanAccountData {
     public static LoanAccountData associateGroup(final LoanAccountData acc, final GroupGeneralData group) {
         return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientName, acc.clientOfficeId,
                 group, acc.loanType, acc.loanProductId, acc.loanProductName, acc.loanProductDescription, acc.fundId, acc.fundName,
-                acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId, acc.loanOfficerName, acc.currency, acc.principal,
+                acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId, acc.loanOfficerName, acc.currency, acc.principal,acc.approvedPrincipal,
                 acc.totalOverpaid, acc.inArrearsTolerance, acc.termFrequency, acc.termPeriodFrequencyType, acc.numberOfRepayments,
                 acc.repaymentEvery, acc.repaymentFrequencyType, acc.transactionProcessingStrategyId, acc.transactionProcessingStrategyName,
                 acc.amortizationType, acc.interestRatePerPeriod, acc.interestRateFrequencyType, acc.annualInterestRate, acc.interestType,
@@ -776,6 +778,7 @@ public class LoanAccountData {
             final String loanOfficerName, //
             final CurrencyData currency,
             final BigDecimal principal,
+            final BigDecimal approvedPrincipal,
             final BigDecimal totalOverpaid,
             final BigDecimal inArrearsTolerance, //
             final Integer termFrequency,
@@ -823,6 +826,7 @@ public class LoanAccountData {
         this.loanOfficerName = loanOfficerName;
         this.currency = currency;
         this.principal = principal;
+        this.approvedPrincipal = approvedPrincipal;
         this.totalOverpaid = totalOverpaid;
         this.inArrearsTolerance = inArrearsTolerance;
         this.termFrequency = termFrequency;
@@ -936,7 +940,7 @@ public class LoanAccountData {
     }
 
     public RepaymentScheduleRelatedLoanData repaymentScheduleRelatedData() {
-        return this.timeline.repaymentScheduleRelatedData(this.currency, this.principal, this.inArrearsTolerance,
+        return this.timeline.repaymentScheduleRelatedData(this.currency, this.principal,this.approvedPrincipal, this.inArrearsTolerance,
                 this.feeChargesAtDisbursementCharged);
     }
 

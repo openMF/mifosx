@@ -759,6 +759,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             BigDecimal tatalDisbursement = BigDecimal.ZERO; 
             boolean isFirstinstallmentOnExpectedDisbursementDate = false;
             final JsonArray variationArray= this.fromApiJsonHelper.extractJsonArrayNamed(LoanApiConstants.disbursementDataParameterName, element);
+            List<LocalDate> expectedDisbursementDates = new ArrayList<LocalDate>();
             if (variationArray != null && variationArray.size() > 0) {
                 int i = 0;
                 do {
@@ -769,7 +770,10 @@ public final class LoanApplicationCommandFromApiJsonHelper {
 
                     LocalDate expectedDisbursementDate =  this.fromApiJsonHelper.extractLocalDateNamed(LoanApiConstants.disbursementDateParameterName, 
                             jsonObject,dateFormat,locale);
-                    
+                    if(expectedDisbursementDates.contains(expectedDisbursementDate)){
+                        baseDataValidator.reset().parameter(LoanApiConstants.disbursementDateParameterName).failWithCode(LoanApiConstants.DISBURSEMENT_DATE_UNIQUE_ERROR);
+                    }
+                    expectedDisbursementDates.add(expectedDisbursementDate);
                     baseDataValidator.reset().parameter(LoanApiConstants.disbursementDataParameterName).parameterAtIndexArray(LoanApiConstants.disbursementPrincipalParameterName, i).value(principal).notBlank();
                     baseDataValidator.reset().parameter(LoanApiConstants.disbursementDataParameterName).parameterAtIndexArray(LoanApiConstants.disbursementDateParameterName, i).value(expectedDisbursementDate).notNull();
                     if(principal != null){
