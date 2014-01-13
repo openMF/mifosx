@@ -5398,7 +5398,11 @@ GET https://DomainName/api/v1/loans/{loanId}
     "linkedAccount":{
     	"id":1,
     	"accountNo":"000000001"
-    }
+    },
+    "disbursementDetails":[{"id":71,"expectedDisbursementDate":[2013,11,1],"principal":22000.000000,"approvedPrincipal":22000.000000}],
+    "fixedEmiAmount":1100.000000,
+    "maxOutstandingLoanBalance":35000,
+    "canDisburse":false
   }
 }
 					</code>
@@ -5823,7 +5827,9 @@ Request Body:
 							<td><div class="mifosXHeading2">Optional Fields</div></td>
 						</tr>
 						<tr class=alt>
-							<td>graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged,linkAccountId</td>
+							<td>graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged,linkAccountId,
+								fixedEmiAmount,maxOutstandingLoanBalance,disbursementData
+							</td>
 						</tr>
 					</table>
 				</div>
@@ -5853,8 +5859,12 @@ Request Body:
     "interestCalculationPeriodType": 1,
     "transactionProcessingStrategyId": 1,
     "expectedDisbursementDate": "10 Jun 2013",
-    "submittedOnDate": "10 Jun 2013"
-    "linkAccountId" : "1"
+    "submittedOnDate": "10 Jun 2013",
+    "linkAccountId" : "1",
+    "fixedEmiAmount":1100,
+    "maxOutstandingLoanBalance":"35000",
+    "disbursementData":[{"expectedDisbursementDate":"01 November 2013",
+    					"principal":22000,"approvedPrincipal":22000}]
 }
 					</code>
 					<code class="method-response">
@@ -6098,6 +6108,15 @@ Request Body:
 							<td>actualDisbursementDate</td>
 						</tr>
 					</table>
+					<br/>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Optional Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>transactionAmount</td>
+						</tr>
+					</table>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
@@ -6110,6 +6129,7 @@ Request Body:
 {
   "dateFormat": "dd MMMM yyyy",
   "locale": "en",
+  "transactionAmount":10000,
   "actualDisbursementDate": "14 May 2013",
   "paymentTypeId": "12",
   "note": "",
@@ -6147,7 +6167,8 @@ Request Body:
     },
     "locale": "en",
     "dateFormat": "dd MMMM yyyy",
-    "actualDisbursementDate": "14 May 2013"
+    "actualDisbursementDate": "14 May 2013",
+    "transactionAmount":10000
   }
 }
 					</code>
@@ -9141,7 +9162,8 @@ GET https://DomainName/api/v1/loanproducts/{productId}
         "name": "income from penalities 2",
         "glCode": "11"
       }
-    }
+    },
+    "multiDisburseLoan":true,"maxTrancheCount":3,"outstandingLoanBalance":36000.000000
   ]
 }
 					</code>
@@ -9181,7 +9203,10 @@ GET https://DomainName/api/v1/loanproducts/{productId}
 							<td>inArrearsTolerance, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, charges, paymentChannelToFundSourceMappings, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, includeInBorrowerCycle,
 							useBorrowerCycle,principalVariationsForBorrowerCycle,
 							numberOfRepaymentVariationsForBorrowerCycle,
-							interestRateVariationsForBorrowerCycle</td>
+							interestRateVariationsForBorrowerCycle,
+							multiDisburseLoan,maxTrancheCount,
+							outstandingLoanBalance
+							</td>
 						</tr>
 
 						<tr class="matrixHeadingBG">
