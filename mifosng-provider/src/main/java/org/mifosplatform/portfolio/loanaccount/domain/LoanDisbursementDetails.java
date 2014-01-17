@@ -121,4 +121,9 @@ public class LoanDisbursementDetails extends AbstractPersistable<Long> {
         return this.principal = this.approvedPrincipal;
     }
 
+    
+    public void updateExpectedDisbursementDate(Date expectedDisbursementDate) {
+        this.expectedDisbursementDate = expectedDisbursementDate;
+    }
+
 }

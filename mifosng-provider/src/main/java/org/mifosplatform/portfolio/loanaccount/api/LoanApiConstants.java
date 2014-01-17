@@ -21,4 +21,6 @@ public interface LoanApiConstants {
     public static final String disbursementIdParameterName = "id";
     
     public static final String principalDisbursedParameterName = "transactionAmount";
+    
+    public static final String ALREADY_DISBURSED = "can.not.change.disbursement.date";
 }

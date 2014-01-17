@@ -47,6 +47,8 @@ import org.mifosplatform.organisation.workingdays.domain.WorkingDaysRepositoryWr
 import org.mifosplatform.portfolio.account.PortfolioAccountType;
 import org.mifosplatform.portfolio.account.data.AccountTransferDTO;
 import org.mifosplatform.portfolio.account.data.PortfolioAccountData;
+import org.mifosplatform.portfolio.account.domain.AccountTransfer;
+import org.mifosplatform.portfolio.account.domain.AccountTransferRepository;
 import org.mifosplatform.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.mifosplatform.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.mifosplatform.portfolio.account.service.AccountTransfersWritePlatformService;
@@ -85,6 +87,7 @@ import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanAccountDomainService;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanChargeRepository;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanDisbursementDetails;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanInstallmentCharge;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanLifecycleStateMachine;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
@@ -151,6 +154,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final LoanChargeReadPlatformService LoanChargeReadPlatformService;
     private final LoanReadPlatformService loanReadPlatformService;
     private final FromJsonHelper fromApiJsonHelper;
+    private final AccountTransferRepository accountTransferRepository;
 
     @Autowired
     public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -169,7 +173,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final AccountTransfersReadPlatformService accountTransfersReadPlatformService,
             final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
             final LoanChargeReadPlatformService loanChargeReadPlatformService, final LoanReadPlatformService loanReadPlatformService,
-            final FromJsonHelper fromApiJsonHelper) {
+            final FromJsonHelper fromApiJsonHelper,final AccountTransferRepository accountTransferRepository) {
         this.context = context;
         this.loanEventApiJsonValidator = loanEventApiJsonValidator;
         this.loanAssembler = loanAssembler;
@@ -195,6 +199,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.LoanChargeReadPlatformService = loanChargeReadPlatformService;
         this.loanReadPlatformService = loanReadPlatformService;
         this.fromApiJsonHelper = fromApiJsonHelper;
+        this.accountTransferRepository = accountTransferRepository;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -1825,5 +1830,58 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         .withGroupId(loan.getGroupId()) //
         .withLoanId(loanId) //
         .build();
+    }
+    
+    @Override
+    @Transactional
+    public CommandProcessingResult updateDisbursementDateForTranche(final Long loanId,final Long disbursementId, final JsonCommand command){
+        
+        final Loan loan = this.loanAssembler.assembleFrom(loanId);
+        checkClientOrGroupActive(loan);
+        LoanDisbursementDetails  loanDisbursementDetails = loan.fetchLoanDisbursementsById(disbursementId);
+        this.loanEventApiJsonValidator.validateUpdateDisbursementDate(command.json(),loanDisbursementDetails);
+        final CalendarInstance calendarInstance = this.calendarInstanceRepository.findCalendarInstaneByLoanId(loan.getId(),
+                CalendarEntityType.LOANS.getValue());
+        final LocalDate calculatedRepaymentsStartingFromDate = getCalculatedRepaymentsStartingFromDate(loan.getDisbursementDate(), loan,
+                calendarInstance);
+        final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
+        final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loan.getOfficeId(),
+                loan.getDisbursementDate().toDate());
+        final WorkingDays workingDays = this.workingDaysRepository.findOne();
+
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+        final List<Long> existingTransactionIds = new ArrayList<Long>();
+        final List<Long> existingReversedTransactionIds = new ArrayList<Long>();
+        final Map<String, Object> changes = new LinkedHashMap<String, Object>();
+        final ChangedTransactionDetail changedTransactionDetail = loan.updateDisbursementDateForTranche(loanDisbursementDetails,command, existingTransactionIds, existingReversedTransactionIds,
+                changes,this.loanScheduleFactory,applicationCurrency, calculatedRepaymentsStartingFromDate, isHolidayEnabled, holidays, workingDays);
+        
+        this.loanRepository.saveAndFlush(loan);
+        
+        if (changedTransactionDetail != null) {
+            for (Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
+                updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
+            }
+        }
+        
+        postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds);
+        
+        return new CommandProcessingResultBuilder() //
+        .withOfficeId(loan.getOfficeId()) //
+        .withClientId(loan.getClientId()) //
+        .withGroupId(loan.getGroupId()) //
+        .withLoanId(loanId) //
+        .with(changes)
+        .build();
+
+    }
+    
+    private void updateLoanTransaction(final Long loanTransactionId, final LoanTransaction newLoanTransaction) {
+        final AccountTransfer transferTransaction = this.accountTransferRepository.findByToLoanTransactionId(loanTransactionId);
+        if (transferTransaction != null) {
+            transferTransaction.updateToLoanTransaction(newLoanTransaction);
+            this.accountTransferRepository.save(transferTransaction);
+        }
     }
 }

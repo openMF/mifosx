@@ -26,6 +26,7 @@ import org.mifosplatform.portfolio.calendar.domain.CalendarInstance;
 import org.mifosplatform.portfolio.calendar.exception.NotValidRecurringDateException;
 import org.mifosplatform.portfolio.calendar.service.CalendarUtils;
 import org.mifosplatform.portfolio.loanaccount.api.LoanApiConstants;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanDisbursementDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -345,5 +346,29 @@ public final class LoanEventApiJsonValidator {
         baseDataValidator.reset().parameter("installmentNumber").value(installmentNumber).ignoreIfNull().integerGreaterThanZero();
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
+    
+    public void validateUpdateDisbursementDate(final String json,LoanDisbursementDetails  loanDisbursementDetails) {
+
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Set<String> disbursementParameters = new HashSet<String>(Arrays.asList(LoanApiConstants.disbursementDateParameterName,"locale", "dateFormat"));
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, disbursementParameters);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan.update.disbursement");
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+        final LocalDate actualDisbursementDate = this.fromApiJsonHelper.extractLocalDateNamed(LoanApiConstants.disbursementDateParameterName, element);
+        baseDataValidator.reset().parameter(LoanApiConstants.disbursementDateParameterName).value(actualDisbursementDate).notNull();
+        
+        if(loanDisbursementDetails.actualDisbursementDate() != null){
+            baseDataValidator.reset().parameter(LoanApiConstants.disbursementDateParameterName).failWithCode(LoanApiConstants.ALREADY_DISBURSED);
+        }
+        
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
 
 }

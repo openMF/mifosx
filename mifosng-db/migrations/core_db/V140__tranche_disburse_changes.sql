@@ -22,3 +22,5 @@ ALTER TABLE `m_loan`
 	ADD COLUMN `max_outstanding_loan_balance` DECIMAL(19,6) NULL DEFAULT NULL AFTER `fixed_emi_amount`;
 	
 UPDATE m_loan ml  SET ml.approved_principal = ml.principal_amount;	
+
+INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`, `can_maker_checker`) VALUES ('portfolio', 'UPDATE_DISBURSEMENTDETAIL', 'DISBURSEMENTDETAIL', 'UPDATE', 0);

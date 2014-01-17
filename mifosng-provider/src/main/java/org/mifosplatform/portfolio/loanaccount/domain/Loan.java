@@ -3612,5 +3612,32 @@ public class Loan extends AbstractPersistable<Long> {
     public Set<LoanDisbursementDetails> getDisbursementDetails() {
         return this.disbursementDetails;
     }
+    
+    public ChangedTransactionDetail updateDisbursementDateForTranche(final LoanDisbursementDetails disbursementDetails,final JsonCommand command,final List<Long> existingTransactionIds,
+            final List<Long> existingReversedTransactionIds, final Map<String, Object> actualChanges,
+            final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency currency, 
+            final LocalDate calculatedRepaymentsStartingFromDate, final boolean isHolidayEnabled, final List<Holiday> holidays,
+            final WorkingDays workingDays){
+        final LocalDate expectedDisbursementDate = command.localDateValueOfParameterNamed(LoanApiConstants.disbursementDateParameterName);
+        disbursementDetails.updateExpectedDisbursementDate(expectedDisbursementDate.toDate());
+        actualChanges.put(LoanApiConstants.disbursementDateParameterName, command.stringValueOfParameterNamed(LoanApiConstants.disbursementDateParameterName));
+        actualChanges.put(LoanApiConstants.disbursementIdParameterName, command.stringValueOfParameterNamed(LoanApiConstants.disbursementIdParameterName));
+        existingTransactionIds.addAll(findExistingTransactionIds());
+        existingReversedTransactionIds.addAll(findExistingReversedTransactionIds());
+        regenerateRepaymentSchedule(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled,
+                holidays, workingDays);
+        
+        final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
+                .determineProcessor(this.transactionProcessingStrategy);
+        final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
+        ChangedTransactionDetail changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(),
+                allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, setOfLoanCharges());
+        for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
+            mapEntry.getValue().updateLoan(this);
+            this.loanTransactions.add(mapEntry.getValue());
+        }
+        
+        return changedTransactionDetail;
+        }
 
 }
