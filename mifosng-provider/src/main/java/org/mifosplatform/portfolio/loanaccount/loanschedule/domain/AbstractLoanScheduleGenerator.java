@@ -22,6 +22,7 @@ import org.mifosplatform.organisation.workingdays.domain.WorkingDays;
 import org.mifosplatform.portfolio.loanaccount.data.DisbursementData;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.exception.MultiDisbursementDisbursementDateException;
+import org.mifosplatform.portfolio.loanaccount.loanschedule.exception.MultiDisbursementEmiAmountException;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.exception.MultiDisbursementOutstandingAmoutException;
 
 /**
@@ -76,7 +77,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                 loanApplicationTerms.getLoanTermPeriodFrequencyType(), loanApplicationTerms.getRepaymentEvery(), firstRepaymentdate);
 
         
-        LocalDate periodStartDateApplicableForInterest = periodStartDate;
+        LocalDate periodStartDateApplicableForInterest = periodStartDate;                       
+        
         int periodNumber = 1;
         Money totalCumulativePrincipal = principalDisbursed.zero();
         Money totalCumulativeInterest = principalDisbursed.zero();
@@ -94,6 +96,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     isHolidayEnabled, holidays, workingDays);
             final int daysInPeriod = Days.daysBetween(periodStartDate, scheduledDueDate).getDays();
             if(loanApplicationTerms.isMultiDisburseLoan()){
+                loanApplicationTerms.setFixedEmiAmountForPeriod(scheduledDueDate);
                 BigDecimal disburseAmt = disbursementForPeriod(loanApplicationTerms, periodStartDate, scheduledDueDate, periods,BigDecimal.ZERO);
                 principalDisbursed = principalDisbursed.plus(disburseAmt);
                 loanApplicationTerms.setPrincipal(loanApplicationTerms.getPrincipal().plus(disburseAmt));
@@ -123,6 +126,12 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     totalCumulativeInterest, totalInterestChargedForFullLoanTerm, totalOutstandingInterestPaymentDueToGrace,
                     daysInPeriodApplicableForInterest, outstandingBalance, loanApplicationTerms, periodNumber, mc);
 
+            if(loanApplicationTerms.getFixedEmiAmount() !=null 
+                    && loanApplicationTerms.getFixedEmiAmount().compareTo(principalInterestForThisPeriod.interest().getAmount()) != 1){
+                String errorMsg = "EMI amount must be greter than : "+principalInterestForThisPeriod.interest().getAmount();
+              throw new MultiDisbursementEmiAmountException(errorMsg, principalInterestForThisPeriod.interest().getAmount(), 
+                      loanApplicationTerms.getFixedEmiAmount());   
+            }
             // update cumulative fields for principal & interest
             totalCumulativePrincipal = totalCumulativePrincipal.plus(principalInterestForThisPeriod.principal());
             totalCumulativeInterest = totalCumulativeInterest.plus(principalInterestForThisPeriod.interest());

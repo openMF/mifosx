@@ -61,8 +61,10 @@ import org.mifosplatform.portfolio.group.service.SearchParameters;
 import org.mifosplatform.portfolio.loanaccount.data.DisbursementData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanAccountData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanChargeData;
+import org.mifosplatform.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionData;
 import org.mifosplatform.portfolio.loanaccount.data.RepaymentScheduleRelatedLoanData;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanTermVariationType;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanTemplateTypeRequiredException;
 import org.mifosplatform.portfolio.loanaccount.exception.NotSupportedLoanTemplateTypeException;
 import org.mifosplatform.portfolio.loanaccount.guarantor.data.GuarantorData;
@@ -283,6 +285,7 @@ public class LoansApiResource {
         Collection<NoteData> notes = null;
         PortfolioAccountData linkedAccount = null;
         Collection<DisbursementData> disbursementData = null;
+        Collection<LoanTermVariationsData> emiAmountVariations = null;
 
         final Set<String> mandatoryResponseParameters = new HashSet<String>();
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
@@ -315,6 +318,11 @@ public class LoansApiResource {
             }
             
 
+            if(associationParameters.contains("emiAmountVariations") || associationParameters.contains("repaymentSchedule")){
+                mandatoryResponseParameters.add("emiAmountVariations");
+                emiAmountVariations = this.loanReadPlatformService.retrieveLoanTermVariations(loanId, LoanTermVariationType.EMI_AMOUNT.getValue());
+            }
+            
             if (associationParameters.contains("repaymentSchedule")) {
                 mandatoryResponseParameters.add("repaymentSchedule");
 
@@ -420,7 +428,7 @@ public class LoansApiResource {
                 charges, collateral, guarantors, meeting, productOptions, loanTermFrequencyTypeOptions, repaymentFrequencyTypeOptions,
                 repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
                 interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, allowedLoanOfficers, loanPurposeOptions,
-                loanCollateralOptions, calendarOptions, notes, accountLinkingOptions, linkedAccount, disbursementData);
+                loanCollateralOptions, calendarOptions, notes, accountLinkingOptions, linkedAccount, disbursementData,emiAmountVariations);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);

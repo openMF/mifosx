@@ -71,6 +71,7 @@ import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.loanaccount.api.LoanApiConstants;
 import org.mifosplatform.portfolio.loanaccount.command.LoanChargeCommand;
 import org.mifosplatform.portfolio.loanaccount.data.DisbursementData;
+import org.mifosplatform.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.LoanRepaymentScheduleTransactionProcessor;
 import org.mifosplatform.portfolio.loanaccount.exception.ExceedingTrancheCountException;
 import org.mifosplatform.portfolio.loanaccount.exception.InvalidLoanStateTransitionException;
@@ -298,6 +299,12 @@ public class Loan extends AbstractPersistable<Long> {
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true)
     private Set<LoanDisbursementDetails> disbursementDetails = new HashSet<LoanDisbursementDetails>();
+    
+    @OrderBy(value = "termApplicableFrom, id")
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true)
+    private final Set<LoanTermVariations> loanTermVariations = new HashSet<LoanTermVariations>();
+
 
     public static Loan newIndividualLoanApplication(final String accountNo, final Client client, final Integer loanType,
             final LoanProduct loanProduct, final Fund fund, final Staff officer, final CodeValue loanPurpose,
@@ -1755,8 +1762,14 @@ public class Loan extends AbstractPersistable<Long> {
             validateDisbursementDateIsOnHoliday(allowTransactionsOnHoliday, holidays);
 
             handleDisbursementTransaction(paymentDetail, actualDisbursementDate, txnExternalId,disburseAmount);
-
-            if (isRepaymentScheduleRegenerationRequiredForDisbursement(actualDisbursementDate) || diff.compareTo(BigDecimal.ZERO) !=0) {
+            BigDecimal emiAmount = command.bigDecimalValueOfParameterNamed(LoanApiConstants.emiAmountParameterName);
+            boolean isEmiAmountChanged = false;
+            if(this.loanProduct.isMultiDisburseLoan() && emiAmount != null && emiAmount.compareTo(retriveLastEmiAmount()) != 0){
+                LoanTermVariations loanVariationTerms = new LoanTermVariations(LoanTermVariationType.EMI_AMOUNT.getValue(),actualDisbursementDate.toDate(),emiAmount,this);
+                this.loanTermVariations.add(loanVariationTerms);
+                isEmiAmountChanged = true;
+            }
+            if (isRepaymentScheduleRegenerationRequiredForDisbursement(actualDisbursementDate) || diff.compareTo(BigDecimal.ZERO) !=0 || isEmiAmountChanged) {
                 regenerateRepaymentSchedule(loanScheduleFactory, currency, calculatedRepaymentsStartingFromDate, isHolidayEnabled,
                         holidays, workingDays);
                 updateLoanRepaymentPeriodsDerivedFields(actualDisbursementDate);
@@ -1796,7 +1809,10 @@ public class Loan extends AbstractPersistable<Long> {
                 }
                
             }
+            updateLoanSummaryDerivedFields();    
         }
+        
+
         return changedTransactionDetail;
     }
 
@@ -1903,12 +1919,26 @@ public class Loan extends AbstractPersistable<Long> {
         for (LoanDisbursementDetails disbursementDetails : this.disbursementDetails) {
             disbursementData.add(disbursementDetails.toData());
         }
+        final List<LoanTermVariationsData> loanVariationTermsData = new ArrayList<LoanTermVariationsData>();
+        boolean isDefaultEmiAmountReq = true;
+        for(LoanTermVariations variationTerms:this.loanTermVariations){
+            if(variationTerms.getTermType().isEMIAmountVariation()){
+                if(variationTerms.getTermApplicableFrom().equals(this.getDisbursementDate().toDate())){
+                    isDefaultEmiAmountReq =false;
+                }
+                loanVariationTermsData.add(variationTerms.toData());
+            }
+        }
+        if(isDefaultEmiAmountReq){
+            LoanTermVariationsData data = new LoanTermVariationsData(null, LoanEnumerations.loanvariationType(LoanTermVariationType.EMI_AMOUNT), this.getDisbursementDate(), this.fixedEmiAmount);
+            loanVariationTermsData.add(data);
+        }
 
         final LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms
                 .assembleFrom(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, getDisbursementDate(),
                         getExpectedFirstRepaymentOnDate(), calculatedRepaymentsStartingFromDate, getInArrearsTolerance(),
                         this.loanRepaymentScheduleDetail, this.loanProduct.isMultiDisburseLoan(), this.fixedEmiAmount, disbursementData,
-                        this.maxOutstandingLoanBalance);
+                        this.maxOutstandingLoanBalance,loanVariationTermsData);
 
         final LoanScheduleModel loanSchedule = loanScheduleGenerator.generate(mc, applicationCurrency, loanApplicationTerms, this.charges,
                 isHolidayEnabled, holidays, workingDays);
@@ -2020,6 +2050,7 @@ public class Loan extends AbstractPersistable<Long> {
             final boolean isScheduleRegenerateRequired = isRepaymentScheduleRegenerationRequiredForDisbursement(actualDisbursementDate);
             this.actualDisbursementDate = null;
             this.disbursedBy = null;
+            boolean isDisbueseAmtChanged = !this.approvedPrincipal.equals(this.loanRepaymentScheduleDetail.getPrincipal());
             this.loanRepaymentScheduleDetail.setPrincipal(this.approvedPrincipal);
             if(this.loanProduct.isMultiDisburseLoan()){
                 for(final LoanDisbursementDetails details:this.disbursementDetails){
@@ -2027,8 +2058,9 @@ public class Loan extends AbstractPersistable<Long> {
                     details.resetPrincipal();
                 }
             }
+            boolean isEmiAmountChanged = this.loanTermVariations.size()>0;
             updateLoanToPreDisbursalState();
-            if (isScheduleRegenerateRequired) {
+            if (isScheduleRegenerateRequired || isDisbueseAmtChanged || isEmiAmountChanged) {
                 // clear off actual disbusrement date so schedule regeneration
                 // uses expected date.
                 
@@ -2066,6 +2098,7 @@ public class Loan extends AbstractPersistable<Long> {
             currentInstallment.resetDerivedComponents();
         }
 
+        this.loanTermVariations.clear();
         final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
         wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, setOfLoanCharges());
 
@@ -3602,6 +3635,14 @@ public class Loan extends AbstractPersistable<Long> {
                     dataValidationErrors.add(error);
                 }
             break;
+            case LOAN_EDIT_MULTI_DISBURSE_DATE:
+                if (isClosed()) {
+                    final String defaultUserMessage = "Edit disbursement is not allowed. Loan Account is not active.";
+                    final ApiParameterError error = ApiParameterError.generalError(
+                            "error.msg.loan.edit.disbursement.account.is.not.active", defaultUserMessage);
+                    dataValidationErrors.add(error);
+                }
+            break;
             default:
             break;
         }
@@ -3618,6 +3659,7 @@ public class Loan extends AbstractPersistable<Long> {
             final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency currency, 
             final LocalDate calculatedRepaymentsStartingFromDate, final boolean isHolidayEnabled, final List<Holiday> holidays,
             final WorkingDays workingDays){
+        validateAccountStatus(LoanEvent.LOAN_EDIT_MULTI_DISBURSE_DATE);
         final LocalDate expectedDisbursementDate = command.localDateValueOfParameterNamed(LoanApiConstants.disbursementDateParameterName);
         disbursementDetails.updateExpectedDisbursementDate(expectedDisbursementDate.toDate());
         actualChanges.put(LoanApiConstants.disbursementDateParameterName, command.stringValueOfParameterNamed(LoanApiConstants.disbursementDateParameterName));
@@ -3639,5 +3681,19 @@ public class Loan extends AbstractPersistable<Long> {
         
         return changedTransactionDetail;
         }
+    
+    
+    public BigDecimal retriveLastEmiAmount(){
+        BigDecimal emiAmount = this.fixedEmiAmount;
+        Date startDate = this.getDisbursementDate().toDate();
+        for(LoanTermVariations loanTermVariations:this.loanTermVariations){
+            if(loanTermVariations.getTermType().isEMIAmountVariation() &&
+                    !startDate.after(loanTermVariations.getTermApplicableFrom())){
+                startDate = loanTermVariations.getTermApplicableFrom();
+                emiAmount = loanTermVariations.getTermValue();
+            }
+        }
+        return emiAmount;
+    }
 
 }

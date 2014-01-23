@@ -17,6 +17,7 @@ import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.portfolio.loanaccount.data.DisbursementData;
+import org.mifosplatform.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestMethod;
@@ -96,6 +97,8 @@ public final class LoanApplicationTerms {
     private BigDecimal fixedEmiAmount;
     
     private BigDecimal maxOutstandingBalance;
+    
+    private List<LoanTermVariationsData> emiAmountVariations;
 
     public static LoanApplicationTerms assembleFrom(final ApplicationCurrency currency, final Integer loanTermFrequency,
             final PeriodFrequencyType loanTermPeriodFrequencyType, final Integer numberOfRepayments, final Integer repaymentEvery,
@@ -107,13 +110,15 @@ public final class LoanApplicationTerms {
             final LocalDate calculatedRepaymentsStartingFromDate, final Integer graceOnPrincipalPayment,
             final Integer graceOnInterestPayment, final Integer graceOnInterestCharged, final LocalDate interestChargedFromDate,
             final Money inArrearsTolerance,final boolean multiDisburseLoan,final BigDecimal emiAmount,
-            final List<DisbursementData> disbursementDatas, final BigDecimal maxOutstandingBalance) {
+            final List<DisbursementData> disbursementDatas, final BigDecimal maxOutstandingBalance,
+            final List<LoanTermVariationsData> emiAmountVariations) {
 
         return new LoanApplicationTerms(currency, loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments, repaymentEvery,
                 repaymentPeriodFrequencyType, amortizationMethod, interestMethod, interestRatePerPeriod, interestRatePeriodFrequencyType,
                 annualNominalInterestRate, interestCalculationPeriodMethod, principalMoney, expectedDisbursementDate,
                 repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate, graceOnPrincipalPayment, graceOnInterestPayment,
-                graceOnInterestCharged, interestChargedFromDate, inArrearsTolerance, multiDisburseLoan, emiAmount, disbursementDatas, maxOutstandingBalance);
+                graceOnInterestCharged, interestChargedFromDate, inArrearsTolerance, multiDisburseLoan, emiAmount, disbursementDatas,
+                maxOutstandingBalance,emiAmountVariations);
     }
 
     public static LoanApplicationTerms assembleFrom(final ApplicationCurrency applicationCurrency, final Integer loanTermFrequency,
@@ -121,7 +126,7 @@ public final class LoanApplicationTerms {
             final LocalDate repaymentsStartingFromDate, final LocalDate calculatedRepaymentsStartingFromDate,
             final Money inArrearsTolerance, final LoanProductRelatedDetail loanProductRelatedDetail,
             final boolean multiDisburseLoan,final BigDecimal emiAmount,final List<DisbursementData> disbursementDatas, 
-            final BigDecimal maxOutstandingBalance) {
+            final BigDecimal maxOutstandingBalance,final List<LoanTermVariationsData> emiAmountVariations) {
 
         final Integer numberOfRepayments = loanProductRelatedDetail.getNumberOfRepayments();
         final Integer repaymentEvery = loanProductRelatedDetail.getRepayEvery();
@@ -146,7 +151,7 @@ public final class LoanApplicationTerms {
                 interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod, principalMoney,
                 expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate, graceOnPrincipalPayment,
                 graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsTolerance, multiDisburseLoan, 
-                emiAmount, disbursementDatas, maxOutstandingBalance);
+                emiAmount, disbursementDatas, maxOutstandingBalance,emiAmountVariations);
     }
 
     private LoanApplicationTerms(final ApplicationCurrency currency, final Integer loanTermFrequency,
@@ -159,7 +164,7 @@ public final class LoanApplicationTerms {
             final LocalDate calculatedRepaymentsStartingFromDate, final Integer principalGrace, final Integer interestPaymentGrace,
             final Integer interestChargingGrace, final LocalDate interestChargedFromDate, final Money inArrearsTolerance, 
             final boolean multiDisburseLoan,final BigDecimal emiAmount,final List<DisbursementData> disbursementDatas, 
-            final BigDecimal maxOutstandingBalance) {
+            final BigDecimal maxOutstandingBalance,final List<LoanTermVariationsData> emiAmountVariations) {
         this.currency = currency;
         this.loanTermFrequency = loanTermFrequency;
         this.loanTermPeriodFrequencyType = loanTermPeriodFrequencyType;
@@ -189,6 +194,7 @@ public final class LoanApplicationTerms {
         this.fixedEmiAmount = emiAmount;
         this.disbursementDatas = disbursementDatas;
         this.maxOutstandingBalance = maxOutstandingBalance;
+        this.emiAmountVariations = emiAmountVariations;
     }
 
     public Money adjustPrincipalIfLastRepaymentPeriod(final Money principalForPeriod, final Money totalCumulativePrincipalToDate,
@@ -831,11 +837,6 @@ public final class LoanApplicationTerms {
     }
 
     
-    public BigDecimal getEmiAmount() {
-        return this.fixedEmiAmount;
-    }
-
-    
     public Money getMaxOutstandingBalance() {
         return Money.of(getCurrency(), this.maxOutstandingBalance);
     }
@@ -843,5 +844,16 @@ public final class LoanApplicationTerms {
     
     public BigDecimal getFixedEmiAmount() {
         return this.fixedEmiAmount;
+    }
+    
+    public void setFixedEmiAmountForPeriod(LocalDate periodDate){
+        LocalDate startDate = expectedDisbursementDate;
+        for(LoanTermVariationsData loanVariationTermsData: this.emiAmountVariations){
+            if(!periodDate.isBefore(loanVariationTermsData.getTermApplicableFrom()) 
+                    && !startDate.isAfter(loanVariationTermsData.getTermApplicableFrom())){
+             this.fixedEmiAmount = loanVariationTermsData.getTermValue();
+             startDate = loanVariationTermsData.getTermApplicableFrom();
+            }
+        }
     }
 }

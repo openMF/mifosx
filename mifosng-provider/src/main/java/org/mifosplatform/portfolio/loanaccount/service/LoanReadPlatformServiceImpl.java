@@ -53,11 +53,13 @@ import org.mifosplatform.portfolio.loanaccount.data.LoanAccountData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanApplicationTimelineData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanStatusEnumData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanSummaryData;
+import org.mifosplatform.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionEnumData;
 import org.mifosplatform.portfolio.loanaccount.data.RepaymentScheduleRelatedLoanData;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanTermVariationType;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionType;
@@ -332,7 +334,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final Collection<CodeValueData> paymentOptions = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode(PaymentDetailConstants.paymentTypeCodeName);
         return new LoanTransactionData(null, null, null, transactionType, null, currencyData, earliestUnpaidInstallmentDate,
-                possibleNextRepaymentAmount.getAmount(), null, null, null, null, null, paymentOptions, null, null);
+                possibleNextRepaymentAmount.getAmount(), null, null, null, null, null, paymentOptions, null, null,null);
     }
 
     @Override
@@ -356,7 +358,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
         final BigDecimal amount = waiveOfInterest.getAmount(currency).getAmount();
         return new LoanTransactionData(null, null, null, transactionType, null, currencyData, waiveOfInterest.getTransactionDate(), amount,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
     }
 
     @Override
@@ -366,7 +368,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
         final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.WRITEOFF);
         return new LoanTransactionData(null, null, null, transactionType, null, null, DateUtils.getLocalDateOfTenant(), null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     @Override
@@ -377,7 +379,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final Collection<CodeValueData> paymentOptions = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode(PaymentDetailConstants.paymentTypeCodeName);
         return new LoanTransactionData(null, null, null, transactionType, null, null, loan.getExpectedDisbursedOnLocalDateForTemplate(), loan.getDisburseAmountForTemplate(),
-                null,null, null, null, null, paymentOptions, null, null);
+                null,null, null, null, null, paymentOptions, null, null,loan.retriveLastEmiAmount());
     }
 
     @Override
@@ -1020,7 +1022,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             }
 
             return new LoanTransactionData(id, officeId, officeName, transactionType, paymentDetailData, currencyData, date, totalAmount,
-                    principalPortion, interestPortion, feeChargesPortion, penaltyChargesPortion, overPaymentPortion, externalId, transfer);
+                    principalPortion, interestPortion, feeChargesPortion, penaltyChargesPortion, overPaymentPortion, externalId, transfer, null);
         }
     }
 
@@ -1247,5 +1249,34 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final String sql = "select " + rm.schema() + " where dd.loan_id=? and dd.id=?";
         return this.jdbcTemplate.queryForObject(sql, rm,  new Object[] { loanId,disbursementId });  
     }
+
+    @Override
+    public Collection<LoanTermVariationsData> retrieveLoanTermVariations(Long loanId, Integer termType) {
+        final LoanTermVariationsMapper rm = new LoanTermVariationsMapper();
+        final String sql = "select " + rm.schema() + " where tv.loan_id=? and tv.term_type=?";
+        return this.jdbcTemplate.query(sql, rm, new Object[] { loanId,termType });
+    }
+    
+    private static final class LoanTermVariationsMapper implements RowMapper<LoanTermVariationsData> {
+
+        public String schema() {
+            return "tv.id as id,tv.applicable_from as variationApplicableFrom,tv.term_value as termValue "
+                    + "from m_loan_term_variations tv";
+        }
+
+        @Override
+        public LoanTermVariationsData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum)
+                throws SQLException {
+            final Long id = rs.getLong("id");
+            final LocalDate variationApplicableFrom = JdbcSupport.getLocalDate(rs, "variationApplicableFrom");
+            final BigDecimal termValue = rs.getBigDecimal("termValue");
+
+            final LoanTermVariationsData loanTermVariationsData = new LoanTermVariationsData(id,LoanEnumerations.loanvariationType(LoanTermVariationType.EMI_AMOUNT),
+                    variationApplicableFrom,termValue);
+            return loanTermVariationsData;
+        }
+
+    }
+
 
 }
