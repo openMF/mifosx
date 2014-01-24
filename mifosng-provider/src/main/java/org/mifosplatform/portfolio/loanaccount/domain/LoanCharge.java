@@ -786,4 +786,9 @@ public class LoanCharge extends AbstractPersistable<Long> {
     public void setActive(boolean active) {
         this.active = active;
     }
+
+    
+    public BigDecimal amountOrPercentage() {
+        return this.amountOrPercentage;
+    }
 }
