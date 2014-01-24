@@ -352,10 +352,10 @@ public class LoanCharge extends AbstractPersistable<Long> {
                         loanCharge = percentageOf(this.amountPercentageAppliedTo);
                     }
                     this.amount = minimumAndMaximumCap(loanCharge);
-                    this.amountOutstanding = calculateOutstanding();
                break;
             }
             this.amountOrPercentage = amount;
+            this.amountOutstanding = calculateOutstanding();
             if(this.loan !=null && isInstalmentFee()){
                 final Set<LoanInstallmentCharge> chargePerInstallments = this.loan.generateInstallmentLoanCharges(this);
                 if(this.loanInstallmentCharge.isEmpty()){
