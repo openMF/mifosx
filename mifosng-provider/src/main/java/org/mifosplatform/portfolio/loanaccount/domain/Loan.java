@@ -431,7 +431,7 @@ public class Loan extends AbstractPersistable<Long> {
 
         validateChargeHasValidSpecifiedDateIfApplicable(loanCharge, getDisbursementDate(), getLastRepaymentPeriodDueDate());
 
-        this.summary = updateSummaryWithTotalFeeChargesDueAtDisbursement(deriveSumTotalOfChargesDueAtDisbursement());
+        
 
         loanCharge.update(this);
 
@@ -455,7 +455,7 @@ public class Loan extends AbstractPersistable<Long> {
         // NOTE: must add new loan charge to set of loan charges before
         // reporcessing the repayment schedule.
         this.charges.add(loanCharge);
-
+        this.summary = updateSummaryWithTotalFeeChargesDueAtDisbursement(deriveSumTotalOfChargesDueAtDisbursement());
         final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
                 .determineProcessor(this.transactionProcessingStrategy);
 
@@ -963,7 +963,7 @@ public class Loan extends AbstractPersistable<Long> {
     }
 
     public Map<String, Object> loanApplicationModification(final JsonCommand command, final Set<LoanCharge> possiblyModifedLoanCharges,
-            final Set<LoanCollateral> possiblyModifedLoanCollateralItems, final AprCalculator aprCalculator) {
+            final Set<LoanCollateral> possiblyModifedLoanCollateralItems, final AprCalculator aprCalculator, boolean isChargesModified) {
 
         final Map<String, Object> actualChanges = this.loanRepaymentScheduleDetail.updateLoanApplicationAttributes(command, aprCalculator);
         if (!actualChanges.isEmpty()) {
@@ -1141,9 +1141,7 @@ public class Loan extends AbstractPersistable<Long> {
         final String chargesParamName = "charges";
         if (command.parameterExists(chargesParamName)) {
 
-            final Set<LoanCharge> existingLoanCharges = charges();
-
-            if (!possiblyModifedLoanCharges.equals(existingLoanCharges)) {
+            if (isChargesModified) {
                 actualChanges.put(chargesParamName, getLoanCharges(possiblyModifedLoanCharges));
 
                 actualChanges.put(chargesParamName, getLoanCharges(possiblyModifedLoanCharges));
@@ -1244,6 +1242,7 @@ public class Loan extends AbstractPersistable<Long> {
 
         updateLoanSchedule(loanSchedule);
 
+        
         LoanStatus from = null;
         if (this.loanStatus != null) {
             from = LoanStatus.fromInt(this.loanStatus);
@@ -1307,6 +1306,8 @@ public class Loan extends AbstractPersistable<Long> {
                     totalChargeAmt);
             validateChargeHasValidSpecifiedDateIfApplicable(loanCharge, getDisbursementDate(), getLastRepaymentPeriodDueDate());
         }
+        
+        updateSummaryWithTotalFeeChargesDueAtDisbursement(deriveSumTotalOfChargesDueAtDisbursement());
 
         // validate if disbursement date is a holiday or a non-working day
         validateDisbursementDateIsOnNonWorkingDay(workingDays, allowTransactionsOnNonWorkingDay);

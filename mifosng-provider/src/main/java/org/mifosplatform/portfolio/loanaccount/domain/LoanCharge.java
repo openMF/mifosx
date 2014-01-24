@@ -352,10 +352,10 @@ public class LoanCharge extends AbstractPersistable<Long> {
                         loanCharge = percentageOf(this.amountPercentageAppliedTo);
                     }
                     this.amount = minimumAndMaximumCap(loanCharge);
-                    this.amountOutstanding = calculateOutstanding();
                break;
             }
             this.amountOrPercentage = amount;
+            this.amountOutstanding = calculateOutstanding();
             if(this.loan !=null && isInstalmentFee()){
                 final Set<LoanInstallmentCharge> chargePerInstallments = this.loan.generateInstallmentLoanCharges(this);
                 if(this.loanInstallmentCharge.isEmpty()){
@@ -553,6 +553,10 @@ public class LoanCharge extends AbstractPersistable<Long> {
             }
         }
         minMaxCap = percentageOf;
+        // this will round the amount value
+        if(this.loan != null && minMaxCap !=null){
+            minMaxCap = Money.of(this.loan.getCurrency(), minMaxCap).getAmount();
+        }
         return minMaxCap;
     }
 
@@ -781,5 +785,10 @@ public class LoanCharge extends AbstractPersistable<Long> {
     
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    
+    public BigDecimal amountOrPercentage() {
+        return this.amountOrPercentage;
     }
 }
