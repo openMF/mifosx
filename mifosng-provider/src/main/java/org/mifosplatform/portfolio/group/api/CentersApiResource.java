@@ -136,7 +136,7 @@ public class CentersApiResource {
         this.context.authenticatedUser().validateHasReadPermission(GroupingTypesApiConstants.CENTER_RESOURCE_NAME);
         final PaginationParameters parameters = PaginationParameters.instance(paged, offset, limit, orderBy, sortOrder);
         final SearchParameters searchParameters = SearchParameters.forGroups(sqlSearch, officeId, staffId, externalId, name, hierarchy,
-                offset, limit, orderBy, sortOrder);
+                offset, limit, orderBy, sortOrder, null);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         if (parameters.isPaged()) {
             final Page<CenterData> centers = this.centerReadPlatformService.retrievePagedAll(searchParameters, parameters);
