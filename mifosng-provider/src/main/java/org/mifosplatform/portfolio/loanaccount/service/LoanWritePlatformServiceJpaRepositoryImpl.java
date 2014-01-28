@@ -253,7 +253,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         if (!changes.isEmpty()) {
             try {
-                this.loanRepository.saveAndFlush(loan);
+                this.loanRepository.saveAndFlush(loan);  
             } catch (final DataIntegrityViolationException e) {
                 final Throwable realCause = e.getCause();
                 final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();

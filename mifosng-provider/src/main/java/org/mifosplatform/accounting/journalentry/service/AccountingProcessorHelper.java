@@ -41,6 +41,7 @@ import org.mifosplatform.organisation.office.domain.OfficeRepository;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionEnumData;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionRepository;
+import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetail;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountTransactionEnumData;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccountTransaction;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccountTransactionRepository;
@@ -498,7 +499,7 @@ public class AccountingProcessorHelper {
             loanTransaction = this.loanTransactionRepository.findOne(id);
             modifiedTransactionId = LOAN_TRANSACTION_IDENTIFIER + transactionId ;
         }
-        final JournalEntry journalEntry = JournalEntry.createNew(office, account, currencyCode, modifiedTransactionId, manualEntry,
+        final JournalEntry journalEntry = JournalEntry.createNew(office, null, account, currencyCode, modifiedTransactionId, manualEntry,
                 transactionDate, JournalEntryType.CREDIT, amount, null, PortfolioProductType.LOAN.getValue(), loanId, null, 
                 loanTransaction, savingsAccountTransaction);
         this.glJournalEntryRepository.saveAndFlush(journalEntry);
@@ -515,7 +516,7 @@ public class AccountingProcessorHelper {
             savingsAccountTransaction = this.savingsAccountTransactionRepository.findOne(id);
             modifiedTransactionId = SAVINGS_TRANSACTION_IDENTIFIER + transactionId;
         }
-        final JournalEntry journalEntry = JournalEntry.createNew(office, account, currencyCode, modifiedTransactionId, manualEntry,
+        final JournalEntry journalEntry = JournalEntry.createNew(office, null, account, currencyCode, modifiedTransactionId, manualEntry,
                 transactionDate, JournalEntryType.CREDIT, amount, null, PortfolioProductType.SAVING.getValue(), savingsId, null, 
                 loanTransaction, savingsAccountTransaction);
         this.glJournalEntryRepository.saveAndFlush(journalEntry);
@@ -532,7 +533,7 @@ public class AccountingProcessorHelper {
             loanTransaction = this.loanTransactionRepository.findOne(id);
             modifiedTransactionId = LOAN_TRANSACTION_IDENTIFIER + transactionId;
         }
-        final JournalEntry journalEntry = JournalEntry.createNew(office, account, currencyCode, modifiedTransactionId, manualEntry,
+        final JournalEntry journalEntry = JournalEntry.createNew(office, null, account, currencyCode, modifiedTransactionId, manualEntry,
                 transactionDate, JournalEntryType.DEBIT, amount, null, PortfolioProductType.LOAN.getValue(), loanId, null, 
                 loanTransaction, savingsAccountTransaction);
         this.glJournalEntryRepository.saveAndFlush(journalEntry);
@@ -549,7 +550,7 @@ public class AccountingProcessorHelper {
             savingsAccountTransaction = this.savingsAccountTransactionRepository.findOne(id);
             modifiedTransactionId = SAVINGS_TRANSACTION_IDENTIFIER + transactionId ;
         }
-        final JournalEntry journalEntry = JournalEntry.createNew(office, account, currencyCode, modifiedTransactionId, manualEntry,
+        final JournalEntry journalEntry = JournalEntry.createNew(office, null, account, currencyCode, modifiedTransactionId, manualEntry,
                 transactionDate, JournalEntryType.DEBIT, amount, null, PortfolioProductType.SAVING.getValue(), savingsId, null, 
                 loanTransaction, savingsAccountTransaction);
         this.glJournalEntryRepository.saveAndFlush(journalEntry);

@@ -7,7 +7,10 @@ package org.mifosplatform.accounting.journalentry.serialization;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -17,6 +20,8 @@ import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.journalentry.api.JournalEntryJsonInputParams;
 import org.mifosplatform.accounting.journalentry.command.JournalEntryCommand;
 import org.mifosplatform.accounting.journalentry.command.SingleDebitOrCreditEntryCommand;
+import org.mifosplatform.infrastructure.core.data.ApiParameterError;
+import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.serialization.AbstractFromApiJsonDeserializer;
 import org.mifosplatform.infrastructure.core.serialization.FromApiJsonDeserializer;
@@ -68,6 +73,12 @@ public final class JournalEntryCommandFromApiJsonDeserializer extends AbstractFr
 
         final BigDecimal amount = this.fromApiJsonHelper.extractBigDecimalNamed(JournalEntryJsonInputParams.AMOUNT.getValue(), element,
                 locale);
+        final Long paymentTypeId=this.fromApiJsonHelper.extractLongNamed(JournalEntryJsonInputParams.PAYMENT_TYPEID.getValue(),element);
+        final String accountNumber=this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.ACCOUNT_NUMBER.getValue(),element);
+        final String checkNumber=this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.CHECK_NUMBER.getValue(),element);
+        final String receiptNumber=this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.RECEIPT_NUMBER.getValue(),element);
+        final String bankNumber=this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.BANK_NUMBER.getValue(),element);
+        final String routingCode=this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.ROUTING_CODE.getValue(),element);
 
         SingleDebitOrCreditEntryCommand[] credits = null;
         SingleDebitOrCreditEntryCommand[] debits = null;
@@ -82,10 +93,10 @@ public final class JournalEntryCommandFromApiJsonDeserializer extends AbstractFr
             }
         }
         return new JournalEntryCommand(officeId, currencyCode, transactionDate, comments, credits, debits, referenceNumber,
-                accountingRuleId, amount);
+                accountingRuleId, amount, paymentTypeId, accountNumber, checkNumber, receiptNumber, bankNumber, routingCode);
     }
-
-    /**
+    
+     /**
      * @param comments
      * @param topLevelJsonElement
      * @param locale
