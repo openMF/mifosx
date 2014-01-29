@@ -170,6 +170,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
                     .build();
         } catch (final DataIntegrityViolationException dve) {
             handleDataIntegrityIssues(command, dve);
+
             return CommandProcessingResult.empty();
         }
     }

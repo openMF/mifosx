@@ -91,14 +91,16 @@ public class AuthenticationApiResource {
             final EnumOptionData organisationalRole = principal.organisationalRoleData();
 
             if(this.springSecurityPlatformSecurityContext.doesPasswordHasToBeRenewed(principal)){
+                //throw new ResetPasswordException(principal.getId());
+                authenticatedUserData = new AuthenticatedUserData(username,principal.getId(), new String(base64EncodedAuthenticationKey));
+            }
+            else{
 
-                logger.debug("Here user need to update his password so we should except");
-                throw new ResetPasswordException();
-
+                authenticatedUserData = new AuthenticatedUserData(username, officeId, officeName, staffId, staffDisplayName,
+                        organisationalRole, roles, permissions, principal.getId(), new String(base64EncodedAuthenticationKey));
             }
 
-            authenticatedUserData = new AuthenticatedUserData(username, officeId, officeName, staffId, staffDisplayName,
-                    organisationalRole, roles, permissions, principal.getId(), new String(base64EncodedAuthenticationKey));
+
         }
 
         return this.apiJsonSerializerService.serialize(authenticatedUserData);

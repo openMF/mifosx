@@ -67,7 +67,7 @@ public class SpringSecurityPlatformSecurityContext implements PlatformSecurityCo
         if (currentUser == null) { throw new UnAuthenticatedUserException(); }
 
 
-        if(this.doesPasswordHasToBeRenewed(currentUser)) { throw new ResetPasswordException();}
+        if(this.doesPasswordHasToBeRenewed(currentUser)) { throw new ResetPasswordException(currentUser.getId());}
 
         return currentUser;
     }
@@ -87,7 +87,7 @@ public class SpringSecurityPlatformSecurityContext implements PlatformSecurityCo
 
         if (currentUser == null) { throw new UnAuthenticatedUserException(); }
 
-        if(this.shouldCheckForPasswordForceReset(commandWrapper) && this.doesPasswordHasToBeRenewed(currentUser)) { throw new ResetPasswordException();}
+        if(this.shouldCheckForPasswordForceReset(commandWrapper) && this.doesPasswordHasToBeRenewed(currentUser)) { throw new ResetPasswordException(currentUser.getId());}
 
         return currentUser;
 

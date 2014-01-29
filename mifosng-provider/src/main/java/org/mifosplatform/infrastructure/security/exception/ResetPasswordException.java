@@ -5,7 +5,12 @@
  */
 package org.mifosplatform.infrastructure.security.exception;
 
+import org.mifosplatform.infrastructure.core.data.ApiParameterError;
+import org.mifosplatform.infrastructure.core.exception.AbstractPlatformServiceUnavailableException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A {@link RuntimeException} that is thrown in the case where a user does not
@@ -13,7 +18,27 @@ import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidation
  */
 public class ResetPasswordException extends PlatformApiDataValidationException {
 
-    public ResetPasswordException() {
-        super("error.msg.password.outdated","The current user password is too old, it needs to be reset",null);
+
+    public ResetPasswordException(final Long userId) {
+
+        super(
+            "error.msg.password.outdated",
+            "The password of the user with id "+userId+" has expired, please reset it it",
+            new ArrayList<ApiParameterError>(){
+                {
+                    add (ApiParameterError.parameterError(
+                            "error.msg.password.outdated",
+                            "The password of the user with id "+userId+" has expired, please reset it it",
+                            "userId",userId)
+                    );
+
+                }
+            }
+
+        );
+
+
     }
+
+
 }
