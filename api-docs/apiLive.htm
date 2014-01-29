@@ -18981,7 +18981,7 @@ GET https://DomainName/api/v1/users/{userId}
 							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
 						</tr>
 						<tr class=alt>
-							<td>username, firstname, lastname, email, officeId, roles</td>
+							<td>username, firstname, lastname, email, officeId, roles, sendPasswordToEmail</td>
 						</tr>
 					</table>
 				</div>
@@ -18999,7 +18999,8 @@ Request body:
     "lastname": "User",
     "email": "whatever@mifos.org",
     "officeId": 1,
-    "roles": [2,3]
+    "roles": [2,3],
+    "sendPasswordToEmail": true
 }
 					</code>
 					<code class="method-response">
