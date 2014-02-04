@@ -65,7 +65,7 @@ public final class StaffCommandFromApiJsonDeserializer {
         if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.mobileNoParamName, element)) {
             final String mobileNo = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.mobileNoParamName, element);
             baseDataValidator.reset().parameter(ClientApiConstants.mobileNoParamName).value(mobileNo).ignoreIfNull()
-                    .notExceedingLengthOf(50);
+                    .notExceedingLengthOf(50).matchesRegularExpression("[+](\\d{1}||\\d{2}||\\d{3})-\\d{10}");
         }
 
         if (this.fromApiJsonHelper.parameterExists("isLoanOfficer", element)) {
@@ -108,7 +108,7 @@ public final class StaffCommandFromApiJsonDeserializer {
 
         if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.mobileNoParamName, element)) {
             final String mobileNo = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.mobileNoParamName, element);
-            baseDataValidator.reset().parameter(ClientApiConstants.mobileNoParamName).value(mobileNo).notExceedingLengthOf(50);
+            baseDataValidator.reset().parameter(ClientApiConstants.mobileNoParamName).value(mobileNo).notExceedingLengthOf(50).matchesRegularExpression("[+](\\d{1}||\\d{2}||\\d{3})-\\d{10}");
         }
 
         if (this.fromApiJsonHelper.parameterExists("isLoanOfficer", element)) {
