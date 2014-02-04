@@ -84,6 +84,31 @@ public class SavingsEnumerations {
                 optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.ANNUAL_FEE.getValue().longValue(),
                         SavingsAccountTransactionType.ANNUAL_FEE.getCode(), "Annual fee");
             break;
+            case APPROVE_TRANSFER:
+                optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.APPROVE_TRANSFER.getValue().longValue(),
+                        SavingsAccountTransactionType.APPROVE_TRANSFER.getCode(), "Transfer approved");
+            break;
+            case INITIATE_TRANSFER:
+                optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.INITIATE_TRANSFER.getValue().longValue(),
+                        SavingsAccountTransactionType.INITIATE_TRANSFER.getCode(), "Transfer initiated");
+            break;
+            case REJECT_TRANSFER:
+                optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.REJECT_TRANSFER.getValue().longValue(),
+                        SavingsAccountTransactionType.REJECT_TRANSFER.getCode(), "Transfer Rejected");
+            break;
+            case WITHDRAW_TRANSFER:
+                optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.WITHDRAW_TRANSFER.getValue().longValue(),
+                        SavingsAccountTransactionType.WITHDRAW_TRANSFER.getCode(), "Transfer Withdrawn");
+            break;
+            default:
+            case PAY_CHARGE:
+                optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.PAY_CHARGE.getValue().longValue(),
+                        SavingsAccountTransactionType.PAY_CHARGE.getCode(), "Pay Charge");
+            break;
+            case WAIVE_CHARGES:
+                optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.WAIVE_CHARGES.getValue().longValue(),
+                        SavingsAccountTransactionType.WAIVE_CHARGES.getCode(), "Waive Charge");
+            break;
         }
         return optionData;
     }
@@ -100,46 +125,61 @@ public class SavingsEnumerations {
         final boolean isWithdrawnByApplicant = type.isApplicationWithdrawnByApplicant();
         final boolean isActive = type.isActive();
         final boolean isClosed = type.isClosed();
+        final boolean isTransferInProgress = type.isTransferInProgress();
+        final boolean isTransferOnHold = type.isTransferOnHold();
 
         SavingsAccountStatusEnumData optionData = new SavingsAccountStatusEnumData(SavingsAccountStatusType.INVALID.getValue().longValue(),
                 SavingsAccountStatusType.INVALID.getCode(), "Invalid", submittedAndPendingApproval, isApproved, isRejected,
-                isWithdrawnByApplicant, isActive, isClosed);
+                isWithdrawnByApplicant, isActive, isClosed, isTransferInProgress, isTransferOnHold);
 
         switch (type) {
             case INVALID:
                 optionData = new SavingsAccountStatusEnumData(SavingsAccountStatusType.INVALID.getValue().longValue(),
                         SavingsAccountStatusType.INVALID.getCode(), "Invalid", submittedAndPendingApproval, isApproved, isRejected,
-                        isWithdrawnByApplicant, isActive, isClosed);
+                        isWithdrawnByApplicant, isActive, isClosed, isTransferInProgress, isTransferOnHold);
             break;
             case SUBMITTED_AND_PENDING_APPROVAL:
                 optionData = new SavingsAccountStatusEnumData(SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL.getValue()
                         .longValue(), SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL.getCode(), "Submitted and pending approval",
-                        submittedAndPendingApproval, isApproved, isRejected, isWithdrawnByApplicant, isActive, isClosed);
+                        submittedAndPendingApproval, isApproved, isRejected, isWithdrawnByApplicant, isActive, isClosed,
+                        isTransferInProgress, isTransferOnHold);
             break;
             case REJECTED:
                 optionData = new SavingsAccountStatusEnumData(SavingsAccountStatusType.REJECTED.getValue().longValue(),
                         SavingsAccountStatusType.REJECTED.getCode(), "Rejected", submittedAndPendingApproval, isApproved, isRejected,
-                        isWithdrawnByApplicant, isActive, isClosed);
+                        isWithdrawnByApplicant, isActive, isClosed, isTransferInProgress, isTransferOnHold);
             break;
             case WITHDRAWN_BY_APPLICANT:
                 optionData = new SavingsAccountStatusEnumData(SavingsAccountStatusType.WITHDRAWN_BY_APPLICANT.getValue().longValue(),
                         SavingsAccountStatusType.WITHDRAWN_BY_APPLICANT.getCode(), "Withdrawn by applicant", submittedAndPendingApproval,
-                        isApproved, isRejected, isWithdrawnByApplicant, isActive, isClosed);
+                        isApproved, isRejected, isWithdrawnByApplicant, isActive, isClosed, isTransferInProgress, isTransferOnHold);
             break;
             case APPROVED:
                 optionData = new SavingsAccountStatusEnumData(SavingsAccountStatusType.APPROVED.getValue().longValue(),
                         SavingsAccountStatusType.APPROVED.getCode(), "Approved", submittedAndPendingApproval, isApproved, isRejected,
-                        isWithdrawnByApplicant, isActive, isClosed);
+                        isWithdrawnByApplicant, isActive, isClosed, isTransferInProgress, isTransferOnHold);
             break;
             case ACTIVE:
                 optionData = new SavingsAccountStatusEnumData(SavingsAccountStatusType.ACTIVE.getValue().longValue(),
                         SavingsAccountStatusType.ACTIVE.getCode(), "Active", submittedAndPendingApproval, isApproved, isRejected,
-                        isWithdrawnByApplicant, isActive, isClosed);
+                        isWithdrawnByApplicant, isActive, isClosed, isTransferInProgress, isTransferOnHold);
             break;
             case CLOSED:
                 optionData = new SavingsAccountStatusEnumData(SavingsAccountStatusType.CLOSED.getValue().longValue(),
                         SavingsAccountStatusType.CLOSED.getCode(), "Closed", submittedAndPendingApproval, isApproved, isRejected,
-                        isWithdrawnByApplicant, isActive, isClosed);
+                        isWithdrawnByApplicant, isActive, isClosed, isTransferInProgress, isTransferOnHold);
+            break;
+            case TRANSFER_IN_PROGRESS:
+                optionData = new SavingsAccountStatusEnumData(SavingsAccountStatusType.TRANSFER_IN_PROGRESS.getValue().longValue(),
+                        SavingsAccountStatusType.TRANSFER_IN_PROGRESS.getCode(), "Transfer in progress", submittedAndPendingApproval,
+                        isApproved, isRejected, isWithdrawnByApplicant, isActive, isClosed, isTransferInProgress, isTransferOnHold);
+            break;
+            case TRANSFER_ON_HOLD:
+                optionData = new SavingsAccountStatusEnumData(SavingsAccountStatusType.TRANSFER_IN_PROGRESS.getValue().longValue(),
+                        SavingsAccountStatusType.TRANSFER_ON_HOLD.getCode(), "Transfer in progress", submittedAndPendingApproval,
+                        isApproved, isRejected, isWithdrawnByApplicant, isActive, isClosed, isTransferInProgress, isTransferOnHold);
+            break;
+            default:
             break;
         }
         return optionData;

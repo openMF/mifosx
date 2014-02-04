@@ -25,6 +25,9 @@ import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityExce
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.staff.domain.Staff;
+import org.mifosplatform.portfolio.account.domain.AccountAssociations;
+import org.mifosplatform.portfolio.account.domain.AccountAssociationsRepository;
+import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
 import org.mifosplatform.portfolio.calendar.domain.Calendar;
 import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
 import org.mifosplatform.portfolio.calendar.domain.CalendarInstance;
@@ -35,12 +38,18 @@ import org.mifosplatform.portfolio.client.domain.AccountNumberGenerator;
 import org.mifosplatform.portfolio.client.domain.AccountNumberGeneratorFactory;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
+import org.mifosplatform.portfolio.client.exception.ClientNotActiveException;
 import org.mifosplatform.portfolio.collateral.domain.LoanCollateral;
 import org.mifosplatform.portfolio.collateral.service.CollateralAssembler;
 import org.mifosplatform.portfolio.fund.domain.Fund;
+import org.mifosplatform.portfolio.group.domain.Group;
+import org.mifosplatform.portfolio.group.domain.GroupRepositoryWrapper;
+import org.mifosplatform.portfolio.group.exception.GroupNotActiveException;
 import org.mifosplatform.portfolio.loanaccount.domain.DefaultLoanLifecycleStateMachine;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanChargeRepository;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanInstallmentCharge;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanLifecycleStateMachine;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleTransactionProcessorFactory;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
@@ -59,10 +68,13 @@ import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRelatedDetail;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRepository;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanTransactionProcessingStrategy;
+import org.mifosplatform.portfolio.loanproduct.exception.LinkedAccountRequiredException;
 import org.mifosplatform.portfolio.loanproduct.exception.LoanProductNotFoundException;
 import org.mifosplatform.portfolio.loanproduct.serialization.LoanProductDataValidator;
 import org.mifosplatform.portfolio.note.domain.Note;
 import org.mifosplatform.portfolio.note.domain.NoteRepository;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccountAssembler;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,9 +106,14 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     private final AprCalculator aprCalculator;
     private final AccountNumberGeneratorFactory accountIdentifierGeneratorFactory;
     private final LoanSummaryWrapper loanSummaryWrapper;
+    private final GroupRepositoryWrapper groupRepository;
     private final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory;
     private final CalendarRepository calendarRepository;
     private final CalendarInstanceRepository calendarInstanceRepository;
+    private final SavingsAccountAssembler savingsAccountAssembler;
+    private final AccountAssociationsRepository accountAssociationsRepository;
+    private final LoanChargeRepository loanChargeRepository;
+    private final LoanReadPlatformService loanReadPlatformService;
 
     @Autowired
     public LoanApplicationWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final FromJsonHelper fromJsonHelper,
@@ -107,9 +124,11 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final CollateralAssembler loanCollateralAssembler, final LoanRepository loanRepository, final NoteRepository noteRepository,
             final LoanScheduleCalculationPlatformService calculationPlatformService, final ClientRepositoryWrapper clientRepository,
             final LoanProductRepository loanProductRepository, final AccountNumberGeneratorFactory accountIdentifierGeneratorFactory,
-            final LoanSummaryWrapper loanSummaryWrapper,
+            final LoanSummaryWrapper loanSummaryWrapper, final GroupRepositoryWrapper groupRepository,
             final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory,
-            final CalendarRepository calendarRepository, final CalendarInstanceRepository calendarInstanceRepository) {
+            final CalendarRepository calendarRepository, final CalendarInstanceRepository calendarInstanceRepository,
+            final SavingsAccountAssembler savingsAccountAssembler, final AccountAssociationsRepository accountAssociationsRepository,
+            final LoanChargeRepository loanChargeRepository, final LoanReadPlatformService loanReadPlatformService) {
         this.context = context;
         this.fromJsonHelper = fromJsonHelper;
         this.loanApplicationTransitionApiJsonValidator = loanApplicationTransitionApiJsonValidator;
@@ -126,13 +145,18 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         this.loanProductRepository = loanProductRepository;
         this.accountIdentifierGeneratorFactory = accountIdentifierGeneratorFactory;
         this.loanSummaryWrapper = loanSummaryWrapper;
+        this.groupRepository = groupRepository;
         this.loanRepaymentScheduleTransactionProcessorFactory = loanRepaymentScheduleTransactionProcessorFactory;
         this.calendarRepository = calendarRepository;
         this.calendarInstanceRepository = calendarInstanceRepository;
+        this.savingsAccountAssembler = savingsAccountAssembler;
+        this.accountAssociationsRepository = accountAssociationsRepository;
+        this.loanChargeRepository = loanChargeRepository;
+        this.loanReadPlatformService = loanReadPlatformService;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
-        List<LoanStatus> allowedLoanStatuses = Arrays.asList(LoanStatus.values());
+        final List<LoanStatus> allowedLoanStatuses = Arrays.asList(LoanStatus.values());
         return new DefaultLoanLifecycleStateMachine(allowedLoanStatuses);
     }
 
@@ -140,67 +164,93 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     @Override
     public CommandProcessingResult submitApplication(final JsonCommand command) {
 
-        final AppUser currentUser = context.authenticatedUser();
+        try {
+            final AppUser currentUser = this.context.authenticatedUser();
 
-        this.fromApiJsonDeserializer.validateForCreate(command.json());
+            this.fromApiJsonDeserializer.validateForCreate(command.json());
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
-        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
 
-        final Long productId = fromJsonHelper.extractLongNamed("productId", command.parsedJson());
-        final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
-        if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
-        
-        this.loanProductCommandFromApiJsonDeserializer.validateMinMaxConstraints(command.parsedJson(), baseDataValidator, loanProduct);
-        
-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+            final Long productId = this.fromJsonHelper.extractLongNamed("productId", command.parsedJson());
+            final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
+            if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
+            if (loanProduct.useBorrowerCycle()) {
+                final Long clientId = this.fromJsonHelper.extractLongNamed("clientId", command.parsedJson());
+                final Long groupId = this.fromJsonHelper.extractLongNamed("groupId", command.parsedJson());
+                Integer cycleNumber = 0;
+                if (clientId != null) {
+                    cycleNumber = this.loanReadPlatformService.retriveLoanCounter(clientId, loanProduct.getId());
+                } else if (groupId != null) {
+                    cycleNumber = this.loanReadPlatformService.retriveLoanCounter(groupId, AccountType.GROUP.getValue(), loanProduct.getId());
+                }
+                this.loanProductCommandFromApiJsonDeserializer.validateMinMaxConstraints(command.parsedJson(), baseDataValidator,
+                        loanProduct, cycleNumber);
+            } else {
+                this.loanProductCommandFromApiJsonDeserializer.validateMinMaxConstraints(command.parsedJson(), baseDataValidator,
+                        loanProduct);
+            }
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
 
-        final Loan newLoanApplication = loanAssembler.assembleFrom(command, currentUser);
-        
-        validateSubmittedOnDate(newLoanApplication);
-        
-        final LoanProductRelatedDetail productRelatedDetail = newLoanApplication.repaymentScheduleDetail();
-        this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(newLoanApplication.getTermFrequency(), newLoanApplication.getTermPeriodFrequencyType(),
-                productRelatedDetail.getNumberOfRepayments(), productRelatedDetail.getRepayEvery(),
-                productRelatedDetail.getRepaymentPeriodFrequencyType().getValue());
-        
-        this.loanRepository.save(newLoanApplication);
+            final Loan newLoanApplication = this.loanAssembler.assembleFrom(command, currentUser);
 
-        if (newLoanApplication.isAccountNumberRequiresAutoGeneration()) {
-            final AccountNumberGenerator accountNoGenerator = this.accountIdentifierGeneratorFactory
-                    .determineLoanAccountNoGenerator(newLoanApplication.getId());
-            newLoanApplication.updateAccountNo(accountNoGenerator.generate());
+            validateSubmittedOnDate(newLoanApplication);
+
+            final LoanProductRelatedDetail productRelatedDetail = newLoanApplication.repaymentScheduleDetail();
+            this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(newLoanApplication.getTermFrequency(),
+                    newLoanApplication.getTermPeriodFrequencyType(), productRelatedDetail.getNumberOfRepayments(),
+                    productRelatedDetail.getRepayEvery(), productRelatedDetail.getRepaymentPeriodFrequencyType().getValue());
+
             this.loanRepository.save(newLoanApplication);
-        }
 
-        final String submittedOnNote = command.stringValueOfParameterNamed("submittedOnNote");
-        if (StringUtils.isNotBlank(submittedOnNote)) {
-            Note note = Note.loanNote(newLoanApplication, submittedOnNote);
-            this.noteRepository.save(note);
-        }
+            if (newLoanApplication.isAccountNumberRequiresAutoGeneration()) {
+                final AccountNumberGenerator accountNoGenerator = this.accountIdentifierGeneratorFactory
+                        .determineLoanAccountNoGenerator(newLoanApplication.getId());
+                newLoanApplication.updateAccountNo(accountNoGenerator.generate());
+                this.loanRepository.save(newLoanApplication);
+            }
 
-        // Save calendar instance
-        final Long calendarId = command.longValueOfParameterNamed("calendarId");
-        Calendar calendar = null;
-        
-        if (calendarId != null && calendarId != 0) {
-            calendar = this.calendarRepository.findOne(calendarId);
-            if (calendar == null) { throw new CalendarNotFoundException(calendarId); }
-            
-            CalendarInstance calendarInstance = new CalendarInstance(calendar, newLoanApplication.getId(),
-                    CalendarEntityType.LOANS.getValue());
-            this.calendarInstanceRepository.save(calendarInstance);
+            final String submittedOnNote = command.stringValueOfParameterNamed("submittedOnNote");
+            if (StringUtils.isNotBlank(submittedOnNote)) {
+                final Note note = Note.loanNote(newLoanApplication, submittedOnNote);
+                this.noteRepository.save(note);
+            }
+
+            // Save calendar instance
+            final Long calendarId = command.longValueOfParameterNamed("calendarId");
+            Calendar calendar = null;
+
+            if (calendarId != null && calendarId != 0) {
+                calendar = this.calendarRepository.findOne(calendarId);
+                if (calendar == null) { throw new CalendarNotFoundException(calendarId); }
+
+                final CalendarInstance calendarInstance = new CalendarInstance(calendar, newLoanApplication.getId(),
+                        CalendarEntityType.LOANS.getValue());
+                this.calendarInstanceRepository.save(calendarInstance);
+            }
+
+            // Save linked account information
+            final Long savingsAccountId = command.longValueOfParameterNamed("linkAccountId");
+            if (savingsAccountId != null) {
+                final SavingsAccount savingsAccount = this.savingsAccountAssembler.assembleFrom(savingsAccountId);
+                this.fromApiJsonDeserializer.validatelinkedSavingsAccount(savingsAccount, newLoanApplication);
+                final AccountAssociations accountAssociations = AccountAssociations.associateSavingsAccount(newLoanApplication,
+                        savingsAccount);
+                this.accountAssociationsRepository.save(accountAssociations);
+            }
+
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withEntityId(newLoanApplication.getId()) //
+                    .withOfficeId(newLoanApplication.getOfficeId()) //
+                    .withClientId(newLoanApplication.getClientId()) //
+                    .withGroupId(newLoanApplication.getGroupId()) //
+                    .withLoanId(newLoanApplication.getId()) //
+                    .build();
+        } catch (final DataIntegrityViolationException dve) {
+            handleDataIntegrityIssues(command, dve);
+            return CommandProcessingResult.empty();
         }
-        
-        
-        return new CommandProcessingResultBuilder() //
-                .withCommandId(command.commandId()) //
-                .withEntityId(newLoanApplication.getId()) //
-                .withOfficeId(newLoanApplication.getOfficeId()) //
-                .withClientId(newLoanApplication.getClientId()) //
-                .withGroupId(newLoanApplication.getGroupId()) //
-                .withLoanId(newLoanApplication.getId()) //
-                .build();
     }
 
     @Transactional
@@ -208,12 +258,13 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     public CommandProcessingResult modifyApplication(final Long loanId, final JsonCommand command) {
 
         try {
-            context.authenticatedUser();
+            this.context.authenticatedUser();
 
             this.fromApiJsonDeserializer.validateForModify(command.json());
 
             final Loan existingLoanApplication = retrieveLoanBy(loanId);
-            
+            checkClientOrGroupActive(existingLoanApplication);
+
             if (!existingLoanApplication.isSubmittedAndPendingApproval()) { throw new LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeModified(
                     loanId); }
 
@@ -224,12 +275,26 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final Map<String, Object> changes = existingLoanApplication.loanApplicationModification(command, possiblyModifedLoanCharges,
                     possiblyModifedLoanCollateralItems, this.aprCalculator);
 
+            if (changes.containsKey("expectedDisbursementDate")) {
+                this.loanAssembler.validateExpectedDisbursementForHolidayAndNonWorkingDay(existingLoanApplication);
+            }
+
             final String clientIdParamName = "clientId";
             if (changes.containsKey(clientIdParamName)) {
                 final Long clientId = command.longValueOfParameterNamed(clientIdParamName);
                 final Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
+                if (client.isNotActive()) { throw new ClientNotActiveException(clientId); }
 
                 existingLoanApplication.updateClient(client);
+            }
+
+            final String groupIdParamName = "groupId";
+            if (changes.containsKey(groupIdParamName)) {
+                final Long groupId = command.longValueOfParameterNamed(groupIdParamName);
+                final Group group = this.groupRepository.findOneWithNotFoundDetection(groupId);
+                if (group.isNotActive()) { throw new GroupNotActiveException(groupId); }
+
+                existingLoanApplication.updateGroup(group);
             }
 
             final String productIdParamName = "productId";
@@ -242,15 +307,31 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 if (!changes.containsKey("interestRateFrequencyType")) {
                     existingLoanApplication.updateInterestRateFrequencyType();
                 }
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+                final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
+                if (loanProduct.useBorrowerCycle()) {
+                    final Long clientId = this.fromJsonHelper.extractLongNamed("clientId", command.parsedJson());
+                    final Long groupId = this.fromJsonHelper.extractLongNamed("groupId", command.parsedJson());
+                    Integer cycleNumber = 0;
+                    if (clientId != null) {
+                        cycleNumber = this.loanReadPlatformService.retriveLoanCounter(clientId, loanProduct.getId());
+                    } else if (groupId != null) {
+                        cycleNumber = this.loanReadPlatformService.retriveLoanCounter(groupId, AccountType.GROUP.getValue(), loanProduct.getId());
+                    }
+                    this.loanProductCommandFromApiJsonDeserializer.validateMinMaxConstraints(command.parsedJson(), baseDataValidator,
+                            loanProduct, cycleNumber);
+                } else {
+                    this.loanProductCommandFromApiJsonDeserializer.validateMinMaxConstraints(command.parsedJson(), baseDataValidator,
+                            loanProduct);
+                }
+                if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
             }
-            
+
             validateSubmittedOnDate(existingLoanApplication);
-            // validate min and maximum constraints
-            this.fromApiJsonDeserializer.validateForModify(command.json());
             final LoanProductRelatedDetail productRelatedDetail = existingLoanApplication.repaymentScheduleDetail();
-            this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(existingLoanApplication.getTermFrequency(), existingLoanApplication.getTermPeriodFrequencyType(),
-                    productRelatedDetail.getNumberOfRepayments(), productRelatedDetail.getRepayEvery(),
-                    productRelatedDetail.getRepaymentPeriodFrequencyType().getValue());
+            this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(existingLoanApplication.getTermFrequency(),
+                    existingLoanApplication.getTermPeriodFrequencyType(), productRelatedDetail.getNumberOfRepayments(),
+                    productRelatedDetail.getRepayEvery(), productRelatedDetail.getRepaymentPeriodFrequencyType().getValue());
 
             final String fundIdParamName = "fundId";
             if (changes.containsKey(fundIdParamName)) {
@@ -282,12 +363,6 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 existingLoanApplication.updateTransactionProcessingStrategy(strategy);
             }
 
-            final String chargesParamName = "charges";
-            if (changes.containsKey(chargesParamName)) {
-                final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(command.parsedJson());
-                existingLoanApplication.updateLoanCharges(loanCharges);
-            }
-
             final String collateralParamName = "collateral";
             if (changes.containsKey(collateralParamName)) {
                 final Set<LoanCollateral> loanCollateral = this.loanCollateralAssembler.fromParsedJson(command.parsedJson());
@@ -304,12 +379,27 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 existingLoanApplication.updateLoanSchedule(loanSchedule);
             }
 
+            final String chargesParamName = "charges";
+            if (changes.containsKey(chargesParamName)) {
+                final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(command.parsedJson());
+                existingLoanApplication.updateLoanCharges(loanCharges);
+            }
+
             this.loanRepository.saveAndFlush(existingLoanApplication);
 
             final String submittedOnNote = command.stringValueOfParameterNamed("submittedOnNote");
             if (StringUtils.isNotBlank(submittedOnNote)) {
-                Note note = Note.loanNote(existingLoanApplication, submittedOnNote);
+                final Note note = Note.loanNote(existingLoanApplication, submittedOnNote);
                 this.noteRepository.save(note);
+            }
+
+            for (final LoanCharge loanCharge : existingLoanApplication.charges()) {
+                if (loanCharge.isInstalmentFee() && loanCharge.hasNoLoanInstallmentCharges()) {
+                    final Set<LoanInstallmentCharge> chargePerInstallments = existingLoanApplication
+                            .generateInstallmentLoanCharges(loanCharge);
+                    loanCharge.addLoanInstallmentCharges(chargePerInstallments);
+                    this.loanChargeRepository.save(loanCharge);
+                }
             }
 
             final Long calendarId = command.longValueOfParameterNamed("calendarId");
@@ -318,29 +408,77 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 calendar = this.calendarRepository.findOne(calendarId);
                 if (calendar == null) { throw new CalendarNotFoundException(calendarId); }
             }
-            
-            List<CalendarInstance> ciList = (List<CalendarInstance>) this.calendarInstanceRepository.findByEntityIdAndEntityTypeId(loanId,
-                    CalendarEntityType.LOANS.getValue());
+
+            final List<CalendarInstance> ciList = (List<CalendarInstance>) this.calendarInstanceRepository.findByEntityIdAndEntityTypeId(
+                    loanId, CalendarEntityType.LOANS.getValue());
             if (calendar != null) {
 
                 // For loans, allow to attach only one calendar instance per
                 // loan
                 if (ciList != null && !ciList.isEmpty()) {
-                    CalendarInstance calendarInstance = ciList.get(0);
+                    final CalendarInstance calendarInstance = ciList.get(0);
                     if (calendarInstance.getCalendar().getId() != calendar.getId()) {
                         calendarInstance.updateCalendar(calendar);
                         this.calendarInstanceRepository.saveAndFlush(calendarInstance);
                     }
                 } else {
                     // attaching new calendar
-                    CalendarInstance calendarInstance = new CalendarInstance(calendar, existingLoanApplication.getId(),
+                    final CalendarInstance calendarInstance = new CalendarInstance(calendar, existingLoanApplication.getId(),
                             CalendarEntityType.LOANS.getValue());
                     this.calendarInstanceRepository.save(calendarInstance);
                 }
 
             } else if (ciList != null && !ciList.isEmpty()) {
-                CalendarInstance calendarInstance = ciList.get(0);
+                final CalendarInstance calendarInstance = ciList.get(0);
                 this.calendarInstanceRepository.delete(calendarInstance);
+            }
+
+            // Save linked account information
+            final String linkAccountIdParamName = "linkAccountId";
+            final Long savingsAccountId = command.longValueOfParameterNamed(linkAccountIdParamName);
+            AccountAssociations accountAssociations = this.accountAssociationsRepository.findByLoanId(loanId);
+            boolean isLinkedAccPresent = false;
+            if (savingsAccountId == null) {
+                if (accountAssociations != null) {
+                    if (this.fromJsonHelper.parameterExists(linkAccountIdParamName, command.parsedJson())) {
+                        this.accountAssociationsRepository.delete(accountAssociations);
+                        changes.put(linkAccountIdParamName, null);
+                    } else {
+                        isLinkedAccPresent = true;
+                    }
+                }
+            } else {
+                isLinkedAccPresent = true;
+                boolean isModified = false;
+                if (accountAssociations == null) {
+                    isModified = true;
+                } else {
+                    final SavingsAccount savingsAccount = accountAssociations.linkedSavingsAccount();
+                    if (savingsAccount == null || savingsAccount.getId() != savingsAccountId) {
+                        isModified = true;
+                    }
+                }
+                if (isModified) {
+                    final SavingsAccount savingsAccount = this.savingsAccountAssembler.assembleFrom(savingsAccountId);
+                    this.fromApiJsonDeserializer.validatelinkedSavingsAccount(savingsAccount, existingLoanApplication);
+                    if (accountAssociations == null) {
+                        accountAssociations = AccountAssociations.associateSavingsAccount(existingLoanApplication, savingsAccount);
+                    } else {
+                        accountAssociations.updateLinkedSavingsAccount(savingsAccount);
+                    }
+                    changes.put(linkAccountIdParamName, savingsAccountId);
+                    this.accountAssociationsRepository.save(accountAssociations);
+                }
+            }
+
+            if (!isLinkedAccPresent) {
+                final Set<LoanCharge> charges = existingLoanApplication.charges();
+                for (final LoanCharge loanCharge : charges) {
+                    if (loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer()) {
+                        final String errorMessage = "one of the charges requires linked savings account for payment";
+                        throw new LinkedAccountRequiredException("loanCharge", errorMessage);
+                    }
+                }
             }
 
             return new CommandProcessingResultBuilder() //
@@ -350,7 +488,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                     .withGroupId(existingLoanApplication.getGroupId()) //
                     .withLoanId(existingLoanApplication.getId()) //
                     .with(changes).build();
-        } catch (DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             handleDataIntegrityIssues(command, dve);
             return CommandProcessingResult.empty();
         }
@@ -362,7 +500,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
      */
     private void handleDataIntegrityIssues(final JsonCommand command, final DataIntegrityViolationException dve) {
 
-        Throwable realCause = dve.getMostSpecificCause();
+        final Throwable realCause = dve.getMostSpecificCause();
         if (realCause.getMessage().contains("loan_account_no_UNIQUE")) {
 
             final String accountNo = command.stringValueOfParameterNamed("accountNo");
@@ -387,13 +525,14 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     @Override
     public CommandProcessingResult deleteApplication(final Long loanId) {
 
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
         final Loan loan = retrieveLoanBy(loanId);
+        checkClientOrGroupActive(loan);
 
         if (loan.isNotSubmittedAndPendingApproval()) { throw new LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeDeleted(loanId); }
 
-        List<Note> relatedNotes = this.noteRepository.findByLoanId(loan.getId());
+        final List<Note> relatedNotes = this.noteRepository.findByLoanId(loan.getId());
         this.noteRepository.deleteInBatch(relatedNotes);
 
         this.loanRepository.delete(loanId);
@@ -411,11 +550,12 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     @Override
     public CommandProcessingResult approveApplication(final Long loanId, final JsonCommand command) {
 
-        final AppUser currentUser = context.authenticatedUser();
+        final AppUser currentUser = this.context.authenticatedUser();
 
         this.loanApplicationTransitionApiJsonValidator.validateApproval(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
+        checkClientOrGroupActive(loan);
 
         final Map<String, Object> changes = loan.loanApplicationApproval(currentUser, command, defaultLoanLifecycleStateMachine());
         if (!changes.isEmpty()) {
@@ -423,7 +563,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             final String noteText = command.stringValueOfParameterNamed("note");
             if (StringUtils.isNotBlank(noteText)) {
-                Note note = Note.loanNote(loan, noteText);
+                final Note note = Note.loanNote(loan, noteText);
                 changes.put("note", noteText);
                 this.noteRepository.save(note);
             }
@@ -444,19 +584,20 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     @Override
     public CommandProcessingResult undoApplicationApproval(final Long loanId, final JsonCommand command) {
 
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
         this.fromApiJsonDeserializer.validateForUndo(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
+        checkClientOrGroupActive(loan);
 
         final Map<String, Object> changes = loan.undoApproval(defaultLoanLifecycleStateMachine());
         if (!changes.isEmpty()) {
             this.loanRepository.save(loan);
 
-            String noteText = command.stringValueOfParameterNamed("note");
+            final String noteText = command.stringValueOfParameterNamed("note");
             if (StringUtils.isNotBlank(noteText)) {
-                Note note = Note.loanNote(loan, noteText);
+                final Note note = Note.loanNote(loan, noteText);
                 this.noteRepository.save(note);
             }
         }
@@ -476,19 +617,20 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     @Override
     public CommandProcessingResult rejectApplication(final Long loanId, final JsonCommand command) {
 
-        final AppUser currentUser = context.authenticatedUser();
+        final AppUser currentUser = this.context.authenticatedUser();
 
         this.loanApplicationTransitionApiJsonValidator.validateRejection(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
+        checkClientOrGroupActive(loan);
 
         final Map<String, Object> changes = loan.loanApplicationRejection(currentUser, command, defaultLoanLifecycleStateMachine());
         if (!changes.isEmpty()) {
             this.loanRepository.save(loan);
 
-            String noteText = command.stringValueOfParameterNamed("note");
+            final String noteText = command.stringValueOfParameterNamed("note");
             if (StringUtils.isNotBlank(noteText)) {
-                Note note = Note.loanNote(loan, noteText);
+                final Note note = Note.loanNote(loan, noteText);
                 this.noteRepository.save(note);
             }
         }
@@ -508,20 +650,21 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     @Override
     public CommandProcessingResult applicantWithdrawsFromApplication(final Long loanId, final JsonCommand command) {
 
-        final AppUser currentUser = context.authenticatedUser();
+        final AppUser currentUser = this.context.authenticatedUser();
 
         this.loanApplicationTransitionApiJsonValidator.validateApplicantWithdrawal(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
+        checkClientOrGroupActive(loan);
 
         final Map<String, Object> changes = loan.loanApplicationWithdrawnByApplicant(currentUser, command,
                 defaultLoanLifecycleStateMachine());
         if (!changes.isEmpty()) {
             this.loanRepository.save(loan);
 
-            String noteText = command.stringValueOfParameterNamed("note");
+            final String noteText = command.stringValueOfParameterNamed("note");
             if (StringUtils.isNotBlank(noteText)) {
-                Note note = Note.loanNote(loan, noteText);
+                final Note note = Note.loanNote(loan, noteText);
                 this.noteRepository.save(note);
             }
         }
@@ -543,7 +686,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         loan.setHelpers(defaultLoanLifecycleStateMachine(), this.loanSummaryWrapper, this.loanRepaymentScheduleTransactionProcessorFactory);
         return loan;
     }
-    
+
     private void validateSubmittedOnDate(final Loan loan) {
         final LocalDate startDate = loan.loanProduct().getStartDate();
         final LocalDate closeDate = loan.loanProduct().getCloseDate();
@@ -555,11 +698,22 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             throw new LoanApplicationDateException("submitted.on.date.cannot.be.before.the.loan.product.start.date", defaultUserMessage,
                     submittedOnDate.toString(), startDate.toString());
         }
-        
+
         if (closeDate != null && submittedOnDate.isAfter(closeDate)) {
             defaultUserMessage = "submittedOnDate cannot be after the loan product closeDate.";
             throw new LoanApplicationDateException("submitted.on.date.cannot.be.after.the.loan.product.close.date", defaultUserMessage,
                     submittedOnDate.toString(), closeDate.toString());
+        }
+    }
+
+    private void checkClientOrGroupActive(final Loan loan) {
+        final Client client = loan.client();
+        if (client != null) {
+            if (client.isNotActive()) { throw new ClientNotActiveException(client.getId()); }
+        }
+        final Group group = loan.group();
+        if (group != null) {
+            if (group.isNotActive()) { throw new GroupNotActiveException(group.getId()); }
         }
     }
 

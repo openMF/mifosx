@@ -22,6 +22,10 @@ import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidation
 
 public class DateUtils {
 
+    public static Date getDateOfTenant() {
+        return getLocalDateOfTenant().toDateTimeAtStartOfDay().toDate();
+    }
+
     public static LocalDate getLocalDateOfTenant() {
 
         LocalDate today = new LocalDate();
@@ -41,22 +45,26 @@ public class DateUtils {
     public static LocalDate parseLocalDate(final String stringDate, final String pattern) {
 
         try {
-            DateTimeFormatter dateStringFormat = DateTimeFormat.forPattern(pattern);
-            DateTime dateTime = dateStringFormat.parseDateTime(stringDate);
+            final DateTimeFormatter dateStringFormat = DateTimeFormat.forPattern(pattern);
+            final DateTime dateTime = dateStringFormat.parseDateTime(stringDate);
             return dateTime.toLocalDate();
-        } catch (IllegalArgumentException e) {
-            List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
-            ApiParameterError error = ApiParameterError.parameterError("validation.msg.invalid.date.pattern", "The parameter date ("
+        } catch (final IllegalArgumentException e) {
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final ApiParameterError error = ApiParameterError.parameterError("validation.msg.invalid.date.pattern", "The parameter date ("
                     + stringDate + ") is invalid w.r.t. pattern " + pattern, "date", stringDate, pattern);
             dataValidationErrors.add(error);
             throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
                     dataValidationErrors);
         }
     }
-    
-    public static String formatToSqlDate(final Date date){
+
+    public static String formatToSqlDate(final Date date) {
         final DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
         final String formattedSqlDate = df.format(date);
         return formattedSqlDate;
+    }
+
+    public static boolean isDateInTheFuture(final LocalDate localDate){
+        return localDate.isAfter(getLocalDateOfTenant());
     }
 }

@@ -28,6 +28,8 @@ import org.mifosplatform.useradministration.domain.AppUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,10 +62,13 @@ public class OfficeWritePlatformServiceJpaRepositoryImpl implements OfficeWriteP
 
     @Transactional
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "offices", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat(#root.target.context.authenticatedUser().getOffice().getHierarchy()+'of')"),
+            @CacheEvict(value = "officesForDropdown", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat(#root.target.context.authenticatedUser().getOffice().getHierarchy()+'ofd')") })
     public CommandProcessingResult createOffice(final JsonCommand command) {
 
         try {
-            final AppUser currentUser = context.authenticatedUser();
+            final AppUser currentUser = this.context.authenticatedUser();
 
             this.fromApiJsonDeserializer.validateForCreate(command.json());
 
@@ -87,7 +92,7 @@ public class OfficeWritePlatformServiceJpaRepositoryImpl implements OfficeWriteP
                     .withEntityId(office.getId()) //
                     .withOfficeId(office.getId()) //
                     .build();
-        } catch (DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             handleOfficeDataIntegrityIssues(command, dve);
             return CommandProcessingResult.empty();
         }
@@ -95,10 +100,14 @@ public class OfficeWritePlatformServiceJpaRepositoryImpl implements OfficeWriteP
 
     @Transactional
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "offices", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat(#root.target.context.authenticatedUser().getOffice().getHierarchy()+'of')"),
+            @CacheEvict(value = "officesForDropdown", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat(#root.target.context.authenticatedUser().getOffice().getHierarchy()+'ofd')"),
+            @CacheEvict(value = "officesById", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat(#officeId)") })
     public CommandProcessingResult updateOffice(final Long officeId, final JsonCommand command) {
 
         try {
-            final AppUser currentUser = context.authenticatedUser();
+            final AppUser currentUser = this.context.authenticatedUser();
 
             this.fromApiJsonDeserializer.validateForUpdate(command.json());
 
@@ -126,7 +135,7 @@ public class OfficeWritePlatformServiceJpaRepositoryImpl implements OfficeWriteP
                     .withOfficeId(office.getId()) //
                     .with(changes) //
                     .build();
-        } catch (DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             handleOfficeDataIntegrityIssues(command, dve);
             return CommandProcessingResult.empty();
         }
@@ -136,7 +145,7 @@ public class OfficeWritePlatformServiceJpaRepositoryImpl implements OfficeWriteP
     @Override
     public CommandProcessingResult officeTransaction(final JsonCommand command) {
 
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
         this.moneyTransferCommandFromApiJsonDeserializer.validateOfficeTransfer(command.json());
 
@@ -159,7 +168,8 @@ public class OfficeWritePlatformServiceJpaRepositoryImpl implements OfficeWriteP
         final String currencyCode = command.stringValueOfParameterNamed("currencyCode");
         final ApplicationCurrency appCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currencyCode);
 
-        final MonetaryCurrency currency = new MonetaryCurrency(appCurrency.getCode(), appCurrency.getDecimalPlaces());
+        final MonetaryCurrency currency = new MonetaryCurrency(appCurrency.getCode(), appCurrency.getDecimalPlaces(),
+                appCurrency.getCurrencyInMultiplesOf());
         final Money amount = Money.of(currency, command.bigDecimalValueOfParameterNamed("transactionAmount"));
 
         final OfficeTransaction entity = OfficeTransaction.fromJson(fromOffice, toOffice, amount, command);
@@ -177,7 +187,7 @@ public class OfficeWritePlatformServiceJpaRepositoryImpl implements OfficeWriteP
     @Override
     public CommandProcessingResult deleteOfficeTransaction(final Long transactionId, final JsonCommand command) {
 
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
         this.officeTransactionRepository.delete(transactionId);
 
@@ -193,7 +203,7 @@ public class OfficeWritePlatformServiceJpaRepositoryImpl implements OfficeWriteP
      */
     private void handleOfficeDataIntegrityIssues(final JsonCommand command, final DataIntegrityViolationException dve) {
 
-        Throwable realCause = dve.getMostSpecificCause();
+        final Throwable realCause = dve.getMostSpecificCause();
         if (realCause.getMessage().contains("externalid_org")) {
             final String externalId = command.stringValueOfParameterNamed("externalId");
             throw new PlatformDataIntegrityException("error.msg.office.duplicate.externalId", "Office with externalId `" + externalId
@@ -229,5 +239,9 @@ public class OfficeWritePlatformServiceJpaRepositoryImpl implements OfficeWriteP
         }
 
         return officeToReturn;
+    }
+
+    public PlatformSecurityContext getContext() {
+        return this.context;
     }
 }

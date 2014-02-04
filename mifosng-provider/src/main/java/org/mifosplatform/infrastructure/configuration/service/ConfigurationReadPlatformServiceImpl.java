@@ -5,10 +5,6 @@
  */
 package org.mifosplatform.infrastructure.configuration.service;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-
 import org.mifosplatform.infrastructure.configuration.data.GlobalConfigurationData;
 import org.mifosplatform.infrastructure.configuration.data.GlobalConfigurationPropertyData;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
@@ -17,6 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
 @Service
 public class ConfigurationReadPlatformServiceImpl implements ConfigurationReadPlatformService {
@@ -30,16 +30,16 @@ public class ConfigurationReadPlatformServiceImpl implements ConfigurationReadPl
         this.context = context;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
 
-        rm = new GlobalConfigurationRowMapper();
+        this.rm = new GlobalConfigurationRowMapper();
     }
 
     @Override
     public GlobalConfigurationData retrieveGlobalConfiguration() {
 
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
-        final String sql = "SELECT c.name, c.enabled FROM c_configuration c order by c.id";
-        final List<GlobalConfigurationPropertyData> globalConfiguration = this.jdbcTemplate.query(sql, rm, new Object[] {});
+        final String sql = "SELECT c.name, c.enabled, c.value FROM c_configuration c order by c.id";
+        final List<GlobalConfigurationPropertyData> globalConfiguration = this.jdbcTemplate.query(sql, this.rm, new Object[] {});
 
         return new GlobalConfigurationData(globalConfiguration);
     }
@@ -51,8 +51,9 @@ public class ConfigurationReadPlatformServiceImpl implements ConfigurationReadPl
 
             final String name = rs.getString("name");
             final boolean enabled = rs.getBoolean("enabled");
+            final Long value      = rs.getLong("value");
 
-            return new GlobalConfigurationPropertyData(name, enabled);
+            return new GlobalConfigurationPropertyData(name, enabled,value);
         }
     }
 }

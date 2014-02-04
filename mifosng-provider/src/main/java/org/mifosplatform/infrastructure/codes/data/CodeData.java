@@ -5,12 +5,13 @@
  */
 package org.mifosplatform.infrastructure.codes.data;
 
+import java.io.Serializable;
+
 /**
  * Immutable data object representing a code.
  */
-public class CodeData {
+public class CodeData implements Serializable {
 
-    @SuppressWarnings("unused")
     private final Long id;
     @SuppressWarnings("unused")
     private final String name;
@@ -25,5 +26,9 @@ public class CodeData {
         this.id = id;
         this.name = name;
         this.systemDefined = systemDefined;
+    }
+
+    public Long getCodeId() {
+        return this.id;
     }
 }

@@ -10,6 +10,8 @@ import org.mifosplatform.useradministration.domain.AppUser;
 public interface PlatformSecurityContext {
 
     AppUser authenticatedUser();
-    
+
     void validateAccessRights(String resourceOfficeHierarchy);
+
+    String officeHierarchy();
 }

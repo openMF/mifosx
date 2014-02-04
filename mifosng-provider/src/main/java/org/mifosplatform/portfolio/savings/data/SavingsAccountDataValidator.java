@@ -6,10 +6,13 @@
 package org.mifosplatform.portfolio.savings.data;
 
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.accountNoParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.annualFeeAmountParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.annualFeeOnMonthDayParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.amountParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.chargeIdParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.chargesParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.clientIdParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.externalIdParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.feeIntervalParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.feeOnMonthDayParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.fieldOfficerIdParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.groupIdParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCalculationDaysInYearTypeParamName;
@@ -22,13 +25,13 @@ import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minRequire
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.productIdParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.submittedOnDateParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeAmountParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeTypeParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
@@ -44,11 +47,12 @@ import org.mifosplatform.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.mifosplatform.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.mifosplatform.portfolio.savings.SavingsInterestCalculationType;
 import org.mifosplatform.portfolio.savings.SavingsPostingInterestPeriodType;
-import org.mifosplatform.portfolio.savings.SavingsWithdrawalFeesType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 @Component
@@ -66,19 +70,19 @@ public class SavingsAccountDataValidator {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-        fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, SavingsApiConstants.SAVINGS_ACCOUNT_REQUEST_DATA_PARAMETERS);
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, SavingsApiConstants.SAVINGS_ACCOUNT_REQUEST_DATA_PARAMETERS);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-        final JsonElement element = fromApiJsonHelper.parse(json);
-        final Long clientId = fromApiJsonHelper.extractLongNamed(clientIdParamName, element);
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+        final Long clientId = this.fromApiJsonHelper.extractLongNamed(clientIdParamName, element);
         if (clientId != null) {
             baseDataValidator.reset().parameter(clientIdParamName).value(clientId).longGreaterThanZero();
         }
 
-        final Long groupId = fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
+        final Long groupId = this.fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
         if (groupId != null) {
             baseDataValidator.reset().parameter(groupIdParamName).value(groupId).longGreaterThanZero();
         }
@@ -87,73 +91,75 @@ public class SavingsAccountDataValidator {
             baseDataValidator.reset().parameter(clientIdParamName).value(clientId).notNull().integerGreaterThanZero();
         }
 
-        final Long productId = fromApiJsonHelper.extractLongNamed(productIdParamName, element);
+        final Long productId = this.fromApiJsonHelper.extractLongNamed(productIdParamName, element);
         baseDataValidator.reset().parameter(productIdParamName).value(productId).notNull().integerGreaterThanZero();
 
-        if (fromApiJsonHelper.parameterExists(fieldOfficerIdParamName, element)) {
-            final Long fieldOfficerId = fromApiJsonHelper.extractLongNamed(fieldOfficerIdParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(fieldOfficerIdParamName, element)) {
+            final Long fieldOfficerId = this.fromApiJsonHelper.extractLongNamed(fieldOfficerIdParamName, element);
             baseDataValidator.reset().parameter(fieldOfficerIdParamName).value(fieldOfficerId).ignoreIfNull().integerGreaterThanZero();
         }
 
-        final LocalDate submittedOnDate = fromApiJsonHelper.extractLocalDateNamed(submittedOnDateParamName, element);
+        final LocalDate submittedOnDate = this.fromApiJsonHelper.extractLocalDateNamed(submittedOnDateParamName, element);
         baseDataValidator.reset().parameter(submittedOnDateParamName).value(submittedOnDate).notNull();
 
-        if (fromApiJsonHelper.parameterExists(accountNoParamName, element)) {
-            final String accountNo = fromApiJsonHelper.extractStringNamed(accountNoParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(accountNoParamName, element)) {
+            final String accountNo = this.fromApiJsonHelper.extractStringNamed(accountNoParamName, element);
             baseDataValidator.reset().parameter(accountNoParamName).value(accountNo).notBlank().notExceedingLengthOf(20);
         }
 
-        if (fromApiJsonHelper.parameterExists(externalIdParamName, element)) {
-            final String externalId = fromApiJsonHelper.extractStringNamed(externalIdParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(externalIdParamName, element)) {
+            final String externalId = this.fromApiJsonHelper.extractStringNamed(externalIdParamName, element);
             baseDataValidator.reset().parameter(externalIdParamName).value(externalId).notExceedingLengthOf(100);
         }
 
-        if (fromApiJsonHelper.parameterExists(nominalAnnualInterestRateParamName, element)) {
-            final BigDecimal interestRate = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(nominalAnnualInterestRateParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(nominalAnnualInterestRateParamName, element)) {
+            final BigDecimal interestRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(nominalAnnualInterestRateParamName,
+                    element);
             baseDataValidator.reset().parameter(nominalAnnualInterestRateParamName).value(interestRate).notNull().zeroOrPositiveAmount();
         }
 
-        if (fromApiJsonHelper.parameterExists(interestCompoundingPeriodTypeParamName, element)) {
-            final Integer interestCompoundingPeriodType = fromApiJsonHelper.extractIntegerSansLocaleNamed(
+        if (this.fromApiJsonHelper.parameterExists(interestCompoundingPeriodTypeParamName, element)) {
+            final Integer interestCompoundingPeriodType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
                     interestCompoundingPeriodTypeParamName, element);
             baseDataValidator.reset().parameter(interestCompoundingPeriodTypeParamName).value(interestCompoundingPeriodType).notNull()
                     .isOneOfTheseValues(SavingsCompoundingInterestPeriodType.integerValues());
         }
 
-        if (fromApiJsonHelper.parameterExists(interestPostingPeriodTypeParamName, element)) {
-            final Integer interestPostingPeriodType = fromApiJsonHelper.extractIntegerSansLocaleNamed(interestPostingPeriodTypeParamName,
-                    element);
+        if (this.fromApiJsonHelper.parameterExists(interestPostingPeriodTypeParamName, element)) {
+            final Integer interestPostingPeriodType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
+                    interestPostingPeriodTypeParamName, element);
             baseDataValidator.reset().parameter(interestPostingPeriodTypeParamName).value(interestPostingPeriodType).notNull()
                     .isOneOfTheseValues(SavingsPostingInterestPeriodType.integerValues());
         }
 
-        if (fromApiJsonHelper.parameterExists(interestCalculationTypeParamName, element)) {
-            final Integer interestCalculationType = fromApiJsonHelper.extractIntegerSansLocaleNamed(interestCalculationTypeParamName,
+        if (this.fromApiJsonHelper.parameterExists(interestCalculationTypeParamName, element)) {
+            final Integer interestCalculationType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(interestCalculationTypeParamName,
                     element);
             baseDataValidator.reset().parameter(interestCalculationTypeParamName).value(interestCalculationType).notNull()
                     .isOneOfTheseValues(SavingsInterestCalculationType.integerValues());
         }
 
-        if (fromApiJsonHelper.parameterExists(interestCalculationDaysInYearTypeParamName, element)) {
-            final Integer interestCalculationDaysInYearType = fromApiJsonHelper.extractIntegerSansLocaleNamed(
+        if (this.fromApiJsonHelper.parameterExists(interestCalculationDaysInYearTypeParamName, element)) {
+            final Integer interestCalculationDaysInYearType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
                     interestCalculationDaysInYearTypeParamName, element);
             baseDataValidator.reset().parameter(interestCalculationDaysInYearTypeParamName).value(interestCalculationDaysInYearType)
                     .notNull().isOneOfTheseValues(SavingsInterestCalculationDaysInYearType.integerValues());
         }
 
         if (this.fromApiJsonHelper.parameterExists(minRequiredOpeningBalanceParamName, element)) {
-            final BigDecimal minOpeningBalance = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(minRequiredOpeningBalanceParamName,
-                    element);
+            final BigDecimal minOpeningBalance = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
+                    minRequiredOpeningBalanceParamName, element);
             baseDataValidator.reset().parameter(minRequiredOpeningBalanceParamName).value(minOpeningBalance).zeroOrPositiveAmount();
         }
 
         if (this.fromApiJsonHelper.parameterExists(lockinPeriodFrequencyParamName, element)) {
 
-            final Integer lockinPeriodFrequency = fromApiJsonHelper.extractIntegerWithLocaleNamed(lockinPeriodFrequencyParamName, element);
+            final Integer lockinPeriodFrequency = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(lockinPeriodFrequencyParamName,
+                    element);
             baseDataValidator.reset().parameter(lockinPeriodFrequencyParamName).value(lockinPeriodFrequency).integerZeroOrGreater();
 
             if (lockinPeriodFrequency != null) {
-                final Integer lockinPeriodFrequencyType = fromApiJsonHelper.extractIntegerSansLocaleNamed(
+                final Integer lockinPeriodFrequencyType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
                         lockinPeriodFrequencyTypeParamName, element);
                 baseDataValidator.reset().parameter(lockinPeriodFrequencyTypeParamName).value(lockinPeriodFrequencyType).notNull()
                         .inMinMaxRange(0, 3);
@@ -161,64 +167,62 @@ public class SavingsAccountDataValidator {
         }
 
         if (this.fromApiJsonHelper.parameterExists(lockinPeriodFrequencyTypeParamName, element)) {
-            final Integer lockinPeriodFrequencyType = fromApiJsonHelper.extractIntegerSansLocaleNamed(lockinPeriodFrequencyTypeParamName,
-                    element);
+            final Integer lockinPeriodFrequencyType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
+                    lockinPeriodFrequencyTypeParamName, element);
             baseDataValidator.reset().parameter(lockinPeriodFrequencyTypeParamName).value(lockinPeriodFrequencyType).inMinMaxRange(0, 3);
 
             if (lockinPeriodFrequencyType != null) {
-                final Integer lockinPeriodFrequency = fromApiJsonHelper.extractIntegerWithLocaleNamed(lockinPeriodFrequencyParamName,
+                final Integer lockinPeriodFrequency = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(lockinPeriodFrequencyParamName,
                         element);
                 baseDataValidator.reset().parameter(lockinPeriodFrequencyParamName).value(lockinPeriodFrequency).notNull()
                         .integerZeroOrGreater();
             }
         }
 
-        if (this.fromApiJsonHelper.parameterExists(withdrawalFeeAmountParamName, element)) {
-
-            final BigDecimal withdrawalFeeAmount = fromApiJsonHelper
-                    .extractBigDecimalWithLocaleNamed(withdrawalFeeAmountParamName, element);
-            baseDataValidator.reset().parameter(withdrawalFeeAmountParamName).value(withdrawalFeeAmount).zeroOrPositiveAmount();
-
-            if (withdrawalFeeAmount != null) {
-                final Integer withdrawalFeeType = fromApiJsonHelper.extractIntegerSansLocaleNamed(withdrawalFeeTypeParamName, element);
-                baseDataValidator.reset().parameter(withdrawalFeeTypeParamName).value(withdrawalFeeType)
-                        .isOneOfTheseValues(SavingsWithdrawalFeesType.integerValues());
-            }
+        if (this.fromApiJsonHelper.parameterExists(withdrawalFeeForTransfersParamName, element)) {
+            final Boolean isWithdrawalFeeApplicableForTransfers = this.fromApiJsonHelper.extractBooleanNamed(
+                    withdrawalFeeForTransfersParamName, element);
+            baseDataValidator.reset().parameter(withdrawalFeeForTransfersParamName).value(isWithdrawalFeeApplicableForTransfers)
+                    .ignoreIfNull().validateForBooleanValue();
         }
 
-        if (this.fromApiJsonHelper.parameterExists(withdrawalFeeTypeParamName, element)) {
-            final Integer withdrawalFeeType = fromApiJsonHelper.extractIntegerSansLocaleNamed(withdrawalFeeTypeParamName, element);
-            baseDataValidator.reset().parameter(withdrawalFeeTypeParamName).value(withdrawalFeeType).ignoreIfNull()
-                    .isOneOfTheseValues(1, 2);
-
-            if (withdrawalFeeType != null) {
-                final BigDecimal withdrawalFeeAmount = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(withdrawalFeeAmountParamName,
-                        element);
-                baseDataValidator.reset().parameter(withdrawalFeeAmountParamName).value(withdrawalFeeAmount).notNull()
-                        .zeroOrPositiveAmount();
-            }
-        }
-
-        if (this.fromApiJsonHelper.parameterExists(annualFeeAmountParamName, element)) {
-            final BigDecimal annualFeeAmount = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(annualFeeAmountParamName, element);
-            baseDataValidator.reset().parameter(annualFeeAmountParamName).value(annualFeeAmount).zeroOrPositiveAmount();
-
-            if (annualFeeAmount != null) {
-                MonthDay monthDayOfAnnualFee = fromApiJsonHelper.extractMonthDayNamed(annualFeeOnMonthDayParamName, element);
-                baseDataValidator.reset().parameter(annualFeeOnMonthDayParamName).value(monthDayOfAnnualFee).notNull();
-            }
-        }
-
-        if (this.fromApiJsonHelper.parameterExists(annualFeeOnMonthDayParamName, element)) {
-
-            MonthDay monthDayOfAnnualFee = fromApiJsonHelper.extractMonthDayNamed(annualFeeOnMonthDayParamName, element);
-            if (monthDayOfAnnualFee != null) {
-                final BigDecimal annualFeeAmount = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(annualFeeAmountParamName, element);
-                baseDataValidator.reset().parameter(annualFeeAmountParamName).value(annualFeeAmount).notNull().zeroOrPositiveAmount();
-            }
-        }
-
+        validateSavingsCharges(element, baseDataValidator);
+        
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    private void validateSavingsCharges(final JsonElement element, final DataValidatorBuilder baseDataValidator) {
+
+        if (element.isJsonObject()) {
+            final JsonObject topLevelJsonElement = element.getAsJsonObject();
+            final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(topLevelJsonElement);
+            final String monthDayFormat = this.fromApiJsonHelper.extractMonthDayFormatParameter(topLevelJsonElement);
+            if (topLevelJsonElement.has(chargesParamName) && topLevelJsonElement.get(chargesParamName).isJsonArray()) {
+                final JsonArray array = topLevelJsonElement.get(chargesParamName).getAsJsonArray();
+                for (int i = 0; i < array.size(); i++) {
+
+                    final JsonObject savingsChargeElement = array.get(i).getAsJsonObject();
+
+                    //final Long id = this.fromApiJsonHelper.extractLongNamed(idParamName, savingsChargeElement);
+
+                    final Long chargeId = this.fromApiJsonHelper.extractLongNamed(chargeIdParamName, savingsChargeElement);
+                    baseDataValidator.reset().parameter(chargeIdParamName).value(chargeId).longGreaterThanZero();
+
+                    final BigDecimal amount = this.fromApiJsonHelper.extractBigDecimalNamed(amountParamName, savingsChargeElement, locale);
+                    baseDataValidator.reset().parameter(amountParamName).value(amount).notNull().positiveAmount();
+                    
+                    if (this.fromApiJsonHelper.parameterExists(feeOnMonthDayParamName, savingsChargeElement)) {
+                        final MonthDay monthDay = this.fromApiJsonHelper.extractMonthDayNamed(feeOnMonthDayParamName, savingsChargeElement, monthDayFormat, locale); 
+                        baseDataValidator.reset().parameter(feeOnMonthDayParamName).value(monthDay).notNull();
+                    }
+                    
+                    if (this.fromApiJsonHelper.parameterExists(feeIntervalParamName, savingsChargeElement)) {
+                        final Integer feeInterval = this.fromApiJsonHelper.extractIntegerNamed(feeIntervalParamName, savingsChargeElement, Locale.getDefault());
+                        baseDataValidator.reset().parameter(feeIntervalParamName).value(feeInterval).notNull().inMinMaxRange(1, 12);
+                    }
+                }
+            }
+        }
     }
 
     public void validateForUpdate(final String json) {
@@ -226,22 +230,22 @@ public class SavingsAccountDataValidator {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-        fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, SavingsApiConstants.SAVINGS_ACCOUNT_REQUEST_DATA_PARAMETERS);
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, SavingsApiConstants.SAVINGS_ACCOUNT_REQUEST_DATA_PARAMETERS);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-        final JsonElement element = fromApiJsonHelper.parse(json);
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
 
         Long clientId = null;
-        if (fromApiJsonHelper.parameterExists(clientIdParamName, element)) {
-            clientId = fromApiJsonHelper.extractLongNamed(clientIdParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(clientIdParamName, element)) {
+            clientId = this.fromApiJsonHelper.extractLongNamed(clientIdParamName, element);
             baseDataValidator.reset().parameter(clientIdParamName).value(clientId).ignoreIfNull().longGreaterThanZero();
 
             Long groupId = null;
-            if (fromApiJsonHelper.parameterExists(productIdParamName, element)) {
-                groupId = fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
+            if (this.fromApiJsonHelper.parameterExists(productIdParamName, element)) {
+                groupId = this.fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
                 baseDataValidator.reset().parameter(groupIdParamName).value(groupId).ignoreIfNull().longGreaterThanZero();
             }
 
@@ -253,12 +257,12 @@ public class SavingsAccountDataValidator {
         }
 
         Long groupId = null;
-        if (fromApiJsonHelper.parameterExists(groupIdParamName, element)) {
-            groupId = fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(groupIdParamName, element)) {
+            groupId = this.fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
             baseDataValidator.reset().parameter(groupIdParamName).value(groupId).ignoreIfNull().longGreaterThanZero();
 
-            if (fromApiJsonHelper.parameterExists(clientIdParamName, element)) {
-                clientId = fromApiJsonHelper.extractLongNamed(clientIdParamName, element);
+            if (this.fromApiJsonHelper.parameterExists(clientIdParamName, element)) {
+                clientId = this.fromApiJsonHelper.extractLongNamed(clientIdParamName, element);
                 baseDataValidator.reset().parameter(clientIdParamName).value(clientId).ignoreIfNull().longGreaterThanZero();
             }
 
@@ -269,108 +273,93 @@ public class SavingsAccountDataValidator {
             }
         }
 
-        if (fromApiJsonHelper.parameterExists(productIdParamName, element)) {
-            final Long productId = fromApiJsonHelper.extractLongNamed(productIdParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(productIdParamName, element)) {
+            final Long productId = this.fromApiJsonHelper.extractLongNamed(productIdParamName, element);
             baseDataValidator.reset().parameter(productIdParamName).value(productId).notNull().integerGreaterThanZero();
         }
 
-        if (fromApiJsonHelper.parameterExists(fieldOfficerIdParamName, element)) {
-            final Long fieldOfficerId = fromApiJsonHelper.extractLongNamed(fieldOfficerIdParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(fieldOfficerIdParamName, element)) {
+            final Long fieldOfficerId = this.fromApiJsonHelper.extractLongNamed(fieldOfficerIdParamName, element);
             baseDataValidator.reset().parameter(fieldOfficerIdParamName).value(fieldOfficerId).ignoreIfNull().integerGreaterThanZero();
         }
 
-        if (fromApiJsonHelper.parameterExists(submittedOnDateParamName, element)) {
-            final LocalDate submittedOnDate = fromApiJsonHelper.extractLocalDateNamed(submittedOnDateParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(submittedOnDateParamName, element)) {
+            final LocalDate submittedOnDate = this.fromApiJsonHelper.extractLocalDateNamed(submittedOnDateParamName, element);
             baseDataValidator.reset().parameter(submittedOnDateParamName).value(submittedOnDate).notNull();
         }
 
-        if (fromApiJsonHelper.parameterExists(accountNoParamName, element)) {
-            final String accountNo = fromApiJsonHelper.extractStringNamed(accountNoParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(accountNoParamName, element)) {
+            final String accountNo = this.fromApiJsonHelper.extractStringNamed(accountNoParamName, element);
             baseDataValidator.reset().parameter(accountNoParamName).value(accountNo).notBlank().notExceedingLengthOf(20);
         }
 
-        if (fromApiJsonHelper.parameterExists(externalIdParamName, element)) {
-            final String externalId = fromApiJsonHelper.extractStringNamed(externalIdParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(externalIdParamName, element)) {
+            final String externalId = this.fromApiJsonHelper.extractStringNamed(externalIdParamName, element);
             baseDataValidator.reset().parameter(externalIdParamName).value(externalId).notExceedingLengthOf(100);
         }
 
-        if (fromApiJsonHelper.parameterExists(nominalAnnualInterestRateParamName, element)) {
-            final BigDecimal interestRate = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(nominalAnnualInterestRateParamName, element);
+        if (this.fromApiJsonHelper.parameterExists(nominalAnnualInterestRateParamName, element)) {
+            final BigDecimal interestRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(nominalAnnualInterestRateParamName,
+                    element);
             baseDataValidator.reset().parameter(nominalAnnualInterestRateParamName).value(interestRate).notNull().zeroOrPositiveAmount();
         }
 
         if (this.fromApiJsonHelper.parameterExists(interestCompoundingPeriodTypeParamName, element)) {
-            final Integer interestCompoundingPeriodType = fromApiJsonHelper.extractIntegerSansLocaleNamed(
+            final Integer interestCompoundingPeriodType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
                     interestCompoundingPeriodTypeParamName, element);
             baseDataValidator.reset().parameter(interestCompoundingPeriodTypeParamName).value(interestCompoundingPeriodType).notNull()
                     .isOneOfTheseValues(SavingsCompoundingInterestPeriodType.integerValues());
         }
 
         if (this.fromApiJsonHelper.parameterExists(interestPostingPeriodTypeParamName, element)) {
-            final Integer interestPostingPeriodType = fromApiJsonHelper.extractIntegerSansLocaleNamed(interestPostingPeriodTypeParamName,
-                    element);
+            final Integer interestPostingPeriodType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
+                    interestPostingPeriodTypeParamName, element);
             baseDataValidator.reset().parameter(interestPostingPeriodTypeParamName).value(interestPostingPeriodType).notNull()
                     .isOneOfTheseValues(SavingsPostingInterestPeriodType.integerValues());
         }
 
         if (this.fromApiJsonHelper.parameterExists(interestCalculationTypeParamName, element)) {
-            final Integer interestCalculationType = fromApiJsonHelper.extractIntegerSansLocaleNamed(interestCalculationTypeParamName,
+            final Integer interestCalculationType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(interestCalculationTypeParamName,
                     element);
             baseDataValidator.reset().parameter(interestCalculationTypeParamName).value(interestCalculationType).notNull()
                     .isOneOfTheseValues(SavingsInterestCalculationType.integerValues());
         }
 
         if (this.fromApiJsonHelper.parameterExists(interestCalculationDaysInYearTypeParamName, element)) {
-            final Integer interestCalculationDaysInYearType = fromApiJsonHelper.extractIntegerSansLocaleNamed(
+            final Integer interestCalculationDaysInYearType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
                     interestCalculationDaysInYearTypeParamName, element);
             baseDataValidator.reset().parameter(interestCalculationDaysInYearTypeParamName).value(interestCalculationDaysInYearType)
                     .notNull().isOneOfTheseValues(SavingsInterestCalculationDaysInYearType.integerValues());
         }
 
         if (this.fromApiJsonHelper.parameterExists(minRequiredOpeningBalanceParamName, element)) {
-            final BigDecimal minOpeningBalance = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(minRequiredOpeningBalanceParamName,
-                    element);
+            final BigDecimal minOpeningBalance = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
+                    minRequiredOpeningBalanceParamName, element);
             baseDataValidator.reset().parameter(minRequiredOpeningBalanceParamName).value(minOpeningBalance).ignoreIfNull()
                     .zeroOrPositiveAmount();
         }
 
         if (this.fromApiJsonHelper.parameterExists(lockinPeriodFrequencyParamName, element)) {
-            final Integer lockinPeriodFrequency = fromApiJsonHelper.extractIntegerWithLocaleNamed(lockinPeriodFrequencyParamName, element);
+            final Integer lockinPeriodFrequency = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(lockinPeriodFrequencyParamName,
+                    element);
             baseDataValidator.reset().parameter(lockinPeriodFrequencyParamName).value(lockinPeriodFrequency).ignoreIfNull()
                     .integerZeroOrGreater();
         }
 
         if (this.fromApiJsonHelper.parameterExists(lockinPeriodFrequencyTypeParamName, element)) {
-            final Integer lockinPeriodFrequencyType = fromApiJsonHelper.extractIntegerSansLocaleNamed(lockinPeriodFrequencyTypeParamName,
-                    element);
+            final Integer lockinPeriodFrequencyType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
+                    lockinPeriodFrequencyTypeParamName, element);
             baseDataValidator.reset().parameter(lockinPeriodFrequencyTypeParamName).value(lockinPeriodFrequencyType).inMinMaxRange(0, 3);
         }
 
-        if (this.fromApiJsonHelper.parameterExists(withdrawalFeeAmountParamName, element)) {
-            final BigDecimal withdrawalFeeAmount = fromApiJsonHelper
-                    .extractBigDecimalWithLocaleNamed(withdrawalFeeAmountParamName, element);
-            baseDataValidator.reset().parameter(withdrawalFeeAmountParamName).value(withdrawalFeeAmount).ignoreIfNull()
-                    .zeroOrPositiveAmount();
-        }
-
-        if (this.fromApiJsonHelper.parameterExists(withdrawalFeeTypeParamName, element)) {
-            final Integer withdrawalFeeType = fromApiJsonHelper.extractIntegerSansLocaleNamed(withdrawalFeeTypeParamName, element);
-            baseDataValidator.reset().parameter(withdrawalFeeTypeParamName).value(withdrawalFeeType).ignoreIfNull()
-                    .isOneOfTheseValues(SavingsWithdrawalFeesType.integerValues());
-        }
-
-        if (this.fromApiJsonHelper.parameterExists(annualFeeAmountParamName, element)) {
-            final BigDecimal annualFeeAmount = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(annualFeeAmountParamName, element);
-            baseDataValidator.reset().parameter(annualFeeAmountParamName).value(annualFeeAmount).ignoreIfNull().zeroOrPositiveAmount();
-        }
-
-        if (this.fromApiJsonHelper.parameterExists(annualFeeOnMonthDayParamName, element)) {
-            MonthDay monthDayOfAnnualFee = fromApiJsonHelper.extractMonthDayNamed(annualFeeOnMonthDayParamName, element);
-            baseDataValidator.reset().parameter(annualFeeOnMonthDayParamName).value(monthDayOfAnnualFee).ignoreIfNull();
+        if (this.fromApiJsonHelper.parameterExists(withdrawalFeeForTransfersParamName, element)) {
+            final Boolean isWithdrawalFeeApplicableForTransfers = this.fromApiJsonHelper.extractBooleanNamed(
+                    withdrawalFeeForTransfersParamName, element);
+            baseDataValidator.reset().parameter(withdrawalFeeForTransfersParamName).value(isWithdrawalFeeApplicableForTransfers)
+                    .ignoreIfNull().validateForBooleanValue();
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
-
     }
 
     private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {

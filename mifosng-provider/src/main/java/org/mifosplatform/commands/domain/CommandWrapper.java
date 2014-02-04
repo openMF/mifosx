@@ -26,6 +26,7 @@ public class CommandWrapper {
     private final String supportedEntityType;
     private final Long supportedEntityId;
     private final Long productId;
+    private Long templateId;
 
     public static CommandWrapper wrap(final String actionName, final String entityName, final Long resourceId, final Long subresourceId) {
         return new CommandWrapper(null, actionName, entityName, resourceId, subresourceId, null, null);
@@ -56,13 +57,12 @@ public class CommandWrapper {
         this.json = null;
         this.transactionId = null;
         this.productId = productId;
-
     }
 
     public CommandWrapper(final Long officeId, final Long groupId, final Long clientId, final Long loanId, final Long savingsId,
             final String actionName, final String entityName, final Long entityId, final Long subentityId, final Long codeId,
             final String supportedEntityType, final Long supportedEntityId, final String href, final String json,
-            final String transactionId, final Long productId) {
+            final String transactionId, final Long productId, final Long templateId) {
         this.commandId = null;
         this.officeId = officeId;
         this.groupId = groupId;
@@ -81,6 +81,7 @@ public class CommandWrapper {
         this.json = json;
         this.transactionId = transactionId;
         this.productId = productId;
+        this.templateId = templateId;
     }
 
     public Long commandId() {
@@ -112,15 +113,15 @@ public class CommandWrapper {
     }
 
     public boolean isCreateDatatable() {
-        return (this.actionName.equalsIgnoreCase("CREATE") && this.href.startsWith("/datatables/") && this.entityId == null);
+        return this.actionName.equalsIgnoreCase("CREATE") && this.href.startsWith("/datatables/") && this.entityId == null;
     }
 
     public boolean isDeleteDatatable() {
-        return (this.actionName.equalsIgnoreCase("DELETE") && this.href.startsWith("/datatables/") && this.entityId == null);
+        return this.actionName.equalsIgnoreCase("DELETE") && this.href.startsWith("/datatables/") && this.entityId == null;
     }
 
     public boolean isUpdateDatatable() {
-        return (this.actionName.equalsIgnoreCase("UPDATE") && this.href.startsWith("/datatables/") && this.entityId == null);
+        return this.actionName.equalsIgnoreCase("UPDATE") && this.href.startsWith("/datatables/") && this.entityId == null;
     }
 
     public String getTaskPermissionName() {
@@ -141,6 +142,10 @@ public class CommandWrapper {
 
     public String getTransactionId() {
         return this.transactionId;
+    }
+
+    public Long getTemplateId() {
+        return this.templateId;
     }
 
     public String getEntityName() {
@@ -185,8 +190,8 @@ public class CommandWrapper {
 
     public boolean isUpdate() {
         // permissions resource has special update which involves no resource.
-        return (isPermissionResource() && isUpdateOperation()) || (isCurrencyResource() && isUpdateOperation())
-                || (isUpdateOperation() && this.entityId != null);
+        return isPermissionResource() && isUpdateOperation() || isCurrencyResource() && isUpdateOperation() || isCacheResource()
+                && isUpdateOperation() || isUpdateOperation() && this.entityId != null;
     }
 
     public boolean isUpdateOperation() {
@@ -225,6 +230,10 @@ public class CommandWrapper {
         return this.entityName.equalsIgnoreCase("CURRENCY");
     }
 
+    public boolean isSmsResource() {
+        return this.entityName.equalsIgnoreCase("SMS");
+    }
+
     public boolean isCodeResource() {
         return this.entityName.equalsIgnoreCase("CODE");
     }
@@ -255,6 +264,10 @@ public class CommandWrapper {
 
     public boolean isRevertJournalEntry() {
         return this.actionName.equalsIgnoreCase("REVERSE") && this.entityName.equalsIgnoreCase("JOURNALENTRY");
+    }
+
+    public boolean isUpdateRunningbalance() {
+        return this.actionName.equalsIgnoreCase("UPDATERUNNINGBALANCE") && this.entityName.equalsIgnoreCase("JOURNALENTRY");
     }
 
     public boolean isFundResource() {
@@ -289,8 +302,16 @@ public class CommandWrapper {
         return this.actionName.equalsIgnoreCase("ACTIVATE") && this.entityName.equalsIgnoreCase("GROUP");
     }
 
+    public boolean isGroupClose() {
+        return this.actionName.equalsIgnoreCase("CLOSE") && this.entityName.equalsIgnoreCase("GROUP");
+    }
+
     public boolean isCenterActivation() {
         return this.actionName.equalsIgnoreCase("ACTIVATE") && this.entityName.equalsIgnoreCase("CENTER");
+    }
+
+    public boolean isCenterClose() {
+        return this.actionName.equalsIgnoreCase("CLOSE") && this.entityName.equalsIgnoreCase("CENTER");
     }
 
     public boolean isClientIdentifierResource() {
@@ -311,6 +332,10 @@ public class CommandWrapper {
 
     public boolean isCollateralResource() {
         return this.entityName.equalsIgnoreCase("COLLATERAL");
+    }
+
+    public boolean isTemplateRessource() {
+        return this.entityName.equalsIgnoreCase("Template");
     }
 
     public boolean isApproveLoanApplication() {
@@ -352,6 +377,10 @@ public class CommandWrapper {
     public boolean isLoanWriteOff() {
         return this.actionName.equalsIgnoreCase("WRITEOFF") && this.entityName.equalsIgnoreCase("LOAN");
     }
+    
+    public boolean isUndoLoanWriteOff() {
+        return this.actionName.equalsIgnoreCase("UNDOWRITEOFF") && this.entityName.equalsIgnoreCase("LOAN");
+    }
 
     public boolean isCloseLoanAsObligationsMet() {
         return this.actionName.equalsIgnoreCase("CLOSE") && this.entityName.equalsIgnoreCase("LOAN");
@@ -375,6 +404,10 @@ public class CommandWrapper {
 
     public boolean isWaiveLoanCharge() {
         return this.actionName.equalsIgnoreCase("WAIVE") && this.entityName.equalsIgnoreCase("LOANCHARGE");
+    }
+
+    public boolean isPayLoanCharge() {
+        return this.actionName.equalsIgnoreCase("PAY") && this.entityName.equalsIgnoreCase("LOANCHARGE");
     }
 
     public boolean isUpdateLoanOfficer() {
@@ -412,6 +445,10 @@ public class CommandWrapper {
 
     public boolean isUnassignStaff() {
         return this.actionName.equalsIgnoreCase("UNASSIGNSTAFF") && this.entityName.equalsIgnoreCase("GROUP");
+    }
+
+    public boolean isAssignStaff() {
+        return this.actionName.equalsIgnoreCase("ASSIGNSTAFF");
     }
 
     public String commandName() {
@@ -454,6 +491,10 @@ public class CommandWrapper {
         return this.actionName.equalsIgnoreCase("DEPOSIT") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNT");
     }
 
+    public boolean isSavingsAccountClose() {
+        return this.actionName.equalsIgnoreCase("CLOSE") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNT");
+    }
+
     public boolean isSavingsAccountWithdrawal() {
         return this.actionName.equalsIgnoreCase("WITHDRAWAL") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNT");
     }
@@ -472,6 +513,34 @@ public class CommandWrapper {
 
     public boolean isSavingsAccountUndoTransaction() {
         return this.actionName.equalsIgnoreCase("UNDOTRANSACTION") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNT");
+    }
+
+    public boolean isAdjustSavingsAccountTransaction() {
+        return this.actionName.equalsIgnoreCase("ADJUSTTRANSACTION") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNT");
+    }
+
+    public boolean isSavingsAccountChargeResource() {
+        return this.entityName.equalsIgnoreCase("SAVINGSACCOUNTCHARGE");
+    }
+
+    public boolean isAddSavingsAccountCharge() {
+        return this.actionName.equalsIgnoreCase("CREATE") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNTCHARGE");
+    }
+
+    public boolean isDeleteSavingsAccountCharge() {
+        return isDeleteOperation() && this.entityName.equalsIgnoreCase("SAVINGSACCOUNTCHARGE");
+    }
+
+    public boolean isUpdateSavingsAccountCharge() {
+        return this.actionName.equalsIgnoreCase("UPDATE") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNTCHARGE");
+    }
+
+    public boolean isWaiveSavingsAccountCharge() {
+        return this.actionName.equalsIgnoreCase("WAIVE") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNTCHARGE");
+    }
+
+    public boolean isPaySavingsAccountCharge() {
+        return this.actionName.equalsIgnoreCase("PAY") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNTCHARGE");
     }
 
     public boolean isCalendarResource() {
@@ -520,8 +589,16 @@ public class CommandWrapper {
         return this.actionName.equalsIgnoreCase("DISASSOCIATECLIENTS");
     }
 
+    public boolean isXBRLMappingResource() {
+        return this.entityName.equalsIgnoreCase("XBRLMAPPING");
+    }
+
     public boolean isHolidayResource() {
         return this.entityName.equalsIgnoreCase("HOLIDAY");
+    }
+    
+    public boolean isHolidayActivation() {
+        return this.entityName.equalsIgnoreCase("HOLIDAY") && this.actionName.equalsIgnoreCase("ACTIVATE") && this.entityId != null;
     }
 
     public boolean isAccountingRuleResource() {
@@ -544,6 +621,10 @@ public class CommandWrapper {
         return this.entityName.equalsIgnoreCase("GROUP") && this.actionName.equalsIgnoreCase("UPDATEROLE");
     }
 
+    public boolean isTransferClientsBetweenGroups() {
+        return this.entityName.equalsIgnoreCase("GROUP") && this.actionName.equalsIgnoreCase("TRANSFERCLIENTS");
+    }
+
     public boolean isClientAssignStaff() {
         return this.actionName.equalsIgnoreCase("ASSIGNSTAFF") && this.entityName.equalsIgnoreCase("CLIENT");
     }
@@ -552,11 +633,47 @@ public class CommandWrapper {
         return this.actionName.equalsIgnoreCase("CLOSE") && this.entityName.equalsIgnoreCase("CLIENT");
     }
 
+    public boolean isProposeClientTransfer() {
+        return this.actionName.equalsIgnoreCase("PROPOSETRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
+
+    public boolean isProposeAndAcceptClientTransfer() {
+        return this.actionName.equalsIgnoreCase("PROPOSEANDACCEPTTRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
+
+    public boolean isWithdrawClientTransfer() {
+        return this.actionName.equalsIgnoreCase("WITHDRAWTRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
+
+    public boolean isAcceptClientTransfer() {
+        return this.actionName.equalsIgnoreCase("ACCEPTTRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
+
+    public boolean isRejectClientTransfer() {
+        return this.actionName.equalsIgnoreCase("REJECTTRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
+    }
+
     public boolean isProductMixResource() {
         return this.entityName.equalsIgnoreCase("PRODUCTMIX");
     }
-    
+
     public boolean isSchedulerResource() {
         return this.entityName.equalsIgnoreCase("SCHEDULER");
+    }
+
+    public boolean isAccountTransferResource() {
+        return this.entityName.equalsIgnoreCase("ACCOUNTTRANSFER");
+    }
+
+    public boolean isMeetingResource() {
+        return this.entityName.equalsIgnoreCase("MEETING");
+    }
+
+    public boolean isSaveOrUpdateAttendance() {
+        return this.actionName.equalsIgnoreCase("SAVEORUPDATEATTENDANCE");
+    }
+
+    public boolean isCacheResource() {
+        return this.entityName.equalsIgnoreCase("CACHE");
     }
 }

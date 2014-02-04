@@ -25,7 +25,6 @@ import org.mifosplatform.useradministration.domain.AppUser;
 @Table(name = "m_loan_officer_assignment_history")
 public class LoanOfficerAssignmentHistory extends AbstractAuditableCustom<AppUser, Long> {
 
-    @SuppressWarnings("unused")
     @ManyToOne
     @JoinColumn(name = "loan_id", nullable = false)
     private Loan loan;
@@ -74,7 +73,7 @@ public class LoanOfficerAssignmentHistory extends AbstractAuditableCustom<AppUse
     }
 
     public LocalDate getStartDate() {
-        return new LocalDate(startDate);
+        return new LocalDate(this.startDate);
     }
 
     public boolean hasStartDateBefore(final LocalDate matchingDate) {
@@ -86,19 +85,20 @@ public class LoanOfficerAssignmentHistory extends AbstractAuditableCustom<AppUse
     }
 
     /**
-     *  If endDate is null then return false.
+     * If endDate is null then return false.
+     * 
      * @param compareDate
      * @return
      */
-    public boolean isEndDateAfter(final LocalDate compareDate){
-        return this.endDate == null ? false : (new LocalDate(endDate)).isAfter(compareDate);
+    public boolean isEndDateAfter(final LocalDate compareDate) {
+        return this.endDate == null ? false : new LocalDate(this.endDate).isAfter(compareDate);
     }
- 
-    public LocalDate getEndDate(){
+
+    public LocalDate getEndDate() {
         return (LocalDate) ObjectUtils.defaultIfNull(new LocalDate(this.endDate), null);
     }
- 
-    public boolean isSameLoanOfficer(final Staff staff){
+
+    public boolean isSameLoanOfficer(final Staff staff) {
         return this.loanOfficer.identifiedBy(staff);
     }
 }

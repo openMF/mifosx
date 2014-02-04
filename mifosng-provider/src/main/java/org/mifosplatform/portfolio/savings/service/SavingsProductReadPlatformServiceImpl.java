@@ -10,7 +10,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 
-import org.joda.time.MonthDay;
 import org.mifosplatform.accounting.common.AccountingEnumerations;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
@@ -36,7 +35,7 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
     @Autowired
     public SavingsProductReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource) {
         this.context = context;
-        jdbcTemplate = new JdbcTemplate(dataSource);
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     @Override
@@ -44,26 +43,26 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
 
         this.context.authenticatedUser();
 
-        final String sql = "select " + savingsProductRowMapper.schema();
+        final String sql = "select " + this.savingsProductRowMapper.schema();
 
-        return this.jdbcTemplate.query(sql, savingsProductRowMapper);
+        return this.jdbcTemplate.query(sql, this.savingsProductRowMapper);
     }
 
     @Override
     public Collection<SavingsProductData> retrieveAllForLookup() {
 
-        final String sql = "select " + savingsProductLookupsRowMapper.schema();
+        final String sql = "select " + this.savingsProductLookupsRowMapper.schema();
 
-        return this.jdbcTemplate.query(sql, savingsProductLookupsRowMapper);
+        return this.jdbcTemplate.query(sql, this.savingsProductLookupsRowMapper);
     }
 
     @Override
     public SavingsProductData retrieveOne(final Long savingProductId) {
         try {
             this.context.authenticatedUser();
-            final String sql = "select " + savingsProductRowMapper.schema() + " where sp.id = ?";
-            return this.jdbcTemplate.queryForObject(sql, savingsProductRowMapper, new Object[] { savingProductId });
-        } catch (EmptyResultDataAccessException e) {
+            final String sql = "select " + this.savingsProductRowMapper.schema() + " where sp.id = ?";
+            return this.jdbcTemplate.queryForObject(sql, this.savingsProductRowMapper, new Object[] { savingProductId });
+        } catch (final EmptyResultDataAccessException e) {
             throw new SavingsProductNotFoundException(savingProductId);
         }
     }
@@ -74,8 +73,8 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
 
         public SavingProductMapper() {
             final StringBuilder sqlBuilder = new StringBuilder(400);
-            sqlBuilder.append("sp.id as id, sp.name as name, sp.description as description, ");
-            sqlBuilder.append("sp.currency_code as currencyCode, sp.currency_digits as currencyDigits, ");
+            sqlBuilder.append("sp.id as id, sp.name as name, sp.short_name as shortName, sp.description as description, ");
+            sqlBuilder.append("sp.currency_code as currencyCode, sp.currency_digits as currencyDigits, sp.currency_multiplesof as inMultiplesOf, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
             sqlBuilder.append("sp.nominal_annual_interest_rate as nominalAnnualInterestRate, ");
@@ -86,11 +85,12 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             sqlBuilder.append("sp.min_required_opening_balance as minRequiredOpeningBalance, ");
             sqlBuilder.append("sp.lockin_period_frequency as lockinPeriodFrequency,");
             sqlBuilder.append("sp.lockin_period_frequency_enum as lockinPeriodFrequencyType, ");
-            sqlBuilder.append("sp.withdrawal_fee_amount as withdrawalFeeAmount,");
-            sqlBuilder.append("sp.withdrawal_fee_type_enum as withdrawalFeeTypeEnum, ");
-            sqlBuilder.append("sp.annual_fee_amount as annualFeeAmount,");
-            sqlBuilder.append("sp.annual_fee_on_month as annualFeeOnMonth, ");
-            sqlBuilder.append("sp.annual_fee_on_day as annualFeeOnDay, ");
+//            sqlBuilder.append("sp.withdrawal_fee_amount as withdrawalFeeAmount,");
+//            sqlBuilder.append("sp.withdrawal_fee_type_enum as withdrawalFeeTypeEnum, ");
+            sqlBuilder.append("sp.withdrawal_fee_for_transfer as withdrawalFeeForTransfers, ");
+//            sqlBuilder.append("sp.annual_fee_amount as annualFeeAmount,");
+//            sqlBuilder.append("sp.annual_fee_on_month as annualFeeOnMonth, ");
+//            sqlBuilder.append("sp.annual_fee_on_day as annualFeeOnDay, ");
             sqlBuilder.append("sp.accounting_type as accountingType ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
@@ -105,29 +105,30 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
         @Override
         public SavingsProductData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
 
-            Long id = rs.getLong("id");
-            String name = rs.getString("name");
-            String description = rs.getString("description");
+            final Long id = rs.getLong("id");
+            final String name = rs.getString("name");
+            final String shortName = rs.getString("shortName");
+            final String description = rs.getString("description");
 
-            String currencyCode = rs.getString("currencyCode");
-            String currencyName = rs.getString("currencyName");
-            String currencyNameCode = rs.getString("currencyNameCode");
-            String currencyDisplaySymbol = rs.getString("currencyDisplaySymbol");
-            Integer currencyDigits = JdbcSupport.getInteger(rs, "currencyDigits");
-
-            final CurrencyData currency = new CurrencyData(currencyCode, currencyName, currencyDigits, currencyDisplaySymbol,
-                    currencyNameCode);
+            final String currencyCode = rs.getString("currencyCode");
+            final String currencyName = rs.getString("currencyName");
+            final String currencyNameCode = rs.getString("currencyNameCode");
+            final String currencyDisplaySymbol = rs.getString("currencyDisplaySymbol");
+            final Integer currencyDigits = JdbcSupport.getInteger(rs, "currencyDigits");
+            final Integer inMultiplesOf = JdbcSupport.getInteger(rs, "inMultiplesOf");
+            final CurrencyData currency = new CurrencyData(currencyCode, currencyName, currencyDigits, inMultiplesOf,
+                    currencyDisplaySymbol, currencyNameCode);
             final BigDecimal nominalAnnualInterestRate = rs.getBigDecimal("nominalAnnualInterestRate");
 
             final Integer compoundingInterestPeriodTypeValue = JdbcSupport.getInteger(rs, "compoundingInterestPeriodType");
-            EnumOptionData compoundingInterestPeriodType = SavingsEnumerations
+            final EnumOptionData compoundingInterestPeriodType = SavingsEnumerations
                     .compoundingInterestPeriodType(compoundingInterestPeriodTypeValue);
 
             final Integer interestPostingPeriodTypeValue = JdbcSupport.getInteger(rs, "interestPostingPeriodType");
-            EnumOptionData interestPostingPeriodType = SavingsEnumerations.interestPostingPeriodType(interestPostingPeriodTypeValue);
+            final EnumOptionData interestPostingPeriodType = SavingsEnumerations.interestPostingPeriodType(interestPostingPeriodTypeValue);
 
             final Integer interestCalculationTypeValue = JdbcSupport.getInteger(rs, "interestCalculationType");
-            EnumOptionData interestCalculationType = SavingsEnumerations.interestCalculationType(interestCalculationTypeValue);
+            final EnumOptionData interestCalculationType = SavingsEnumerations.interestCalculationType(interestCalculationTypeValue);
 
             EnumOptionData interestCalculationDaysInYearType = null;
             final Integer interestCalculationDaysInYearTypeValue = JdbcSupport.getInteger(rs, "interestCalculationDaysInYearType");
@@ -141,22 +142,24 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
 
             final BigDecimal minRequiredOpeningBalance = rs.getBigDecimal("minRequiredOpeningBalance");
 
-            Integer lockinPeriodFrequency = JdbcSupport.getInteger(rs, "lockinPeriodFrequency");
+            final Integer lockinPeriodFrequency = JdbcSupport.getInteger(rs, "lockinPeriodFrequency");
             EnumOptionData lockinPeriodFrequencyType = null;
             final Integer lockinPeriodFrequencyTypeValue = JdbcSupport.getInteger(rs, "lockinPeriodFrequencyType");
             if (lockinPeriodFrequencyTypeValue != null) {
                 lockinPeriodFrequencyType = SavingsEnumerations.lockinPeriodFrequencyType(lockinPeriodFrequencyTypeValue);
             }
 
-            final BigDecimal withdrawalFeeAmount = rs.getBigDecimal("withdrawalFeeAmount");
+            /*final BigDecimal withdrawalFeeAmount = rs.getBigDecimal("withdrawalFeeAmount");
 
             EnumOptionData withdrawalFeeType = null;
             final Integer withdrawalFeeTypeValue = JdbcSupport.getInteger(rs, "withdrawalFeeTypeEnum");
             if (withdrawalFeeTypeValue != null) {
                 withdrawalFeeType = SavingsEnumerations.withdrawalFeeType(withdrawalFeeTypeValue);
             }
+*/
+            final boolean withdrawalFeeForTransfers = rs.getBoolean("withdrawalFeeForTransfers");
 
-            final BigDecimal annualFeeAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "annualFeeAmount");
+/*            final BigDecimal annualFeeAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "annualFeeAmount");
 
             MonthDay annualFeeOnMonthDay = null;
             final Integer annualFeeOnMonth = JdbcSupport.getInteger(rs, "annualFeeOnMonth");
@@ -164,11 +167,10 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             if (annualFeeAmount != null && annualFeeOnDay != null) {
                 annualFeeOnMonthDay = new MonthDay(annualFeeOnMonth, annualFeeOnDay);
             }
-
-            return SavingsProductData.instance(id, name, description, currency, nominalAnnualInterestRate, compoundingInterestPeriodType,
+*/
+            return SavingsProductData.instance(id, name, shortName,  description, currency, nominalAnnualInterestRate, compoundingInterestPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
-                    lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeAmount, withdrawalFeeType, annualFeeAmount,
-                    annualFeeOnMonthDay, accountingRuleType);
+                    lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, accountingRuleType);
         }
     }
 

@@ -5,18 +5,22 @@
  */
 package org.mifosplatform.portfolio.charge.data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
+import org.joda.time.LocalDate;
+import org.joda.time.MonthDay;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanChargeData;
+import org.mifosplatform.portfolio.savings.data.SavingsAccountChargeData;
 
 /**
  * Immutable data object for charge data.
  */
-public class ChargeData implements Comparable<ChargeData> {
+public class ChargeData implements Comparable<ChargeData>, Serializable {
 
     private final Long id;
     private final String name;
@@ -27,53 +31,101 @@ public class ChargeData implements Comparable<ChargeData> {
     private final EnumOptionData chargeTimeType;
     private final EnumOptionData chargeAppliesTo;
     private final EnumOptionData chargeCalculationType;
+    private final EnumOptionData chargePaymentMode;
+    private final MonthDay feeOnMonthDay;
+    private final Integer feeInterval;
+    private final BigDecimal minCap;
+    private final BigDecimal maxCap;
 
     private final Collection<CurrencyData> currencyOptions;
-    private final List<EnumOptionData> chargeCalculationTypeOptions;
-    private final List<EnumOptionData> chargeAppliesToOptions;
-    private final List<EnumOptionData> chargeTimeTypeOptions;
+    private final List<EnumOptionData> chargeCalculationTypeOptions;//
+    private final List<EnumOptionData> chargeAppliesToOptions;//
+    private final List<EnumOptionData> chargeTimeTypeOptions;//
+    private final List<EnumOptionData> chargePaymetModeOptions;//
+    
+    private final List<EnumOptionData> loanChargeCalculationTypeOptions;
+    private final List<EnumOptionData> loanChargeTimeTypeOptions;    
+    private final List<EnumOptionData> savingsChargeCalculationTypeOptions;
+    private final List<EnumOptionData> savingsChargeTimeTypeOptions;
 
     public static ChargeData template(final Collection<CurrencyData> currencyOptions,
             final List<EnumOptionData> chargeCalculationTypeOptions, final List<EnumOptionData> chargeAppliesToOptions,
-            final List<EnumOptionData> chargeTimeTypeOptions) {
-        return new ChargeData(null, null, null, null, null, null, null, false, false, currencyOptions, chargeCalculationTypeOptions,
-                chargeAppliesToOptions, chargeTimeTypeOptions);
+            final List<EnumOptionData> chargeTimeTypeOptions, final List<EnumOptionData> chargePaymentModeOptions,
+            final List<EnumOptionData> loansChargeCalculationTypeOptions, final List<EnumOptionData> loansChargeTimeTypeOptions,
+            final List<EnumOptionData> savingsChargeCalculationTypeOptions, final List<EnumOptionData> savingsChargeTimeTypeOptions) {
+
+        return new ChargeData(null, null, null, null, null, null, null, null, false, false, currencyOptions, chargeCalculationTypeOptions,
+                chargeAppliesToOptions, chargeTimeTypeOptions, chargePaymentModeOptions, loansChargeCalculationTypeOptions,
+                loansChargeTimeTypeOptions, savingsChargeCalculationTypeOptions, savingsChargeTimeTypeOptions, null, null,null,null);
     }
 
     public static ChargeData withTemplate(final ChargeData charge, final ChargeData template) {
         return new ChargeData(charge.id, charge.name, charge.amount, charge.currency, charge.chargeTimeType, charge.chargeAppliesTo,
-                charge.chargeCalculationType, charge.penalty, charge.active, template.currencyOptions,
-                template.chargeCalculationTypeOptions, template.chargeAppliesToOptions, template.chargeTimeTypeOptions);
+                charge.chargeCalculationType, charge.chargePaymentMode, charge.penalty, charge.active,template.currencyOptions,
+                template.chargeCalculationTypeOptions, template.chargeAppliesToOptions, template.chargeTimeTypeOptions,
+                template.chargePaymetModeOptions, template.loanChargeCalculationTypeOptions, template.loanChargeTimeTypeOptions,
+                template.savingsChargeCalculationTypeOptions, template.savingsChargeTimeTypeOptions, charge.feeOnMonthDay, charge.feeInterval,charge.minCap,charge.maxCap);
     }
 
     public static ChargeData instance(final Long id, final String name, final BigDecimal amount, final CurrencyData currency,
             final EnumOptionData chargeTimeType, final EnumOptionData chargeAppliesTo, final EnumOptionData chargeCalculationType,
-            final boolean penalty, final boolean active) {
-        return new ChargeData(id, name, amount, currency, chargeTimeType, chargeAppliesTo, chargeCalculationType, penalty, active, null,
-                null, null, null);
+            final EnumOptionData chargePaymentMode, final MonthDay feeOnMonthDay, final Integer feeInterval, final boolean penalty, final boolean active,
+            final BigDecimal minCap, final BigDecimal maxCap) {
+        
+        final Collection<CurrencyData> currencyOptions = null;
+        final List<EnumOptionData> chargeCalculationTypeOptions = null;
+        final List<EnumOptionData> chargeAppliesToOptions = null;
+        final List<EnumOptionData> chargeTimeTypeOptions = null;
+        final List<EnumOptionData> chargePaymentModeOptions = null;
+        final List<EnumOptionData> loansChargeCalculationTypeOptions = null;
+        final List<EnumOptionData> loansChargeTimeTypeOptions = null;
+        final List<EnumOptionData> savingsChargeCalculationTypeOptions = null;
+        final List<EnumOptionData> savingsChargeTimeTypeOptions = null;
+        
+        return new ChargeData(id, name, amount, currency, chargeTimeType, chargeAppliesTo, chargeCalculationType, chargePaymentMode,
+                penalty, active, currencyOptions, chargeCalculationTypeOptions, chargeAppliesToOptions, chargeTimeTypeOptions,
+                chargePaymentModeOptions, loansChargeCalculationTypeOptions, loansChargeTimeTypeOptions,
+                savingsChargeCalculationTypeOptions, savingsChargeTimeTypeOptions, feeOnMonthDay, feeInterval,minCap,maxCap);
     }
 
     public static ChargeData lookup(final Long id, final String name, final boolean isPenalty) {
-        BigDecimal amount = null;
-        CurrencyData currency = null;
-        EnumOptionData chargeTimeType = null;
-        EnumOptionData chargeAppliesTo = null;
-        EnumOptionData chargeCalculationType = null;
-        Boolean penalty = isPenalty;
-        Boolean active = false;
-        Collection<CurrencyData> currencyOptions = null;
-        List<EnumOptionData> chargeCalculationTypeOptions = null;
-        List<EnumOptionData> chargeAppliesToOptions = null;
-        List<EnumOptionData> chargeTimeTypeOptions = null;
-        return new ChargeData(id, name, amount, currency, chargeTimeType, chargeAppliesTo, chargeCalculationType, penalty, active,
-                currencyOptions, chargeCalculationTypeOptions, chargeAppliesToOptions, chargeTimeTypeOptions);
+        final BigDecimal amount = null;
+        final CurrencyData currency = null;
+        final EnumOptionData chargeTimeType = null;
+        final EnumOptionData chargeAppliesTo = null;
+        final EnumOptionData chargeCalculationType = null;
+        final EnumOptionData chargePaymentMode = null;
+        final MonthDay feeOnMonthDay = null;
+        final Integer feeInterval = null;
+        final Boolean penalty = isPenalty;
+        final Boolean active = false;
+        final BigDecimal minCap = null;
+        final BigDecimal maxCap = null;
+        final Collection<CurrencyData> currencyOptions = null;
+        final List<EnumOptionData> chargeCalculationTypeOptions = null;
+        final List<EnumOptionData> chargeAppliesToOptions = null;
+        final List<EnumOptionData> chargeTimeTypeOptions = null;
+        final List<EnumOptionData> chargePaymentModeOptions = null;
+        final List<EnumOptionData> loansChargeCalculationTypeOptions = null;
+        final List<EnumOptionData> loansChargeTimeTypeOptions = null;
+        final List<EnumOptionData> savingsChargeCalculationTypeOptions = null;
+        final List<EnumOptionData> savingsChargeTimeTypeOptions = null;
+        
+        return new ChargeData(id, name, amount, currency, chargeTimeType, chargeAppliesTo, chargeCalculationType, chargePaymentMode,
+                penalty, active, currencyOptions, chargeCalculationTypeOptions, chargeAppliesToOptions, chargeTimeTypeOptions,
+                chargePaymentModeOptions, loansChargeCalculationTypeOptions, loansChargeTimeTypeOptions,
+                savingsChargeCalculationTypeOptions, savingsChargeTimeTypeOptions, feeOnMonthDay, feeInterval,minCap,maxCap);
     }
 
     private ChargeData(final Long id, final String name, final BigDecimal amount, final CurrencyData currency,
             final EnumOptionData chargeTimeType, final EnumOptionData chargeAppliesTo, final EnumOptionData chargeCalculationType,
-            final boolean penalty, final boolean active, final Collection<CurrencyData> currencyOptions,
-            final List<EnumOptionData> chargeCalculationTypeOptions, final List<EnumOptionData> chargeAppliesToOptions,
-            final List<EnumOptionData> chargeTimeTypeOptions) {
+            final EnumOptionData chargePaymentMode, final boolean penalty, final boolean active,
+            final Collection<CurrencyData> currencyOptions, final List<EnumOptionData> chargeCalculationTypeOptions,
+            final List<EnumOptionData> chargeAppliesToOptions, final List<EnumOptionData> chargeTimeTypeOptions,
+            final List<EnumOptionData> chargePaymentModeOptions, final List<EnumOptionData> loansChargeCalculationTypeOptions,
+            final List<EnumOptionData> loansChargeTimeTypeOptions, final List<EnumOptionData> savingsChargeCalculationTypeOptions,
+            final List<EnumOptionData> savingsChargeTimeTypeOptions, final MonthDay feeOnMonthDay, final Integer feeInterval,
+            final BigDecimal minCap,final BigDecimal maxCap) {
         this.id = id;
         this.name = name;
         this.amount = amount;
@@ -81,17 +133,27 @@ public class ChargeData implements Comparable<ChargeData> {
         this.chargeTimeType = chargeTimeType;
         this.chargeAppliesTo = chargeAppliesTo;
         this.chargeCalculationType = chargeCalculationType;
+        this.chargePaymentMode = chargePaymentMode;
+        this.feeInterval = feeInterval;
+        this.feeOnMonthDay = feeOnMonthDay;
         this.penalty = penalty;
         this.active = active;
+        this.minCap = minCap;
+        this.maxCap = maxCap;
         this.currencyOptions = currencyOptions;
         this.chargeCalculationTypeOptions = chargeCalculationTypeOptions;
         this.chargeAppliesToOptions = chargeAppliesToOptions;
         this.chargeTimeTypeOptions = chargeTimeTypeOptions;
+        this.chargePaymetModeOptions = chargePaymentModeOptions;
+        this.savingsChargeCalculationTypeOptions = savingsChargeCalculationTypeOptions;
+        this.savingsChargeTimeTypeOptions = savingsChargeTimeTypeOptions;
+        this.loanChargeCalculationTypeOptions = loansChargeCalculationTypeOptions;
+        this.loanChargeTimeTypeOptions = loansChargeTimeTypeOptions;
     }
 
     @Override
     public boolean equals(final Object obj) {
-        ChargeData chargeData = (ChargeData) obj;
+        final ChargeData chargeData = (ChargeData) obj;
         return this.id.equals(chargeData.id);
     }
 
@@ -115,6 +177,24 @@ public class ChargeData implements Comparable<ChargeData> {
         }
 
         return LoanChargeData.newLoanChargeDetails(this.id, this.name, this.currency, this.amount, percentage, this.chargeTimeType,
-                this.chargeCalculationType, this.penalty);
+                this.chargeCalculationType, this.penalty, this.chargePaymentMode,this.minCap,this.maxCap);
+    }
+
+    public SavingsAccountChargeData toSavingsAccountChargeData() {
+
+        final Long savingsChargeId = null;
+        final Long savingsAccountId = null;
+        final BigDecimal amountPaid = BigDecimal.ZERO;
+        final BigDecimal amountWaived = BigDecimal.ZERO;
+        final BigDecimal amountWrittenOff = BigDecimal.ZERO;
+        final BigDecimal amountOutstanding = BigDecimal.ZERO;
+        final BigDecimal percentage = BigDecimal.ZERO;
+        final BigDecimal amountPercentageAppliedTo = BigDecimal.ZERO;
+        final Collection<ChargeData> chargeOptions = null;
+        final LocalDate dueAsOfDate = null;
+
+        return SavingsAccountChargeData.instance(savingsChargeId, this.id, savingsAccountId, this.name, this.currency, this.amount, amountPaid, amountWaived,
+                amountWrittenOff, amountOutstanding, this.chargeTimeType, dueAsOfDate, this.chargeCalculationType, percentage,
+                amountPercentageAppliedTo, chargeOptions, this.penalty, this.feeOnMonthDay, this.feeInterval);
     }
 }

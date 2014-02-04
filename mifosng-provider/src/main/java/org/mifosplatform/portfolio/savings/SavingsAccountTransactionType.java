@@ -18,7 +18,13 @@ public enum SavingsAccountTransactionType {
     WITHDRAWAL(2, "savingsAccountTransactionType.withdrawal"), //
     INTEREST_POSTING(3, "savingsAccountTransactionType.interestPosting"), //
     WITHDRAWAL_FEE(4, "savingsAccountTransactionType.withdrawalFee"), //
-    ANNUAL_FEE(5, "savingsAccountTransactionType.annualFee");
+    ANNUAL_FEE(5, "savingsAccountTransactionType.annualFee"), //
+    WAIVE_CHARGES(6, "savingsAccountTransactionType.waiveCharge"), //
+    PAY_CHARGE(7, "savingsAccountTransactionType.payCharge"), //
+    INITIATE_TRANSFER(12, "savingsAccountTransactionType.initiateTransfer"), //
+    APPROVE_TRANSFER(13, "savingsAccountTransactionType.approveTransfer"), //
+    WITHDRAW_TRANSFER(14, "savingsAccountTransactionType.withdrawTransfer"), //
+    REJECT_TRANSFER(15, "savingsAccountTransactionType.rejectTransfer");
 
     private final Integer value;
     private final String code;
@@ -33,32 +39,50 @@ public enum SavingsAccountTransactionType {
     }
 
     public String getCode() {
-        return code;
+        return this.code;
     }
 
     public static SavingsAccountTransactionType fromInt(final Integer transactionType) {
 
         if (transactionType == null) { return SavingsAccountTransactionType.INVALID; }
 
-        SavingsAccountTransactionType loanTransactionType = SavingsAccountTransactionType.INVALID;
+        SavingsAccountTransactionType savingsAccountTransactionType = SavingsAccountTransactionType.INVALID;
         switch (transactionType) {
             case 1:
-                loanTransactionType = SavingsAccountTransactionType.DEPOSIT;
+                savingsAccountTransactionType = SavingsAccountTransactionType.DEPOSIT;
             break;
             case 2:
-                loanTransactionType = SavingsAccountTransactionType.WITHDRAWAL;
+                savingsAccountTransactionType = SavingsAccountTransactionType.WITHDRAWAL;
             break;
             case 3:
-                loanTransactionType = SavingsAccountTransactionType.INTEREST_POSTING;
+                savingsAccountTransactionType = SavingsAccountTransactionType.INTEREST_POSTING;
             break;
             case 4:
-                loanTransactionType = SavingsAccountTransactionType.WITHDRAWAL_FEE;
+                savingsAccountTransactionType = SavingsAccountTransactionType.WITHDRAWAL_FEE;
             break;
             case 5:
-                loanTransactionType = SavingsAccountTransactionType.ANNUAL_FEE;
+                savingsAccountTransactionType = SavingsAccountTransactionType.ANNUAL_FEE;
+            break;
+            case 6:
+                savingsAccountTransactionType = SavingsAccountTransactionType.WAIVE_CHARGES;
+            break;
+            case 7:
+                savingsAccountTransactionType = SavingsAccountTransactionType.PAY_CHARGE;
+            break;
+            case 12:
+                savingsAccountTransactionType = SavingsAccountTransactionType.INITIATE_TRANSFER;
+            break;
+            case 13:
+                savingsAccountTransactionType = SavingsAccountTransactionType.APPROVE_TRANSFER;
+            break;
+            case 14:
+                savingsAccountTransactionType = SavingsAccountTransactionType.WITHDRAW_TRANSFER;
+            break;
+            case 15:
+                savingsAccountTransactionType = SavingsAccountTransactionType.REJECT_TRANSFER;
             break;
         }
-        return loanTransactionType;
+        return savingsAccountTransactionType;
     }
 
     public boolean isDeposit() {
@@ -81,8 +105,36 @@ public enum SavingsAccountTransactionType {
         return this.value.equals(SavingsAccountTransactionType.ANNUAL_FEE.getValue());
     }
 
+    public boolean isPayCharge() {
+        return this.value.equals(SavingsAccountTransactionType.PAY_CHARGE.getValue());
+    }
+    
+    public boolean isChargeTransaction(){
+        return isPayCharge() || isWithdrawalFee() || isAnnualFee();
+    }
+
+    public boolean isWaiveCharge() {
+        return this.value.equals(SavingsAccountTransactionType.WAIVE_CHARGES.getValue());
+    }
+
+    public boolean isTransferInitiation() {
+        return this.value.equals(SavingsAccountTransactionType.INITIATE_TRANSFER.getValue());
+    }
+
+    public boolean isTransferApproval() {
+        return this.value.equals(SavingsAccountTransactionType.APPROVE_TRANSFER.getValue());
+    }
+
+    public boolean isTransferRejection() {
+        return this.value.equals(SavingsAccountTransactionType.REJECT_TRANSFER.getValue());
+    }
+
+    public boolean isTransferWithdrawal() {
+        return this.value.equals(SavingsAccountTransactionType.WITHDRAW_TRANSFER.getValue());
+    }
+
     public boolean isDebit() {
-        return isWithdrawal() || isWithdrawalFee() || isAnnualFee();
+        return isWithdrawal() || isWithdrawalFee() || isAnnualFee() || isPayCharge();
     }
 
     public boolean isCredit() {

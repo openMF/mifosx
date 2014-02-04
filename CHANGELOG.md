@@ -5,6 +5,33 @@ See VERSIONING (https://github.com/openMF/mifosx/blob/master/VERSIONING.md) for 
 
 Releases
 ===============
+
+1. 17 Dec 2013 - 1.17.0.RELEASE
+1. 29 Dec 2013 - 1.16.1.RELEASE
+1. 15 Dec 2013 - 1.16.0.RELEASE
+1. 12 Dec 2013 - 1.15.2.RELEASE
+1. 04 Dec 2013 - 1.15.1.RELEASE
+1. 01 Dec 2013 - 1.15.0.RELEASE
+1. 21 Nov 2013 - 1.14.0.RELEASE
+1. 03 Nov 2013 - 1.13.4.RELEASE
+1. 30 Oct 2013 - 1.13.3.RELEASE
+1. 28 Oct 2013 - 1.13.2.RELEASE
+1. 22 Oct 2013 - 1.13.1.RELEASE
+1. 19 Oct 2013 - 1.13.0.RELEASE
+1. 16 Oct 2013 - 1.12.0.RELEASE
+1. 7 Oct 2013 - 1.11.1.RELEASE
+1. 5 Oct 2013 - 1.11.0.RELEASE
+1. 4 Oct 2013 - 1.10.3.RELEASE
+1. 22 Sep 2013 - 1.10.2.RELEASE
+1. 20 Sep 2013 - 1.10.1.RELEASE
+1. 19 Sep 2013 - 1.10.0.RELEASE
+1. 18 Sep 2013 - 1.9.2.RELEASE
+1. 10 Sep 2013 - 1.9.1.RELEASE
+1. 8 Sep 2013 - 1.9.0.RELEASE
+1. 21 Aug 2013 - 1.8.1.RELEASE
+1. 20 Aug 2013 - 1.8.0.RELEASE
+1. 14 Aug 2013 - 1.7.2.RELEASE
+1. 12 Aug 2013 - 1.7.1.RELEASE
 1. 28 July 2013 - 1.7.0.RELEASE
 1. 28 July 2013 - 1.6.1.RELEASE
 1. 20 July 2013 - 1.6.0.RELEASE
@@ -28,6 +55,425 @@ Releases
 1. 10 April 2013 - 0.11.2.beta
 1. 05 April 2013 - 0.11.1.beta
 1. 05 April 2013 - 0.11.0.beta
+
+1.17.0.RELEASE
+=============
+Feature Release
+
+This feature release contains some API breaking changes around charges, loans and savings products (introducing mandatory short names) along with improvements around Collection Sheet, introducing the ability to activate/inactivate Staff and other Bug fixes
+
+Platform & API
+
+New Features & Improvements
+ - [MIFOSX-831] - Collectionsheet improvements to make data entry easy
+ - [MIFOSX-832] - Options to set short name for loan, charge and saving products
+ - [MIFOSX-845] - Option to activate or inactivate a staff
+ - [MIFOSX-849] - Update search API to include group external Id as a search parameter
+ - [MIFOSX-866] - Return Transaction Type of loan or savings transaction associated with a journal entry
+
+Bugs
+ - [MIFOSX-720] - In modify loan application (Undo disbursal - Undo approval) if charge to be collected from savings is deleted then not able to save the application.
+ - [MIFOSX-819] - Not able to modify Loan application after undo disburse once one of the charge paid.
+
+1.16.1.RELEASE
+=============
+Bug Release
+
+Bugs
+ - [MIFOSX-802] - Loan life cycle is not considered in validations for loan operations
+ - [MIFOSX-812] - Journalentries Api is not returning currency while retrieving transactions
+ - [MIFOSX-825] - Timeline is not displaying while fetching the details of created centers
+ - [MIFOSX-830] - APIs are returning invalid commandId for all actions when maker-checker is enabled.
+ - [MIFOSX-834] - Reports-Loan products are not listing for currency ALL(Active Loans - Summary)
+
+1.16.0.RELEASE
+=============
+Feature Release
+
+This feature release adds support for undoing loan write-offs along with a couple other improvements
+
+Platform & API
+
+New Features & Improvements
+ - [MIFOSX-796] - Allow undo of write off transaction (disallow undo or change of any other transaction when loan is written off)
+ - [MIFOSX-824] - Add pagination to Audits endpoints
+ - [MIFOSX-826] - Add holiday status in response data
+
+1.15.2.RELEASE
+=============
+Bug Release
+
+Bugs
+ - [MIFOSX-816] - Future loan amounts should be with respect to Loan cycle (not to be confused with borrower cycle)
+ - [MIFOSX-818] - Not able to retrieve Global Configurations through API
+ - [MIFOSX-820] - Fix spelling mistakes in permissions for better Display on community app
+ - [MIFOSX-821] - Null pointer exception while disbursing the loan
+ - [MIFOSX-822] - Backdated transaction that results in transaction reversals does not create journal entries for new transactions
+
+
+1.15.1.RELEASE
+=============
+Bug Release
+
+Bugs
+ - [MIFOSX-801] - Clean up implementation of [MIFOSX-765]
+ - [MIFOSX-805] - Terms vary based on loan cycle is not getting updated in Edit Loan Product page.
+ - [MIFOSX-810] - Unhandled API error while creating multiple users with same name
+ - [MIFOSX-811] - Repayment schedule dates for Loan disbursement after undo disbursal is not proper
+ - [MIFOSX-744] - Implementation of mifosx-735 should be optional
+
+1.15.0.RELEASE
+=============
+Feature Release
+
+This feature release contains some API breaking changes around loan and savings products in relation to the accounting section of their respective APIs. Some small improvements are also bundled into this release.
+
+Platform & API
+
+New Features & Improvements
+ - [MIFOSX-569] - Calculate future loan amounts or installments based on previous loan cycle.
+ - [MIFOSX-744] - Implementation of mifosx-735 should be optional
+ - [MIFOSX-790] - Need ability to be able to link accounting journal entries with the additional payment details captured in m_payment_detail table
+ - [MIFOSX-792] - Improve penalties introducing a redemption periods for MFIs that dont input data same day.
+ - [MIFOSX-794] - Add roles list to /users endpoint
+ - [MIFOSX-795] - Clean up API around Loan/ Savings product creation for consistency and better usability
+
+
+Bug 
+ - [MIFOSX-798] - Read not working for holidays and API documentation not updated
+ - [MIFOSX-800] - Scheduler job is failed, if no accounting data is available.
+
+
+1.14.0.RELEASE
+=============
+Feature Release
+
+This feature release adds support for per installment fees for loans, introduces the ability to edit/delete existing holidays and other improvements around Calendar (recurring meetings) functionality.
+
+Platform & API
+
+New Features & Improvements
+ - [MIFOSX-693] - Holidays cannot be edited or removed
+ - [MIFOSX-730] - Implement "per installment fee" for Loans
+ - [MIFOSX-649] - (Meeting) Calendar Improvements
+ - [MIFOSX-682] - Data Validation & Helpful Developer Messages for Meetings
+ - [MIFOSX-754] - Mobile phone number(s?) fields on Client & Staff on core database (not custom data tables)
+ - [MIFOSX-765] - Add Timeline to the clients and groups api
+ - [MIFOSX-119] - Spike: Produce boilerplate shell on platform/API for Outbound SMS Integration
+
+Bug 
+ - [MIFOSX-769] - Loans product: Min & max are not working as expected for Principal, No. of repayments & interest
+ - [MIFOSX-784] - API - Client under pending status doesn't allow future activation date
+
+
+1.13.4.RELEASE
+=============
+Bug Release
+
+Bugs
+ - [MIFOSX-763] - Organization Running balance on /glaccounts is incorrect for uncalculated entries
+ - [MIFOSX-764] - Journal entries are not returned in correct order making running blance nonsensical
+ - [MIFOSX-766] - Add and delete charge is not reflecting the schedule till loan disburse
+ 
+1.13.3.RELEASE
+=============
+Bug Release
+
+Bugs
+ - [MIFOSX-740] - In Savings account monthly charge Recurrence Start month should be after activation of the account
+ - [MIFOSX-757] - updating charges
+ - [MIFOSX-759] - Retrieving journal entry information by transactionId is not gauranteed to return journal entries from same transaction
+ - [MIFOSX-760] - Updating a charge does not evict the cache resulting in incorrect data returned from platform
+ - [MIFOSX-762] - SubmittedBy User not stored when creating savings accounts
+
+1.13.2.RELEASE
+=============
+Bug Release
+
+Bugs
+ - [MIFOSX-721] - "Interest charged from" is not working as per expected
+ - [MIFOSX-722] - Due amount in Repayment installments are not equal
+ - [MIFOSX-729] - Flat - Daily is not working as expected
+ - [MIFOSX-749] - Scoping of clients by office hierarchy no longer works
+ - [MIFOSX-750] - Scoping of clients by search term (to search any name part) no longer works
+
+1.13.1.RELEASE
+=============
+Bug Release
+
+Bugs
+ - [MIFOSX-715] - NPE getting client image
+ - [MIFOSX-733] - 500 exception when not passing a note during undo of disbursement
+ - [MIFOSX-734] - Add further detail on the 'repayment strategies' concept
+ 
+1.13.0.RELEASE
+=============
+Feature Release
+
+This Feature Release adds support for min and maximum caps on % based charges for loans.
+
+Platform & API
+
+New Features & Improvements
+
+ - [MIFOSX-437] - Minimum and maximimum caps on % based charges
+ - [MIFOSX-747] - Update AMI and AMI related docs on readme
+ - [MIFOSX-748] - Improve API documentation around charges
+
+1.12.0.RELEASE
+=============
+Feature Release
+
+This Feature Release adds support for Monthly fees for savings along with minor bug fixes
+
+Platform & API
+
+New Features & Improvements
+ - [MIFOSX-728] - Extend Recurring fees for Savings
+ - [MIFOSX-735] - add organizationRunningBalance and runningBalanceComputed to /glaccounts API output
+
+Bug 
+ - [MIFOSX-639] - loan transactions - externalId duplicates not being caught by exception
+ - [MIFOSX-723] - In Savings, not able to adjust the transaction for the amount deposited as "Minimum opening balance"
+ - [MIFOSX-732] - Payment type need not be specified for charges for savings products
+
+
+1.11.1.RELEASE
+=============
+Bug Release
+
+Platform & API
+
+New Features & Improvements
+ - [MIFOSX-726] - Add missing savings charges details to api doc
+
+Bug
+ - [MIFOSX-727] - Loan Write off account not being persisted on creating a new Loan Product
+
+1.11.0.RELEASE
+=============
+Feature Release
+
+This Feature release ships various improvements to the configurable fees functionality for savings, ability to consolidate running balances for Journal entries (both at a Branch and an Organizational Level) and various bug fixes
+
+Platform & API
+
+New Features & Improvements
+ - [MIFOSX-435] - Capture derived/running balances for Journals
+ - [MIFOSX-656] - Ability to Map specific savings fees to specific income accounts
+ - [MIFOSX-690] - Accounting Not Done for over-payments and related work-flows (transfer overpaid amount to savings)
+ - [MIFOSX-697] - Move existing withdrawal fees and Annual fees for savings into the configurable fees workflow
+
+Bug 
+ - [MIFOSX-687] - In View/Edit Savings Product not able to remove the charge added while defining the product.
+ - [MIFOSX-688] - Transaction Number for accounting needs to have guaranteed uniqueness
+ - [MIFOSX-689] - Ensure account Transfers (Savings to Loans etc) point to the right Loan Transaction
+ - [MIFOSX-691] - Clean up current Configurable Savings Fees functionality
+ - [MIFOSX-692] - Savings account accepting multiple currency charges
+ - [MIFOSX-699] - Duplicate entry in accounting table for disbursement fee through linked savings account
+ - [MIFOSX-718] - Not able to "Pay Annual Fee" and "Post Interest" for savings account through Schedular Jobs
+ - [MIFOSX-719] - Savings account with min. opening balance if Annual fee is deducted on account activation date then interest is not getting posted.
+
+Reference App
+ - [MIFOSX-673] - Receipt number displayed in Client Transactions history table / Journal
+
+1.10.3.RELEASE
+=============
+Bug Release
+
+Platform & API
+
+Bug
+ - [MIFOSX-679] - Not able to Create holiday through API
+ - [MIFOSX-694] - Unable to view users when caching is enabled
+ - [MIFOSX-696] - Declining balance - Equal principal payments(Daily) is not working as expected.
+ - [MIFOSX-716] - When updating details related to roles (name, permissions) - the incorrect cached details are returned for cached users
+ - [MIFOSX-717] - Register/Deregister data tables not working with constraint based approach
+
+Reference App
+ - [MIFOSX-698] - Unable to save the created permissions for created Role
+
+
+1.10.2.RELEASE
+=============
+Bug Release
+
+Platform & API
+
+New Features & Improvements
+ - [MIFOSX-664] - Client transfer workflow change
+
+Bug
+ - [MIFOSX-677] - No mention of 'transfersInSuspenseAccountId' parameter in API docs
+ - [MIFOSX-684] - Default transfersInSuspense Accounts set incorrectly for existing Saving Products
+ - [MIFOSX-685] - Debit and Balance displayed for active savings account after a transfer in Transactions tab is incorrect
+ - [MIFOSX-686] - Configurable fees payment does not return FeesDeduction as true
+
+
+1.10.1.RELEASE
+=============
+Bug Release
+
+Platform & API
+
+Bug
+ - [MIFOSX-675] - Not able to create savings account with/without charges.
+ - [MIFOSX-680] - Duplicate entries for Payment channels to Fund source mapping
+
+Reference App
+ - [MIFOSX-683] - Update Reference UI to allow manual payments of Loan fees from savings
+
+
+1.10.0.RELEASE
+=============
+Feature Release
+
+This feature release ships a tighter integration between Loans and Savings (ability to pay Loan Charges from Savings) , introduces configurable fees for savings and adds the ability to Transfer clients with active savings accounts across branches along with a couple of bug fixes
+
+Platform & API
+
+New Features & Improvements
+ - [MIFOSX-642] - Allow charges for a loan to be deducted from savings of the client
+ - [MIFOSX-643] - Transfer Clients with Savings accounts between Branches
+ - [MIFOSX-644] - Configurable Fees for savings
+
+Bug 
+ - [MIFOSX-662] - Not able to define "Transfer in Suspense" in cash based accounting for Savings product.
+ - [MIFOSX-674] - Not able to disburse the Client's loan if charges attached to that loan is transfered from Savings account
+
+
+1.9.2.RELEASE
+=============
+Bug Release
+
+Platform & API
+
+Bug
+ - [MIFOSX-659] - Not able to transfer Client between Branch offices which were created under same parent office.
+ - [MIFOSX-663] - No API documentation on Holidays or Working Days features
+ - [MIFOSX-671] - "Minimum opening balance" assigned is not displaying as balance in Transaction page after activation of savings account
+ - [MIFOSX-672] - Final installment of FLAT interest loans incorrectly has closing loan balance thats greater than zero.
+
+Improvement
+ - [MIFOSX-669] - Ability to not allow to "close" a client while transfer of client is in progress
+
+
+1.9.1.RELEASE
+=============
+Bug Release
+
+Platform & API
+
+Bug
+ - [MIFOSX-647] - Transfered amount in Loan account transaction page should not be allowed to Edit/Delete
+ - [MIFOSX-648] - User with no read permissions should still be able to fetch their own user account data
+ - [MIFOSX-658] - Unable to update existing Loan Products in demo server
+
+Reference App
+ - [MIFOSX-655] - Client Closure reason added in code values is not displayed in dropdon list of Client Close page
+
+
+1.9.0.RELEASE
+=============
+Feature Release
+
+This feature release ships various improvements to the core portfolio modules like adding the ability to close a savings account, reactivate a savings account by undoingingediting transactions, transferring money from overpaid loan to savings accounts, closing group accounts, transferring clients with active loans between groups and across branches and adding ability to capture attendance through the collection sheet along with various bug fixes
+
+Platform & API
+
+Bug 
+ - [MIFOSX-611] - Not able to reassign loan from one loan officer to other in Bulk Loan Reassignment page
+ - [MIFOSX-613] - Not able to assign Loan officer after submitting the Group Loan Application.
+ - [MIFOSX-615] - regression issue fixes for integration test
+ - [MIFOSX-624] - Applying Annual Fee results in Savings Account Having a Negative Balance
+ - [MIFOSX-627] - End of day balance is calculated incorrectly for same day transations which results in negative interest been calculated
+ - [MIFOSX-628] - The default Annual fee due on date is not displaying future date in case provided
+ - [MIFOSX-635] - Currency in multiples of 1000 returns an an invalid integer error in edit saving product
+ - [MIFOSX-640] - Approve Transfer Client button
+ - [MIFOSX-517] - If "Code" is added and defined in "Create Data Table" and utilized for a client and then if that code is deleted wrong entry is displayed in Client's page
+
+New Features & Improvements
+ - [MIFOSX-547] - Client, Group and Center Transfers
+ - [MIFOSX-567] - External Id work for migration
+ - [MIFOSX-596] - Support ability to transfer money from overpaid loan accounts to savings accounts
+ - [MIFOSX-619] - Support ability to close an existing active savings account
+ - [MIFOSX-436] - Transfer clients between loanofficers, groups and branches
+ - [MIFOSX-607] - Capture attendance through collectionsheet
+ - [MIFOSX-622] - Savings transfers involving a withdrawal should not auto apply withdrawal fees if configured for account
+ - [MIFOSX-625] - Support ability to close a group
+ - [MIFOSX-634] - Support ability to undo/reverse transactions for the Savings account in closed state and activate again
+ - [MIFOSX-440] - Meeting calendar clean up
+ 
+Reference App
+ - [MIFOSX-612] - Not able to configure Maker Checker Tasks in UI
+ - [MIFOSX-646] - Client "Close" tab is not working
+ - [MIFOSX-618] - Not able to add permisons for the new role created.
+ 
+1.8.1.RELEASE
+=============
+Bug Release
+
+Platform & API
+
+Bug
+ - [MIFOSX-617] - Unable to create a new Loan Application
+
+
+1.8.0.RELEASE
+=============
+Feature Release
+
+This feature release ships various improvements to the savings module (including ability to transfer funds from a savings accounts to another savings/loan accounts, adjust deposits/withdrawals, batch jobs for posting interest etc), ability to capture attendance details against center/group meetings, updates to the scheduler to run in a clustered environment and the beta release of the transfers functionality (with support for transferring clients with active accounts between groups and transferring clients with closed accounts between branches)
+
+Platform & API
+
+New Features & Improvements
+ - [MIFOSX-310] - Generate Collection sheet based on meeting calendar dates
+ - [MIFOSX-357] - Add Assign staff functionality to Group API call
+ - [MIFOSX-433] - Allow rounding of loan schedules and charges to multiples of 100's or 1000's
+ - [MIFOSX-441] - Synch JLG loans first repayment date with meeting dates
+ - [MIFOSX-586] - Support ability to adjust/edit an existing savings transaction
+ - [MIFOSX-591] - changes to group loan API
+ - [MIFOSX-599] - Ability to add savings account details in Group Summary Page.
+ - [MIFOSX-602] - Display transaction ID after applying withdrawal/repayment/etc.
+ - [MIFOSX-605] - add support for scheduling to work in clustered mode
+ - [MIFOSX-159] - Add batch job for posting of interest to savings accounts
+ - [MIFOSX-432] - Support ability to transfer money from savings account to other savings accounts
+ - [MIFOSX-496] - Capture Client Attendance details
+ - [MIFOSX-574] - Add support for Savings accounts at the Center level
+ - [MIFOSX-575] - Add support for Savings accounts for Groups
+ - [MIFOSX-595] - Support ability to transfer money from savings account to loan accounts for purposes of making a repayment
+ 
+Reference App
+ - [MIFOSX-609] - Show "Add Holidays" link in demo server
+
+1.7.2.RELEASE
+=============
+Bug Release
+
+Platform & API
+
+Bug
+ - [MIFOSX-606] - Unable to activate client from pending state
+
+1.7.1.RELEASE
+=============
+Bug Release
+
+Platform & API
+
+Bug
+ - [MIFOSX-538] - Search is displaying duplicate result if acct number is part of client name
+ - [MIFOSX-554] - In Group loan if meeting dates are getting rescheduled frequently, the repayment is getting extended.
+ - [MIFOSX-555] - Return write-off date and transaction history for written off loans
+ - [MIFOSX-581] - Batch job is starting even when scheduler is in suspended state
+ - [MIFOSX-589] - Adjust Transactions accepts Holidays and non working days.
+ - [MIFOSX-597] - Closed client under Group applying for JLG loan
+ - [MIFOSX-598] - Closed client under Group applying for New Savings Account
+ - [MIFOSX-600] - Allowing to Disassociate a client from the Group who is having a active savings account under that Group
+
+New Features & Improvements
+ - [MIFOSX-428] - Add user giving invalid emailid error
 
 1.7.0.RELEASE
 =============

@@ -13,6 +13,7 @@ import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,7 @@ public class CodeValueReadPlatformServiceImpl implements CodeValueReadPlatformSe
     @Override
     public Collection<CodeValueData> retrieveCodeValuesByCode(final String code) {
 
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
         final CodeValueDataMapper rm = new CodeValueDataMapper();
         final String sql = "select " + rm.schema() + "where c.code_name like ? order by position";
@@ -59,9 +60,10 @@ public class CodeValueReadPlatformServiceImpl implements CodeValueReadPlatformSe
     }
 
     @Override
-    public Collection<CodeValueData> retrieveAllCodeValues(Long codeId) {
+    @Cacheable(value = "code_values", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat(#codeId+'cv')")
+    public Collection<CodeValueData> retrieveAllCodeValues(final Long codeId) {
 
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
         final CodeValueDataMapper rm = new CodeValueDataMapper();
         final String sql = "select " + rm.schema() + "where cv.code_id = ? order by position";
@@ -70,9 +72,9 @@ public class CodeValueReadPlatformServiceImpl implements CodeValueReadPlatformSe
     }
 
     @Override
-    public CodeValueData retrieveCodeValue(Long codeValueId) {
+    public CodeValueData retrieveCodeValue(final Long codeValueId) {
 
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
         final CodeValueDataMapper rm = new CodeValueDataMapper();
         final String sql = "select " + rm.schema() + "where cv.id = ? order by position";

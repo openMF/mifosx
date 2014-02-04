@@ -5,8 +5,6 @@
  */
 package org.mifosplatform.portfolio.client.data;
 
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.activatedOnDateParamName;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -117,6 +115,12 @@ public final class ClientDataValidator {
                     .notExceedingLengthOf(100);
         }
 
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.mobileNoParamName, element)) {
+            final String mobileNo = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.mobileNoParamName, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.mobileNoParamName).value(mobileNo).ignoreIfNull()
+                    .notExceedingLengthOf(50).matchesRegularExpression("[+](\\d{1}||\\d{2}||\\d{3})-\\d{10}");
+        }
+
         final Boolean active = this.fromApiJsonHelper.extractBooleanNamed(ClientApiConstants.activeParamName, element);
         if (active != null) {
             if (active.booleanValue()) {
@@ -126,6 +130,12 @@ public final class ClientDataValidator {
             }
         } else {
             baseDataValidator.reset().parameter(ClientApiConstants.activeParamName).value(active).trueOrFalseRequired(false);
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.submittedOnDateParamName, element))
+        {
+            final LocalDate submittedOnDate = this.fromApiJsonHelper.extractLocalDateNamed(ClientApiConstants.submittedOnDateParamName, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.submittedOnDateParamName).value(submittedOnDate).notNull();
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
@@ -278,6 +288,12 @@ public final class ClientDataValidator {
             baseDataValidator.reset().parameter(ClientApiConstants.externalIdParamName).value(externalId).notExceedingLengthOf(100);
         }
 
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.mobileNoParamName, element)) {
+            atLeastOneParameterPassedForUpdate = true;
+            final String mobileNo = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.mobileNoParamName, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.mobileNoParamName).value(mobileNo).notExceedingLengthOf(50).matchesRegularExpression("[+](\\d{1}||\\d{2}||\\d{3})-\\d{10}");
+        }
+
         final Boolean active = this.fromApiJsonHelper.extractBooleanNamed(ClientApiConstants.activeParamName, element);
         if (active != null) {
             if (active.booleanValue()) {
@@ -314,8 +330,8 @@ public final class ClientDataValidator {
 
         final JsonElement element = command.parsedJson();
 
-        final LocalDate activationDate = this.fromApiJsonHelper.extractLocalDateNamed(activatedOnDateParamName, element);
-        baseDataValidator.reset().parameter(activatedOnDateParamName).value(activationDate).notNull();
+        final LocalDate activationDate = this.fromApiJsonHelper.extractLocalDateNamed(ClientApiConstants.activationDateParamName, element);
+        baseDataValidator.reset().parameter(ClientApiConstants.activationDateParamName).value(activationDate).notNull();
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
@@ -351,7 +367,7 @@ public final class ClientDataValidator {
 
     }
 
-    public void validateForAssignStaff(String json) {
+    public void validateForAssignStaff(final String json) {
 
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
@@ -392,10 +408,11 @@ public final class ClientDataValidator {
 
         final LocalDate closureDate = this.fromApiJsonHelper.extractLocalDateNamed(ClientApiConstants.closureDateParamName, element);
         baseDataValidator.reset().parameter(ClientApiConstants.closureDateParamName).value(closureDate).notNull();
-        
+
         final Long closureReasonId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.closureReasonIdParamName, element);
-        baseDataValidator.reset().parameter(ClientApiConstants.closureReasonIdParamName).value(closureReasonId).notNull().longGreaterThanZero();
-        
+        baseDataValidator.reset().parameter(ClientApiConstants.closureReasonIdParamName).value(closureReasonId).notNull()
+                .longGreaterThanZero();
+
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 

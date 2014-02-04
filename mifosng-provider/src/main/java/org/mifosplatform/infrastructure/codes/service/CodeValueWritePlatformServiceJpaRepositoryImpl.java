@@ -22,6 +22,7 @@ import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,7 @@ public class CodeValueWritePlatformServiceJpaRepositoryImpl implements CodeValue
 
     @Transactional
     @Override
+    @CacheEvict(value = "code_values", allEntries = true)
     public CommandProcessingResult createCodeValue(final JsonCommand command) {
 
         try {
@@ -66,7 +68,7 @@ public class CodeValueWritePlatformServiceJpaRepositoryImpl implements CodeValue
                     .withCommandId(command.commandId()) //
                     .withEntityId(codeValue.getId()) //
                     .build();
-        } catch (DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             handleCodeValueDataIntegrityIssues(command, dve);
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -93,6 +95,7 @@ public class CodeValueWritePlatformServiceJpaRepositoryImpl implements CodeValue
 
     @Transactional
     @Override
+    @CacheEvict(value = "code_values", allEntries = true)
     public CommandProcessingResult updateCodeValue(final Long codeValueId, final JsonCommand command) {
 
         try {
@@ -112,7 +115,7 @@ public class CodeValueWritePlatformServiceJpaRepositoryImpl implements CodeValue
                     .withEntityId(codeValueId) //
                     .with(changes) //
                     .build();
-        } catch (DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             handleCodeValueDataIntegrityIssues(command, dve);
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -123,6 +126,7 @@ public class CodeValueWritePlatformServiceJpaRepositoryImpl implements CodeValue
 
     @Transactional
     @Override
+    @CacheEvict(value = "code_values", allEntries = true)
     public CommandProcessingResult deleteCodeValue(final Long codeId, final Long codeValueId) {
 
         try {
@@ -133,7 +137,7 @@ public class CodeValueWritePlatformServiceJpaRepositoryImpl implements CodeValue
 
             final CodeValue codeValueToDelete = this.codeValueRepositoryWrapper.findOneWithNotFoundDetection(codeValueId);
 
-            boolean removed = code.remove(codeValueToDelete);
+            final boolean removed = code.remove(codeValueToDelete);
             if (removed) {
                 this.codeRepository.saveAndFlush(code);
             }
@@ -141,7 +145,7 @@ public class CodeValueWritePlatformServiceJpaRepositoryImpl implements CodeValue
             return new CommandProcessingResultBuilder() //
                     .withEntityId(codeValueId) //
                     .build();
-        } catch (DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             logger.error(dve.getMessage(), dve);
             throw new PlatformDataIntegrityException("error.msg.code.value.unknown.data.integrity.issue",
                     "Unknown data integrity issue with resource: " + dve.getMostSpecificCause().getMessage());

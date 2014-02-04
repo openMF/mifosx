@@ -26,6 +26,7 @@ import org.mifosplatform.accounting.common.AccountingDropdownReadPlatformService
 import org.mifosplatform.accounting.common.AccountingEnumerations;
 import org.mifosplatform.accounting.common.AccountingRuleType;
 import org.mifosplatform.accounting.glaccount.data.GLAccountData;
+import org.mifosplatform.accounting.producttoaccountmapping.data.ChargeToGLAccountMapper;
 import org.mifosplatform.accounting.producttoaccountmapping.data.PaymentTypeToGLAccountMapper;
 import org.mifosplatform.accounting.producttoaccountmapping.service.ProductToGLAccountMappingReadPlatformService;
 import org.mifosplatform.commands.domain.CommandWrapper;
@@ -41,6 +42,8 @@ import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSeria
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.monetary.service.CurrencyReadPlatformService;
+import org.mifosplatform.portfolio.charge.data.ChargeData;
+import org.mifosplatform.portfolio.charge.service.ChargeReadPlatformService;
 import org.mifosplatform.portfolio.paymentdetail.PaymentDetailConstants;
 import org.mifosplatform.portfolio.savings.SavingsApiConstants;
 import org.mifosplatform.portfolio.savings.SavingsCompoundingInterestPeriodType;
@@ -54,6 +57,7 @@ import org.mifosplatform.portfolio.savings.service.SavingsProductReadPlatformSer
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 @Path("/savingsproducts")
 @Component
@@ -70,6 +74,7 @@ public class SavingsProductsApiResource {
     private final AccountingDropdownReadPlatformService accountingDropdownReadPlatformService;
     private final CodeValueReadPlatformService codeValueReadPlatformService;
     private final ProductToGLAccountMappingReadPlatformService accountMappingReadPlatformService;
+    private final ChargeReadPlatformService chargeReadPlatformService;
 
     @Autowired
     public SavingsProductsApiResource(final SavingsProductReadPlatformService savingProductReadPlatformService,
@@ -79,7 +84,8 @@ public class SavingsProductsApiResource {
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final ApiRequestParameterHelper apiRequestParameterHelper, final CodeValueReadPlatformService codeValueReadPlatformService,
             final AccountingDropdownReadPlatformService accountingDropdownReadPlatformService,
-            final ProductToGLAccountMappingReadPlatformService accountMappingReadPlatformService) {
+            final ProductToGLAccountMappingReadPlatformService accountMappingReadPlatformService,
+            final ChargeReadPlatformService chargeReadPlatformService) {
         this.savingProductReadPlatformService = savingProductReadPlatformService;
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.currencyReadPlatformService = currencyReadPlatformService;
@@ -90,6 +96,7 @@ public class SavingsProductsApiResource {
         this.codeValueReadPlatformService = codeValueReadPlatformService;
         this.accountingDropdownReadPlatformService = accountingDropdownReadPlatformService;
         this.accountMappingReadPlatformService = accountMappingReadPlatformService;
+        this.chargeReadPlatformService = chargeReadPlatformService;
     }
 
     @POST
@@ -124,11 +131,11 @@ public class SavingsProductsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveAll(@Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME);
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME);
 
         final Collection<SavingsProductData> products = this.savingProductReadPlatformService.retrieveAll();
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, products, SavingsApiConstants.SAVINGS_PRODUCT_RESPONSE_DATA_PARAMETERS);
     }
 
@@ -138,19 +145,27 @@ public class SavingsProductsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOne(@PathParam("productId") final Long productId, @Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME);
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME);
 
         SavingsProductData savingProductData = this.savingProductReadPlatformService.retrieveOne(productId);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final Collection<ChargeData> charges = this.chargeReadPlatformService.retrieveSavingsProductCharges(productId);
+
+        savingProductData = SavingsProductData.withCharges(savingProductData, charges);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
         if (savingProductData.hasAccountingEnabled()) {
-            Map<String, Object> accountingMappings = accountMappingReadPlatformService.fetchAccountMappingDetailsForSavingsProduct(
-                    productId, savingProductData.accountingRuleTypeId());
-            Collection<PaymentTypeToGLAccountMapper> paymentChannelToFundSourceMappings = accountMappingReadPlatformService
+            final Map<String, Object> accountingMappings = this.accountMappingReadPlatformService
+                    .fetchAccountMappingDetailsForSavingsProduct(productId, savingProductData.accountingRuleTypeId());
+            final Collection<PaymentTypeToGLAccountMapper> paymentChannelToFundSourceMappings = this.accountMappingReadPlatformService
                     .fetchPaymentTypeToFundSourceMappingsForSavingsProduct(productId);
+            Collection<ChargeToGLAccountMapper> feeToGLAccountMappings = this.accountMappingReadPlatformService
+                    .fetchFeeToIncomeAccountMappingsForSavingsProduct(productId);
+            Collection<ChargeToGLAccountMapper> penaltyToGLAccountMappings = this.accountMappingReadPlatformService
+                    .fetchPenaltyToIncomeAccountMappingsForSavingsProduct(productId);
             savingProductData = SavingsProductData.withAccountingDetails(savingProductData, accountingMappings,
-                    paymentChannelToFundSourceMappings);
+                    paymentChannelToFundSourceMappings, feeToGLAccountMappings, penaltyToGLAccountMappings);
         }
 
         if (settings.isTemplate()) {
@@ -167,11 +182,11 @@ public class SavingsProductsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveTemplate(@Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME);
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME);
 
-        SavingsProductData savingProduct = handleTemplateRelatedData(null);
+        final SavingsProductData savingProduct = handleTemplateRelatedData(null);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, savingProduct, SavingsApiConstants.SAVINGS_PRODUCT_RESPONSE_DATA_PARAMETERS);
     }
 
@@ -214,25 +229,33 @@ public class SavingsProductsApiResource {
 
         final Collection<EnumOptionData> withdrawalFeeTypeOptions = this.dropdownReadPlatformService.retrievewithdrawalFeeTypeOptions();
 
-        final Collection<CodeValueData> paymentTypeOptions = codeValueReadPlatformService
+        final Collection<CodeValueData> paymentTypeOptions = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode(PaymentDetailConstants.paymentTypeCodeName);
         final Collection<EnumOptionData> accountingRuleOptions = this.accountingDropdownReadPlatformService
                 .retrieveAccountingRuleTypeOptions();
-        final Map<String, List<GLAccountData>> accountingMappingOptions = accountingDropdownReadPlatformService
+        final Map<String, List<GLAccountData>> accountingMappingOptions = this.accountingDropdownReadPlatformService
                 .retrieveAccountMappingOptionsForSavingsProducts();
+
+        // charges
+        final boolean feeChargesOnly = true;
+        Collection<ChargeData> chargeOptions = this.chargeReadPlatformService.retrieveSavingsAccountApplicableCharges(feeChargesOnly);
+        chargeOptions = CollectionUtils.isEmpty(chargeOptions) ? null : chargeOptions;
+
+        Collection<ChargeData> penaltyOptions = this.chargeReadPlatformService.retrieveSavingsAccountApplicablePenalties();
+        penaltyOptions = CollectionUtils.isEmpty(penaltyOptions) ? null : penaltyOptions;
 
         SavingsProductData savingsProductToReturn = null;
         if (savingsProduct != null) {
             savingsProductToReturn = SavingsProductData.withTemplate(savingsProduct, currencyOptions, interestCompoundingPeriodTypeOptions,
                     interestPostingPeriodTypeOptions, interestCalculationTypeOptions, interestCalculationDaysInYearTypeOptions,
                     lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, paymentTypeOptions, accountingRuleOptions,
-                    accountingMappingOptions);
+                    accountingMappingOptions, chargeOptions, penaltyOptions);
         } else {
             savingsProductToReturn = SavingsProductData.template(currency, interestCompoundingPeriodType, interestPostingPeriodType,
                     interestCalculationType, interestCalculationDaysInYearType, accountingRule, currencyOptions,
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                     interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions,
-                    paymentTypeOptions, accountingRuleOptions, accountingMappingOptions);
+                    paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions);
         }
 
         return savingsProductToReturn;

@@ -32,12 +32,13 @@ public class TenantDatabaseUpgradeService {
 
     @PostConstruct
     public void upgradeAllTenants() {
-        List<MifosPlatformTenant> tenants = tenantDetailsService.findAllTenants();
-        for (MifosPlatformTenant tenant : tenants) {
+        final List<MifosPlatformTenant> tenants = this.tenantDetailsService.findAllTenants();
+        for (final MifosPlatformTenant tenant : tenants) {
             if (tenant.isAutoUpdateEnabled()) {
-                Flyway flyway = new Flyway();
+                final Flyway flyway = new Flyway();
                 flyway.setDataSource(tenant.databaseURL(), tenant.getSchemaUsername(), tenant.getSchemaPassword());
                 flyway.setLocations("sql");
+                flyway.setOutOfOrder(true);
                 flyway.migrate();
             }
         }

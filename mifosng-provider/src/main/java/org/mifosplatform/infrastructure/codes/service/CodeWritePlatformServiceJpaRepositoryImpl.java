@@ -20,6 +20,7 @@ import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,10 +44,11 @@ public class CodeWritePlatformServiceJpaRepositoryImpl implements CodeWritePlatf
 
     @Transactional
     @Override
+    @CacheEvict(value = "codes", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat('cv')")
     public CommandProcessingResult createCode(final JsonCommand command) {
 
         try {
-            context.authenticatedUser();
+            this.context.authenticatedUser();
 
             this.fromApiJsonDeserializer.validateForCreate(command.json());
 
@@ -54,7 +56,7 @@ public class CodeWritePlatformServiceJpaRepositoryImpl implements CodeWritePlatf
             this.codeRepository.save(code);
 
             return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(code.getId()).build();
-        } catch (DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             handleCodeDataIntegrityIssues(command, dve);
             return CommandProcessingResult.empty();
         }
@@ -62,10 +64,11 @@ public class CodeWritePlatformServiceJpaRepositoryImpl implements CodeWritePlatf
 
     @Transactional
     @Override
+    @CacheEvict(value = "codes", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat('cv')")
     public CommandProcessingResult updateCode(final Long codeId, final JsonCommand command) {
 
         try {
-            context.authenticatedUser();
+            this.context.authenticatedUser();
 
             this.fromApiJsonDeserializer.validateForUpdate(command.json());
 
@@ -81,7 +84,7 @@ public class CodeWritePlatformServiceJpaRepositoryImpl implements CodeWritePlatf
                     .withEntityId(codeId) //
                     .with(changes) //
                     .build();
-        } catch (DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             handleCodeDataIntegrityIssues(command, dve);
             return null;
         }
@@ -89,15 +92,21 @@ public class CodeWritePlatformServiceJpaRepositoryImpl implements CodeWritePlatf
 
     @Transactional
     @Override
+    @CacheEvict(value = "codes", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat('cv')")
     public CommandProcessingResult deleteCode(final Long codeId) {
 
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
         final Code code = retrieveCodeBy(codeId);
         if (code.isSystemDefined()) { throw new SystemDefinedCodeCannotBeChangedException(); }
 
-        this.codeRepository.delete(code);
-
+        try {
+            this.codeRepository.delete(code);
+            this.codeRepository.flush();
+        } catch (final DataIntegrityViolationException e) {
+            throw new PlatformDataIntegrityException("error.msg.cund.unknown.data.integrity.issue",
+                    "Unknown data integrity issue with resource: " + e.getMostSpecificCause());
+        }
         return new CommandProcessingResultBuilder().withEntityId(codeId).build();
     }
 
@@ -112,7 +121,7 @@ public class CodeWritePlatformServiceJpaRepositoryImpl implements CodeWritePlatf
      * is.
      */
     private void handleCodeDataIntegrityIssues(final JsonCommand command, final DataIntegrityViolationException dve) {
-        Throwable realCause = dve.getMostSpecificCause();
+        final Throwable realCause = dve.getMostSpecificCause();
         if (realCause.getMessage().contains("code_name")) {
             final String name = command.stringValueOfParameterNamed("name");
             throw new PlatformDataIntegrityException("error.msg.code.duplicate.name", "A code with name '" + name + "' already exists",

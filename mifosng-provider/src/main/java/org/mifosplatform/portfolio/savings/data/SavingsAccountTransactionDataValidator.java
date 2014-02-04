@@ -8,6 +8,7 @@ package org.mifosplatform.portfolio.savings.data;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.activatedOnDateParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.bankNumberParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.checkNumberParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.closedOnDateParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.paymentTypeIdParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.receiptNumberParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.routingCodeParamName;
@@ -56,7 +57,7 @@ public class SavingsAccountTransactionDataValidator {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-        fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
                 SavingsApiConstants.SAVINGS_ACCOUNT_TRANSACTION_REQUEST_DATA_PARAMETERS);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
@@ -65,19 +66,19 @@ public class SavingsAccountTransactionDataValidator {
 
         final JsonElement element = command.parsedJson();
 
-        final LocalDate transactionDate = fromApiJsonHelper.extractLocalDateNamed(transactionDateParamName, element);
+        final LocalDate transactionDate = this.fromApiJsonHelper.extractLocalDateNamed(transactionDateParamName, element);
         baseDataValidator.reset().parameter(transactionDateParamName).value(transactionDate).notNull();
 
-        final BigDecimal transactionAmount = fromApiJsonHelper.extractBigDecimalWithLocaleNamed(transactionAmountParamName, element);
+        final BigDecimal transactionAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(transactionAmountParamName, element);
         baseDataValidator.reset().parameter(transactionAmountParamName).value(transactionAmount).notNull().positiveAmount();
 
         // Validate all string payment detail fields for max length
-        final Integer paymentTypeId = fromApiJsonHelper.extractIntegerWithLocaleNamed(paymentTypeIdParamName, element);
+        final Integer paymentTypeId = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(paymentTypeIdParamName, element);
         baseDataValidator.reset().parameter(paymentTypeIdParamName).value(paymentTypeId).ignoreIfNull().integerGreaterThanZero();
-        final Set<String> paymentDetailParameters = new HashSet<String>(Arrays.asList(transactionAccountNumberParamName, checkNumberParamName,
-                routingCodeParamName, receiptNumberParamName, bankNumberParamName));
-        for (String paymentDetailParameterName : paymentDetailParameters) {
-            final String paymentDetailParameterValue = fromApiJsonHelper.extractStringNamed(paymentDetailParameterName, element);
+        final Set<String> paymentDetailParameters = new HashSet<String>(Arrays.asList(transactionAccountNumberParamName,
+                checkNumberParamName, routingCodeParamName, receiptNumberParamName, bankNumberParamName));
+        for (final String paymentDetailParameterName : paymentDetailParameters) {
+            final String paymentDetailParameterValue = this.fromApiJsonHelper.extractStringNamed(paymentDetailParameterName, element);
             baseDataValidator.reset().parameter(paymentDetailParameterName).value(paymentDetailParameterValue).ignoreIfNull()
                     .notExceedingLengthOf(50);
         }
@@ -91,7 +92,7 @@ public class SavingsAccountTransactionDataValidator {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-        fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
                 SavingsApiConstants.SAVINGS_ACCOUNT_ACTIVATION_REQUEST_DATA_PARAMETERS);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
@@ -100,8 +101,29 @@ public class SavingsAccountTransactionDataValidator {
 
         final JsonElement element = command.parsedJson();
 
-        final LocalDate activationDate = fromApiJsonHelper.extractLocalDateNamed(activatedOnDateParamName, element);
+        final LocalDate activationDate = this.fromApiJsonHelper.extractLocalDateNamed(activatedOnDateParamName, element);
         baseDataValidator.reset().parameter(activatedOnDateParamName).value(activationDate).notNull();
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void validateClosing(final JsonCommand command) {
+        final String json = command.json();
+
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+                SavingsApiConstants.SAVINGS_ACCOUNT_CLOSE_REQUEST_DATA_PARAMETERS);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+
+        final JsonElement element = command.parsedJson();
+
+        final LocalDate activationDate = this.fromApiJsonHelper.extractLocalDateNamed(closedOnDateParamName, element);
+        baseDataValidator.reset().parameter(closedOnDateParamName).value(activationDate).notNull();
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }

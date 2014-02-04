@@ -6,13 +6,16 @@
 package org.mifosplatform.scheduledjobs.service;
 
 import java.util.Collection;
+import java.util.List;
 
+import org.mifosplatform.infrastructure.core.data.ApiParameterError;
+import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSourceServiceFactory;
 import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
 import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
 import org.mifosplatform.infrastructure.jobs.service.JobName;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountAnnualFeeData;
-import org.mifosplatform.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.mifosplatform.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,15 +31,15 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
     private final RoutingDataSourceServiceFactory dataSourceServiceFactory;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
-    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    private final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
+            final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
-        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
+        this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
     }
 
     @Transactional
@@ -44,9 +47,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @CronTarget(jobName = JobName.UPDATE_LOAN_SUMMARY)
     public void updateLoanSummaryDetails() {
 
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+        final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
 
-        StringBuilder updateSqlBuilder = new StringBuilder(900);
+        final StringBuilder updateSqlBuilder = new StringBuilder(900);
         updateSqlBuilder.append("update m_loan ");
         updateSqlBuilder.append("join (");
         updateSqlBuilder.append("SELECT ml.id AS loanId,");
@@ -115,7 +118,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         updateSqlBuilder
                 .append(" (x.penalty_charges_charged_derived - (x.penalty_charges_repaid_derived + x.penalty_charges_waived_derived + x.penalty_charges_writtenoff_derived))");
 
-        int result = jdbcTemplate.update(updateSqlBuilder.toString());
+        final int result = jdbcTemplate.update(updateSqlBuilder.toString());
 
         logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + result);
     }
@@ -125,11 +128,11 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @CronTarget(jobName = JobName.UPDATE_LOAN_ARREARS_AGEING)
     public void updateLoanArrearsAgeingDetails() {
 
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+        final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
 
         jdbcTemplate.execute("truncate table m_loan_arrears_aging");
 
-        StringBuilder updateSqlBuilder = new StringBuilder(900);
+        final StringBuilder updateSqlBuilder = new StringBuilder(900);
 
         updateSqlBuilder
                 .append("INSERT INTO m_loan_arrears_aging(`loan_id`,`principal_overdue_derived`,`interest_overdue_derived`,`fee_charges_overdue_derived`,`penalty_charges_overdue_derived`,`total_overdue_derived`,`overdue_since_date_derived`)");
@@ -155,7 +158,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         updateSqlBuilder.append(" and mr.duedate < CURDATE() ");
         updateSqlBuilder.append(" GROUP BY ml.id");
 
-        int result = jdbcTemplate.update(updateSqlBuilder.toString());
+        final int result = jdbcTemplate.update(updateSqlBuilder.toString());
 
         logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + result);
     }
@@ -165,11 +168,11 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @CronTarget(jobName = JobName.UPDATE_LOAN_PAID_IN_ADVANCE)
     public void updateLoanPaidInAdvance() {
 
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+        final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
 
         jdbcTemplate.execute("truncate table m_loan_paid_in_advance");
 
-        StringBuilder updateSqlBuilder = new StringBuilder(900);
+        final StringBuilder updateSqlBuilder = new StringBuilder(900);
 
         updateSqlBuilder
                 .append("INSERT INTO m_loan_paid_in_advance(loan_id, principal_in_advance_derived, interest_in_advance_derived, fee_charges_in_advance_derived, penalty_charges_in_advance_derived, total_in_advance_derived)");
@@ -190,24 +193,55 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         updateSqlBuilder
                 .append(" SUM(ifnull(mr.fee_charges_completed_derived, 0)) + SUM(ifnull(mr.penalty_charges_completed_derived, 0))) > 0.0");
 
-        int result = jdbcTemplate.update(updateSqlBuilder.toString());
+        final int result = jdbcTemplate.update(updateSqlBuilder.toString());
 
         logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + result);
     }
 
-    @Transactional
     @Override
     @CronTarget(jobName = JobName.APPLY_ANNUAL_FEE_FOR_SAVINGS)
     public void applyAnnualFeeForSavings() {
-        
-        final Collection<SavingsAccountAnnualFeeData> annualFeeData = this.savingsAccountReadPlatformService
-                .retrieveAccountsWithAnnualFeeDue();
 
-        for (SavingsAccountAnnualFeeData savingsAccountReference : annualFeeData) {
-            this.savingsAccountWritePlatformService.applyAnnualFee(savingsAccountReference.getId(),
-                    savingsAccountReference.getNextAnnualFeeDueDate());
+        final Collection<SavingsAccountAnnualFeeData> annualFeeData = this.savingsAccountChargeReadPlatformService
+                .retrieveChargesWithAnnualFeeDue();
+
+        for (final SavingsAccountAnnualFeeData savingsAccountReference : annualFeeData) {
+            try {
+                this.savingsAccountWritePlatformService.applyAnnualFee(savingsAccountReference.getId(),
+                        savingsAccountReference.getAccountId());
+            } catch (final PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error("Apply annual fee failed for account:" + savingsAccountReference.getAccountNo() + " with message "
+                            + error.getDeveloperMessage());
+                }
+            } catch (final Exception ex){
+                //need to handle this scenario
+            }
         }
 
         logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Savings accounts affected by update: " + annualFeeData.size());
     }
+
+    @Override
+    @CronTarget(jobName = JobName.PAY_DUE_SAVINGS_CHARGES)
+    public void applyDueChargesForSavings() {
+        final Collection<SavingsAccountAnnualFeeData> chargesDueData = this.savingsAccountChargeReadPlatformService
+                .retrieveChargesWithDue();
+        
+        for (final SavingsAccountAnnualFeeData savingsAccountReference : chargesDueData) {
+            try {
+                this.savingsAccountWritePlatformService.applyChargeDue(savingsAccountReference.getId(), savingsAccountReference.getAccountId());
+            } catch (final PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error("Apply Charges due for savings failed for account:" + savingsAccountReference.getAccountNo() + " with message "
+                            + error.getDeveloperMessage());
+                }
+            }
+        }
+        
+        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Savings accounts affected by update: " + chargesDueData.size());
+    }
+   
 }

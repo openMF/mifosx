@@ -19,6 +19,8 @@ import org.mifosplatform.useradministration.domain.PermissionRepository;
 import org.mifosplatform.useradministration.exception.PermissionNotFoundException;
 import org.mifosplatform.useradministration.serialization.PermissionsCommandFromApiJsonDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,20 +33,22 @@ public class PermissionWritePlatformServiceJpaRepositoryImpl implements Permissi
 
     @Autowired
     public PermissionWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final PermissionRepository permissionRepository,
-            final PermissionsCommandFromApiJsonDeserializer fromApiJsonDeserializer) {
+            final PermissionRepository permissionRepository, final PermissionsCommandFromApiJsonDeserializer fromApiJsonDeserializer) {
         this.context = context;
         this.permissionRepository = permissionRepository;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "users", allEntries = true),
+            @CacheEvict(value = "usersByUsername", allEntries = true)})
     @Transactional
     @Override
     public CommandProcessingResult updateMakerCheckerPermissions(final JsonCommand command) {
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
         final Collection<Permission> allPermissions = this.permissionRepository.findAll();
-        
+
         final PermissionsCommand permissionsCommand = this.fromApiJsonDeserializer.commandFromApiJson(command.json());
 
         final Map<String, Boolean> commandPermissions = permissionsCommand.getPermissions();
@@ -58,13 +62,13 @@ public class PermissionWritePlatformServiceJpaRepositoryImpl implements Permissi
                     || permission.getGrouping().equalsIgnoreCase("special")) { throw new PermissionNotFoundException(permissionCode); }
 
             final boolean isSelected = commandPermissions.get(permissionCode).booleanValue();
-            boolean changed = permission.enableMakerChecker(isSelected);
+            final boolean changed = permission.enableMakerChecker(isSelected);
             if (changed) {
                 changedPermissions.put(permissionCode, isSelected);
                 this.permissionRepository.save(permission);
             }
         }
-        
+
         if (!changedPermissions.isEmpty()) {
             changes.put("permissions", changedPermissions);
         }
@@ -75,7 +79,7 @@ public class PermissionWritePlatformServiceJpaRepositoryImpl implements Permissi
     private Permission findPermissionInCollectionByCode(final Collection<Permission> allPermissions, final String permissionCode) {
 
         if (allPermissions != null) {
-            for (Permission permission : allPermissions) {
+            for (final Permission permission : allPermissions) {
                 if (permission.hasCode(permissionCode)) { return permission; }
             }
         }

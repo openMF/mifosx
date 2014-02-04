@@ -36,6 +36,7 @@ import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext
 import org.mifosplatform.portfolio.charge.data.ChargeData;
 import org.mifosplatform.portfolio.charge.service.ChargeReadPlatformService;
 import org.mifosplatform.portfolio.loanaccount.data.LoanChargeData;
+import org.mifosplatform.portfolio.loanaccount.data.LoanInstallmentChargeData;
 import org.mifosplatform.portfolio.loanaccount.service.LoanChargeReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -48,7 +49,7 @@ public class LoanChargesApiResource {
 
     private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("id", "chargeId", "name", "penalty",
             "chargeTimeType", "dueAsOfDate", "chargeCalculationType", "percentage", "amountPercentageAppliedTo", "currency",
-            "amountWaived", "amountWrittenOff", "amountOutstanding", "amountOrPercentage", "amount", "amountPaid", "chargeOptions"));
+            "amountWaived", "amountWrittenOff", "amountOutstanding", "amountOrPercentage", "amount", "amountPaid", "chargeOptions","installmentChargeData"));
 
     private final String resourceNameForPermissions = "LOAN";
 
@@ -82,12 +83,12 @@ public class LoanChargesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveAllLoanCharges(@PathParam("loanId") final Long loanId, @Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         final Collection<LoanChargeData> loanCharges = this.loanChargeReadPlatformService.retrieveLoanCharges(loanId);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, loanCharges, RESPONSE_DATA_PARAMETERS);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, loanCharges, this.RESPONSE_DATA_PARAMETERS);
     }
 
     @GET
@@ -96,14 +97,14 @@ public class LoanChargesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveTemplate(@Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         final boolean feeChargesOnly = false;
         final Collection<ChargeData> chargeOptions = this.chargeReadPlatformService.retrieveLoanApplicableCharges(feeChargesOnly);
         final LoanChargeData loanChargeTemplate = LoanChargeData.template(chargeOptions);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, loanChargeTemplate, RESPONSE_DATA_PARAMETERS);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, loanChargeTemplate, this.RESPONSE_DATA_PARAMETERS);
     }
 
     @GET
@@ -113,22 +114,34 @@ public class LoanChargesApiResource {
     public String retrieveLoanCharge(@PathParam("loanId") final Long loanId, @PathParam("chargeId") final Long loanChargeId,
             @Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         final LoanChargeData loanCharge = this.loanChargeReadPlatformService.retrieveLoanChargeDetails(loanChargeId, loanId);
+        
+        final Collection<LoanInstallmentChargeData> installmentChargeData = this.loanChargeReadPlatformService.retrieveInstallmentLoanCharges(loanChargeId, true);
+        
+        final LoanChargeData loanChargeData  = new LoanChargeData(loanCharge, installmentChargeData);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, loanCharge, RESPONSE_DATA_PARAMETERS);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, loanChargeData, this.RESPONSE_DATA_PARAMETERS);
     }
 
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String addLoanCharge(@PathParam("loanId") final Long loanId, final String apiRequestBodyAsJson) {
+    public String executeLoanCharge(@PathParam("loanId") final Long loanId, @QueryParam("command") final String commandParam,
+            final String apiRequestBodyAsJson) {
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().createLoanCharge(loanId).withJson(apiRequestBodyAsJson).build();
-
-        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        CommandProcessingResult result = null;
+        if (is(commandParam, "pay")) {
+            final CommandWrapper commandRequest = new CommandWrapperBuilder().payLoanCharge(loanId, null).withJson(apiRequestBodyAsJson)
+                    .build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else {
+            final CommandWrapper commandRequest = new CommandWrapperBuilder().createLoanCharge(loanId).withJson(apiRequestBodyAsJson)
+                    .build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }
 
         return this.toApiJsonSerializer.serialize(result);
     }
@@ -152,21 +165,22 @@ public class LoanChargesApiResource {
     @Path("{chargeId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String waiveLoanCharge(@PathParam("loanId") final Long loanId, @PathParam("chargeId") final Long loanChargeId,
-            @QueryParam("command") final String commandParam) {
+    public String executeLoanCharge(@PathParam("loanId") final Long loanId, @PathParam("chargeId") final Long loanChargeId,
+            @QueryParam("command") final String commandParam, final String apiRequestBodyAsJson) {
 
-        String json = "";
+        final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
+        CommandProcessingResult result = null;
         if (is(commandParam, "waive")) {
-            final CommandWrapper commandRequest = new CommandWrapperBuilder().waiveLoanCharge(loanId, loanChargeId).build();
-
-            final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-
-            json = this.toApiJsonSerializer.serialize(result);
+            final CommandWrapper commandRequest = builder.waiveLoanCharge(loanId, loanChargeId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "pay")) {
+            final CommandWrapper commandRequest = builder.payLoanCharge(loanId, loanChargeId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else {
             throw new UnrecognizedQueryParamException("command", commandParam);
         }
-
-        return json;
+        if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam); }
+        return this.toApiJsonSerializer.serialize(result);
     }
 
     @DELETE

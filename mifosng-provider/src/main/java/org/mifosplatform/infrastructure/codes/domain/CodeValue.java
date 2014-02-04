@@ -31,12 +31,11 @@ public class CodeValue extends AbstractPersistable<Long> {
     @Column(name = "order_position")
     private int position;
 
-    @SuppressWarnings("unused")
     @ManyToOne
     @JoinColumn(name = "code_id", nullable = false)
     private Code code;
 
-    public static CodeValue createNew(Code code, final String label, final int position) {
+    public static CodeValue createNew(final Code code, final String label, final int position) {
         return new CodeValue(code, label, position);
     }
 
@@ -51,21 +50,23 @@ public class CodeValue extends AbstractPersistable<Long> {
     }
 
     public String label() {
-        return label;
+        return this.label;
     }
 
     public int position() {
-        return position;
+        return this.position;
     }
-    
-    public static CodeValue fromJson(Code code, final JsonCommand command) {
+
+    public static CodeValue fromJson(final Code code, final JsonCommand command) {
 
         final String label = command.stringValueOfParameterNamed(CODEVALUE_JSON_INPUT_PARAMS.NAME.getValue());
         Integer position = command.integerValueSansLocaleOfParameterNamed(CODEVALUE_JSON_INPUT_PARAMS.POSITION.getValue());
-        if(position == null) position = new Integer(0);
+        if (position == null) {
+            position = new Integer(0);
+        }
         return new CodeValue(code, label, position.intValue());
     }
-    
+
     public Map<String, Object> update(final JsonCommand command) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(2);
@@ -76,18 +77,18 @@ public class CodeValue extends AbstractPersistable<Long> {
             actualChanges.put(labelParamName, newValue);
             this.label = StringUtils.defaultIfEmpty(newValue, null);
         }
-        
+
         final String positionParamName = CODEVALUE_JSON_INPUT_PARAMS.POSITION.getValue();
         if (command.isChangeInIntegerSansLocaleParameterNamed(positionParamName, this.position)) {
             final Integer newValue = command.integerValueSansLocaleOfParameterNamed(positionParamName);
             actualChanges.put(positionParamName, newValue);
             this.position = newValue.intValue();
         }
-        
+
         return actualChanges;
     }
 
     public CodeValueData toData() {
-        return CodeValueData.instance(this.getId(), this.label, this.position);
+        return CodeValueData.instance(getId(), this.label, this.position);
     }
 }

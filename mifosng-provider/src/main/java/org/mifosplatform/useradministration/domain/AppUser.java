@@ -23,7 +23,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.security.domain.PlatformUser;
@@ -72,7 +71,6 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
-    @SuppressWarnings("unused")
     @Column(name = "firsttime_login_remaining", nullable = false)
     private boolean firstTimeLoginRemaining;
 
@@ -95,19 +93,21 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
 
         final String username = command.stringValueOfParameterNamed("username");
         String password = command.stringValueOfParameterNamed("password");
-        if (StringUtils.isBlank(password)) {
+        final Boolean sendPasswordToEmail = command.booleanObjectValueOfParameterNamed("sendPasswordToEmail");
+
+        if (sendPasswordToEmail.booleanValue()) {
             password = new RandomPasswordGenerator(13).generate();
         }
 
-        boolean userEnabled = true;
-        boolean userAccountNonExpired = true;
-        boolean userCredentialsNonExpired = true;
-        boolean userAccountNonLocked = true;
+        final boolean userEnabled = true;
+        final boolean userAccountNonExpired = true;
+        final boolean userCredentialsNonExpired = true;
+        final boolean userAccountNonLocked = true;
 
-        Collection<SimpleGrantedAuthority> authorities = new ArrayList<SimpleGrantedAuthority>();
+        final Collection<SimpleGrantedAuthority> authorities = new ArrayList<SimpleGrantedAuthority>();
         authorities.add(new SimpleGrantedAuthority("DUMMY_ROLE_NOT_USED_OR_PERSISTED_TO_AVOID_EXCEPTION"));
 
-        User user = new User(username, password, userEnabled, userAccountNonExpired, userCredentialsNonExpired, userAccountNonLocked,
+        final User user = new User(username, password, userEnabled, userAccountNonExpired, userCredentialsNonExpired, userAccountNonLocked,
                 authorities);
 
         final String email = command.stringValueOfParameterNamed("email");
@@ -171,9 +171,9 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
         final String passwordParamName = "password";
         final String passwordEncodedParamName = "passwordEncoded";
         if (command.hasParameter(passwordParamName)) {
-            if (command.isChangeInPasswordParameterNamed(passwordParamName, this.password, platformPasswordEncoder, this.getId())) {
+            if (command.isChangeInPasswordParameterNamed(passwordParamName, this.password, platformPasswordEncoder, getId())) {
                 final String passwordEncodedValue = command.passwordValueOfParameterNamed(passwordParamName, platformPasswordEncoder,
-                        this.getId());
+                        getId());
                 actualChanges.put(passwordEncodedParamName, passwordEncodedValue);
                 updatePassword(passwordEncodedValue);
             }
@@ -231,9 +231,9 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
     }
 
     private String[] getRolesAsIdStringArray() {
-        List<String> roleIds = new ArrayList<String>();
+        final List<String> roleIds = new ArrayList<String>();
 
-        for (Role role : this.roles) {
+        for (final Role role : this.roles) {
             roleIds.add(role.getId().toString());
         }
 
@@ -251,23 +251,23 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
         this.enabled = false;
         this.accountNonExpired = false;
         this.firstTimeLoginRemaining = true;
-        this.username = this.getId() + "_DELETED_" + this.username;
+        this.username = getId() + "_DELETED_" + this.username;
     }
 
     public boolean isDeleted() {
-        return deleted;
+        return this.deleted;
     }
 
     @Override
     public Collection<GrantedAuthority> getAuthorities() {
-        return this.populateGrantedAuthorities();
+        return populateGrantedAuthorities();
     }
 
     private List<GrantedAuthority> populateGrantedAuthorities() {
-        List<GrantedAuthority> grantedAuthorities = new ArrayList<GrantedAuthority>();
-        for (Role role : this.roles) {
-            Collection<Permission> permissions = role.getPermissions();
-            for (Permission permission : permissions) {
+        final List<GrantedAuthority> grantedAuthorities = new ArrayList<GrantedAuthority>();
+        for (final Role role : this.roles) {
+            final Collection<Permission> permissions = role.getPermissions();
+            for (final Permission permission : permissions) {
                 grantedAuthorities.add(new SimpleGrantedAuthority(permission.getCode()));
             }
         }
@@ -305,11 +305,11 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
     }
 
     public String getFirstname() {
-        return firstname;
+        return this.firstname;
     }
 
     public String getLastname() {
-        return lastname;
+        return this.lastname;
     }
 
     public String getEmail() {
@@ -346,31 +346,31 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
 
     public boolean hasNotPermissionForReport(final String reportName) {
 
-        if (hasNotPermissionForAnyOf("ALL_FUNCTIONS", "ALL_FUNCTIONS_READ", "REPORTING_SUPER_USER", "READ_" + reportName)) return true;
+        if (hasNotPermissionForAnyOf("ALL_FUNCTIONS", "ALL_FUNCTIONS_READ", "REPORTING_SUPER_USER", "READ_" + reportName)) { return true; }
 
         return false;
     }
 
     public boolean hasNotPermissionForDatatable(final String datatable, final String accessType) {
 
-        String matchPermission = accessType + "_" + datatable;
+        final String matchPermission = accessType + "_" + datatable;
 
         if (accessType.equalsIgnoreCase("READ")) {
 
-            if (hasNotPermissionForAnyOf("ALL_FUNCTIONS", "ALL_FUNCTIONS_READ", matchPermission)) return true;
+            if (hasNotPermissionForAnyOf("ALL_FUNCTIONS", "ALL_FUNCTIONS_READ", matchPermission)) { return true; }
 
             return false;
         }
 
-        if (hasNotPermissionForAnyOf("ALL_FUNCTIONS", matchPermission)) return true;
+        if (hasNotPermissionForAnyOf("ALL_FUNCTIONS", matchPermission)) { return true; }
 
         return false;
     }
 
     public boolean hasNotPermissionForAnyOf(final String... permissionCodes) {
         boolean hasNotPermission = true;
-        for (String permissionCode : permissionCodes) {
-            boolean checkPermission = this.hasPermissionTo(permissionCode);
+        for (final String permissionCode : permissionCodes) {
+            final boolean checkPermission = hasPermissionTo(permissionCode);
             if (checkPermission) {
                 hasNotPermission = false;
                 break;
@@ -384,7 +384,7 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
         final String authorizationMessage = "User has no authority to view " + resourceType.toLowerCase() + "s";
         final String matchPermission = "READ_" + resourceType.toUpperCase();
 
-        if (!(hasNotPermissionForAnyOf("ALL_FUNCTIONS", "ALL_FUNCTIONS_READ", matchPermission))) return;
+        if (!hasNotPermissionForAnyOf("ALL_FUNCTIONS", "ALL_FUNCTIONS_READ", matchPermission)) { return; }
 
         throw new NoAuthorizationException(authorizationMessage);
     }
@@ -396,7 +396,7 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
     private boolean hasPermissionTo(final String permissionCode) {
         boolean hasPermission = hasAllFunctionsPermission();
         if (!hasPermission) {
-            for (Role role : this.roles) {
+            for (final Role role : this.roles) {
                 if (role.hasPermissionTo(permissionCode)) {
                     hasPermission = true;
                     break;
@@ -408,7 +408,7 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
 
     private boolean hasAllFunctionsPermission() {
         boolean match = false;
-        for (Role role : this.roles) {
+        for (final Role role : this.roles) {
             if (role.hasPermissionTo("ALL_FUNCTIONS")) {
                 match = true;
                 break;
@@ -448,8 +448,17 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
     public void validateHasPermissionTo(final String function) {
         if (hasNotPermissionTo(function)) {
             final String authorizationMessage = "User has no authority to: " + function;
-            logger.info("Unauthorized access: userId: " + this.getId() + " action: " + function + " allowed: " + getAuthorities());
+            logger.info("Unauthorized access: userId: " + getId() + " action: " + function + " allowed: " + getAuthorities());
             throw new NoAuthorizationException(authorizationMessage);
+        }
+    }
+
+    public void validateHasReadPermission(final String function, final Long userId) {
+        if ("USER".equalsIgnoreCase(function) && userId.equals(getId())) {
+            // abstain from validation as user allowed fetch their own data no
+            // matter what permissions they have.
+        } else {
+            validateHasPermissionTo(function);
         }
     }
 

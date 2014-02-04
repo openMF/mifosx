@@ -7,6 +7,7 @@ package org.mifosplatform.portfolio.loanproduct.service;
 
 import java.util.Collection;
 
+import org.mifosplatform.portfolio.loanproduct.data.LoanProductBorrowerCycleVariationData;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
 
 public interface LoanProductReadPlatformService {
@@ -22,6 +23,8 @@ public interface LoanProductReadPlatformService {
     Collection<LoanProductData> retrieveAvailableLoanProductsForMix();
 
     Collection<LoanProductData> retrieveRestrictedProductsForMix(Long productId);
-    
+
     Collection<LoanProductData> retrieveAllowedProductsForMix(Long productId);
+
+    Collection<LoanProductBorrowerCycleVariationData> retrieveLoanProductBorrowerCycleVariations(Long loanProductId);
 }

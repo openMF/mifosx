@@ -12,7 +12,8 @@ public class AccountingConstants {
 
     /*** Accounting placeholders for cash based accounting for loan products ***/
     public static enum CASH_ACCOUNTS_FOR_LOAN {
-        FUND_SOURCE(1), LOAN_PORTFOLIO(2), INTEREST_ON_LOANS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), LOSSES_WRITTEN_OFF(6);
+        FUND_SOURCE(1), LOAN_PORTFOLIO(2), INTEREST_ON_LOANS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), LOSSES_WRITTEN_OFF(6), TRANSFERS_SUSPENSE(
+                10), OVERPAYMENT(11);
 
         private final Integer value;
 
@@ -45,7 +46,7 @@ public class AccountingConstants {
     /*** Accounting placeholders for accrual based accounting for loan products ***/
     public static enum ACCRUAL_ACCOUNTS_FOR_LOAN {
         FUND_SOURCE(1), LOAN_PORTFOLIO(2), INTEREST_ON_LOANS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), LOSSES_WRITTEN_OFF(6), INTEREST_RECEIVABLE(
-                7), FEES_RECEIVABLE(8), PENALTIES_RECEIVABLE(9);
+                7), FEES_RECEIVABLE(8), PENALTIES_RECEIVABLE(9), TRANSFERS_SUSPENSE(10), OVERPAYMENT(11);
 
         private final Integer value;
 
@@ -82,9 +83,10 @@ public class AccountingConstants {
      ***/
     public static enum LOAN_PRODUCT_ACCOUNTING_PARAMS {
         FUND_SOURCE("fundSourceAccountId"), LOAN_PORTFOLIO("loanPortfolioAccountId"), INTEREST_ON_LOANS("interestOnLoanAccountId"), INCOME_FROM_FEES(
-                "incomeFromFeeAccountId"), INCOME_FROM_PENALTIES("incomeFromPenaltyAccountId"), LOSSES_WRITTEN_OFF("writeOffAccountId"), INTEREST_RECEIVABLE(
-                "receivableInterestAccountId"), FEES_RECEIVABLE("receivableFeeAccountId"), PENALTIES_RECEIVABLE(
-                "receivablePenaltyAccountId"), PAYMENT_CHANNEL_FUND_SOURCE_MAPPING("paymentChannelToFundSourceMappings"), PAYMENT_TYPE(
+                "incomeFromFeeAccountId"), INCOME_FROM_PENALTIES("incomeFromPenaltyAccountId"), LOSSES_WRITTEN_OFF("writeOffAccountId"), OVERPAYMENT(
+                "overpaymentLiabilityAccountId"), INTEREST_RECEIVABLE("receivableInterestAccountId"), FEES_RECEIVABLE(
+                "receivableFeeAccountId"), PENALTIES_RECEIVABLE("receivablePenaltyAccountId"), TRANSFERS_SUSPENSE(
+                "transfersInSuspenseAccountId"), PAYMENT_CHANNEL_FUND_SOURCE_MAPPING("paymentChannelToFundSourceMappings"), PAYMENT_TYPE(
                 "paymentTypeId"), FEE_INCOME_ACCOUNT_MAPPING("feeToIncomeAccountMappings"), PENALTY_INCOME_ACCOUNT_MAPPING(
                 "penaltyToIncomeAccountMappings"), CHARGE_ID("chargeId"), INCOME_ACCOUNT_ID("incomeAccountId");
 
@@ -104,9 +106,34 @@ public class AccountingConstants {
         }
     }
 
+    public static enum LOAN_PRODUCT_ACCOUNTING_DATA_PARAMS {
+        FUND_SOURCE("fundSourceAccount"), LOAN_PORTFOLIO("loanPortfolioAccount"), INTEREST_ON_LOANS("interestOnLoanAccount"), INCOME_FROM_FEES(
+                "incomeFromFeeAccount"), INCOME_FROM_PENALTIES("incomeFromPenaltyAccount"), LOSSES_WRITTEN_OFF("writeOffAccount"), OVERPAYMENT(
+                "overpaymentLiabilityAccount"), INTEREST_RECEIVABLE("receivableInterestAccount"), FEES_RECEIVABLE(
+                "receivableFeeAccount"), PENALTIES_RECEIVABLE("receivablePenaltyAccount"), TRANSFERS_SUSPENSE(
+                "transfersInSuspenseAccount"), INCOME_ACCOUNT_ID("incomeAccount");
+
+        private final String value;
+
+        private LOAN_PRODUCT_ACCOUNTING_DATA_PARAMS(final String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return name().toString().replaceAll("_", " ");
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+    }
+
+    
     /*** Accounting placeholders for cash based accounting for savings products ***/
     public static enum CASH_ACCOUNTS_FOR_SAVINGS {
-        SAVINGS_REFERENCE(1), SAVINGS_CONTROL(2), INTEREST_ON_SAVINGS(3), INCOME_FROM_FEES(4);
+        SAVINGS_REFERENCE(1), SAVINGS_CONTROL(2), INTEREST_ON_SAVINGS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), TRANSFERS_SUSPENSE(
+                10);
 
         private final Integer value;
 
@@ -142,8 +169,11 @@ public class AccountingConstants {
      ***/
     public static enum SAVINGS_PRODUCT_ACCOUNTING_PARAMS {
         SAVINGS_REFERENCE("savingsReferenceAccountId"), SAVINGS_CONTROL("savingsControlAccountId"), INCOME_FROM_FEES(
-                "incomeFromFeeAccountId"), INTEREST_ON_SAVINGS("interestOnSavingsAccountId"), PAYMENT_CHANNEL_FUND_SOURCE_MAPPING(
-                "paymentChannelToFundSourceMappings"), PAYMENT_TYPE("paymentTypeId"), FUND_SOURCE("fundSourceAccountId");
+                "incomeFromFeeAccountId"), INCOME_FROM_PENALTIES("incomeFromPenaltyAccountId"), INTEREST_ON_SAVINGS(
+                "interestOnSavingsAccountId"), PAYMENT_CHANNEL_FUND_SOURCE_MAPPING("paymentChannelToFundSourceMappings"), PAYMENT_TYPE(
+                "paymentTypeId"), FUND_SOURCE("fundSourceAccountId"), TRANSFERS_SUSPENSE("transfersInSuspenseAccountId"), FEE_INCOME_ACCOUNT_MAPPING(
+                "feeToIncomeAccountMappings"), PENALTY_INCOME_ACCOUNT_MAPPING("penaltyToIncomeAccountMappings"), CHARGE_ID("chargeId"), INCOME_ACCOUNT_ID(
+                "incomeAccountId");
 
         private final String value;
 
@@ -160,6 +190,30 @@ public class AccountingConstants {
             return this.value;
         }
     }
+    
+    public static enum SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS {
+        SAVINGS_REFERENCE("savingsReferenceAccount"), SAVINGS_CONTROL("savingsControlAccount"), INCOME_FROM_FEES(
+                "incomeFromFeeAccount"), INCOME_FROM_PENALTIES("incomeFromPenaltyAccount"), INTEREST_ON_SAVINGS(
+                "interestOnSavingsAccount"), PAYMENT_TYPE("paymentType"), FUND_SOURCE("fundSourceAccount"), 
+                TRANSFERS_SUSPENSE("transfersInSuspenseAccount"), PENALTY_INCOME_ACCOUNT_MAPPING("penaltyToIncomeAccountMappings"), CHARGE_ID("charge"), INCOME_ACCOUNT_ID(
+                "incomeAccount");
+
+        private final String value;
+
+        private SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS(final String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return name().toString().replaceAll("_", " ");
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+    }
+
 
     public static final String ASSESTS_TAG_OPTION_CODE_NAME = "AssetAccountTags";
     public static final String LIABILITIES_TAG_OPTION_CODE_NAME = "LiabilityAccountTags";

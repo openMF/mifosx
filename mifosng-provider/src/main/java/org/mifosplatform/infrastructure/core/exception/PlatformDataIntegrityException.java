@@ -20,7 +20,7 @@ public class PlatformDataIntegrityException extends RuntimeException {
             final Object... defaultUserMessageArgs) {
         this.globalisationMessageCode = globalisationMessageCode;
         this.defaultUserMessage = defaultUserMessage;
-        this.parameterName = "";
+        this.parameterName = null;
         this.defaultUserMessageArgs = defaultUserMessageArgs;
     }
 
@@ -33,18 +33,18 @@ public class PlatformDataIntegrityException extends RuntimeException {
     }
 
     public String getGlobalisationMessageCode() {
-        return globalisationMessageCode;
+        return this.globalisationMessageCode;
     }
 
     public String getDefaultUserMessage() {
-        return defaultUserMessage;
+        return this.defaultUserMessage;
     }
 
     public Object[] getDefaultUserMessageArgs() {
-        return defaultUserMessageArgs;
+        return this.defaultUserMessageArgs;
     }
 
     public String getParameterName() {
-        return parameterName;
+        return this.parameterName;
     }
 }

@@ -6,25 +6,27 @@ import java.util.Set;
 
 public class HolidayApiConstants {
 
-	public static final String HOLIDAY_RESOURCE_NAME = "holiday";
-	
-	 // general
+    public static final String HOLIDAY_RESOURCE_NAME = "holiday";
+
+    // general
     public static final String localeParamName = "locale";
     public static final String dateFormatParamName = "dateFormat";
-    
-    //request parameters
-    public static final String name = "name";
-    public static final String fromDate = "fromDate";
-    public static final String toDate = "toDate";
-    public static final String description = "description";
-    public static final String offices = "offices";
-    public static final String officeId = "officeId";
-    public static final String repaymentsRescheduledTo = "repaymentsRescheduledTo";
+
+    // request parameters
+    public static final String idParamName = "id";
+    public static final String nameParamName = "name";
+    public static final String fromDateParamName = "fromDate";
+    public static final String toDateParamName = "toDate";
+    public static final String descriptionParamName = "description";
+    public static final String officesParamName = "offices";
+    public static final String officeIdParamName = "officeId";
+    public static final String repaymentsRescheduledToParamName = "repaymentsRescheduledTo";
     public static final String processed = "processed";
+    public static final String status = "status";
+
+    public static final Set<String> HOLIDAY_CREATE_OR_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
+            dateFormatParamName, nameParamName, fromDateParamName, toDateParamName, descriptionParamName, officesParamName, repaymentsRescheduledToParamName));
     
-    public static final Set<String> HOLIDAY_CREATE_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
-            dateFormatParamName, name, fromDate, toDate, description, offices, repaymentsRescheduledTo));
-    
-    public static final Set<String> HOLIDAY_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
-            dateFormatParamName, name, fromDate, toDate, repaymentsRescheduledTo));
+    public static final Set<String> HOLIDAY_RESPONSE_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(idParamName, nameParamName,
+            fromDateParamName, descriptionParamName, toDateParamName, repaymentsRescheduledToParamName, localeParamName, dateFormatParamName, status));
 }

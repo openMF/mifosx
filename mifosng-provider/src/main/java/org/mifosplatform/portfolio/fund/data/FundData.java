@@ -5,17 +5,19 @@
  */
 package org.mifosplatform.portfolio.fund.data;
 
+import java.io.Serializable;
+
 /**
  * Immutable data object to represent fund data.
  */
-public class FundData {
+public class FundData implements Serializable {
 
     @SuppressWarnings("unused")
-    private Long id;
+    private final Long id;
     @SuppressWarnings("unused")
-    private String name;
+    private final String name;
     @SuppressWarnings("unused")
-    private String externalId;
+    private final String externalId;
 
     public static FundData instance(final Long id, final String name, final String externalId) {
         return new FundData(id, name, externalId);

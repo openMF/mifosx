@@ -14,6 +14,8 @@ public enum LoanStatus {
     SUBMITTED_AND_PENDING_APPROVAL(100, "loanStatusType.submitted.and.pending.approval"), //
     APPROVED(200, "loanStatusType.approved"), //
     ACTIVE(300, "loanStatusType.active"), //
+    TRANSFER_IN_PROGRESS(303, "loanStatusType.transfer.in.progress"), //
+    TRANSFER_ON_HOLD(304, "loanStatusType.transfer.on.hold"), //
     WITHDRAWN_BY_CLIENT(400, "loanStatusType.withdrawn.by.client"), //
     REJECTED(500, "loanStatusType.rejected"), //
     CLOSED_OBLIGATIONS_MET(600, "loanStatusType.closed.obligations.met"), //
@@ -36,6 +38,12 @@ public enum LoanStatus {
             break;
             case 300:
                 enumeration = LoanStatus.ACTIVE;
+            break;
+            case 303:
+                enumeration = LoanStatus.TRANSFER_IN_PROGRESS;
+            break;
+            case 304:
+                enumeration = LoanStatus.TRANSFER_ON_HOLD;
             break;
             case 400:
                 enumeration = LoanStatus.WITHDRAWN_BY_CLIENT;
@@ -73,7 +81,7 @@ public enum LoanStatus {
     }
 
     public String getCode() {
-        return code;
+        return this.code;
     }
 
     public boolean isSubmittedAndPendingApproval() {
@@ -110,5 +118,25 @@ public enum LoanStatus {
 
     public boolean isRejected() {
         return this.value.equals(LoanStatus.REJECTED.getValue());
+    }
+
+    public boolean isActiveOrAwaitingApprovalOrDisbursal() {
+        return isApproved() || isSubmittedAndPendingApproval() || isActive();
+    }
+
+    public boolean isTransferInProgress() {
+        return this.value.equals(LoanStatus.TRANSFER_IN_PROGRESS.getValue());
+    }
+
+    public boolean isTransferOnHold() {
+        return this.value.equals(LoanStatus.TRANSFER_ON_HOLD.getValue());
+    }
+
+    public boolean isUnderTransfer() {
+        return isTransferInProgress() || isTransferOnHold();
+    }
+
+    public boolean isOverpaid() {
+        return this.value.equals(LoanStatus.OVERPAID.getValue());
     }
 }

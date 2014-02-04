@@ -43,16 +43,16 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
 
     private static final class CollateralMapper implements RowMapper<CollateralData> {
 
-        private StringBuilder sqlBuilder = new StringBuilder(
+        private final StringBuilder sqlBuilder = new StringBuilder(
                 "lc.id as id, lc.description as description, lc.value as value, cv.id as typeId, cv.code_value as typeName, oc.code as currencyCode, ")
-                .append(" oc.name as currencyName,oc.decimal_places as currencyDecimalPlaces, oc.display_symbol as currencyDisplaySymbol, oc.internationalized_name_code as currencyNameCode")
+                .append(" oc.name as currencyName,oc.decimal_places as currencyDecimalPlaces, oc.currency_multiplesof as inMultiplesOf, oc.display_symbol as currencyDisplaySymbol, oc.internationalized_name_code as currencyNameCode")
                 .append(" FROM m_loan_collateral lc") //
                 .append(" JOIN m_code_value cv on lc.type_cv_id = cv.id")//
                 .append(" JOIN m_loan loan on lc.loan_id = loan.id")//
                 .append(" JOIN m_organisation_currency oc on loan.currency_code = oc.code");
 
         public String schema() {
-            return sqlBuilder.toString();
+            return this.sqlBuilder.toString();
         }
 
         @Override
@@ -71,9 +71,10 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
             final String currencyNameCode = rs.getString("currencyNameCode");
             final String currencyDisplaySymbol = rs.getString("currencyDisplaySymbol");
             final Integer currencyDecimalPlaces = JdbcSupport.getInteger(rs, "currencyDecimalPlaces");
+            final Integer inMultiplesOf = JdbcSupport.getInteger(rs, "inMultiplesOf");
 
-            final CurrencyData currencyData = new CurrencyData(currencyCode, currencyName, currencyDecimalPlaces, currencyDisplaySymbol,
-                    currencyNameCode);
+            final CurrencyData currencyData = new CurrencyData(currencyCode, currencyName, currencyDecimalPlaces, inMultiplesOf,
+                    currencyDisplaySymbol, currencyNameCode);
 
             return CollateralData.instance(id, type, value, description, currencyData);
         }
@@ -91,7 +92,7 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
     }
 
     @Override
-    public CollateralData retrieveCollateral(Long loanId, Long collateralId) {
+    public CollateralData retrieveCollateral(final Long loanId, final Long collateralId) {
         try {
             final CollateralMapper rm = new CollateralMapper();
             String sql = "select " + rm.schema();
@@ -104,8 +105,8 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
     }
 
     @Override
-    public List<CollateralData> retrieveCollateralsForValidLoan(Long loanId) {
-        Loan loan = this.loanRepository.findOne(loanId);
+    public List<CollateralData> retrieveCollateralsForValidLoan(final Long loanId) {
+        final Loan loan = this.loanRepository.findOne(loanId);
         if (loan == null) { throw new LoanNotFoundException(loanId); }
         return retrieveCollaterals(loanId);
     }

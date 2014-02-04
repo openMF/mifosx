@@ -5,19 +5,20 @@
  */
 package org.mifosplatform.useradministration.data;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 /**
  * Immutable data object for role data.
  */
-public class RoleData {
+public class RoleData implements Serializable {
 
     private final Long id;
     private final String name;
     private final String description;
 
     public RolePermissionsData toRolePermissionData(final Collection<PermissionData> permissionUsageData) {
-        return new RolePermissionsData(id, name, description, permissionUsageData);
+        return new RolePermissionsData(this.id, this.name, this.description, permissionUsageData);
     }
 
     public RoleData(final Long id, final String name, final String description) {

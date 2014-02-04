@@ -6,14 +6,16 @@
 package org.mifosplatform.portfolio.loanproduct.service;
 
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
+import org.mifosplatform.portfolio.accountdetails.service.AccountEnumerations;
 import org.mifosplatform.portfolio.loanaccount.data.LoanStatusEnumData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionEnumData;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionType;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanType;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestMethod;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProductParamType;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProductValueConditionType;
 import org.mifosplatform.portfolio.loanproduct.domain.PeriodFrequencyType;
 
 public class LoanEnumerations {
@@ -44,7 +46,7 @@ public class LoanEnumerations {
             return interestType(id);
         } else if (typeName.equals(INTEREST_CALCULATION_PERIOD_TYPE)) {
             return interestCalculationPeriodType(id);
-        } else if (typeName.equals(LOAN_TYPE)) { return loanType(id); }
+        } else if (typeName.equals(LOAN_TYPE)) { return AccountEnumerations.loanType(id); }
         return null;
     }
 
@@ -282,6 +284,32 @@ public class LoanEnumerations {
                 optionData = new LoanTransactionEnumData(LoanTransactionType.APPLY_INTEREST.getValue().longValue(),
                         LoanTransactionType.APPLY_INTEREST.getCode(), "Apply Interest");
             break;
+            case APPROVE_TRANSFER:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.APPROVE_TRANSFER.getValue().longValue(),
+                        LoanTransactionType.APPROVE_TRANSFER.getCode(), "Transfer approved");
+            break;
+            case INITIATE_TRANSFER:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.INITIATE_TRANSFER.getValue().longValue(),
+                        LoanTransactionType.INITIATE_TRANSFER.getCode(), "Transfer initiated");
+            break;
+            case WITHDRAW_TRANSFER:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.WITHDRAW_TRANSFER.getValue().longValue(),
+                        LoanTransactionType.WITHDRAW_TRANSFER.getCode(), "Transfer Withdrawn");
+            break;
+            case REJECT_TRANSFER:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.REJECT_TRANSFER.getValue().longValue(),
+                        LoanTransactionType.REJECT_TRANSFER.getCode(), "Transfer Rejected");
+            break;
+            case REFUND:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.REFUND.getValue().longValue(),
+                        LoanTransactionType.REFUND.getCode(), "Transfer Refund");
+            break;
+            case CHARGE_PAYMENT:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.CHARGE_PAYMENT.getValue().longValue(),
+                        LoanTransactionType.CHARGE_PAYMENT.getCode(), "Charge Payment");
+            break;
+            default:
+            break;
         }
         return optionData;
     }
@@ -329,36 +357,64 @@ public class LoanEnumerations {
             case OVERPAID:
                 optionData = new LoanStatusEnumData(LoanStatus.OVERPAID.getValue().longValue(), LoanStatus.OVERPAID.getCode(), "Overpaid");
             break;
+            case TRANSFER_IN_PROGRESS:
+                optionData = new LoanStatusEnumData(LoanStatus.TRANSFER_IN_PROGRESS.getValue().longValue(),
+                        LoanStatus.TRANSFER_IN_PROGRESS.getCode(), "Transfer in progress");
+            break;
+            case TRANSFER_ON_HOLD:
+                optionData = new LoanStatusEnumData(LoanStatus.TRANSFER_ON_HOLD.getValue().longValue(),
+                        LoanStatus.TRANSFER_ON_HOLD.getCode(), "Transfer on hold");
+            break;
+            default:
+            break;
         }
 
         return optionData;
     }
-
-    public static EnumOptionData loanType(final Integer loanTypeId) {
-        return loanType(LoanType.fromInt(loanTypeId));
+    
+    public static EnumOptionData loanCycleValueConditionType(final int id) {
+        return loanCycleValueConditionType(LoanProductValueConditionType.fromInt(id));
     }
 
-    public static EnumOptionData loanType(final String name) {
-        return loanType(LoanType.fromName(name));
-    }
-
-    public static EnumOptionData loanType(final LoanType type) {
-        EnumOptionData optionData = new EnumOptionData(LoanType.INVALID.getValue().longValue(), LoanType.INVALID.getCode(), "Invalid");
+    public static EnumOptionData loanCycleValueConditionType(final LoanProductValueConditionType type) {
+        EnumOptionData optionData = null;
         switch (type) {
-            case INVALID:
-                optionData = new EnumOptionData(LoanType.INVALID.getValue().longValue(), LoanType.INVALID.getCode(), "Invalid");
+            case EQUAL:
+                optionData = new EnumOptionData(LoanProductValueConditionType.EQUAL.getValue().longValue(), LoanProductValueConditionType.EQUAL.getCode(), "equals");
             break;
-            case INDIVIDUAL:
-                optionData = new EnumOptionData(LoanType.INDIVIDUAL.getValue().longValue(), LoanType.INDIVIDUAL.getCode(), "Individual");
+            case GRETERTHAN:
+                optionData = new EnumOptionData(LoanProductValueConditionType.GRETERTHAN.getValue().longValue(), LoanProductValueConditionType.GRETERTHAN.getCode(), "greter than");
             break;
-            case GROUP:
-                optionData = new EnumOptionData(LoanType.GROUP.getValue().longValue(), LoanType.GROUP.getCode(), "Group");
-            break;
-            case JLG:
-                optionData = new EnumOptionData(LoanType.JLG.getValue().longValue(), LoanType.JLG.getCode(), "JLG");
+            default:
+                optionData = new EnumOptionData(LoanProductValueConditionType.INVALID.getValue().longValue(), LoanProductValueConditionType.INVALID.getCode(),
+                        "Invalid");
             break;
         }
-
         return optionData;
     }
+
+    public static EnumOptionData loanCycleParamType(final int id) {
+        return loanCycleParamType(LoanProductParamType.fromInt(id));
+    }
+
+    public static EnumOptionData loanCycleParamType(final LoanProductParamType type) {
+        EnumOptionData optionData = null;
+        switch (type) {
+            case PRINCIPAL:
+                optionData = new EnumOptionData(LoanProductParamType.PRINCIPAL.getValue().longValue(), LoanProductParamType.PRINCIPAL.getCode(), "principal");
+            break;
+            case INTERESTRATE:
+                optionData = new EnumOptionData(LoanProductParamType.INTERESTRATE.getValue().longValue(),LoanProductParamType.INTERESTRATE.getCode(), "Interest rate");
+            break;
+            case REPAYMENT:
+                optionData = new EnumOptionData(LoanProductParamType.REPAYMENT.getValue().longValue(),LoanProductParamType.REPAYMENT.getCode(), "repayment");
+            break;
+            default:
+                optionData = new EnumOptionData(LoanProductParamType.INVALID.getValue().longValue(), LoanProductParamType.INVALID.getCode(),
+                        "Invalid");
+            break;
+        }
+        return optionData;
+    }
+
 }

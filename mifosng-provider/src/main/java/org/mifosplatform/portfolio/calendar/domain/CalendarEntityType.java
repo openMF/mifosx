@@ -66,4 +66,52 @@ public enum CalendarEntityType {
     public String toString() {
         return name().toString();
     }
+
+    public static boolean isGroup(final Integer value) {
+        return CalendarEntityType.GROUPS.value.equals(value) ? true : false;
+    }
+
+    public static boolean isGroup(final String name) {
+        return CalendarEntityType.GROUPS.name().equalsIgnoreCase(name) ? true : false;
+    }
+
+    public static boolean isCenter(final Integer value) {
+        return CalendarEntityType.CENTERS.value.equals(value) ? true : false;
+    }
+
+    public static boolean isCenter(final String name) {
+        return CalendarEntityType.CENTERS.name().equalsIgnoreCase(name) ? true : false;
+    }
+    
+    public static boolean isLoan(final Integer value) {
+        return CalendarEntityType.LOANS.value.equals(value) ? true : false;
+    }
+
+    public static boolean isLoan(final String name) {
+        return CalendarEntityType.LOANS.name().equalsIgnoreCase(name) ? true : false;
+    }
+    
+    public static boolean isClient(final Integer value) {
+        return CalendarEntityType.CLIENTS.value.equals(value) ? true : false;
+    }
+
+    public static boolean isClient(final String name) {
+        return CalendarEntityType.CLIENTS.name().equalsIgnoreCase(name) ? true : false;
+    }
+    
+    public boolean isCenter() {
+        return this.value.equals(CalendarEntityType.CENTERS.getValue());
+    }
+    
+    public boolean isGroup() {
+        return this.value.equals(CalendarEntityType.GROUPS.getValue());
+    }
+    
+    public boolean isLoan() {
+        return this.value.equals(CalendarEntityType.LOANS.getValue());
+    }
+    
+    public boolean isClient() {
+        return this.value.equals(CalendarEntityType.CLIENTS.getValue());
+    }
 }

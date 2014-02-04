@@ -16,7 +16,6 @@ import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.serialization.AbstractFromApiJsonDeserializer;
 import org.mifosplatform.infrastructure.core.serialization.FromApiJsonDeserializer;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
-import org.mifosplatform.portfolio.client.command.ClientCommand;
 import org.mifosplatform.portfolio.client.command.ClientIdentifierCommand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,8 +24,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 
 /**
- * Implementation of {@link FromApiJsonDeserializer} for {@link ClientCommand} 
- * 's.
+ * Implementation of {@link FromApiJsonDeserializer} for
+ * {@link ClientIdentifierCommandFromApiJsonDeserializer} 's.
  */
 @Component
 public final class ClientIdentifierCommandFromApiJsonDeserializer extends AbstractFromApiJsonDeserializer<ClientIdentifierCommand> {

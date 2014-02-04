@@ -43,7 +43,8 @@ public class ChargesApiResource {
 
     private final Set<String> CHARGES_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("id", "name", "amount", "currency", "penalty",
             "active", "chargeAppliesTo", "chargeTimeType", "chargeCalculationType", "chargeCalculationTypeOptions",
-            "chargeAppliesToOptions", "chargeTimeTypeOptions", "currencyOptions"));
+            "chargeAppliesToOptions", "chargeTimeTypeOptions", "currencyOptions", "loanChargeCalculationTypeOptions",
+            "loanChargeTimeTypeOptions", "savingsChargeCalculationTypeOptions", "savingsChargeTimeTypeOptions"));
 
     private final String resourceNameForPermissions = "CHARGE";
 
@@ -69,12 +70,12 @@ public class ChargesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveAllCharges(@Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         final Collection<ChargeData> charges = this.readPlatformService.retrieveAllCharges();
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, charges, CHARGES_DATA_PARAMETERS);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, charges, this.CHARGES_DATA_PARAMETERS);
     }
 
     @GET
@@ -83,17 +84,17 @@ public class ChargesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveCharge(@PathParam("chargeId") final Long chargeId, @Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
         ChargeData charge = this.readPlatformService.retrieveCharge(chargeId);
         if (settings.isTemplate()) {
-            ChargeData templateData = this.readPlatformService.retrieveNewChargeDetails();
+            final ChargeData templateData = this.readPlatformService.retrieveNewChargeDetails();
             charge = ChargeData.withTemplate(charge, templateData);
         }
 
-        return this.toApiJsonSerializer.serialize(settings, charge, CHARGES_DATA_PARAMETERS);
+        return this.toApiJsonSerializer.serialize(settings, charge, this.CHARGES_DATA_PARAMETERS);
     }
 
     @GET
@@ -102,12 +103,12 @@ public class ChargesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveNewChargeDetails(@Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         final ChargeData charge = this.readPlatformService.retrieveNewChargeDetails();
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, charge, CHARGES_DATA_PARAMETERS);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, charge, this.CHARGES_DATA_PARAMETERS);
     }
 
     @POST

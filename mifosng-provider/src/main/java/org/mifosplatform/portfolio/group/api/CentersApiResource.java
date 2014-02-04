@@ -6,11 +6,13 @@
 package org.mifosplatform.portfolio.group.api;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -23,6 +25,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.LocalDate;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
@@ -30,19 +33,26 @@ import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.api.JsonQuery;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.core.data.PaginationParameters;
 import org.mifosplatform.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+import org.mifosplatform.portfolio.accountdetails.data.AccountSummaryCollectionData;
+import org.mifosplatform.portfolio.accountdetails.service.AccountDetailsReadPlatformService;
+import org.mifosplatform.portfolio.calendar.data.CalendarData;
+import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
+import org.mifosplatform.portfolio.calendar.service.CalendarReadPlatformService;
 import org.mifosplatform.portfolio.collectionsheet.data.JLGCollectionSheetData;
 import org.mifosplatform.portfolio.collectionsheet.service.CollectionSheetReadPlatformService;
 import org.mifosplatform.portfolio.group.data.CenterData;
-import org.mifosplatform.portfolio.group.data.GroupAccountSummaryCollectionData;
+import org.mifosplatform.portfolio.group.data.GroupGeneralData;
 import org.mifosplatform.portfolio.group.service.CenterReadPlatformService;
-import org.mifosplatform.portfolio.group.service.GroupReadPlatformService;
 import org.mifosplatform.portfolio.group.service.SearchParameters;
+import org.mifosplatform.portfolio.meeting.data.MeetingData;
+import org.mifosplatform.portfolio.meeting.service.MeetingReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -56,26 +66,28 @@ public class CentersApiResource {
 
     private final PlatformSecurityContext context;
     private final CenterReadPlatformService centerReadPlatformService;
-    private final GroupReadPlatformService groupReadPlatformService;
     private final ToApiJsonSerializer<CenterData> centerApiJsonSerializer;
     private final ToApiJsonSerializer<Object> toApiJsonSerializer;
-    private final ToApiJsonSerializer<GroupAccountSummaryCollectionData> groupSummaryToApiJsonSerializer;
+    private final ToApiJsonSerializer<AccountSummaryCollectionData> groupSummaryToApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final CollectionSheetReadPlatformService collectionSheetReadPlatformService;
     private final FromJsonHelper fromJsonHelper;
+    private final AccountDetailsReadPlatformService accountDetailsReadPlatformService;
+    private final CalendarReadPlatformService calendarReadPlatformService;
+    private final MeetingReadPlatformService meetingReadPlatformService;
 
     @Autowired
     public CentersApiResource(final PlatformSecurityContext context, final CenterReadPlatformService centerReadPlatformService,
-            final GroupReadPlatformService groupReadPlatformService, final ToApiJsonSerializer<CenterData> centerApiJsonSerializer,
-            final ToApiJsonSerializer<Object> toApiJsonSerializer,
-            final ToApiJsonSerializer<GroupAccountSummaryCollectionData> groupSummaryToApiJsonSerializer,
+            final ToApiJsonSerializer<CenterData> centerApiJsonSerializer, final ToApiJsonSerializer<Object> toApiJsonSerializer,
+            final ToApiJsonSerializer<AccountSummaryCollectionData> groupSummaryToApiJsonSerializer,
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-            final CollectionSheetReadPlatformService collectionSheetReadPlatformService, final FromJsonHelper fromJsonHelper) {
+            final CollectionSheetReadPlatformService collectionSheetReadPlatformService, final FromJsonHelper fromJsonHelper,
+            final AccountDetailsReadPlatformService accountDetailsReadPlatformService,
+            final CalendarReadPlatformService calendarReadPlatformService, final MeetingReadPlatformService meetingReadPlatformService) {
         this.context = context;
         this.centerReadPlatformService = centerReadPlatformService;
-        this.groupReadPlatformService = groupReadPlatformService;
         this.centerApiJsonSerializer = centerApiJsonSerializer;
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.groupSummaryToApiJsonSerializer = groupSummaryToApiJsonSerializer;
@@ -83,17 +95,29 @@ public class CentersApiResource {
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.collectionSheetReadPlatformService = collectionSheetReadPlatformService;
         this.fromJsonHelper = fromJsonHelper;
+        this.accountDetailsReadPlatformService = accountDetailsReadPlatformService;
+        this.calendarReadPlatformService = calendarReadPlatformService;
+        this.meetingReadPlatformService = meetingReadPlatformService;
     }
 
     @GET
     @Path("template")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveTemplate(@Context final UriInfo uriInfo, @QueryParam("officeId") final Long officeId) {
+    public String retrieveTemplate(@Context final UriInfo uriInfo, @QueryParam("command") final String commandParam,
+            @QueryParam("officeId") final Long officeId,
+            @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly) {
 
         this.context.authenticatedUser().validateHasReadPermission(GroupingTypesApiConstants.CENTER_RESOURCE_NAME);
 
-        final CenterData template = this.centerReadPlatformService.retrieveTemplate(officeId);
+        if (is(commandParam, "close")) {
+            final CenterData centerClosureTemplate = this.centerReadPlatformService.retrieveCenterWithClosureReasons();
+            final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+            return this.centerApiJsonSerializer.serialize(settings, centerClosureTemplate,
+                    GroupingTypesApiConstants.CENTER_RESPONSE_DATA_PARAMETERS);
+        }
+
+        final CenterData template = this.centerReadPlatformService.retrieveTemplate(officeId, staffInSelectedOfficeOnly);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.centerApiJsonSerializer.serialize(settings, template, GroupingTypesApiConstants.CENTER_RESPONSE_DATA_PARAMETERS);
@@ -103,18 +127,23 @@ public class CentersApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveAll(@Context final UriInfo uriInfo, @QueryParam("sqlSearch") final String sqlSearch,
-            @QueryParam("officeId") final Long officeId, @QueryParam("externalId") final String externalId,
-            @QueryParam("name") final String name, @QueryParam("underHierarchy") final String hierarchy,
+            @QueryParam("officeId") final Long officeId, @QueryParam("staffId") final Long staffId,
+            @QueryParam("externalId") final String externalId, @QueryParam("name") final String name,
+            @QueryParam("underHierarchy") final String hierarchy, @QueryParam("paged") final Boolean paged,
             @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit,
             @QueryParam("orderBy") final String orderBy, @QueryParam("sortOrder") final String sortOrder) {
 
         this.context.authenticatedUser().validateHasReadPermission(GroupingTypesApiConstants.CENTER_RESOURCE_NAME);
+        final PaginationParameters parameters = PaginationParameters.instance(paged, offset, limit, orderBy, sortOrder);
+        final SearchParameters searchParameters = SearchParameters.forGroups(sqlSearch, officeId, staffId, externalId, name, hierarchy,
+                offset, limit, orderBy, sortOrder);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        if (parameters.isPaged()) {
+            final Page<CenterData> centers = this.centerReadPlatformService.retrievePagedAll(searchParameters, parameters);
+            return this.toApiJsonSerializer.serialize(settings, centers, GroupingTypesApiConstants.CENTER_RESPONSE_DATA_PARAMETERS);
+        }
 
-        final SearchParameters searchParameters = SearchParameters.forGroups(sqlSearch, officeId, externalId, name, hierarchy, offset,
-                limit, orderBy, sortOrder);
-        final Page<CenterData> centers = this.centerReadPlatformService.retrieveAll(searchParameters);
-
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final Collection<CenterData> centers = this.centerReadPlatformService.retrieveAll(searchParameters, parameters);
         return this.toApiJsonSerializer.serialize(settings, centers, GroupingTypesApiConstants.CENTER_RESPONSE_DATA_PARAMETERS);
     }
 
@@ -122,23 +151,41 @@ public class CentersApiResource {
     @Path("{centerId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveOne(@Context final UriInfo uriInfo, @PathParam("centerId") final Long centerId) {
+    public String retrieveOne(@Context final UriInfo uriInfo, @PathParam("centerId") final Long centerId,
+            @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly) {
 
         this.context.authenticatedUser().validateHasReadPermission(GroupingTypesApiConstants.CENTER_RESOURCE_NAME);
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
-        
+        CalendarData collectionMeetingCalendar = null;
+        Collection<GroupGeneralData> groups = null;
         CenterData center = this.centerReadPlatformService.retrieveOne(centerId);
 
         final boolean template = ApiParameterHelper.template(uriInfo.getQueryParameters());
         if (template) {
-            final CenterData templateCenter = this.centerReadPlatformService.retrieveTemplate(center.officeId());
+            final CenterData templateCenter = this.centerReadPlatformService.retrieveTemplate(center.officeId(), staffInSelectedOfficeOnly);
             center = CenterData.withTemplate(templateCenter, center);
         }
-        
+
         if (!associationParameters.isEmpty()) {
             if (associationParameters.contains("groupMembers")) {
-                center = CenterData.setGroups(center, this.centerReadPlatformService.retrieveAssociatedGroups(centerId));
+                groups = this.centerReadPlatformService.retrieveAssociatedGroups(centerId);
             }
+
+            if (associationParameters.contains("collectionMeetingCalendar")) {
+                collectionMeetingCalendar = this.calendarReadPlatformService.retrieveCollctionCalendarByEntity(centerId,
+                        CalendarEntityType.CENTERS.getValue());
+                if (collectionMeetingCalendar != null) {
+                    final boolean withHistory = true;
+                    final LocalDate tillDate = null;
+                    final Collection<LocalDate> recurringDates = this.calendarReadPlatformService.generateRecurringDates(collectionMeetingCalendar, withHistory, tillDate);
+                    final Collection<LocalDate> nextTenRecurringDates = this.calendarReadPlatformService.generateNextTenRecurringDates(collectionMeetingCalendar);
+                    final MeetingData lastMeeting = this.meetingReadPlatformService.retrieveLastMeeting(collectionMeetingCalendar.getCalendarInstanceId());
+                    final LocalDate recentEligibleMeetingDate = this.calendarReadPlatformService.generateNextEligibleMeetingDateForCollection(collectionMeetingCalendar, lastMeeting);
+                    collectionMeetingCalendar = CalendarData.withRecurringDates(collectionMeetingCalendar, recurringDates, nextTenRecurringDates, recentEligibleMeetingDate);
+                }
+            }
+
+            center = CenterData.withAssociations(center, groups, collectionMeetingCalendar);
         }
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
@@ -200,18 +247,24 @@ public class CentersApiResource {
             final CommandWrapper commandRequest = builder.activateCenter(centerId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             return this.toApiJsonSerializer.serialize(result);
-        }else if (is(commandParam, "generateCollectionSheet")) {
+        } else if (is(commandParam, "generateCollectionSheet")) {
             final JsonElement parsedQuery = this.fromJsonHelper.parse(apiRequestBodyAsJson);
             final JsonQuery query = JsonQuery.from(apiRequestBodyAsJson, parsedQuery, this.fromJsonHelper);
-            final JLGCollectionSheetData collectionSheet = this.collectionSheetReadPlatformService.generateCenterCollectionSheet(centerId, query);
+            final JLGCollectionSheetData collectionSheet = this.collectionSheetReadPlatformService.generateCenterCollectionSheet(centerId,
+                    query);
             final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
             return this.toApiJsonSerializer.serialize(settings, collectionSheet, GroupingTypesApiConstants.COLLECTIONSHEET_DATA_PARAMETERS);
-        }else if (is(commandParam, "saveCollectionSheet")) {
+        } else if (is(commandParam, "saveCollectionSheet")) {
             final CommandWrapper commandRequest = builder.saveCenterCollectionSheet(centerId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             return this.toApiJsonSerializer.serialize(result);
-        } else { 
-            throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "activate", "generateCollectionSheet", "createRole" });
+        } else if (is(commandParam, "close")) {
+            final CommandWrapper commandRequest = builder.closeCenter(centerId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            return this.toApiJsonSerializer.serialize(result);
+        } else {
+            throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "activate", "generateCollectionSheet",
+                    "createRole" });
         }
 
     }
@@ -221,18 +274,17 @@ public class CentersApiResource {
     }
 
     @GET
-    @Path("{centerId}/loans")
+    @Path("{centerId}/accounts")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveGroupAccount(@PathParam("centerId") final Long centerId, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(GroupingTypesApiConstants.CENTER_RESOURCE_NAME);
 
-        final GroupAccountSummaryCollectionData groupAccount = this.groupReadPlatformService.retrieveGroupAccountDetails(centerId);
+        final AccountSummaryCollectionData groupAccount = this.accountDetailsReadPlatformService.retrieveGroupAccountDetails(centerId);
 
-        final Set<String> GROUP_ACCOUNTS_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("pendingApprovalLoans",
-                "awaitingDisbursalLoans", "openLoans", "closedLoans", "anyLoanCount", "pendingApprovalLoanCount",
-                "awaitingDisbursalLoanCount", "activeLoanCount", "closedLoanCount"));
+        final Set<String> GROUP_ACCOUNTS_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("loanAccounts", "savingsAccounts",
+                "memberLoanAccounts", "memberSavingsAccounts"));
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.groupSummaryToApiJsonSerializer.serialize(settings, groupAccount, GROUP_ACCOUNTS_DATA_PARAMETERS);

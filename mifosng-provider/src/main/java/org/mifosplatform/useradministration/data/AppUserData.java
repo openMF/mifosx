@@ -5,9 +5,9 @@
  */
 package org.mifosplatform.useradministration.data;
 
-import java.util.Collection;
-
 import org.mifosplatform.organisation.office.data.OfficeData;
+
+import java.util.Collection;
 
 /**
  * Immutable data object for application user data.
@@ -27,7 +27,7 @@ public class AppUserData {
     private final Collection<RoleData> availableRoles;
     private final Collection<RoleData> selectedRoles;
 
-    public static AppUserData template(AppUserData user, Collection<OfficeData> officesForDropdown) {
+    public static AppUserData template(final AppUserData user, final Collection<OfficeData> officesForDropdown) {
         return new AppUserData(user.id, user.username, user.email, user.officeId, user.officeName, user.firstname, user.lastname,
                 user.availableRoles, user.selectedRoles, officesForDropdown);
     }
@@ -35,7 +35,7 @@ public class AppUserData {
     public static AppUserData template(final Collection<OfficeData> offices, final Collection<RoleData> availableRoles) {
         return new AppUserData(null, null, null, null, null, null, null, availableRoles, null, offices);
     }
-    
+
     public static AppUserData dropdown(final Long id, final String username) {
         return new AppUserData(id, username, null, null, null, null, null, null, null, null);
     }
@@ -67,5 +67,22 @@ public class AppUserData {
 
     public String username() {
         return this.username;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AppUserData that = (AppUserData) o;
+
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
     }
 }

@@ -6,8 +6,6 @@
 package org.mifosplatform.portfolio.savings.domain;
 
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.accountNoParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.annualFeeAmountParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.annualFeeOnMonthDayParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.clientIdParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.externalIdParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.fieldOfficerIdParamName;
@@ -22,33 +20,37 @@ import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minRequire
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.productIdParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.submittedOnDateParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeAmountParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeTypeParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 import org.joda.time.LocalDate;
-import org.joda.time.MonthDay;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepositoryWrapper;
+import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
+import org.mifosplatform.portfolio.client.exception.ClientNotActiveException;
 import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.group.domain.GroupRepositoryWrapper;
+import org.mifosplatform.portfolio.group.exception.CenterNotActiveException;
+import org.mifosplatform.portfolio.group.exception.ClientNotInGroupException;
+import org.mifosplatform.portfolio.group.exception.GroupNotActiveException;
 import org.mifosplatform.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.mifosplatform.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.mifosplatform.portfolio.savings.SavingsInterestCalculationType;
 import org.mifosplatform.portfolio.savings.SavingsPeriodFrequencyType;
 import org.mifosplatform.portfolio.savings.SavingsPostingInterestPeriodType;
-import org.mifosplatform.portfolio.savings.SavingsWithdrawalFeesType;
 import org.mifosplatform.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonElement;
+import org.mifosplatform.useradministration.domain.AppUser;
 
 @Service
 public class SavingsAccountAssembler {
@@ -60,6 +62,7 @@ public class SavingsAccountAssembler {
     private final StaffRepositoryWrapper staffRepository;
     private final SavingsProductRepository savingProductRepository;
     private final SavingsAccountRepositoryWrapper savingsAccountRepository;
+    private final SavingsAccountChargeAssembler savingsAccountChargeAssembler;
     private final FromJsonHelper fromApiJsonHelper;
 
     @Autowired
@@ -67,13 +70,14 @@ public class SavingsAccountAssembler {
             final ClientRepositoryWrapper clientRepository, final GroupRepositoryWrapper groupRepository,
             final StaffRepositoryWrapper staffRepository, final SavingsProductRepository savingProductRepository,
             final SavingsAccountRepositoryWrapper savingsAccountRepository,
-            final FromJsonHelper fromApiJsonHelper) {
+            final SavingsAccountChargeAssembler savingsAccountChargeAssembler, final FromJsonHelper fromApiJsonHelper) {
         this.savingsAccountTransactionSummaryWrapper = savingsAccountTransactionSummaryWrapper;
         this.clientRepository = clientRepository;
         this.groupRepository = groupRepository;
         this.staffRepository = staffRepository;
         this.savingProductRepository = savingProductRepository;
         this.savingsAccountRepository = savingsAccountRepository;
+        this.savingsAccountChargeAssembler = savingsAccountChargeAssembler;
         this.fromApiJsonHelper = fromApiJsonHelper;
     }
 
@@ -82,13 +86,13 @@ public class SavingsAccountAssembler {
      * request inheriting details where relevant from chosen
      * {@link SavingsProduct}.
      */
-    public SavingsAccount assembleFrom(final JsonCommand command) {
+    public SavingsAccount assembleFrom(final JsonCommand command, final AppUser submittedBy) {
 
         final JsonElement element = command.parsedJson();
-
-        final String accountNo = fromApiJsonHelper.extractStringNamed(accountNoParamName, element);
-        final String externalId = fromApiJsonHelper.extractStringNamed(externalIdParamName, element);
-        final Long productId = fromApiJsonHelper.extractLongNamed(productIdParamName, element);
+        
+        final String accountNo = this.fromApiJsonHelper.extractStringNamed(accountNoParamName, element);
+        final String externalId = this.fromApiJsonHelper.extractStringNamed(externalIdParamName, element);
+        final Long productId = this.fromApiJsonHelper.extractLongNamed(productIdParamName, element);
 
         final SavingsProduct product = this.savingProductRepository.findOne(productId);
         if (product == null) { throw new SavingsProductNotFoundException(productId); }
@@ -96,23 +100,35 @@ public class SavingsAccountAssembler {
         Client client = null;
         Group group = null;
         Staff fieldOfficer = null;
-
-        final Long clientId = fromApiJsonHelper.extractLongNamed(clientIdParamName, element);
+        AccountType accountType = AccountType.INVALID;
+        final Long clientId = this.fromApiJsonHelper.extractLongNamed(clientIdParamName, element);
         if (clientId != null) {
             client = this.clientRepository.findOneWithNotFoundDetection(clientId);
+            accountType = AccountType.INDIVIDUAL;
+            if (client.isNotActive()) { throw new ClientNotActiveException(clientId); }
         }
 
-        final Long groupId = fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
+        final Long groupId = this.fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
         if (groupId != null) {
             group = this.groupRepository.findOneWithNotFoundDetection(groupId);
+            accountType = AccountType.GROUP;
         }
 
-        final Long fieldOfficerId = fromApiJsonHelper.extractLongNamed(fieldOfficerIdParamName, element);
+        if (group != null && client != null) {
+            if (!group.hasClientAsMember(client)) { throw new ClientNotInGroupException(clientId, groupId); }
+            accountType = AccountType.JLG;
+            if (group.isNotActive()) {
+                if (group.isCenter()) { throw new CenterNotActiveException(groupId); }
+                throw new GroupNotActiveException(groupId);
+            }
+        }
+
+        final Long fieldOfficerId = this.fromApiJsonHelper.extractLongNamed(fieldOfficerIdParamName, element);
         if (fieldOfficerId != null) {
             fieldOfficer = this.staffRepository.findOneWithNotFoundDetection(fieldOfficerId);
         }
 
-        final LocalDate submittedOnDate = fromApiJsonHelper.extractLocalDateNamed(submittedOnDateParamName, element);
+        final LocalDate submittedOnDate = this.fromApiJsonHelper.extractLocalDateNamed(submittedOnDateParamName, element);
 
         BigDecimal interestRate = null;
         if (command.parameterExists(nominalAnnualInterestRateParamName)) {
@@ -178,42 +194,18 @@ public class SavingsAccountAssembler {
         } else {
             lockinPeriodFrequencyType = product.lockinPeriodFrequencyType();
         }
-
-        BigDecimal withdrawalFeeAmount = null;
-        if (command.parameterExists(withdrawalFeeAmountParamName)) {
-            withdrawalFeeAmount = command.bigDecimalValueOfParameterNamed(withdrawalFeeAmountParamName);
-        } else {
-            withdrawalFeeAmount = product.withdrawalFeeAmount();
+        boolean iswithdrawalFeeApplicableForTransfer = false;
+        if (command.parameterExists(withdrawalFeeForTransfersParamName)) {
+            iswithdrawalFeeApplicableForTransfer = command.booleanPrimitiveValueOfParameterNamed(withdrawalFeeForTransfersParamName);
         }
 
-        SavingsWithdrawalFeesType withdrawalFeeType = null;
-        if (command.parameterExists(withdrawalFeeAmountParamName)) {
-            final Integer withdrawalFeeTypeValue = command.integerValueOfParameterNamed(withdrawalFeeTypeParamName);
-            if (withdrawalFeeTypeValue != null) {
-                withdrawalFeeType = SavingsWithdrawalFeesType.fromInt(withdrawalFeeTypeValue);
-            }
-        } else {
-            withdrawalFeeType = product.withdrawalFeeType();
-        }
 
-        BigDecimal annualFeeAmount = null;
-        if (command.parameterExists(annualFeeAmountParamName)) {
-            annualFeeAmount = command.bigDecimalValueOfParameterNamed(annualFeeAmountParamName);
-        } else {
-            annualFeeAmount = product.annualFeeAmount();
-        }
-
-        MonthDay monthDayOfAnnualFee = null;
-        if (command.parameterExists(annualFeeOnMonthDayParamName)) {
-            monthDayOfAnnualFee = command.extractMonthDayNamed(annualFeeOnMonthDayParamName);
-        } else {
-            monthDayOfAnnualFee = product.monthDayOfAnnualFee();
-        }
-
-        final SavingsAccount account = SavingsAccount.createNewApplicationForSubmittal(client, group, product, fieldOfficer, accountNo, externalId,
-                submittedOnDate, interestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
-                interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
-                withdrawalFeeAmount, withdrawalFeeType, annualFeeAmount, monthDayOfAnnualFee);
+        final Set<SavingsAccountCharge> charges = this.savingsAccountChargeAssembler.fromParsedJson(element, product.currency().getCode());
+        
+        final SavingsAccount account = SavingsAccount.createNewApplicationForSubmittal(client, group, product, fieldOfficer, accountNo,
+                externalId, accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
+                interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
+                lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, charges);
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
 
         account.validateNewApplicationState(DateUtils.getLocalDateOfTenant());
@@ -222,9 +214,13 @@ public class SavingsAccountAssembler {
     }
 
     public SavingsAccount assembleFrom(final Long savingsId) {
-        SavingsAccount account = this.savingsAccountRepository.findOneWithNotFoundDetection(savingsId);
-        account.setHelpers(this.savingsAccountTransactionSummaryWrapper, savingsHelper);
+        final SavingsAccount account = this.savingsAccountRepository.findOneWithNotFoundDetection(savingsId);
+        account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
 
         return account;
+    }
+
+    public void assignSavingAccountHelpers(final SavingsAccount savingsAccount) {
+        savingsAccount.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
     }
 }

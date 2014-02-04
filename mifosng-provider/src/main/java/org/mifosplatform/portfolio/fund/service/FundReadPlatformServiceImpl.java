@@ -14,6 +14,7 @@ import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext
 import org.mifosplatform.portfolio.fund.data.FundData;
 import org.mifosplatform.portfolio.fund.exception.FundNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -49,9 +50,10 @@ public class FundReadPlatformServiceImpl implements FundReadPlatformService {
     }
 
     @Override
+    @Cacheable(value = "funds", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat('fn')")
     public Collection<FundData> retrieveAllFunds() {
 
-        context.authenticatedUser();
+        this.context.authenticatedUser();
 
         final FundMapper rm = new FundMapper();
         final String sql = "select " + rm.schema() + " order by f.name";
@@ -63,7 +65,7 @@ public class FundReadPlatformServiceImpl implements FundReadPlatformService {
     public FundData retrieveFund(final Long fundId) {
 
         try {
-            context.authenticatedUser();
+            this.context.authenticatedUser();
 
             final FundMapper rm = new FundMapper();
             final String sql = "select " + rm.schema() + " where f.id = ?";
@@ -71,7 +73,7 @@ public class FundReadPlatformServiceImpl implements FundReadPlatformService {
             final FundData selectedFund = this.jdbcTemplate.queryForObject(sql, rm, new Object[] { fundId });
 
             return selectedFund;
-        } catch (EmptyResultDataAccessException e) {
+        } catch (final EmptyResultDataAccessException e) {
             throw new FundNotFoundException(fundId);
         }
     }

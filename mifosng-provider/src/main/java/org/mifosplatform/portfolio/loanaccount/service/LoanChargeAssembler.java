@@ -14,6 +14,7 @@ import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
+import org.mifosplatform.portfolio.charge.domain.ChargePaymentMode;
 import org.mifosplatform.portfolio.charge.domain.ChargeRepositoryWrapper;
 import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
 import org.mifosplatform.portfolio.charge.exception.LoanChargeNotFoundException;
@@ -45,46 +46,52 @@ public class LoanChargeAssembler {
 
         final Set<LoanCharge> loanCharges = new HashSet<LoanCharge>();
 
-        final BigDecimal principal = fromApiJsonHelper.extractBigDecimalWithLocaleNamed("principal", element);
+        final BigDecimal principal = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("principal", element);
+        final Integer numberOfRepayments = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("numberOfRepayments", element);
 
         if (element.isJsonObject()) {
             final JsonObject topLevelJsonElement = element.getAsJsonObject();
-            final String dateFormat = fromApiJsonHelper.extractDateFormatParameter(topLevelJsonElement);
-            final Locale locale = fromApiJsonHelper.extractLocaleParameter(topLevelJsonElement);
+            final String dateFormat = this.fromApiJsonHelper.extractDateFormatParameter(topLevelJsonElement);
+            final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(topLevelJsonElement);
             if (topLevelJsonElement.has("charges") && topLevelJsonElement.get("charges").isJsonArray()) {
                 final JsonArray array = topLevelJsonElement.get("charges").getAsJsonArray();
                 for (int i = 0; i < array.size(); i++) {
 
                     final JsonObject loanChargeElement = array.get(i).getAsJsonObject();
 
-                    final Long id = fromApiJsonHelper.extractLongNamed("id", loanChargeElement);
-                    final Long chargeId = fromApiJsonHelper.extractLongNamed("chargeId", loanChargeElement);
-                    final BigDecimal amount = fromApiJsonHelper.extractBigDecimalNamed("amount", loanChargeElement, locale);
-                    final Integer chargeTimeType = fromApiJsonHelper.extractIntegerNamed("chargeTimeType", loanChargeElement, locale);
-                    final Integer chargeCalculationType = fromApiJsonHelper.extractIntegerNamed("chargeCalculationType", loanChargeElement,
+                    final Long id = this.fromApiJsonHelper.extractLongNamed("id", loanChargeElement);
+                    final Long chargeId = this.fromApiJsonHelper.extractLongNamed("chargeId", loanChargeElement);
+                    final BigDecimal amount = this.fromApiJsonHelper.extractBigDecimalNamed("amount", loanChargeElement, locale);
+                    final Integer chargeTimeType = this.fromApiJsonHelper.extractIntegerNamed("chargeTimeType", loanChargeElement, locale);
+                    final Integer chargeCalculationType = this.fromApiJsonHelper.extractIntegerNamed("chargeCalculationType",
+                            loanChargeElement, locale);
+                    final LocalDate dueDate = this.fromApiJsonHelper
+                            .extractLocalDateNamed("dueDate", loanChargeElement, dateFormat, locale);
+                    final Integer chargePaymentMode = this.fromApiJsonHelper.extractIntegerNamed("chargePaymentMode", loanChargeElement,
                             locale);
-                    final LocalDate dueDate = fromApiJsonHelper.extractLocalDateNamed("dueDate", loanChargeElement,
-                            dateFormat, locale);
-
                     if (id == null) {
                         final Charge chargeDefinition = this.chargeRepository.findOneWithNotFoundDetection(chargeId);
                         ChargeTimeType chargeTime = null;
                         if (chargeTimeType != null) {
-                            ChargeTimeType.fromInt(chargeTimeType);
+                            chargeTime = ChargeTimeType.fromInt(chargeTimeType);
                         }
                         ChargeCalculationType chargeCalculation = null;
                         if (chargeCalculationType != null) {
-                            ChargeCalculationType.fromInt(chargeCalculationType);
+                            chargeCalculation = ChargeCalculationType.fromInt(chargeCalculationType);
+                        }
+                        ChargePaymentMode chargePaymentModeEnum = null;
+                        if (chargePaymentMode != null) {
+                            chargePaymentModeEnum = ChargePaymentMode.fromInt(chargePaymentMode);
                         }
                         final LoanCharge loanCharge = LoanCharge.createNewWithoutLoan(chargeDefinition, principal, amount, chargeTime,
-                                chargeCalculation, dueDate);
+                                chargeCalculation, dueDate, chargePaymentModeEnum,numberOfRepayments);
                         loanCharges.add(loanCharge);
                     } else {
                         final Long loanChargeId = id;
                         final LoanCharge loanCharge = this.loanChargeRepository.findOne(loanChargeId);
                         if (loanCharge == null) { throw new LoanChargeNotFoundException(loanChargeId); }
 
-                        loanCharge.update(amount, dueDate, principal);
+                        loanCharge.update(amount, dueDate, numberOfRepayments);
 
                         loanCharges.add(loanCharge);
                     }

@@ -31,23 +31,18 @@ public class CommandSource extends AbstractPersistable<Long> {
     @Column(name = "entity_name", nullable = true, length = 100)
     private String entityName;
 
-    @SuppressWarnings("unused")
     @Column(name = "office_id")
     private Long officeId;
 
-    @SuppressWarnings("unused")
     @Column(name = "group_id")
     private Long groupId;
 
-    @SuppressWarnings("unused")
     @Column(name = "client_id")
     private Long clientId;
 
-    @SuppressWarnings("unused")
     @Column(name = "loan_id")
     private Long loanId;
 
-    @SuppressWarnings("unused")
     @Column(name = "savings_account_id")
     private Long savingsId;
 
@@ -63,29 +58,25 @@ public class CommandSource extends AbstractPersistable<Long> {
     @Column(name = "command_as_json", length = 1000)
     private String commandAsJson;
 
-    @SuppressWarnings("unused")
     @ManyToOne
     @JoinColumn(name = "maker_id", nullable = false)
     private AppUser maker;
 
-    @SuppressWarnings("unused")
     @Column(name = "made_on_date", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date madeOnDate;
 
-    @SuppressWarnings("unused")
     @ManyToOne
     @JoinColumn(name = "checker_id", nullable = true)
     private AppUser checker;
 
-    @SuppressWarnings("unused")
     @Column(name = "checked_on_date", nullable = true)
     @Temporal(TemporalType.TIMESTAMP)
     private Date checkedOnDate;
 
     @Column(name = "processing_result_enum", nullable = false)
     private Integer processingResult;
-    
+
     @Column(name = "product_id")
     private Long productId;
 
@@ -170,7 +161,7 @@ public class CommandSource extends AbstractPersistable<Long> {
     }
 
     public boolean isMarkedAsAwaitingApproval() {
-        if (this.processingResult.equals(CommandProcessingResultType.AWAITING_APPROVAL.getValue())) return true;
+        if (this.processingResult.equals(CommandProcessingResultType.AWAITING_APPROVAL.getValue())) { return true; }
 
         return false;
     }

@@ -55,7 +55,7 @@ public class HeavensFamilyLoanRepaymentScheduleTransactionProcessor extends Abst
             previousInstallmentIndex = currentInstallmentIndex - 1;
         }
 
-        LoanRepaymentScheduleInstallment previousInstallment = installments.get(previousInstallmentIndex);
+        final LoanRepaymentScheduleInstallment previousInstallment = installments.get(previousInstallmentIndex);
         lastInstallmentDueDate = previousInstallment.getDueDate();
 
         isInAdvance = !(transactionDate.isAfter(lastInstallmentDueDate) || (transactionDate.isEqual(lastInstallmentDueDate)));
@@ -81,6 +81,14 @@ public class HeavensFamilyLoanRepaymentScheduleTransactionProcessor extends Abst
         if (loanTransaction.isInterestWaiver()) {
             interestPortion = currentInstallment.waiveInterestComponent(transactionDate, transactionAmountRemaining);
             transactionAmountRemaining = transactionAmountRemaining.minus(interestPortion);
+        } else if (loanTransaction.isChargePayment()) {
+            if (loanTransaction.isPenaltyPayment()) {
+                penaltyChargesPortion = currentInstallment.payPenaltyChargesComponent(transactionDate, transactionAmountRemaining);
+                transactionAmountRemaining = transactionAmountRemaining.minus(penaltyChargesPortion);
+            } else {
+                feeChargesPortion = currentInstallment.payFeeChargesComponent(transactionDate, transactionAmountRemaining);
+                transactionAmountRemaining = transactionAmountRemaining.minus(feeChargesPortion);
+            }
         } else {
 
             if (currentInstallment.isPrincipalNotCompleted(currency)) {
@@ -141,6 +149,14 @@ public class HeavensFamilyLoanRepaymentScheduleTransactionProcessor extends Abst
         } else if (loanTransaction.isInterestWaiver()) {
             interestPortion = currentInstallment.waiveInterestComponent(transactionDate, transactionAmountRemaining);
             transactionAmountRemaining = transactionAmountRemaining.minus(interestPortion);
+        } else if (loanTransaction.isChargePayment()) {
+            if (loanTransaction.isPenaltyPayment()) {
+                penaltyChargesPortion = currentInstallment.payPenaltyChargesComponent(transactionDate, transactionAmountRemaining);
+                transactionAmountRemaining = transactionAmountRemaining.minus(penaltyChargesPortion);
+            } else {
+                feeChargesPortion = currentInstallment.payFeeChargesComponent(transactionDate, transactionAmountRemaining);
+                transactionAmountRemaining = transactionAmountRemaining.minus(feeChargesPortion);
+            }
         } else {
             // 1. pay of principal before interest.
 

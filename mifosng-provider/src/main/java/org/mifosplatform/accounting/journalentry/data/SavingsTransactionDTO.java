@@ -7,11 +7,13 @@ package org.mifosplatform.accounting.journalentry.data;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 import org.mifosplatform.portfolio.savings.data.SavingsAccountTransactionEnumData;
 
 public class SavingsTransactionDTO {
 
+    private final Long officeId;
     private final String transactionId;
     private final Date transactionDate;
     private final Long paymentTypeId;
@@ -22,14 +24,26 @@ public class SavingsTransactionDTO {
     /*** Boolean values determines if the transaction is reversed ***/
     private final boolean reversed;
 
-    public SavingsTransactionDTO(final Long paymentTypeId, final String transactionId, final Date transactionDate,
-            final SavingsAccountTransactionEnumData transactionType, final BigDecimal amount, final boolean reversed) {
+    /** Breakdowns of fees and penalties this Transaction pays **/
+    private final List<ChargePaymentDTO> penaltyPayments;
+    private final List<ChargePaymentDTO> feePayments;
+
+    public SavingsTransactionDTO(final Long officeId, final Long paymentTypeId, final String transactionId, final Date transactionDate,
+            final SavingsAccountTransactionEnumData transactionType, final BigDecimal amount, final boolean reversed,
+            final List<ChargePaymentDTO> feePayments, final List<ChargePaymentDTO> penaltyPayments) {
         this.paymentTypeId = paymentTypeId;
         this.transactionId = transactionId;
         this.transactionDate = transactionDate;
         this.amount = amount;
         this.reversed = reversed;
         this.transactionType = transactionType;
+        this.feePayments = feePayments;
+        this.penaltyPayments = penaltyPayments;
+        this.officeId = officeId;
+    }
+
+    public Long getOfficeId() {
+        return this.officeId;
     }
 
     public String getTransactionId() {
@@ -54,6 +68,14 @@ public class SavingsTransactionDTO {
 
     public boolean isReversed() {
         return this.reversed;
+    }
+
+    public List<ChargePaymentDTO> getPenaltyPayments() {
+        return this.penaltyPayments;
+    }
+
+    public List<ChargePaymentDTO> getFeePayments() {
+        return this.feePayments;
     }
 
 }

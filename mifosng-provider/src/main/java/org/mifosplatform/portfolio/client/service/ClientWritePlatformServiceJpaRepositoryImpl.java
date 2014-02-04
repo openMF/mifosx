@@ -13,6 +13,7 @@ import java.util.Map;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
@@ -43,6 +44,7 @@ import org.mifosplatform.portfolio.note.domain.Note;
 import org.mifosplatform.portfolio.note.domain.NoteRepository;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccountRepository;
+import org.mifosplatform.useradministration.domain.AppUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,7 +137,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     public CommandProcessingResult createClient(final JsonCommand command) {
 
         try {
-            this.context.authenticatedUser();
+            final AppUser currentUser = this.context.authenticatedUser();
 
             this.fromApiJsonDeserializer.validateForCreate(command.json());
 
@@ -158,7 +160,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 staff = this.staffRepository.findByOfficeHierarchyWithNotFoundDetection(staffId, clientOffice.getHierarchy());
             }
 
-            final Client newClient = Client.createNew(clientOffice, clientParentGroup, staff, command);
+            final Client newClient = Client.createNew(currentUser,clientOffice, clientParentGroup, staff, command);
 
             this.clientRepository.save(newClient);
 
@@ -187,8 +189,6 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     public CommandProcessingResult updateClient(final Long clientId, final JsonCommand command) {
 
         try {
-            this.context.authenticatedUser();
-
             this.fromApiJsonDeserializer.validateForUpdate(command.json());
 
             final Client clientForUpdate = this.clientRepository.findOneWithNotFoundDetection(clientId);
@@ -238,7 +238,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
             final LocalDate activationDate = command.localDateValueOfParameterNamed("activationDate");
 
-            client.activate(fmt, activationDate);
+            final AppUser currentUser = this.context.authenticatedUser();
+            client.activate(currentUser, fmt, activationDate);
 
             this.clientRepository.saveAndFlush(client);
 
@@ -306,6 +307,11 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         final Long staffId = command.longValueOfParameterNamed(ClientApiConstants.staffIdParamName);
         if (staffId != null) {
             staff = this.staffRepository.findByOfficeHierarchyWithNotFoundDetection(staffId, clientForUpdate.getOffice().getHierarchy());
+            /**
+             * TODO Vishwas: We maintain history of chage of loan officer w.r.t
+             * loan in a history table, should we do the same for a client?
+             * Especially useful when the change happens due to a transfer etc
+             **/
             clientForUpdate.assignStaff(staff);
         }
 
@@ -326,17 +332,23 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     @Override
     public CommandProcessingResult closeClient(final Long clientId, final JsonCommand command) {
         try {
+
+            final AppUser currentUser = this.context.authenticatedUser();
             this.fromApiJsonDeserializer.validateClose(command);
 
-            Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
+            final Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
             final LocalDate closureDate = command.localDateValueOfParameterNamed(ClientApiConstants.closureDateParamName);
             final Long closureReasonId = command.longValueOfParameterNamed(ClientApiConstants.closureReasonIdParamName);
 
-            this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.CLIENT_CLOSURE_REASON, closureReasonId);
+            final CodeValue closureReason = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
+                    ClientApiConstants.CLIENT_CLOSURE_REASON, closureReasonId);
 
             if (ClientStatus.fromInt(client.getStatus()).isClosed()) {
                 final String errorMessage = "Client is alread closed.";
                 throw new InvalidClientStateTransitionException("close", "is.already.closed", errorMessage);
+            } else if (ClientStatus.fromInt(client.getStatus()).isUnderTransfer()) {
+                final String errorMessage = "Cannot Close a Client under Transfer";
+                throw new InvalidClientStateTransitionException("close", "is.under.transfer", errorMessage);
             }
 
             if (client.isNotPending() && client.getActivationLocalDate().isAfter(closureDate)) {
@@ -345,10 +357,10 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                         closureDate, client.getActivationLocalDate());
             }
 
-            List<Loan> clientLoans = this.loanRepository.findLoanByClientId(clientId);
+            final List<Loan> clientLoans = this.loanRepository.findLoanByClientId(clientId);
 
-            for (Loan loan : clientLoans) {
-                LoanStatusMapper loanStatus = new LoanStatusMapper(loan.status().getValue());
+            for (final Loan loan : clientLoans) {
+                final LoanStatusMapper loanStatus = new LoanStatusMapper(loan.status().getValue());
                 if (loanStatus.isOpen()) {
                     final String errorMessage = "Client cannot be closed because of non-closed loans.";
                     throw new InvalidClientStateTransitionException("close", "loan.non-closed", errorMessage);
@@ -359,18 +371,27 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 } else if (loanStatus.isPendingApproval()) {
                     final String errorMessage = "Client cannot be closed because of non-closed loans.";
                     throw new InvalidClientStateTransitionException("close", "loan.non-closed", errorMessage);
+                } else if (loanStatus.isAwaitingDisbursal()) {
+                    final String errorMessage = "Client cannot be closed because of non-closed loans.";
+                    throw new InvalidClientStateTransitionException("close", "loan.non-closed", errorMessage);
                 }
             }
-            List<SavingsAccount> clientSavingAccounts = this.savingsRepository.findSavingAccountByClientId(clientId);
+            final List<SavingsAccount> clientSavingAccounts = this.savingsRepository.findSavingAccountByClientId(clientId);
 
-            for (SavingsAccount saving : clientSavingAccounts) {
+            for (final SavingsAccount saving : clientSavingAccounts) {
                 if (saving.isActive()) {
+                    final String errorMessage = "Client cannot be closed because of non-closed savings account.";
+                    throw new InvalidClientStateTransitionException("close", "non-closed.savings.account", errorMessage);
+                } else if (saving.isSubmittedAndPendingApproval()) {
+                    final String errorMessage = "Client cannot be closed because of non-closed savings account.";
+                    throw new InvalidClientStateTransitionException("close", "non-closed.savings.account", errorMessage);
+                } else if (saving.isApproved()) {
                     final String errorMessage = "Client cannot be closed because of non-closed savings account.";
                     throw new InvalidClientStateTransitionException("close", "non-closed.savings.account", errorMessage);
                 }
             }
 
-            client.close(closureReasonId, closureDate.toDate());
+            client.close(currentUser,closureReason, closureDate.toDate());
             this.clientRepository.saveAndFlush(client);
 
             return new CommandProcessingResultBuilder() //
@@ -378,7 +399,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                     .withClientId(clientId) //
                     .withEntityId(clientId) //
                     .build();
-        } catch (DataIntegrityViolationException dve) {
+        } catch (final DataIntegrityViolationException dve) {
             handleDataIntegrityIssues(command, dve);
             return CommandProcessingResult.empty();
         }

@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -48,7 +49,7 @@ public class StaffApiResource {
      * {@link StaffData}.
      */
     private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("id", "firstname", "lastname", "displayName",
-            "officeId", "officeName", "loanOfficerFlag", "allowedOffices"));
+            "officeId", "officeName", "isLoanOfficer", "externalId", "mobileNo", "allowedOffices", "isActive"));
 
     private final String resourceNameForPermissions = "STAFF";
 
@@ -76,14 +77,22 @@ public class StaffApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveStaff(@Context final UriInfo uriInfo, @QueryParam("sqlSearch") final String sqlSearch,
-            @QueryParam("officeId") final Long officeId) {
+            @QueryParam("officeId") final Long officeId,
+            @DefaultValue("false") @QueryParam("staffInOfficeHierarchy") final boolean staffInOfficeHierarchy, 
+            @DefaultValue("false") @QueryParam("loanOfficersOnly") final boolean loanOfficersOnly,
+            @DefaultValue("active") @QueryParam("status") final String status) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        final Collection<StaffData> staff = this.readPlatformService.retrieveAllStaff(sqlSearch, officeId);
+        final Collection<StaffData> staff;
+        if (staffInOfficeHierarchy) {
+            staff = this.readPlatformService.retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(officeId, loanOfficersOnly);
+        } else {
+            staff = this.readPlatformService.retrieveAllStaff(sqlSearch, officeId, loanOfficersOnly, status);
+        }
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, staff, RESPONSE_DATA_PARAMETERS);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, staff, this.RESPONSE_DATA_PARAMETERS);
     }
 
     @POST
@@ -104,17 +113,16 @@ public class StaffApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retreiveStaff(@PathParam("staffId") final Long staffId, @Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
         StaffData staff = this.readPlatformService.retrieveStaff(staffId);
         if (settings.isTemplate()) {
-            final Collection<OfficeData> allowedOffices = officeReadPlatformService.retrieveAllOfficesForDropdown();
+            final Collection<OfficeData> allowedOffices = this.officeReadPlatformService.retrieveAllOfficesForDropdown();
             staff = StaffData.templateData(staff, allowedOffices);
-        }
-
-        return this.toApiJsonSerializer.serialize(settings, staff, RESPONSE_DATA_PARAMETERS);
+        }        
+        return this.toApiJsonSerializer.serialize(settings, staff, this.RESPONSE_DATA_PARAMETERS);
     }
 
     @PUT

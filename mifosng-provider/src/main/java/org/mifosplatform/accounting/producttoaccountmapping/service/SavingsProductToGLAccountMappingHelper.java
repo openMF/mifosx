@@ -8,9 +8,9 @@ package org.mifosplatform.accounting.producttoaccountmapping.service;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.mifosplatform.accounting.common.AccountingRuleType;
 import org.mifosplatform.accounting.common.AccountingConstants.CASH_ACCOUNTS_FOR_SAVINGS;
 import org.mifosplatform.accounting.common.AccountingConstants.SAVINGS_PRODUCT_ACCOUNTING_PARAMS;
+import org.mifosplatform.accounting.common.AccountingRuleType;
 import org.mifosplatform.accounting.glaccount.domain.GLAccountRepository;
 import org.mifosplatform.accounting.glaccount.domain.GLAccountType;
 import org.mifosplatform.accounting.producttoaccountmapping.domain.PortfolioProductType;
@@ -28,9 +28,9 @@ import com.google.gson.JsonElement;
 public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMappingHelper {
 
     @Autowired
-    public SavingsProductToGLAccountMappingHelper(GLAccountRepository glAccountRepository,
-            ProductToGLAccountMappingRepository glAccountMappingRepository, FromJsonHelper fromApiJsonHelper,
-            CodeValueRepositoryWrapper codeValueRepositoryWrapper, ChargeRepositoryWrapper chargeRepositoryWrapper) {
+    public SavingsProductToGLAccountMappingHelper(final GLAccountRepository glAccountRepository,
+            final ProductToGLAccountMappingRepository glAccountMappingRepository, final FromJsonHelper fromApiJsonHelper,
+            final CodeValueRepositoryWrapper codeValueRepositoryWrapper, final ChargeRepositoryWrapper chargeRepositoryWrapper) {
         super(glAccountRepository, glAccountMappingRepository, fromApiJsonHelper, codeValueRepositoryWrapper, chargeRepositoryWrapper);
     }
 
@@ -85,13 +85,27 @@ public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMa
     /*** Abstractions for payments channel related to savings products ***/
 
     public void savePaymentChannelToFundSourceMappings(final JsonCommand command, final JsonElement element, final Long productId,
-            Map<String, Object> changes) {
+            final Map<String, Object> changes) {
         savePaymentChannelToFundSourceMappings(command, element, productId, changes, PortfolioProductType.SAVING);
     }
 
     public void updatePaymentChannelToFundSourceMappings(final JsonCommand command, final JsonElement element, final Long productId,
-            Map<String, Object> changes) {
+            final Map<String, Object> changes) {
         updatePaymentChannelToFundSourceMappings(command, element, productId, changes, PortfolioProductType.SAVING);
+    }
+
+    public void saveChargesToIncomeAccountMappings(final JsonCommand command, final JsonElement element, final Long productId,
+            final Map<String, Object> changes) {
+        // save both fee and penalty charges
+        saveChargesToIncomeAccountMappings(command, element, productId, changes, PortfolioProductType.SAVING, true);
+        saveChargesToIncomeAccountMappings(command, element, productId, changes, PortfolioProductType.SAVING, false);
+    }
+
+    public void updateChargesToIncomeAccountMappings(final JsonCommand command, final JsonElement element, final Long productId,
+            final Map<String, Object> changes) {
+        // update both fee and penalty charges
+        updateChargeToIncomeAccountMappings(command, element, productId, changes, PortfolioProductType.SAVING, true);
+        updateChargeToIncomeAccountMappings(command, element, productId, changes, PortfolioProductType.SAVING, false);
     }
 
     public Map<String, Object> populateChangesForNewSavingsProductToGLAccountMappingCreation(final JsonElement element,
@@ -102,10 +116,14 @@ public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMa
                 SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_REFERENCE.getValue(), element);
         final Long incomeFromFeesId = this.fromApiJsonHelper.extractLongNamed(
                 SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_FEES.getValue(), element);
+        final Long incomeFromPenaltiesId = this.fromApiJsonHelper.extractLongNamed(
+                SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_PENALTIES.getValue(), element);
         final Long interestOnSavingsId = this.fromApiJsonHelper.extractLongNamed(
                 SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_ON_SAVINGS.getValue(), element);
         final Long savingsControlId = this.fromApiJsonHelper.extractLongNamed(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_CONTROL.getValue(),
                 element);
+        final Long transfersInSuspenseAccountId = this.fromApiJsonHelper.extractLongNamed(
+                SAVINGS_PRODUCT_ACCOUNTING_PARAMS.TRANSFERS_SUSPENSE.getValue(), element);
 
         switch (accountingRuleType) {
             case NONE:
@@ -115,6 +133,8 @@ public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMa
                 changes.put(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_REFERENCE.getValue(), savingsReferenceId);
                 changes.put(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_ON_SAVINGS.getValue(), interestOnSavingsId);
                 changes.put(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_FEES.getValue(), incomeFromFeesId);
+                changes.put(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_PENALTIES.getValue(), incomeFromPenaltiesId);
+                changes.put(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.TRANSFERS_SUSPENSE.getValue(), transfersInSuspenseAccountId);
             break;
             case ACCRUAL_BASED:
             break;
@@ -147,6 +167,10 @@ public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMa
                         savingsProductId, CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES.getValue(),
                         CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES.toString(), changes);
 
+                mergeSavingsToIncomeAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_PENALTIES.getValue(),
+                        savingsProductId, CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_PENALTIES.getValue(),
+                        CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_PENALTIES.toString(), changes);
+
                 // expenses
                 mergeSavingsToExpenseAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_ON_SAVINGS.getValue(),
                         savingsProductId, CASH_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue(),
@@ -156,6 +180,9 @@ public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMa
                 mergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_CONTROL.getValue(),
                         savingsProductId, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
                         CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.toString(), changes);
+                mergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.TRANSFERS_SUSPENSE.getValue(),
+                        savingsProductId, CASH_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE.getValue(),
+                        CASH_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE.toString(), changes);
             break;
             case ACCRUAL_BASED:
             break;

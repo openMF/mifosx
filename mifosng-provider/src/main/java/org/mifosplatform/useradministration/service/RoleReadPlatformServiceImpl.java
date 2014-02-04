@@ -33,7 +33,7 @@ public class RoleReadPlatformServiceImpl implements RoleReadPlatformService {
 
     @Override
     public Collection<RoleData> retrieveAll() {
-        final String sql = "select " + roleRowMapper.schema() + " order by r.id";
+        final String sql = "select " + this.roleRowMapper.schema() + " order by r.id";
 
         return this.jdbcTemplate.query(sql, this.roleRowMapper);
     }
@@ -42,10 +42,10 @@ public class RoleReadPlatformServiceImpl implements RoleReadPlatformService {
     public RoleData retrieveOne(final Long id) {
 
         try {
-            final String sql = "select " + roleRowMapper.schema() + " where r.id=?";
+            final String sql = "select " + this.roleRowMapper.schema() + " where r.id=?";
 
             return this.jdbcTemplate.queryForObject(sql, this.roleRowMapper, new Object[] { id });
-        } catch (EmptyResultDataAccessException e) {
+        } catch (final EmptyResultDataAccessException e) {
             throw new RoleNotFoundException(id);
         }
     }
@@ -65,5 +65,13 @@ public class RoleReadPlatformServiceImpl implements RoleReadPlatformService {
         public String schema() {
             return " r.id as id, r.name as name, r.description as description from m_role r";
         }
+    }
+
+    @Override
+    public Collection<RoleData> retrieveAppUserRoles(final Long appUserId) {
+        final String sql = "select " + this.roleRowMapper.schema() + " inner join m_appuser_role"
+                + " ar on ar.role_id = r.id where ar.appuser_id= ?";
+
+        return this.jdbcTemplate.query(sql,this.roleRowMapper,new Object[]{appUserId});
     }
 }

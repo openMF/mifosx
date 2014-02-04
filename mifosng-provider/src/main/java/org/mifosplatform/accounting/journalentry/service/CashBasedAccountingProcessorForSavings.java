@@ -7,9 +7,11 @@ package org.mifosplatform.accounting.journalentry.service;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 import org.mifosplatform.accounting.closure.domain.GLClosure;
 import org.mifosplatform.accounting.common.AccountingConstants.CASH_ACCOUNTS_FOR_SAVINGS;
+import org.mifosplatform.accounting.journalentry.data.ChargePaymentDTO;
 import org.mifosplatform.accounting.journalentry.data.SavingsDTO;
 import org.mifosplatform.accounting.journalentry.data.SavingsTransactionDTO;
 import org.mifosplatform.organisation.office.domain.Office;
@@ -27,32 +29,35 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
     }
 
     @Override
-    public void createJournalEntriesForSavings(SavingsDTO savingsDTO) {
+    public void createJournalEntriesForSavings(final SavingsDTO savingsDTO) {
         final GLClosure latestGLClosure = this.helper.getLatestClosureByBranch(savingsDTO.getOfficeId());
-        final Office office = this.helper.getOfficeById(savingsDTO.getOfficeId());
         final Long savingsProductId = savingsDTO.getSavingsProductId();
         final Long savingsId = savingsDTO.getSavingsId();
+        final String currencyCode = savingsDTO.getCurrencyCode();
         for (final SavingsTransactionDTO savingsTransactionDTO : savingsDTO.getNewSavingsTransactions()) {
             final Date transactionDate = savingsTransactionDTO.getTransactionDate();
             final String transactionId = savingsTransactionDTO.getTransactionId();
+            final Office office = this.helper.getOfficeById(savingsTransactionDTO.getOfficeId());
             final Long paymentTypeId = savingsTransactionDTO.getPaymentTypeId();
             final boolean isReversal = savingsTransactionDTO.isReversed();
             final BigDecimal amount = savingsTransactionDTO.getAmount();
+            final List<ChargePaymentDTO> feePayments = savingsTransactionDTO.getFeePayments();
+            final List<ChargePaymentDTO> penaltyPayments = savingsTransactionDTO.getPenaltyPayments();
 
-            helper.checkForBranchClosures(latestGLClosure, transactionDate);
+            this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
 
             /** Handle Deposits and reversals of deposits **/
             if (savingsTransactionDTO.getTransactionType().isDeposit()) {
-                helper.createCashBasedJournalEntriesAndReversalsForSavings(office, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE,
-                        CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL, savingsProductId, paymentTypeId, savingsId, transactionId,
-                        transactionDate, amount, isReversal);
+                this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                        CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL, savingsProductId,
+                        paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
             }
 
             /** Handle withdrawals and reversals of withdrawals **/
             else if (savingsTransactionDTO.getTransactionType().isWithdrawal()) {
-                helper.createCashBasedJournalEntriesAndReversalsForSavings(office, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL,
-                        CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE, savingsProductId, paymentTypeId, savingsId, transactionId,
-                        transactionDate, amount, isReversal);
+                this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                        CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE, savingsProductId,
+                        paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
             }
 
             /**
@@ -60,16 +65,38 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
              * Applications
              **/
             else if (savingsTransactionDTO.getTransactionType().isInterestPosting()) {
-                helper.createCashBasedJournalEntriesAndReversalsForSavings(office, CASH_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS,
-                        CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL, savingsProductId, paymentTypeId, savingsId, transactionId,
-                        transactionDate, amount, isReversal);
+                this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                        CASH_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL, savingsProductId,
+                        paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
             }
 
             /** Handle Fees Deductions and reversals of Fees Deductions **/
             else if (savingsTransactionDTO.getTransactionType().isFeeDeduction()) {
-                helper.createCashBasedJournalEntriesAndReversalsForSavings(office, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL,
-                        CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES, savingsProductId, paymentTypeId, savingsId, transactionId,
-                        transactionDate, amount, isReversal);
+                // Is the Charge a penalty?
+                if (penaltyPayments.size() > 0) {
+                    this.helper.createCashBasedJournalEntriesAndReversalsForSavingsCharges(office, currencyCode,
+                            CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL, CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_PENALTIES, savingsProductId,
+                            paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, penaltyPayments);
+                } else {
+                    this.helper.createCashBasedJournalEntriesAndReversalsForSavingsCharges(office, currencyCode,
+                            CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL, CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES, savingsProductId,
+                            paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal, feePayments);
+                }
+            }
+
+            /** Handle Transfers proposal **/
+            else if (savingsTransactionDTO.getTransactionType().isInitiateTransfer()) {
+                this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                        CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL, CASH_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE, savingsProductId,
+                        paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+            }
+
+            /** Handle Transfer Withdrawal or Acceptance **/
+            else if (savingsTransactionDTO.getTransactionType().isWithdrawTransfer()
+                    || savingsTransactionDTO.getTransactionType().isApproveTransfer()) {
+                this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                        CASH_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL, savingsProductId,
+                        paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
             }
 
         }

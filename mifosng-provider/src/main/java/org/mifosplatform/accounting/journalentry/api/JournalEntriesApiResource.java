@@ -22,6 +22,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
+import org.mifosplatform.accounting.journalentry.data.JournalEntryAssociationParametersData;
 import org.mifosplatform.accounting.journalentry.data.JournalEntryData;
 import org.mifosplatform.accounting.journalentry.service.JournalEntryReadPlatformService;
 import org.mifosplatform.commands.domain.CommandWrapper;
@@ -47,7 +48,7 @@ public class JournalEntriesApiResource {
     private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<String>(Arrays.asList("id", "officeId", "officeName",
             "glAccountName", "glAccountId", "glAccountCode", "glAccountType", "transactionDate", "entryType", "amount", "transactionId",
             "manualEntry", "entityType", "entityId", "createdByUserId", "createdDate", "createdByUserName", "comments", "reversed",
-            "referenceNumber"));
+            "referenceNumber", "currency"));
 
     private final String resourceNameForPermission = "JOURNALENTRY";
 
@@ -76,10 +77,11 @@ public class JournalEntriesApiResource {
     public String retrieveAll(@Context final UriInfo uriInfo, @QueryParam("officeId") final Long officeId,
             @QueryParam("glAccountId") final Long glAccountId, @QueryParam("manualEntriesOnly") final Boolean onlyManualEntries,
             @QueryParam("fromDate") final DateParam fromDateParam, @QueryParam("toDate") final DateParam toDateParam,
-            @QueryParam("transactionId") final String transactionId, @QueryParam("offset") final Integer offset,
+            @QueryParam("transactionId") final String transactionId, @QueryParam("entityType") final Integer entityType, @QueryParam("offset") final Integer offset,
             @QueryParam("limit") final Integer limit, @QueryParam("orderBy") final String orderBy,
             @QueryParam("sortOrder") final String sortOrder, @QueryParam("locale") final String locale,
-            @QueryParam("dateFormat") final String dateFormat) {
+            @QueryParam("dateFormat") final String dateFormat,@QueryParam("runningBalance") final boolean runningBalance, 
+            @QueryParam("transactionDetails") final boolean transactionDetails) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermission);
 
@@ -93,10 +95,11 @@ public class JournalEntriesApiResource {
         }
 
         final SearchParameters searchParameters = SearchParameters.forJournalEntries(officeId, offset, limit, orderBy, sortOrder);
+        JournalEntryAssociationParametersData associationParametersData = new JournalEntryAssociationParametersData(transactionDetails, runningBalance);
 
-        Page<JournalEntryData> glJournalEntries = this.journalEntryReadPlatformService.retrieveAll(searchParameters, glAccountId,
-                onlyManualEntries, fromDate, toDate, transactionId);
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final Page<JournalEntryData> glJournalEntries = this.journalEntryReadPlatformService.retrieveAll(searchParameters, glAccountId,
+                onlyManualEntries, fromDate, toDate, transactionId, entityType, associationParametersData);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.apiJsonSerializerService.serialize(settings, glJournalEntries, RESPONSE_DATA_PARAMETERS);
     }
 
@@ -104,10 +107,12 @@ public class JournalEntriesApiResource {
     @Path("{journalEntryId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retreiveJournalEntryById(@PathParam("journalEntryId") final Long journalEntryId, @Context final UriInfo uriInfo) {
+    public String retreiveJournalEntryById(@PathParam("journalEntryId") final Long journalEntryId, @Context final UriInfo uriInfo,
+            @QueryParam("runningBalance") final boolean runningBalance, @QueryParam("transactionDetails") final boolean transactionDetails) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermission);
-        final JournalEntryData glJournalEntryData = this.journalEntryReadPlatformService.retrieveGLJournalEntryById(journalEntryId);
+        JournalEntryAssociationParametersData associationParametersData = new JournalEntryAssociationParametersData(transactionDetails, runningBalance);
+        final JournalEntryData glJournalEntryData = this.journalEntryReadPlatformService.retrieveGLJournalEntryById(journalEntryId, associationParametersData);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.apiJsonSerializerService.serialize(settings, glJournalEntryData, RESPONSE_DATA_PARAMETERS);
@@ -116,12 +121,17 @@ public class JournalEntriesApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String createGLJournalEntry(final String jsonRequestBody) {
+    public String createGLJournalEntry(final String jsonRequestBody, @QueryParam("command") final String commandParam) {
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().createJournalEntry().withJson(jsonRequestBody).build();
-
-        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-
+        CommandProcessingResult result = null;
+        if (is(commandParam, "updateRunningBalance")) {
+            final CommandWrapper commandRequest = new CommandWrapperBuilder().updateRunningBalanceForJournalEntry()
+                    .withJson(jsonRequestBody).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else {
+            final CommandWrapper commandRequest = new CommandWrapperBuilder().createJournalEntry().withJson(jsonRequestBody).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }
         return this.apiJsonSerializerService.serialize(result);
     }
 

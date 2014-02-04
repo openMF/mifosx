@@ -21,6 +21,8 @@ import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.accounting.glaccount.domain.GLAccount;
 import org.mifosplatform.infrastructure.core.domain.AbstractAuditableCustom;
 import org.mifosplatform.organisation.office.domain.Office;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccountTransaction;
 import org.mifosplatform.useradministration.domain.AppUser;
 
 @Entity
@@ -35,20 +37,27 @@ public class JournalEntry extends AbstractAuditableCustom<AppUser, Long> {
     @JoinColumn(name = "account_id", nullable = false)
     private GLAccount glAccount;
 
-    @SuppressWarnings("unused")
+    @Column(name = "currency_code", length = 3, nullable = false)
+    private String currencyCode;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reversal_id")
     private JournalEntry reversalJournalEntry;
 
-    @SuppressWarnings("unused")
     @Column(name = "transaction_id", nullable = false, length = 50)
     private String transactionId;
 
-    @SuppressWarnings("unused")
+    @ManyToOne
+    @JoinColumn(name = "loan_transaction_id", nullable = false)
+    private LoanTransaction loanTransaction;
+
+    @ManyToOne
+    @JoinColumn(name = "savings_transaction_id", nullable = false)
+    private SavingsAccountTransaction savingsTransaction;
+    
     @Column(name = "reversed", nullable = false)
     private boolean reversed = false;
 
-    @SuppressWarnings("unused")
     @Column(name = "manual_entry", nullable = false)
     private boolean manualEntry = false;
 
@@ -62,35 +71,34 @@ public class JournalEntry extends AbstractAuditableCustom<AppUser, Long> {
     @Column(name = "amount", scale = 6, precision = 19, nullable = false)
     private BigDecimal amount;
 
-    @SuppressWarnings("unused")
     @Column(name = "description", length = 500)
     private String description;
 
-    @SuppressWarnings("unused")
     @Column(name = "entity_type_enum", length = 50)
     private Integer entityType;
 
-    @SuppressWarnings("unused")
     @Column(name = "entity_id")
     private Long entityId;
 
     @Column(name = "ref_num")
     private String referenceNumber;
 
-    public static JournalEntry createNew(final Office office, final GLAccount glAccount, final String transactionId,
-            final boolean manualEntry, final Date transactionDate, final JournalEntryType journalEntryType, final BigDecimal amount,
-            final String description, final Integer entityType, final Long entityId, final String referenceNumber) {
-        return new JournalEntry(office, glAccount, transactionId, manualEntry, transactionDate, journalEntryType.getValue(), amount,
-                description, entityType, entityId, referenceNumber);
+    public static JournalEntry createNew(final Office office, final GLAccount glAccount, final String currencyCode,
+            final String transactionId, final boolean manualEntry, final Date transactionDate, final JournalEntryType journalEntryType,
+            final BigDecimal amount, final String description, final Integer entityType, final Long entityId, final String referenceNumber, 
+            final LoanTransaction loanTransaction, final SavingsAccountTransaction savingsTransaction) {
+        return new JournalEntry(office, glAccount, currencyCode, transactionId, manualEntry, transactionDate, journalEntryType.getValue(),
+                amount, description, entityType, entityId, referenceNumber, loanTransaction, savingsTransaction);
     }
 
     protected JournalEntry() {
         //
     }
 
-    public JournalEntry(final Office office, final GLAccount glAccount, final String transactionId, final boolean manualEntry,
-            final Date transactionDate, final Integer type, final BigDecimal amount, final String description, final Integer entityType,
-            final Long entityId, final String referenceNumber) {
+    public JournalEntry(final Office office, final GLAccount glAccount, final String currencyCode, final String transactionId,
+            final boolean manualEntry, final Date transactionDate, final Integer type, final BigDecimal amount, final String description,
+            final Integer entityType, final Long entityId, final String referenceNumber, final LoanTransaction loanTransaction, 
+            final SavingsAccountTransaction savingsTransaction) {
         this.office = office;
         this.glAccount = glAccount;
         this.reversalJournalEntry = null;
@@ -104,7 +112,9 @@ public class JournalEntry extends AbstractAuditableCustom<AppUser, Long> {
         this.entityType = entityType;
         this.entityId = entityId;
         this.referenceNumber = referenceNumber;
-
+        this.currencyCode = currencyCode;
+        this.loanTransaction = loanTransaction; 
+        this.savingsTransaction = savingsTransaction;
     }
 
     public boolean isDebitEntry() {
@@ -141,6 +151,20 @@ public class JournalEntry extends AbstractAuditableCustom<AppUser, Long> {
 
     public String getReferenceNumber() {
         return this.referenceNumber;
+    }
+
+    public String getCurrencyCode() {
+        return this.currencyCode;
+    }
+
+    
+    public LoanTransaction getLoanTransaction() {
+        return this.loanTransaction;
+    }
+
+    
+    public SavingsAccountTransaction getSavingsTransaction() {
+        return this.savingsTransaction;
     }
 
 }

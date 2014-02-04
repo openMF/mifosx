@@ -29,22 +29,22 @@ public class JpaUserDomainService implements UserDomainService {
 
     @Transactional
     @Override
-    public void create(final AppUser appUser , final Boolean sendPasswordToEmail) {
+    public void create(final AppUser appUser, final Boolean sendPasswordToEmail) {
 
         generateKeyUsedForPasswordSalting(appUser);
 
-        String unencodedPassword = appUser.getPassword();
+        final String unencodedPassword = appUser.getPassword();
 
         final String encodePassword = this.applicationPasswordEncoder.encode(appUser);
         appUser.updatePassword(encodePassword);
 
-        this.userRepository.save(appUser);
+        this.userRepository.saveAndFlush(appUser);
 
-        if (sendPasswordToEmail.booleanValue()){
-        	final EmailDetail emailDetail = new EmailDetail(appUser.getFirstname(), appUser.getFirstname(), appUser.getEmail(),
-                appUser.getUsername());
+        if (sendPasswordToEmail.booleanValue()) {
+            final EmailDetail emailDetail = new EmailDetail(appUser.getOffice().getName(), appUser.getFirstname(), appUser.getEmail(),
+                    appUser.getUsername());
 
-        	this.emailService.sendToUserAccount(emailDetail, unencodedPassword);
+            this.emailService.sendToUserAccount(emailDetail, unencodedPassword);
         }
     }
 

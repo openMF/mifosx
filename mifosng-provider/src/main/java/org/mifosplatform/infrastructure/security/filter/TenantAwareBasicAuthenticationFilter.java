@@ -15,12 +15,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.time.StopWatch;
+import org.mifosplatform.infrastructure.cache.domain.CacheType;
+import org.mifosplatform.infrastructure.cache.service.CacheWritePlatformService;
+import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.domain.MifosPlatformTenant;
 import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
 import org.mifosplatform.infrastructure.security.data.PlatformRequestLog;
 import org.mifosplatform.infrastructure.security.exception.InvalidTenantIdentiferException;
-import org.mifosplatform.infrastructure.security.service.TenantDetailsService;
+import org.mifosplatform.infrastructure.security.service.BasicAuthTenantDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +31,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.stereotype.Service;
 
 /**
  * A customised version of spring security's {@link BasicAuthenticationFilter}.
@@ -44,31 +48,39 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
  * If multi-tenant and basic auth credentials are invalid, a http error response
  * is returned.
  */
+@Service(value = "basicAuthenticationProcessingFilter")
 public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
+    private static boolean firstRequestProcessed = false;
     private final static Logger logger = LoggerFactory.getLogger(TenantAwareBasicAuthenticationFilter.class);
 
-    @Autowired
-    private TenantDetailsService tenantDetailsService;
+    private final BasicAuthTenantDetailsService basicAuthTenantDetailsService;
+    private final ToApiJsonSerializer<PlatformRequestLog> toApiJsonSerializer;
+    private final ConfigurationDomainService configurationDomainService;
+    private final CacheWritePlatformService cacheWritePlatformService;
+
+    private final String tenantRequestHeader = "X-Mifos-Platform-TenantId";
+    private final boolean exceptionIfHeaderMissing = true;
 
     @Autowired
-    private ToApiJsonSerializer<PlatformRequestLog> toApiJsonSerializer;
-
-    private String tenantRequestHeader = "X-Mifos-Platform-TenantId";
-    private boolean exceptionIfHeaderMissing = true;
-
     public TenantAwareBasicAuthenticationFilter(final AuthenticationManager authenticationManager,
-            final AuthenticationEntryPoint authenticationEntryPoint) {
+            final AuthenticationEntryPoint authenticationEntryPoint, final BasicAuthTenantDetailsService basicAuthTenantDetailsService,
+            final ToApiJsonSerializer<PlatformRequestLog> toApiJsonSerializer, final ConfigurationDomainService configurationDomainService,
+            final CacheWritePlatformService cacheWritePlatformService) {
         super(authenticationManager, authenticationEntryPoint);
+        this.basicAuthTenantDetailsService = basicAuthTenantDetailsService;
+        this.toApiJsonSerializer = toApiJsonSerializer;
+        this.configurationDomainService = configurationDomainService;
+        this.cacheWritePlatformService = cacheWritePlatformService;
     }
 
     @Override
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+    public void doFilter(final ServletRequest req, final ServletResponse res, final FilterChain chain) throws IOException, ServletException {
 
-        HttpServletRequest request = (HttpServletRequest) req;
-        HttpServletResponse response = (HttpServletResponse) res;
+        final HttpServletRequest request = (HttpServletRequest) req;
+        final HttpServletResponse response = (HttpServletResponse) res;
 
-        StopWatch task = new StopWatch();
+        final StopWatch task = new StopWatch();
         task.start();
 
         try {
@@ -78,23 +90,33 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
                 // in different origin (domain name)
             } else {
 
-                String tenantId = request.getHeader(tenantRequestHeader);
-                if (org.apache.commons.lang.StringUtils.isBlank(tenantId)) {
-                    tenantId = request.getParameter("tenantIdentifier");
+                String tenantIdentifier = request.getHeader(this.tenantRequestHeader);
+                if (org.apache.commons.lang.StringUtils.isBlank(tenantIdentifier)) {
+                    tenantIdentifier = request.getParameter("tenantIdentifier");
                 }
 
-                if (tenantId == null && exceptionIfHeaderMissing) { throw new InvalidTenantIdentiferException(
-                        "No tenant identifier found: Add request header of '" + tenantRequestHeader
+                if (tenantIdentifier == null && this.exceptionIfHeaderMissing) { throw new InvalidTenantIdentiferException(
+                        "No tenant identifier found: Add request header of '" + this.tenantRequestHeader
                                 + "' or add the parameter 'tenantIdentifier' to query string of request URL."); }
 
                 // check tenants database for tenantId
-                final MifosPlatformTenant tenant = this.tenantDetailsService.loadTenantById(tenantId);
+                final MifosPlatformTenant tenant = this.basicAuthTenantDetailsService.loadTenantById(tenantIdentifier);
 
                 ThreadLocalContextUtil.setTenant(tenant);
+
+                if (!firstRequestProcessed) {
+                    final boolean ehcacheEnabled = this.configurationDomainService.isEhcacheEnabled();
+                    if (ehcacheEnabled) {
+                        this.cacheWritePlatformService.switchToCache(CacheType.SINGLE_NODE);
+                    } else {
+                        this.cacheWritePlatformService.switchToCache(CacheType.NO_CACHE);
+                    }
+                    TenantAwareBasicAuthenticationFilter.firstRequestProcessed = true;
+                }
             }
 
             super.doFilter(req, res, chain);
-        } catch (InvalidTenantIdentiferException e) {
+        } catch (final InvalidTenantIdentiferException e) {
             // deal with exception at low level
             SecurityContextHolder.getContext().setAuthentication(null);
 
@@ -103,7 +125,7 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
         } finally {
             task.stop();
             final PlatformRequestLog log = PlatformRequestLog.from(task, request);
-            logger.info(toApiJsonSerializer.serialize(log));
+            logger.info(this.toApiJsonSerializer.serialize(log));
         }
     }
 }

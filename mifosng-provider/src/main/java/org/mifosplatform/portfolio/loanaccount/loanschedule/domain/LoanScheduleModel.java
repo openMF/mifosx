@@ -62,18 +62,19 @@ public final class LoanScheduleModel {
     public LoanScheduleData toData() {
 
         final int decimalPlaces = this.totalPrincipalDisbursed.getCurrencyDigitsAfterDecimal();
-        final CurrencyData currency = applicationCurrency.toData(decimalPlaces);
+        final Integer inMultiplesOf = this.totalPrincipalDisbursed.getCurrencyInMultiplesOf();
+        final CurrencyData currency = this.applicationCurrency.toData(decimalPlaces, inMultiplesOf);
 
         final Collection<LoanSchedulePeriodData> periodsData = new ArrayList<LoanSchedulePeriodData>();
-        for (LoanScheduleModelPeriod modelPeriod : this.periods) {
+        for (final LoanScheduleModelPeriod modelPeriod : this.periods) {
             periodsData.add(modelPeriod.toData());
         }
 
-        BigDecimal totalWaived = null;
-        BigDecimal totalWrittenOff = null;
-        BigDecimal totalRepayment = null;
-        BigDecimal totalPaidInAdvance = null;
-        BigDecimal totalPaidLate = null;
+        final BigDecimal totalWaived = null;
+        final BigDecimal totalWrittenOff = null;
+        final BigDecimal totalRepayment = null;
+        final BigDecimal totalPaidInAdvance = null;
+        final BigDecimal totalPaidLate = null;
 
         return new LoanScheduleData(currency, periodsData, this.loanTermInDays, this.totalPrincipalDisbursed.getAmount(),
                 this.totalPrincipalExpected, this.totalPrincipalPaid, this.totalInterestCharged, this.totalFeeChargesCharged,

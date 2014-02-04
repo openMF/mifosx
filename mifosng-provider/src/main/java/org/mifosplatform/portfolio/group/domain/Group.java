@@ -28,19 +28,24 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
+import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
+import org.mifosplatform.portfolio.client.api.ClientApiConstants;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.group.api.GroupingTypesApiConstants;
 import org.mifosplatform.portfolio.group.exception.ClientExistInGroupException;
 import org.mifosplatform.portfolio.group.exception.ClientNotInGroupException;
+import org.mifosplatform.portfolio.group.exception.InvalidGroupStateTransitionException;
+import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 import com.google.common.collect.Sets;
@@ -62,6 +67,10 @@ public final class Group extends AbstractPersistable<Long> {
     @Temporal(TemporalType.DATE)
     private Date activationDate;
 
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "activatedon_userid", nullable = true)
+    private AppUser activatedBy;
+
     @ManyToOne
     @JoinColumn(name = "office_id", nullable = false)
     private Office office;
@@ -74,10 +83,6 @@ public final class Group extends AbstractPersistable<Long> {
     @JoinColumn(name = "parent_id")
     private Group parent;
 
-    /*
-     * TODO - kw - it might be possible to just move this to be a java enum type
-     * rather than 'levels' table.
-     */
     @ManyToOne
     @JoinColumn(name = "level_id", nullable = false)
     private GroupLevel groupLevel;
@@ -96,6 +101,26 @@ public final class Group extends AbstractPersistable<Long> {
     @JoinTable(name = "m_group_client", joinColumns = @JoinColumn(name = "group_id"), inverseJoinColumns = @JoinColumn(name = "client_id"))
     private Set<Client> clientMembers;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "closure_reason_cv_id", nullable = true)
+    private CodeValue closureReason;
+
+    @Column(name = "closedon_date", nullable = true)
+    @Temporal(TemporalType.DATE)
+    private Date closureDate;
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "closedon_userid", nullable = true)
+    private AppUser closedBy;
+
+    @Column(name = "submittedon_date", nullable = true)
+    @Temporal(TemporalType.DATE)
+    private Date submittedOnDate;
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "submittedon_userid", nullable = true)
+    private AppUser submittedBy;
+
     public Group() {
         this.name = null;
         this.externalId = null;
@@ -104,21 +129,22 @@ public final class Group extends AbstractPersistable<Long> {
 
     public static Group newGroup(final Office office, final Staff staff, final Group parent, final GroupLevel groupLevel,
             final String name, final String externalId, final boolean active, final LocalDate activationDate,
-            final Set<Client> clientMembers, final Set<Group> groupMembers) {
+            final Set<Client> clientMembers, final Set<Group> groupMembers, final LocalDate submittedOnDate, final AppUser currentUser) {
 
         GroupingTypeStatus status = GroupingTypeStatus.PENDING;
         LocalDate groupActivationDate = null;
         if (active) {
             status = GroupingTypeStatus.ACTIVE;
-            groupActivationDate = activationDate;//set activation date only if group is made active
+            groupActivationDate = activationDate;
         }
 
-        return new Group(office, staff, parent, groupLevel, name, externalId, status, groupActivationDate, clientMembers, groupMembers);
+        return new Group(office, staff, parent, groupLevel, name, externalId, status, groupActivationDate, clientMembers, groupMembers,
+                submittedOnDate, currentUser);
     }
 
-    public Group(final Office office, final Staff staff, final Group parent, final GroupLevel groupLevel, final String name,
+    private Group(final Office office, final Staff staff, final Group parent, final GroupLevel groupLevel, final String name,
             final String externalId, final GroupingTypeStatus status, final LocalDate activationDate, final Set<Client> clientMembers,
-            final Set<Group> groupMembers) {
+            final Set<Group> groupMembers, final LocalDate submittedOnDate, final AppUser currentUser) {
         this.office = office;
         this.staff = staff;
         this.groupLevel = groupLevel;
@@ -131,6 +157,7 @@ public final class Group extends AbstractPersistable<Long> {
         this.status = status.getValue();
         if (activationDate != null) {
             this.activationDate = activationDate.toDate();
+            this.activatedBy = currentUser;
         }
 
         if (StringUtils.isNotBlank(name)) {
@@ -149,9 +176,60 @@ public final class Group extends AbstractPersistable<Long> {
         if (groupMembers != null) {
             this.groupMembers.addAll(groupMembers);
         }
+
+        this.submittedOnDate = submittedOnDate.toDate();
+        this.submittedBy = currentUser;
+
+        validate();
     }
 
-    public void activate(final DateTimeFormatter formatter, final LocalDate activationLocalDate) {
+    private void validate() {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        validateActivationDate(dataValidationErrors);
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+    }
+
+    private void validateActivationDate(final List<ApiParameterError> dataValidationErrors) {
+
+        if (getSubmittedOnDate() != null && isDateInTheFuture(getSubmittedOnDate())) {
+
+            final String defaultUserMessage = "Submitted on date cannot be in the future.";
+            final ApiParameterError error = ApiParameterError.parameterError("error.msg.group.submittedOnDate.in.the.future",
+                    defaultUserMessage, ClientApiConstants.submittedOnDateParamName, this.submittedOnDate);
+
+            dataValidationErrors.add(error);
+        }
+
+        if (getActivationLocalDate() != null && getSubmittedOnDate() != null && getSubmittedOnDate().isAfter(getActivationLocalDate())) {
+
+            final String defaultUserMessage = "Submitted on date cannot be after the activation date";
+            final ApiParameterError error = ApiParameterError.parameterError("error.msg.group.submittedOnDate.after.activation.date",
+                    defaultUserMessage, GroupingTypesApiConstants.submittedOnDateParamName, this.submittedOnDate);
+
+            dataValidationErrors.add(error);
+        }
+
+        if (getActivationLocalDate() != null && isDateInTheFuture(getActivationLocalDate())) {
+
+            final String defaultUserMessage = "Activation date cannot be in the future.";
+            final ApiParameterError error = ApiParameterError.parameterError("error.msg.group.activationDate.in.the.future",
+                    defaultUserMessage, GroupingTypesApiConstants.activationDateParamName, getActivationLocalDate());
+
+            dataValidationErrors.add(error);
+        }
+
+        if (getActivationLocalDate() != null) {
+            if (this.office.isOpeningDateAfter(getActivationLocalDate())) {
+                final String defaultUserMessage = "Activation date cannot be a date before the office opening date.";
+                final ApiParameterError error = ApiParameterError.parameterError(
+                        "error.msg.group.activationDate.cannot.be.before.office.activation.date", defaultUserMessage,
+                        GroupingTypesApiConstants.activationDateParamName, getActivationLocalDate());
+                dataValidationErrors.add(error);
+            }
+        }
+    }
+
+    public void activate(final AppUser currentUser, final DateTimeFormatter formatter, final LocalDate activationLocalDate) {
         if (isActive()) {
             final String defaultUserMessage = "Cannot activate group. Group is already active.";
             final ApiParameterError error = ApiParameterError.parameterError("error.msg.group.already.active", defaultUserMessage,
@@ -163,20 +241,11 @@ public final class Group extends AbstractPersistable<Long> {
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
 
-        if (isDateInTheFuture(activationLocalDate)) {
-
-            final String defaultUserMessage = "Activation date cannot be in the future.";
-            final ApiParameterError error = ApiParameterError.parameterError("error.msg.group.activationDate.in.the.future",
-                    defaultUserMessage, "activationDate", activationLocalDate);
-
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
-            dataValidationErrors.add(error);
-
-            throw new PlatformApiDataValidationException(dataValidationErrors);
-        }
-
         this.activationDate = activationLocalDate.toDate();
         this.status = GroupingTypeStatus.ACTIVE.getValue();
+        this.activatedBy = currentUser;
+
+        validate();
     }
 
     public boolean isActivatedAfter(final LocalDate submittedOn) {
@@ -250,6 +319,10 @@ public final class Group extends AbstractPersistable<Long> {
         return actualChanges;
     }
 
+    public LocalDate getSubmittedOnDate() {
+        return (LocalDate) ObjectUtils.defaultIfNull(new LocalDate(this.submittedOnDate), null);
+    }
+
     public LocalDate getActivationLocalDate() {
         LocalDate activationLocalDate = null;
         if (this.activationDate != null) {
@@ -309,8 +382,8 @@ public final class Group extends AbstractPersistable<Long> {
     public List<String> updateClientMembersIfDifferent(final Set<Client> clientMembersSet) {
         List<String> differences = new ArrayList<String>();
         if (!clientMembersSet.equals(this.clientMembers)) {
-            Set<Client> diffClients = Sets.symmetricDifference(clientMembersSet, this.clientMembers);
-            String[] diffClientsIds = getClientIds(diffClients);
+            final Set<Client> diffClients = Sets.symmetricDifference(clientMembersSet, this.clientMembers);
+            final String[] diffClientsIds = getClientIds(diffClients);
             if (diffClientsIds != null) {
                 differences = Arrays.asList(diffClientsIds);
             }
@@ -321,42 +394,39 @@ public final class Group extends AbstractPersistable<Long> {
     }
 
     public List<String> associateClients(final Set<Client> clientMembersSet) {
-        List<String> differences = new ArrayList<String>();
-        for (Client client : clientMembersSet) {
-            if(this.hasClientAsMember(client)){
-                throw new ClientExistInGroupException(client.getId(), this.getId());
-            }
+        final List<String> differences = new ArrayList<String>();
+        for (final Client client : clientMembersSet) {
+            if (hasClientAsMember(client)) { throw new ClientExistInGroupException(client.getId(), getId()); }
             this.clientMembers.add(client);
             differences.add(client.getId().toString());
         }
 
         return differences;
     }
-    
+
     public List<String> disassociateClients(final Set<Client> clientMembersSet) {
-        List<String> differences = new ArrayList<String>();
-        for (Client client : clientMembersSet) {
-            if(this.hasClientAsMember(client)){
+        final List<String> differences = new ArrayList<String>();
+        for (final Client client : clientMembersSet) {
+            if (hasClientAsMember(client)) {
                 this.clientMembers.remove(client);
                 differences.add(client.getId().toString());
-            }else{
-                throw new ClientNotInGroupException(client.getId(), this.getId());
-            }            
+            } else {
+                throw new ClientNotInGroupException(client.getId(), getId());
+            }
         }
 
         return differences;
-    } 
-    
+    }
+
     private String[] getClientIds(final Set<Client> clients) {
-        String[] clientIds = new String[clients.size()];
-        Iterator<Client> it = clients.iterator();
+        final String[] clientIds = new String[clients.size()];
+        final Iterator<Client> it = clients.iterator();
         for (int i = 0; it.hasNext(); i++) {
             clientIds[i] = it.next().getId().toString();
         }
         return clientIds;
     }
 
-    // TODO - kw - look into removing usage of these getters/setters
     public GroupLevel getGroupLevel() {
         return this.groupLevel;
     }
@@ -379,5 +449,73 @@ public final class Group extends AbstractPersistable<Long> {
 
     public Office getOffice() {
         return this.office;
+    }
+
+    public boolean isCenter() {
+        return this.groupLevel.isCenter();
+    }
+
+    public boolean isTransferInProgress() {
+        return GroupingTypeStatus.fromInt(this.status).isTransferInProgress();
+    }
+
+    public boolean isTransferOnHold() {
+        return GroupingTypeStatus.fromInt(this.status).isTransferOnHold();
+    }
+
+    public boolean isTransferInProgressOrOnHold() {
+        return isTransferInProgress() || isTransferOnHold();
+    }
+
+    public boolean isChildClient(final Long clientId) {
+        if (clientId != null && this.clientMembers != null && !this.clientMembers.isEmpty()) {
+            for (final Client client : this.clientMembers) {
+                if (client.getId().equals(clientId)) { return true; }
+            }
+        }
+        return false;
+    }
+
+    public boolean isChildGroup() {
+        return this.parent == null ? false : true;
+
+    }
+
+    public boolean isClosed() {
+        return GroupingTypeStatus.fromInt(this.status).isClosed();
+    }
+
+    public void close(final AppUser currentUser, final CodeValue closureReason, final LocalDate closureDate) {
+
+        if (isClosed()) {
+            final String errorMessage = "Group with identifier " + getId() + " is alread closed.";
+            throw new InvalidGroupStateTransitionException(this.groupLevel.getLevelName(), "close", "already.closed", errorMessage, getId());
+        }
+
+        if (isNotPending() && getActivationLocalDate().isAfter(closureDate)) {
+            final String errorMessage = "The Group closure Date " + closureDate + " cannot be before the group Activation Date "
+                    + getActivationLocalDate() + ".";
+            throw new InvalidGroupStateTransitionException(this.groupLevel.getLevelName(), "close",
+                    "date.cannot.before.group.actvation.date", errorMessage, closureDate, getActivationLocalDate());
+        }
+
+        this.closureReason = closureReason;
+        this.closureDate = closureDate.toDate();
+        this.status = GroupingTypeStatus.CLOSED.getValue();
+        this.closedBy = currentUser;
+    }
+
+    public boolean hasActiveClients() {
+        for (final Client client : this.clientMembers) {
+            if (!client.isClosed()) { return true; }
+        }
+        return false;
+    }
+
+    public boolean hasActiveGroups() {
+        for (final Group group : this.groupMembers) {
+            if (!group.isClosed()) { return true; }
+        }
+        return false;
     }
 }

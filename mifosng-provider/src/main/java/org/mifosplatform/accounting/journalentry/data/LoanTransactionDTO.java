@@ -13,6 +13,8 @@ import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionEnumData;
 
 public class LoanTransactionDTO {
 
+    private final Long officeId;
+
     private final String transactionId;
     private final Date transactionDate;
     private final Long paymentTypeId;
@@ -25,6 +27,7 @@ public class LoanTransactionDTO {
     private final BigDecimal interest;
     private final BigDecimal fees;
     private final BigDecimal penalties;
+    private final BigDecimal overPayment;
 
     /*** Boolean values determines if the transaction is reversed ***/
     private final boolean reversed;
@@ -33,10 +36,10 @@ public class LoanTransactionDTO {
     private final List<ChargePaymentDTO> penaltyPayments;
     private final List<ChargePaymentDTO> feePayments;
 
-    public LoanTransactionDTO(final Long paymentTypeId, final String transactionId, final Date transactionDate,
+    public LoanTransactionDTO(final Long officeId, final Long paymentTypeId, final String transactionId, final Date transactionDate,
             final LoanTransactionEnumData transactionType, final BigDecimal amount, final BigDecimal principal, final BigDecimal interest,
-            final BigDecimal fees, final BigDecimal penalties, final boolean reversed, final List<ChargePaymentDTO> feePayments,
-            final List<ChargePaymentDTO> penaltyPayments) {
+            final BigDecimal fees, final BigDecimal penalties, final BigDecimal overPayment, final boolean reversed,
+            final List<ChargePaymentDTO> feePayments, final List<ChargePaymentDTO> penaltyPayments) {
         this.paymentTypeId = paymentTypeId;
         this.transactionId = transactionId;
         this.transactionDate = transactionDate;
@@ -49,6 +52,12 @@ public class LoanTransactionDTO {
         this.transactionType = transactionType;
         this.feePayments = feePayments;
         this.penaltyPayments = penaltyPayments;
+        this.overPayment = overPayment;
+        this.officeId = officeId;
+    }
+
+    public Long getOfficeId() {
+        return this.officeId;
     }
 
     public String getTransactionId() {
@@ -81,6 +90,10 @@ public class LoanTransactionDTO {
 
     public BigDecimal getPenalties() {
         return this.penalties;
+    }
+
+    public BigDecimal getOverPayment() {
+        return this.overPayment;
     }
 
     public boolean isReversed() {

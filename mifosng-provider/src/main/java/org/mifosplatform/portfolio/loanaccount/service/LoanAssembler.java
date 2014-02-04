@@ -18,14 +18,17 @@ import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.organisation.holiday.domain.Holiday;
 import org.mifosplatform.organisation.holiday.domain.HolidayRepository;
+import org.mifosplatform.organisation.holiday.domain.HolidayStatusType;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepository;
 import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
 import org.mifosplatform.organisation.staff.exception.StaffRoleException;
-import org.mifosplatform.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDays;
+import org.mifosplatform.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
+import org.mifosplatform.portfolio.accountdetails.service.AccountEnumerations;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
+import org.mifosplatform.portfolio.client.exception.ClientNotActiveException;
 import org.mifosplatform.portfolio.collateral.domain.LoanCollateral;
 import org.mifosplatform.portfolio.collateral.service.CollateralAssembler;
 import org.mifosplatform.portfolio.fund.domain.Fund;
@@ -34,12 +37,14 @@ import org.mifosplatform.portfolio.fund.exception.FundNotFoundException;
 import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.group.domain.GroupRepository;
 import org.mifosplatform.portfolio.group.exception.ClientNotInGroupException;
+import org.mifosplatform.portfolio.group.exception.GroupNotActiveException;
 import org.mifosplatform.portfolio.group.exception.GroupNotFoundException;
 import org.mifosplatform.portfolio.loanaccount.domain.DefaultLoanLifecycleStateMachine;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanLifecycleStateMachine;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleTransactionProcessorFactory;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanSummaryWrapper;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionProcessingStrategyRepository;
@@ -52,8 +57,8 @@ import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRelatedDetail;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRepository;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanTransactionProcessingStrategy;
 import org.mifosplatform.portfolio.loanproduct.exception.InvalidCurrencyException;
+import org.mifosplatform.portfolio.loanproduct.exception.LinkedAccountRequiredException;
 import org.mifosplatform.portfolio.loanproduct.exception.LoanProductNotFoundException;
-import org.mifosplatform.portfolio.loanproduct.service.LoanEnumerations;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -63,6 +68,8 @@ import com.google.gson.JsonElement;
 @Service
 public class LoanAssembler {
 
+    private final FromJsonHelper fromApiJsonHelper;
+    private final LoanRepositoryWrapper loanRepository;
     private final LoanProductRepository loanProductRepository;
     private final ClientRepositoryWrapper clientRepository;
     private final GroupRepository groupRepository;
@@ -73,7 +80,6 @@ public class LoanAssembler {
     private final LoanScheduleAssembler loanScheduleAssembler;
     private final LoanChargeAssembler loanChargeAssembler;
     private final CollateralAssembler loanCollateralAssembler;
-    private final FromJsonHelper fromApiJsonHelper;
     private final LoanSummaryWrapper loanSummaryWrapper;
     private final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory;
     private final HolidayRepository holidayRepository;
@@ -81,8 +87,9 @@ public class LoanAssembler {
     private final WorkingDaysRepositoryWrapper workingDaysRepository;
 
     @Autowired
-    public LoanAssembler(final FromJsonHelper fromApiJsonHelper, final LoanProductRepository loanProductRepository,
-            final ClientRepositoryWrapper clientRepository, final GroupRepository groupRepository, final FundRepository fundRepository,
+    public LoanAssembler(final FromJsonHelper fromApiJsonHelper, final LoanRepositoryWrapper loanRepository,
+            final LoanProductRepository loanProductRepository, final ClientRepositoryWrapper clientRepository,
+            final GroupRepository groupRepository, final FundRepository fundRepository,
             final LoanTransactionProcessingStrategyRepository loanTransactionProcessingStrategyRepository,
             final StaffRepository staffRepository, final CodeValueRepositoryWrapper codeValueRepository,
             final LoanScheduleAssembler loanScheduleAssembler, final LoanChargeAssembler loanChargeAssembler,
@@ -91,6 +98,7 @@ public class LoanAssembler {
             final HolidayRepository holidayRepository, final ConfigurationDomainService configurationDomainService,
             final WorkingDaysRepositoryWrapper workingDaysRepository) {
         this.fromApiJsonHelper = fromApiJsonHelper;
+        this.loanRepository = loanRepository;
         this.loanProductRepository = loanProductRepository;
         this.clientRepository = clientRepository;
         this.groupRepository = groupRepository;
@@ -108,24 +116,32 @@ public class LoanAssembler {
         this.workingDaysRepository = workingDaysRepository;
     }
 
+    public Loan assembleFrom(final Long accountId) {
+        final Loan loanAccount = this.loanRepository.findOneWithNotFoundDetection(accountId);
+        loanAccount.setHelpers(defaultLoanLifecycleStateMachine(), this.loanSummaryWrapper,
+                this.loanRepaymentScheduleTransactionProcessorFactory);
+
+        return loanAccount;
+    }
+
     public Loan assembleFrom(final JsonCommand command, final AppUser currentUser) {
         final JsonElement element = command.parsedJson();
 
-        final Long clientId = fromApiJsonHelper.extractLongNamed("clientId", element);
-        final Long groupId = fromApiJsonHelper.extractLongNamed("groupId", element);
+        final Long clientId = this.fromApiJsonHelper.extractLongNamed("clientId", element);
+        final Long groupId = this.fromApiJsonHelper.extractLongNamed("groupId", element);
 
         return assembleApplication(element, clientId, groupId, currentUser);
     }
 
     private Loan assembleApplication(final JsonElement element, final Long clientId, final Long groupId, final AppUser currentUser) {
 
-        final String accountNo = fromApiJsonHelper.extractStringNamed("accountNo", element);
-        final Long productId = fromApiJsonHelper.extractLongNamed("productId", element);
-        final Long fundId = fromApiJsonHelper.extractLongNamed("fundId", element);
-        final Long loanOfficerId = fromApiJsonHelper.extractLongNamed("loanOfficerId", element);
-        final Long transactionProcessingStrategyId = fromApiJsonHelper.extractLongNamed("transactionProcessingStrategyId", element);
-        final Long loanPurposeId = fromApiJsonHelper.extractLongNamed("loanPurposeId", element);
-        final Boolean syncDisbursementWithMeeting = fromApiJsonHelper.extractBooleanNamed("syncDisbursementWithMeeting", element);
+        final String accountNo = this.fromApiJsonHelper.extractStringNamed("accountNo", element);
+        final Long productId = this.fromApiJsonHelper.extractLongNamed("productId", element);
+        final Long fundId = this.fromApiJsonHelper.extractLongNamed("fundId", element);
+        final Long loanOfficerId = this.fromApiJsonHelper.extractLongNamed("loanOfficerId", element);
+        final Long transactionProcessingStrategyId = this.fromApiJsonHelper.extractLongNamed("transactionProcessingStrategyId", element);
+        final Long loanPurposeId = this.fromApiJsonHelper.extractLongNamed("loanPurposeId", element);
+        final Boolean syncDisbursementWithMeeting = this.fromApiJsonHelper.extractBooleanNamed("syncDisbursementWithMeeting", element);
 
         final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
         if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
@@ -135,14 +151,21 @@ public class LoanAssembler {
         final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy = findStrategyByIdIfProvided(transactionProcessingStrategyId);
         CodeValue loanPurpose = null;
         if (loanPurposeId != null) {
-            loanPurpose = codeValueRepository.findOneWithNotFoundDetection(loanPurposeId);
+            loanPurpose = this.codeValueRepository.findOneWithNotFoundDetection(loanPurposeId);
         }
         final Set<LoanCollateral> collateral = this.loanCollateralAssembler.fromParsedJson(element);
         final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element);
-        for (LoanCharge loanCharge : loanCharges) {
+        for (final LoanCharge loanCharge : loanCharges) {
             if (!loanProduct.hasCurrencyCodeOf(loanCharge.currencyCode())) {
                 final String errorMessage = "Charge and Loan must have the same currency.";
                 throw new InvalidCurrencyException("loanCharge", "attach.to.loan", errorMessage);
+            }
+            if (loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer()) {
+                final Long savingsAccountId = this.fromApiJsonHelper.extractLongNamed("linkAccountId", element);
+                if (savingsAccountId == null) {
+                    final String errorMessage = "one of the charges requires linked savings account for payment";
+                    throw new LinkedAccountRequiredException("loanCharge", errorMessage);
+                }
             }
         }
 
@@ -153,11 +176,12 @@ public class LoanAssembler {
         final LoanProductRelatedDetail loanProductRelatedDetail = this.loanScheduleAssembler.assembleLoanProductRelatedDetail(element);
 
         final String loanTypeParameterName = "loanType";
-        final String loanTypeStr = fromApiJsonHelper.extractStringNamed(loanTypeParameterName, element);
-        final EnumOptionData loanType = LoanEnumerations.loanType(loanTypeStr);
+        final String loanTypeStr = this.fromApiJsonHelper.extractStringNamed(loanTypeParameterName, element);
+        final EnumOptionData loanType = AccountEnumerations.loanType(loanTypeStr);
 
         if (clientId != null) {
             client = this.clientRepository.findOneWithNotFoundDetection(clientId);
+            if (client.isNotActive()) { throw new ClientNotActiveException(clientId); }
 
             loanApplication = Loan.newIndividualLoanApplication(accountNo, client, loanType.getId().intValue(), loanProduct, fund,
                     loanOfficer, loanPurpose, loanTransactionProcessingStrategy, loanProductRelatedDetail, loanCharges, collateral);
@@ -166,6 +190,7 @@ public class LoanAssembler {
         if (groupId != null) {
             group = this.groupRepository.findOne(groupId);
             if (group == null) { throw new GroupNotFoundException(groupId); }
+            if (group.isNotActive()) { throw new GroupNotActiveException(groupId); }
 
             loanApplication = Loan.newGroupLoanApplication(accountNo, group, loanType.getId().intValue(), loanProduct, fund, loanOfficer,
                     loanTransactionProcessingStrategy, loanProductRelatedDetail, loanCharges, syncDisbursementWithMeeting);
@@ -176,11 +201,12 @@ public class LoanAssembler {
             if (!group.hasClientAsMember(client)) { throw new ClientNotInGroupException(clientId, groupId); }
 
             loanApplication = Loan.newIndividualLoanApplicationFromGroup(accountNo, client, group, loanType.getId().intValue(),
-                    loanProduct, fund, loanOfficer, loanTransactionProcessingStrategy, loanProductRelatedDetail, loanCharges, syncDisbursementWithMeeting);
+                    loanProduct, fund, loanOfficer, loanTransactionProcessingStrategy, loanProductRelatedDetail, loanCharges,
+                    syncDisbursementWithMeeting);
         }
 
-        final String externalId = fromApiJsonHelper.extractStringNamed("externalId", element);
-        final LocalDate submittedOnDate = fromApiJsonHelper.extractLocalDateNamed("submittedOnDate", element);
+        final String externalId = this.fromApiJsonHelper.extractStringNamed("externalId", element);
+        final LocalDate submittedOnDate = this.fromApiJsonHelper.extractLocalDateNamed("submittedOnDate", element);
 
         if (loanApplication == null) { throw new IllegalStateException("No loan application exists for either a client or group (or both)."); }
         loanApplication.setHelpers(defaultLoanLifecycleStateMachine(), this.loanSummaryWrapper,
@@ -188,17 +214,21 @@ public class LoanAssembler {
 
         final LoanApplicationTerms loanApplicationTerms = this.loanScheduleAssembler.assembleLoanTerms(element);
         final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
-        final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loanApplication.getOfficeId(), loanApplicationTerms.getExpectedDisbursementDate().toDate());
+        final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loanApplication.getOfficeId(),
+                loanApplicationTerms.getExpectedDisbursementDate().toDate(), HolidayStatusType.ACTIVE.getValue());
         final WorkingDays workingDays = this.workingDaysRepository.findOne();
-        final LoanScheduleModel loanScheduleModel = this.loanScheduleAssembler.assembleLoanScheduleFrom(loanApplicationTerms, isHolidayEnabled, holidays, workingDays, element);
+        final boolean allowTransactionsOnNonWorkingDay = this.configurationDomainService.allowTransactionsOnNonWorkingDayEnabled();
+        final boolean allowTransactionsOnHoliday = this.configurationDomainService.allowTransactionsOnHolidayEnabled();
+        final LoanScheduleModel loanScheduleModel = this.loanScheduleAssembler.assembleLoanScheduleFrom(loanApplicationTerms,
+                isHolidayEnabled, holidays, workingDays, element);
         loanApplication.loanApplicationSubmittal(currentUser, loanScheduleModel, loanApplicationTerms, defaultLoanLifecycleStateMachine(),
-                submittedOnDate, externalId, isHolidayEnabled, holidays, workingDays);
+                submittedOnDate, externalId, allowTransactionsOnHoliday, holidays, workingDays, allowTransactionsOnNonWorkingDay);
 
         return loanApplication;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
-        List<LoanStatus> allowedLoanStatuses = Arrays.asList(LoanStatus.values());
+        final List<LoanStatus> allowedLoanStatuses = Arrays.asList(LoanStatus.values());
         return new DefaultLoanLifecycleStateMachine(allowedLoanStatuses);
     }
 
@@ -237,5 +267,17 @@ public class LoanAssembler {
             if (strategy == null) { throw new LoanTransactionProcessingStrategyNotFoundException(transactionProcessingStrategyId); }
         }
         return strategy;
+    }
+
+    public void validateExpectedDisbursementForHolidayAndNonWorkingDay(final Loan loanApplication) {
+
+        final boolean allowTransactionsOnHoliday = this.configurationDomainService.allowTransactionsOnHolidayEnabled();
+        final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loanApplication.getOfficeId(),
+                loanApplication.getExpectedDisbursedOnLocalDate().toDate(), HolidayStatusType.ACTIVE.getValue());
+        final WorkingDays workingDays = this.workingDaysRepository.findOne();
+        final boolean allowTransactionsOnNonWorkingDay = this.configurationDomainService.allowTransactionsOnNonWorkingDayEnabled();
+
+        loanApplication.validateExpectedDisbursementForHolidayAndNonWorkingDay(workingDays, allowTransactionsOnHoliday, holidays,
+                allowTransactionsOnNonWorkingDay);
     }
 }

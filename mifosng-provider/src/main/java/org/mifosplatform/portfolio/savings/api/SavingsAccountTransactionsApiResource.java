@@ -77,17 +77,38 @@ public class SavingsAccountTransactionsApiResource {
     // @QueryParam("command") final String commandParam,
             @Context final UriInfo uriInfo) {
 
-        context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
         // FIXME - KW - for now just send back generic default information for
         // both deposit/withdrawal templates
         SavingsAccountTransactionData savingsAccount = this.savingsAccountReadPlatformService.retrieveDepositTransactionTemplate(savingsId);
-        final Collection<CodeValueData> paymentTypeOptions = codeValueReadPlatformService
+        final Collection<CodeValueData> paymentTypeOptions = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode(PaymentDetailConstants.paymentTypeCodeName);
         savingsAccount = SavingsAccountTransactionData.templateOnTop(savingsAccount, paymentTypeOptions);
 
-        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, savingsAccount,
+                SavingsApiConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
+    }
+
+    @GET
+    @Path("{transactionId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveOne(@PathParam("savingsId") final Long savingsId, @PathParam("transactionId") final Long transactionId,
+            @Context final UriInfo uriInfo) {
+
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+        SavingsAccountTransactionData transactionData = this.savingsAccountReadPlatformService.retrieveSavingsTransaction(savingsId,
+                transactionId);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        if (settings.isTemplate()) {
+            final Collection<CodeValueData> paymentTypeOptions = this.codeValueReadPlatformService
+                    .retrieveCodeValuesByCode(PaymentDetailConstants.paymentTypeCodeName);
+            transactionData = SavingsAccountTransactionData.templateOnTop(transactionData, paymentTypeOptions);
+        }
+
+        return this.toApiJsonSerializer.serialize(settings, transactionData,
                 SavingsApiConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
     }
 
@@ -120,7 +141,7 @@ public class SavingsAccountTransactionsApiResource {
     @Path("{transactionId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String undoTransaction(@PathParam("savingsId") final Long savingsId, @PathParam("transactionId") final Long transactionId,
+    public String adjustTransaction(@PathParam("savingsId") final Long savingsId, @PathParam("transactionId") final Long transactionId,
             @QueryParam("command") final String commandParam, final String apiRequestBodyAsJson) {
 
         String jsonApiRequest = apiRequestBodyAsJson;
@@ -131,8 +152,11 @@ public class SavingsAccountTransactionsApiResource {
         final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(jsonApiRequest);
 
         CommandProcessingResult result = null;
-        if (is(commandParam, "undo")) {
+        if (is(commandParam, SavingsApiConstants.COMMAND_UNDO_TRANSACTION)) {
             final CommandWrapper commandRequest = builder.undoSavingsAccountTransaction(savingsId, transactionId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, SavingsApiConstants.COMMAND_ADJUST_TRANSACTION)) {
+            final CommandWrapper commandRequest = builder.adjustSavingsAccountTransaction(savingsId, transactionId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 

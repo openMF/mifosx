@@ -5,6 +5,9 @@
  */
 package org.mifosplatform.portfolio.collectionsheet.service;
 
+import static org.mifosplatform.portfolio.collectionsheet.CollectionSheetConstants.calendarIdParamName;
+import static org.mifosplatform.portfolio.collectionsheet.CollectionSheetConstants.transactionDateParamName;
+
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,14 +21,19 @@ import java.util.Set;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.JsonQuery;
+import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
-import org.mifosplatform.portfolio.collectionsheet.data.ClientLoansData;
-import org.mifosplatform.portfolio.collectionsheet.data.JLGClientsData;
+import org.mifosplatform.portfolio.calendar.domain.Calendar;
+import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
+import org.mifosplatform.portfolio.calendar.domain.CalendarRepositoryWrapper;
+import org.mifosplatform.portfolio.calendar.exception.NotValidRecurringDateException;
+import org.mifosplatform.portfolio.collectionsheet.data.JLGClientData;
 import org.mifosplatform.portfolio.collectionsheet.data.JLGCollectionSheetData;
 import org.mifosplatform.portfolio.collectionsheet.data.JLGCollectionSheetFlatData;
+import org.mifosplatform.portfolio.collectionsheet.data.JLGGroupData;
 import org.mifosplatform.portfolio.collectionsheet.data.LoanDueData;
 import org.mifosplatform.portfolio.collectionsheet.serialization.CollectionSheetGenerateCommandFromApiJsonDeserializer;
 import org.mifosplatform.portfolio.group.data.CenterData;
@@ -33,6 +41,8 @@ import org.mifosplatform.portfolio.group.data.GroupGeneralData;
 import org.mifosplatform.portfolio.group.service.CenterReadPlatformService;
 import org.mifosplatform.portfolio.group.service.GroupReadPlatformService;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
+import org.mifosplatform.portfolio.meeting.attendance.service.AttendanceDropdownReadPlatformService;
+import org.mifosplatform.portfolio.meeting.attendance.service.AttendanceEnumerations;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
@@ -49,32 +59,22 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
     private final CenterReadPlatformService centerReadPlatformService;
     private final GroupReadPlatformService groupReadPlatformService;
     private final CollectionSheetGenerateCommandFromApiJsonDeserializer collectionSheetGenerateCommandFromApiJsonDeserializer;
+    private final CalendarRepositoryWrapper calendarRepositoryWrapper;
+    private final AttendanceDropdownReadPlatformService attendanceDropdownReadPlatformService;
 
     @Autowired
     public CollectionSheetReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
-            final CenterReadPlatformService centerReadPlatformService, final GroupReadPlatformService groupReadPlatformService, final CollectionSheetGenerateCommandFromApiJsonDeserializer collectionSheetGenerateCommandFromApiJsonDeserializer) {
+            final CenterReadPlatformService centerReadPlatformService, final GroupReadPlatformService groupReadPlatformService,
+            final CollectionSheetGenerateCommandFromApiJsonDeserializer collectionSheetGenerateCommandFromApiJsonDeserializer,
+            final CalendarRepositoryWrapper calendarRepositoryWrapper,
+            final AttendanceDropdownReadPlatformService attendanceDropdownReadPlatformService) {
         this.context = context;
         this.centerReadPlatformService = centerReadPlatformService;
         this.namedParameterjdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.collectionSheetGenerateCommandFromApiJsonDeserializer = collectionSheetGenerateCommandFromApiJsonDeserializer;
         this.groupReadPlatformService = groupReadPlatformService;
-    }
-
-    @Override
-    public JLGCollectionSheetData retriveCollectionSheet(final LocalDate dueDate, final Long centerId) {
-
-        final AppUser currentUser = this.context.authenticatedUser();
-        final String hierarchy = currentUser.getOffice().getHierarchy();
-        final String officeHierarchy = hierarchy + "%";
-
-        final CenterData center = this.centerReadPlatformService.retrieveOne(centerId);
-        final String groupHierarchy = center.getHierarchy() + "%";
-        
-        Collection<JLGCollectionSheetFlatData> collectionSheetFlatDatas = this.retriveJLGCollectionSheet(groupHierarchy, officeHierarchy, dueDate);
-        
-        final JLGCollectionSheetData jlgCollectionSheetData = buildJLGCollectionSheet(dueDate, collectionSheetFlatDatas);
-
-        return jlgCollectionSheetData;
+        this.calendarRepositoryWrapper = calendarRepositoryWrapper;
+        this.attendanceDropdownReadPlatformService = attendanceDropdownReadPlatformService;
     }
 
     /*
@@ -83,60 +83,63 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
      * Groups >> Clients >> Loans.
      */
     @SuppressWarnings("null")
-    private JLGCollectionSheetData buildJLGCollectionSheet(final LocalDate dueDate, final Collection<JLGCollectionSheetFlatData> jlgCollectionSheetFlatData) {
+    private JLGCollectionSheetData buildJLGCollectionSheet(final LocalDate dueDate,
+            final Collection<JLGCollectionSheetFlatData> jlgCollectionSheetFlatData) {
 
         boolean firstTime = true;
         Long prevGroupId = null;
         Long prevClientId = null;
 
-        final List<JLGClientsData> jlgClientsDatas = new ArrayList<JLGClientsData>();
-        List<ClientLoansData> clientLoansDatas = new ArrayList<ClientLoansData>();
-        List<LoanDueData> loanDueDatas = new ArrayList<LoanDueData>();
+        final List<JLGGroupData> jlgGroupsData = new ArrayList<JLGGroupData>();
+        List<JLGClientData> clientsData = new ArrayList<JLGClientData>();
+        List<LoanDueData> loansDueData = new ArrayList<LoanDueData>();
 
         JLGCollectionSheetData jlgCollectionSheetData = null;
         JLGCollectionSheetFlatData prevCollectioSheetFlatData = null;
         JLGCollectionSheetFlatData corrCollectioSheetFlatData = null;
-        Set<LoanProductData> loanProducts = new HashSet<LoanProductData>();
+        final Set<LoanProductData> loanProducts = new HashSet<LoanProductData>();
         if (jlgCollectionSheetFlatData != null) {
 
             for (final JLGCollectionSheetFlatData collectionSheetFlatData : jlgCollectionSheetFlatData) {
 
-                loanProducts.add(LoanProductData.lookupWithCurrency(collectionSheetFlatData.getProductId(),
-                        collectionSheetFlatData.getProductShortName(), collectionSheetFlatData.getCurrency()));
+                if (collectionSheetFlatData.getProductId() != null) {
+                    loanProducts.add(LoanProductData.lookupWithCurrency(collectionSheetFlatData.getProductId(),
+                            collectionSheetFlatData.getProductShortName(), collectionSheetFlatData.getCurrency()));
+                }
                 corrCollectioSheetFlatData = collectionSheetFlatData;
 
                 if (firstTime || collectionSheetFlatData.getGroupId().equals(prevGroupId)) {
                     if (firstTime || collectionSheetFlatData.getClientId().equals(prevClientId)) {
                         if (collectionSheetFlatData.getLoanId() != null) {
-                            loanDueDatas.add(collectionSheetFlatData.getLoanDueData());
+                            loansDueData.add(collectionSheetFlatData.getLoanDueData());
                         }
                     } else {
-                        final ClientLoansData clientLoansData = prevCollectioSheetFlatData.getClientLoansData();
-                        clientLoansData.setLoans(loanDueDatas);
-                        clientLoansDatas.add(clientLoansData);
-                        loanDueDatas = new ArrayList<LoanDueData>();
+                        final JLGClientData clientData = prevCollectioSheetFlatData.getClientData();
+                        clientData.setLoans(loansDueData);
+                        clientsData.add(clientData);
+                        loansDueData = new ArrayList<LoanDueData>();
 
                         if (collectionSheetFlatData.getLoanId() != null) {
-                            loanDueDatas.add(collectionSheetFlatData.getLoanDueData());
+                            loansDueData.add(collectionSheetFlatData.getLoanDueData());
                         }
 
                     }
                 } else {
 
-                    final ClientLoansData clientLoansData = prevCollectioSheetFlatData.getClientLoansData();
-                    clientLoansData.setLoans(loanDueDatas);
-                    clientLoansDatas.add(clientLoansData);
+                    final JLGClientData clientData = prevCollectioSheetFlatData.getClientData();
+                    clientData.setLoans(loansDueData);
+                    clientsData.add(clientData);
 
-                    final JLGClientsData jlgClientsData = prevCollectioSheetFlatData.getJLGClientsData();
-                    jlgClientsData.setClients(clientLoansDatas);
+                    final JLGGroupData jlgGroupData = prevCollectioSheetFlatData.getJLGGroupData();
+                    jlgGroupData.setClients(clientsData);
 
-                    jlgClientsDatas.add(jlgClientsData);
+                    jlgGroupsData.add(jlgGroupData);
 
-                    loanDueDatas = new ArrayList<LoanDueData>();
-                    clientLoansDatas = new ArrayList<ClientLoansData>();
+                    loansDueData = new ArrayList<LoanDueData>();
+                    clientsData = new ArrayList<JLGClientData>();
 
                     if (collectionSheetFlatData.getLoanId() != null) {
-                        loanDueDatas.add(collectionSheetFlatData.getLoanDueData());
+                        loansDueData.add(collectionSheetFlatData.getLoanDueData());
                     }
                 }
 
@@ -150,71 +153,77 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
             // client/group or new client / previous group or new client / new
             // group
             if (corrCollectioSheetFlatData != null) {
-                final ClientLoansData lastClientLoansData = corrCollectioSheetFlatData.getClientLoansData();
-                lastClientLoansData.setLoans(loanDueDatas);
-                clientLoansDatas.add(lastClientLoansData);
+                final JLGClientData lastClientData = corrCollectioSheetFlatData.getClientData();
+                lastClientData.setLoans(loansDueData);
+                clientsData.add(lastClientData);
 
-                final JLGClientsData jlgClientsData = corrCollectioSheetFlatData.getJLGClientsData();
-                jlgClientsData.setClients(clientLoansDatas);
-                jlgClientsDatas.add(jlgClientsData);
+                final JLGGroupData jlgGroupData = corrCollectioSheetFlatData.getJLGGroupData();
+                jlgGroupData.setClients(clientsData);
+                jlgGroupsData.add(jlgGroupData);
             }
 
-            jlgCollectionSheetData = new JLGCollectionSheetData(dueDate, loanProducts, jlgClientsDatas);
+            jlgCollectionSheetData = new JLGCollectionSheetData(dueDate, loanProducts, jlgGroupsData,
+                    this.attendanceDropdownReadPlatformService.retrieveAttendanceTypeOptions());
         }
 
         return jlgCollectionSheetData;
     }
 
-    @Override
-    public Collection<JLGCollectionSheetFlatData> retriveJLGCollectionSheet(final String groupHierarchy, final String officeHierarchy,
-            final LocalDate dueDate) {
-
-        final JLGCollectionSheetFaltDataMapper mapper = new JLGCollectionSheetFaltDataMapper();
-        final String sql = mapper.collectionSheetSchema();
-        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        final String dueDateStr = df.format(dueDate.toDate());
-        final SqlParameterSource namedParameters = new MapSqlParameterSource().addValue("hierarchy", groupHierarchy)
-                .addValue("dueDate", dueDateStr).addValue("officeHierarchy", officeHierarchy);
-        return this.namedParameterjdbcTemplate.query(sql, namedParameters, mapper);
-    }
-
     private static final class JLGCollectionSheetFaltDataMapper implements RowMapper<JLGCollectionSheetFlatData> {
 
-        public String collectionSheetSchema() {
+        public String collectionSheetSchema(final boolean isCenterCollection) {
+            StringBuffer sql = new StringBuffer(400);
+            sql.append("SELECT loandata.*, sum(lc.amount_outstanding_derived) as chargesDue from ")
+                    .append("(SELECT gp.display_name As groupName, ")
+                    .append("gp.id As groupId, ")
+                    .append("cl.display_name As clientName, ")
+                    .append("sf.id As staffId, ")
+                    .append("sf.display_name As staffName, ")
+                    .append("gl.id As levelId, ")
+                    .append("gl.level_name As levelName, ")
+                    .append("cl.id As clientId, ")
+                    .append("ln.id As loanId, ")
+                    .append("ln.account_no As accountId, ")
+                    .append("ln.loan_status_id As accountStatusId, ")
+                    .append("pl.short_name As productShortName, ")
+                    .append("ln.product_id As productId, ")
+                    .append("ln.currency_code as currencyCode, ln.currency_digits as currencyDigits, ln.currency_multiplesof as inMultiplesOf, rc.`name` as currencyName, rc.display_symbol as currencyDisplaySymbol, rc.internationalized_name_code as currencyNameCode, ")
+                    .append("if(ln.loan_status_id = 200 , ln.principal_amount , null) As disbursementAmount, ")
+                    .append("sum(ifnull(if(ln.loan_status_id = 300, ls.principal_amount, 0.0), 0.0) - ifnull(if(ln.loan_status_id = 300, ls.principal_completed_derived, 0.0), 0.0)) As principalDue, ")
+                    .append("ln.principal_repaid_derived As principalPaid, ")
+                    .append("sum(ifnull(if(ln.loan_status_id = 300, ls.interest_amount, 0.0), 0.0) - ifnull(if(ln.loan_status_id = 300, ls.interest_completed_derived, 0.0), 0.0)) As interestDue, ")
+                    .append("ln.interest_repaid_derived As interestPaid, ")
+                    .append("ca.attendance_type_enum as attendanceTypeId ")
+                    .append("FROM m_group gp ")
+                    .append("LEFT JOIN m_office of ON of.id = gp.office_id AND of.hierarchy like :officeHierarchy ")
+                    .append("JOIN m_group_level gl ON gl.id = gp.level_Id ")
+                    .append("LEFT JOIN m_staff sf ON sf.id = gp.staff_id ")
+                    .append("JOIN m_group_client gc ON gc.group_id = gp.id ")
+                    .append("JOIN m_client cl ON cl.id = gc.client_id ")
+                    .append("LEFT JOIN m_loan ln ON cl.id = ln.client_id AND ln.group_id is not null AND ( ln.loan_status_id = 300 OR ( ln.loan_status_id =200 AND ln.expected_disbursedon_date <= :dueDate )) ")
+                    .append("LEFT JOIN m_product_loan pl ON pl.id = ln.product_id ")
+                    .append("LEFT JOIN m_currency rc on rc.`code` = ln.currency_code ")
+                    .append("LEFT JOIN m_loan_repayment_schedule ls ON ls.loan_id = ln.id AND ls.completed_derived = 0 AND ls.duedate <= :dueDate ")
+                    .append("left join m_calendar_instance ci on gp.parent_id = ci.entity_id and ci.entity_type_enum =:entityTypeId ")
+                    .append("left join m_meeting mt on ci.id = mt.calendar_instance_id and mt.meeting_date =:dueDate ")
+                    .append("left join m_client_attendance ca on ca.meeting_id=mt.id and ca.client_id=cl.id ");
 
-            return "SELECT gp.display_name As groupName, "
-                    + "gp.id As groupId, "
-                    + "cl.display_name As clientName, "
-                    + "sf.id As staffId, "
-                    + "sf.display_name As staffName, "
-                    + "gl.id As levelId, "
-                    + "gl.level_name As levelName, "
-                    + "cl.id As clientId, "
-                    + "ln.id As loanId, "
-                    + "ln.account_no As accountId, "
-                    + "ln.loan_status_id As accountStatusId, "
-                    + "pl.name As productShortName, "
-                    + "ln.product_id As productId, "
-                    + "ln.currency_code as currencyCode, ln.currency_digits as currencyDigits, rc.`name` as currencyName, rc.display_symbol as currencyDisplaySymbol, rc.internationalized_name_code as currencyNameCode, "
-                    + "if(ln.loan_status_id = 200 , ln.principal_amount , null) As disbursementAmount, "
-                    + "sum(ifnull(if(ln.loan_status_id = 300, ls.principal_amount, 0.0), 0.0) - ifnull(if(ln.loan_status_id = 300, ls.principal_completed_derived, 0.0), 0.0)) As principalDue, "
-                    + "ln.principal_repaid_derived As principalPaid, "
-                    + "sum(ifnull(if(ln.loan_status_id = 300, ls.interest_amount, 0.0), 0.0) - ifnull(if(ln.loan_status_id = 300, ls.interest_completed_derived, 0.0), 0.0)) As interestDue, "
-                    + "ln.interest_repaid_derived As interestPaid, "
-                    + "sum(if(ln.loan_status_id = 300, lc.amount_outstanding_derived, 0.0)) as chargesDue "
-                    + "FROM m_group gp "
-                    + "LEFT JOIN m_office of ON of.id = gp.office_id AND of.hierarchy like :officeHierarchy "
-                    //+ "LEFT JOIN m_office of ON of.id = gp.office_id "
-                    + "JOIN m_group_level gl ON gl.id = gp.level_Id "
-                    + "LEFT JOIN m_staff sf ON sf.id = gp.staff_id "
-                    + "JOIN m_group_client gc ON gc.group_id = gp.id "
-                    + "JOIN m_client cl ON cl.id = gc.client_id "
-                    + "LEFT JOIN m_loan ln ON cl.id = ln.client_id AND ln.group_id is not null AND ( ln.loan_status_id = 300 OR ( ln.loan_status_id =200 AND ln.expected_disbursedon_date <= :dueDate )) "
-                    + "LEFT JOIN m_product_loan pl ON pl.id = ln.product_id "
-                    + "JOIN m_currency rc on rc.`code` = ln.currency_code "
-                    + "LEFT JOIN m_loan_repayment_schedule ls ON ls.loan_id = ln.id AND ls.completed_derived = 0 AND ls.duedate <= :dueDate "
-                    + "LEFT JOIN m_loan_charge lc ON lc.loan_id = ln.id AND lc.is_paid_derived = 0 AND ( lc.due_for_collection_as_of_date  <= :dueDate OR lc.charge_time_enum = 1) ";
-                    //+ "WHERE gp.hierarchy like :hierarchy " + "GROUP BY gp.id ,cl.id , ln.id " + "ORDER BY gp.id , cl.id , ln.id ";
+            if (isCenterCollection) {
+                sql.append("WHERE gp.parent_id = :centerId ");
+            } else {
+                sql.append("WHERE gp.id = :groupId ");
+            }
+
+            sql.append("and (gp.status_enum = 300 or (gp.status_enum = 600 and gp.closedon_date >= :dueDate)) ")
+                    .append("and (cl.status_enum = 300 or (cl.status_enum = 600 and cl.closedon_date >= :dueDate)) ")
+                    .append("GROUP BY gp.id ,cl.id , ln.id ORDER BY gp.id , cl.id , ln.id ").append(") loandata ")
+                    .append("LEFT JOIN m_loan_charge lc ON lc.loan_id = loandata.loanId AND lc.is_paid_derived = 0 AND lc.is_active = 1 ")
+                    .append("AND ( lc.due_for_collection_as_of_date  <= :dueDate OR lc.charge_time_enum = 1) ")
+                    .append("GROUP BY loandata.groupId, ").append("loandata.clientId, ").append("loandata.loanId ")
+                    .append("ORDER BY loandata.groupId, ").append("loandata.clientId, ").append("loandata.loanId ");
+
+            return sql.toString();
+
         }
 
         @Override
@@ -239,8 +248,12 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
             final String currencyNameCode = rs.getString("currencyNameCode");
             final String currencyDisplaySymbol = rs.getString("currencyDisplaySymbol");
             final Integer currencyDigits = JdbcSupport.getInteger(rs, "currencyDigits");
-            final CurrencyData currencyData = new CurrencyData(currencyCode, currencyName, currencyDigits, currencyDisplaySymbol,
-                    currencyNameCode);
+            final Integer inMultiplesOf = JdbcSupport.getInteger(rs, "inMultiplesOf");
+            CurrencyData currencyData = null;
+            if (currencyCode != null) {
+                currencyData = new CurrencyData(currencyCode, currencyName, currencyDigits, inMultiplesOf, currencyDisplaySymbol,
+                        currencyNameCode);
+            }
 
             final BigDecimal disbursementAmount = rs.getBigDecimal("disbursementAmount");
             final BigDecimal principalDue = rs.getBigDecimal("principalDue");
@@ -249,17 +262,31 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
             final BigDecimal interestPaid = rs.getBigDecimal("interestPaid");
             final BigDecimal chargesDue = rs.getBigDecimal("chargesDue");
 
+            final Integer attendanceTypeId = rs.getInt("attendanceTypeId");
+            final EnumOptionData attendanceType = AttendanceEnumerations.attendanceType(attendanceTypeId);
+
             return new JLGCollectionSheetFlatData(groupName, groupId, staffId, staffName, levelId, levelName, clientName, clientId, loanId,
                     accountId, accountStatusId, productShortName, productId, currencyData, disbursementAmount, principalDue, principalPaid,
-                    interestDue, interestPaid, chargesDue);
+                    interestDue, interestPaid, chargesDue, attendanceType);
         }
 
     }
 
     @Override
     public JLGCollectionSheetData generateGroupCollectionSheet(final Long groupId, final JsonQuery query) {
-        
+
         this.collectionSheetGenerateCommandFromApiJsonDeserializer.validateForGenerateCollectionSheet(query.json());
+
+        final Long calendarId = query.longValueOfParameterNamed(calendarIdParamName);
+        final LocalDate transactionDate = query.localDateValueOfParameterNamed(transactionDateParamName);
+        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        final String transactionDateStr = df.format(transactionDate.toDate());
+
+        final Calendar calendar = this.calendarRepositoryWrapper.findOneWithNotFoundDetection(calendarId);
+        // check if transaction against calendar effective from date
+
+        if (!calendar.isValidRecurringDate(transactionDate)) { throw new NotValidRecurringDateException("collectionsheet", "The date '"
+                + transactionDate + "' is not a valid meeting date.", transactionDate); }
 
         final AppUser currentUser = this.context.authenticatedUser();
         final String hierarchy = currentUser.getOffice().getHierarchy();
@@ -267,27 +294,26 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
 
         final GroupGeneralData group = this.groupReadPlatformService.retrieveOne(groupId);
 
-        final LocalDate dueDate = query.localDateValueOfParameterNamed("dueDate");
-        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        final String dueDateStr = df.format(dueDate.toDate());
-
         final JLGCollectionSheetFaltDataMapper mapper = new JLGCollectionSheetFaltDataMapper();
 
-        String sql = mapper.collectionSheetSchema();
-        sql += "WHERE gp.id = :groupId GROUP BY gp.id ,cl.id , ln.id ORDER BY gp.id , cl.id , ln.id";
+        final StringBuilder sql = new StringBuilder(mapper.collectionSheetSchema(false));
 
-        final SqlParameterSource namedParameters = new MapSqlParameterSource().addValue("dueDate", dueDateStr).addValue("groupId", group.getId())
-                .addValue("officeHierarchy", officeHierarchy);
+        // entityType should be center if it's within a center
+        final CalendarEntityType entityType = (group.isChildGroup()) ? CalendarEntityType.CENTERS : CalendarEntityType.GROUPS;
 
-        final Collection<JLGCollectionSheetFlatData> collectionSheetFlatDatas = this.namedParameterjdbcTemplate.query(sql, namedParameters,
-                mapper);
+        final SqlParameterSource namedParameters = new MapSqlParameterSource().addValue("dueDate", transactionDateStr)
+                .addValue("groupId", group.getId()).addValue("officeHierarchy", officeHierarchy)
+                .addValue("entityTypeId", entityType.getValue());
 
-        return buildJLGCollectionSheet(dueDate, collectionSheetFlatDatas);
+        final Collection<JLGCollectionSheetFlatData> collectionSheetFlatDatas = this.namedParameterjdbcTemplate.query(sql.toString(),
+                namedParameters, mapper);
+
+        return buildJLGCollectionSheet(transactionDate, collectionSheetFlatDatas);
     }
-    
+
     @Override
     public JLGCollectionSheetData generateCenterCollectionSheet(final Long centerId, final JsonQuery query) {
-        
+
         this.collectionSheetGenerateCommandFromApiJsonDeserializer.validateForGenerateCollectionSheet(query.json());
 
         final AppUser currentUser = this.context.authenticatedUser();
@@ -296,22 +322,21 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
 
         final CenterData center = this.centerReadPlatformService.retrieveOne(centerId);
 
-        final LocalDate dueDate = query.localDateValueOfParameterNamed("dueDate");
+        final LocalDate transactionDate = query.localDateValueOfParameterNamed(transactionDateParamName);
         final DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        final String dueDateStr = df.format(dueDate.toDate());
+        final String dueDateStr = df.format(transactionDate.toDate());
 
         final JLGCollectionSheetFaltDataMapper mapper = new JLGCollectionSheetFaltDataMapper();
 
-        String sql = mapper.collectionSheetSchema();
-        sql += "WHERE gp.parent_id = :centerId GROUP BY gp.id ,cl.id , ln.id ORDER BY gp.id , cl.id , ln.id";
+        StringBuilder sql = new StringBuilder(mapper.collectionSheetSchema(true));
 
-        final SqlParameterSource namedParameters = new MapSqlParameterSource().addValue("dueDate", dueDateStr).addValue("centerId", center.getId())
-                .addValue("officeHierarchy", officeHierarchy);
+        final SqlParameterSource namedParameters = new MapSqlParameterSource().addValue("dueDate", dueDateStr)
+                .addValue("centerId", center.getId()).addValue("officeHierarchy", officeHierarchy)
+                .addValue("entityTypeId", CalendarEntityType.CENTERS.getValue());
 
-        final Collection<JLGCollectionSheetFlatData> collectionSheetFlatDatas = this.namedParameterjdbcTemplate.query(sql, namedParameters,
-                mapper);
+        final Collection<JLGCollectionSheetFlatData> collectionSheetFlatDatas = this.namedParameterjdbcTemplate.query(sql.toString(),
+                namedParameters, mapper);
 
-        return buildJLGCollectionSheet(dueDate, collectionSheetFlatDatas);
+        return buildJLGCollectionSheet(transactionDate, collectionSheetFlatDatas);
     }
-
 }
