@@ -33,7 +33,8 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 @Entity
-@Table(name = "m_charge", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }, name = "name") })
+@Table(name = "m_charge", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }, name = "name"),
+        @UniqueConstraint(columnNames = { "short_name" }, name = "short_name")})
 public class Charge extends AbstractPersistable<Long> {
 
     @Column(name = "name", length = 100)
@@ -80,6 +81,9 @@ public class Charge extends AbstractPersistable<Long> {
 
     @Column(name = "max_cap", scale = 6, precision = 19, nullable = true)
     private BigDecimal maxCap;
+    
+    @Column(name = "short_name", nullable = false, unique = true)
+    private String shortName;
 
     public static Charge fromJson(final JsonCommand command) {
 
@@ -101,9 +105,10 @@ public class Charge extends AbstractPersistable<Long> {
         final Integer feeInterval = command.integerValueOfParameterNamed("feeInterval");
         final BigDecimal minCap = command.bigDecimalValueOfParameterNamed("minCap");
         final BigDecimal maxCap = command.bigDecimalValueOfParameterNamed("maxCap");
+        final String shortName=command.stringValueOfParameterNamed("shortName");
 
         return new Charge(name, amount, currencyCode, chargeAppliesTo, chargeTimeType, chargeCalculationType, penalty, active, paymentMode,
-                feeOnMonthDay, feeInterval, minCap, maxCap);
+                feeOnMonthDay, feeInterval, minCap, maxCap, shortName);
     }
 
     protected Charge() {
@@ -113,7 +118,7 @@ public class Charge extends AbstractPersistable<Long> {
     private Charge(final String name, final BigDecimal amount, final String currencyCode, final ChargeAppliesTo chargeAppliesTo,
             final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculationType, final boolean penalty,
             final boolean active, final ChargePaymentMode paymentMode, final MonthDay feeOnMonthDay, final Integer feeInterval,
-            final BigDecimal minCap, final BigDecimal maxCap) {
+            final BigDecimal minCap, final BigDecimal maxCap, final String shortName) {
         this.name = name;
         this.amount = amount;
         this.currencyCode = currencyCode;
@@ -123,6 +128,7 @@ public class Charge extends AbstractPersistable<Long> {
         this.penalty = penalty;
         this.active = active;
         this.chargePaymentMode = paymentMode == null ? null : paymentMode.getValue();
+        this.shortName=shortName;
 
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
@@ -250,6 +256,10 @@ public class Charge extends AbstractPersistable<Long> {
     public BigDecimal getMaxCap() {
         return this.maxCap;
     }
+    
+    public String getShortName() {
+		return this.shortName;
+	}
 
     public Map<String, Object> update(final JsonCommand command) {
 
@@ -266,7 +276,7 @@ public class Charge extends AbstractPersistable<Long> {
             actualChanges.put(nameParamName, newValue);
             this.name = newValue;
         }
-
+        
         final String currencyCodeParamName = "currencyCode";
         if (command.isChangeInStringParameterNamed(currencyCodeParamName, this.currencyCode)) {
             final String newValue = command.stringValueOfParameterNamed(currencyCodeParamName);
@@ -413,7 +423,14 @@ public class Charge extends AbstractPersistable<Long> {
                 this.maxCap = newValue;
             }
         }
-
+        
+        final String shortNameParamName = "shortName";
+        if (command.isChangeInStringParameterNamed(shortNameParamName, this.shortName)) {
+            final String newValue = command.stringValueOfParameterNamed(shortNameParamName);
+            actualChanges.put(shortNameParamName, newValue);
+            this.shortName = newValue;
+        }
+        
         if (this.penalty && ChargeTimeType.fromInt(this.chargeTime).isTimeOfDisbursement()) { throw new ChargeDueAtDisbursementCannotBePenaltyException(
                 this.name); }
 
@@ -441,7 +458,7 @@ public class Charge extends AbstractPersistable<Long> {
         final EnumOptionData chargePaymentmode = ChargeEnumerations.chargePaymentMode(this.chargePaymentMode);
         final CurrencyData currency = new CurrencyData(this.currencyCode, null, 0, 0, null, null);
         return ChargeData.instance(getId(), this.name, this.amount, currency, chargeTimeType, chargeAppliesTo, chargeCalculationType,
-                chargePaymentmode, getFeeOnMonthDay(), this.feeInterval, this.penalty, this.active, this.minCap, this.maxCap);
+                chargePaymentmode, getFeeOnMonthDay(), this.feeInterval, this.penalty, this.active, this.minCap, this.maxCap, this.shortName);
     }
 
     public Integer getChargePaymentMode() {
