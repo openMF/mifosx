@@ -198,9 +198,10 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
             }
             final BigDecimal minCap = rs.getBigDecimal("minCap");
             final BigDecimal maxCap = rs.getBigDecimal("maxCap");
+            final String shortName=rs.getString("shortName");
             
             return ChargeData.instance(id, name, amount, currency, chargeTimeType, chargeAppliesToType, chargeCalculationType,
-                    chargePaymentMode, feeOnMonthDay, feeInterval, penalty, active,minCap,maxCap);
+                    chargePaymentMode, feeOnMonthDay, feeInterval, penalty, active,minCap,maxCap, shortName);
         }
     }
 
