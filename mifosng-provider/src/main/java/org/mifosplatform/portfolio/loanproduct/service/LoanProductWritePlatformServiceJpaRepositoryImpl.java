@@ -11,6 +11,9 @@ import java.util.Map;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.producttoaccountmapping.service.ProductToGLAccountMappingWritePlatformService;
+import org.mifosplatform.infrastructure.codes.domain.Code;
+import org.mifosplatform.infrastructure.codes.domain.CodeRepository;
+import org.mifosplatform.infrastructure.codes.exception.CodeNotFoundException;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -53,6 +56,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
     private final LoanTransactionProcessingStrategyRepository loanTransactionProcessingStrategyRepository;
     private final ChargeRepositoryWrapper chargeRepository;
     private final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService;
+    private final CodeRepository codeRepository;
 
     @Autowired
     public LoanProductWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -60,7 +64,8 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             final AprCalculator aprCalculator, final FundRepository fundRepository,
             final LoanTransactionProcessingStrategyRepository loanTransactionProcessingStrategyRepository,
             final ChargeRepositoryWrapper chargeRepository,
-            final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService) {
+            final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
+            final CodeRepository codeRepository) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.loanProductRepository = loanProductRepository;
@@ -69,6 +74,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
         this.loanTransactionProcessingStrategyRepository = loanTransactionProcessingStrategyRepository;
         this.chargeRepository = chargeRepository;
         this.accountMappingWritePlatformService = accountMappingWritePlatformService;
+        this.codeRepository = codeRepository;
     }
 
     @Transactional
@@ -83,6 +89,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             validateInputDates(command);
 
             final Fund fund = findFundByIdIfProvided(command.longValueOfParameterNamed("fundId"));
+            final Code code = findCategoryLoanPurposeByIdIfProvided(command.longValueOfParameterNamed("codeId"));
 
             final Long transactionProcessingStrategyId = command.longValueOfParameterNamed("transactionProcessingStrategyId");
             final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy = findStrategyByIdIfProvided(transactionProcessingStrategyId);
@@ -91,7 +98,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             final List<Charge> charges = assembleListOfProductCharges(command, currencyCode);
 
             final LoanProduct loanproduct = LoanProduct.assembleFromJson(fund, loanTransactionProcessingStrategy, charges, command,
-                    this.aprCalculator);
+                    this.aprCalculator, code);
 
             this.loanProductRepository.save(loanproduct);
 
@@ -126,6 +133,15 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             if (fund == null) { throw new FundNotFoundException(fundId); }
         }
         return fund;
+    }
+    
+    private Code findCategoryLoanPurposeByIdIfProvided(final Long codeId) {
+        Code code = null;
+        if (codeId != null) {
+        	code = this.codeRepository.findOne(codeId);
+            if (code == null) { throw new CodeNotFoundException(codeId); }
+        }
+        return code;
     }
 
     @Transactional

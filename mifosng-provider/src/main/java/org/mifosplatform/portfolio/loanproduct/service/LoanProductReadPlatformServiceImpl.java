@@ -120,7 +120,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + "lp.grace_on_principal_periods as graceOnPrincipalPayment, lp.grace_on_interest_periods as graceOnInterestPayment, lp.grace_interest_free_periods as graceOnInterestCharged,"
                     + "lp.amortization_method_enum as amortizationMethod, lp.arrearstolerance_amount as tolerance, "
                     + "lp.accounting_type as accountingType, lp.include_in_borrower_cycle as includeInBorrowerCycle,lp.use_borrower_cycle as useBorrowerCycle, lp.start_date as startDate, lp.close_date as closeDate,  "
-                    + "curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, curr.display_symbol as currencyDisplaySymbol, lp.external_id as externalId "
+                    + "curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, curr.display_symbol as currencyDisplaySymbol, lp.external_id as externalId, lp.purpose_category_code_id as codeId "
                     + " from m_product_loan lp "
                     + " left join m_fund f on f.id = lp.fund_id"
                     + " left join ref_loan_transaction_processing_strategy ltps on ltps.id = lp.loan_transaction_strategy_id"
@@ -135,6 +135,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final String shortName = rs.getString("shortName");
             final String description = rs.getString("description");
             final Long fundId = JdbcSupport.getLong(rs, "fundId");
+            final Long codeId = JdbcSupport.getLong(rs, "codeId");
             final String fundName = rs.getString("fundName");
             final Long transactionStrategyId = JdbcSupport.getLong(rs, "transactionStrategyId");
             final String transactionStrategyName = rs.getString("transactionStrategyName");
@@ -221,7 +222,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     transactionStrategyId, transactionStrategyName, graceOnPrincipalPayment, graceOnInterestPayment,
                     graceOnInterestCharged, this.charges, accountingRuleType, includeInBorrowerCycle, useBorrowerCycle, startDate,
                     closeDate, status, externalId, principalVariationsForBorrowerCycle, interestRateVariationsForBorrowerCycle,
-                    numberOfRepaymentVariationsForBorrowerCycle);
+                    numberOfRepaymentVariationsForBorrowerCycle, codeId);
         }
 
     }

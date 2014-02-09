@@ -34,6 +34,7 @@ import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingRuleType;
+import org.mifosplatform.infrastructure.codes.domain.Code;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
@@ -107,13 +108,17 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
     @Column(name = "external_id", length = 100, nullable = true, unique = true)
     private String externalId;
+    
+    @ManyToOne
+    @JoinColumn(name = "purpose_category_code_id", nullable = true)
+    private Code code;
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loanProduct", orphanRemoval = true)
     private Set<LoanProductBorrowerCycleVariations> borrowerCycleVariations = new HashSet<LoanProductBorrowerCycleVariations>();
 
     public static LoanProduct assembleFromJson(final Fund fund, final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy,
-            final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator) {
+            final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator, final Code code) {
 
         final String name = command.stringValueOfParameterNamed("name");
         final String shortName = command.stringValueOfParameterNamed(LoanProductConstants.shortName);
@@ -170,7 +175,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
                 interestMethod, interestCalculationPeriodMethod, repaymentEvery, repaymentFrequencyType, numberOfRepayments,
                 minNumberOfRepayments, maxNumberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged,
                 amortizationMethod, inArrearsTolerance, productCharges, accountingRuleType, includeInBorrowerCycle, startDate, closeDate,
-                externalId, useBorrowerCycle, loanProductBorrowerCycleVariations);
+                externalId, useBorrowerCycle, loanProductBorrowerCycleVariations, code);
     }
 
     /**
@@ -379,7 +384,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final AmortizationMethod amortizationMethod, final BigDecimal inArrearsTolerance, final List<Charge> charges,
             final AccountingRuleType accountingRuleType, final boolean includeInBorrowerCycle, final LocalDate startDate,
             final LocalDate closeDate, final String externalId, final boolean useBorrowerCycle,
-            final Set<LoanProductBorrowerCycleVariations> loanProductBorrowerCycleVariations) {
+            final Set<LoanProductBorrowerCycleVariations> loanProductBorrowerCycleVariations, final Code code) {
         this.fund = fund;
         this.transactionProcessingStrategy = transactionProcessingStrategy;
         this.name = name.trim();
@@ -418,7 +423,8 @@ public class LoanProduct extends AbstractPersistable<Long> {
         if (closeDate != null) {
             this.closeDate = closeDate.toDateTimeAtStartOfDay().toDate();
         }
-
+        
+        this.code = code;
         this.externalId = externalId;
         this.borrowerCycleVariations = loanProductBorrowerCycleVariations;
         for (LoanProductBorrowerCycleVariations borrowerCycleVariations : this.borrowerCycleVariations) {

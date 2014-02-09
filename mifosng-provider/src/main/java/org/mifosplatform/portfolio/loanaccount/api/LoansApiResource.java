@@ -199,7 +199,7 @@ public class LoansApiResource {
         } else if (templateType.equals("collateral")) {
             loanCollateralOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanCollateral");
             newLoanAccount = LoanAccountData.collateralTemplate(loanCollateralOptions);
-        } else {
+        } else { 
             // for JLG loan both client and group details are required
             if (templateType.equals("individual") || templateType.equals("jlg")) {
 
@@ -386,7 +386,7 @@ public class LoansApiResource {
             allowedLoanOfficers = this.loanReadPlatformService.retrieveAllowedLoanOfficers(loanBasicDetails.officeId(),
                     staffInSelectedOfficeOnly);
 
-            loanPurposeOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanPurpose");
+            loanPurposeOptions = this.codeValueReadPlatformService.retrieveAllCodeValues(loanBasicDetails.codeId());
             loanCollateralOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanCollateral");
             final CurrencyData currencyData = loanBasicDetails.currency();
             String currencyCode = null;

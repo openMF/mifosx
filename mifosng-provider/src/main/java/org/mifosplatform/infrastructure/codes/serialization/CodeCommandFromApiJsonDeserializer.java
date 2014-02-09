@@ -34,7 +34,7 @@ public final class CodeCommandFromApiJsonDeserializer {
     /**
      * The parameters supported for this command.
      */
-    private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("name"));
+    private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("name", "categoryId"));
     private final FromJsonHelper fromApiJsonHelper;
 
     @Autowired

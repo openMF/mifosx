@@ -16,4 +16,6 @@ public interface CodeReadPlatformService {
     CodeData retrieveCode(Long codeId);
 
     CodeData retriveCode(String codeName);
+    
+    Collection<CodeData> retrieveAllCategoryLoanPurposeCodes();
 }

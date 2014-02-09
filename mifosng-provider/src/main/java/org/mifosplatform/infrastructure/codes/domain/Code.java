@@ -31,22 +31,27 @@ public class Code extends AbstractPersistable<Long> {
 
     @Column(name = "is_system_defined")
     private final boolean systemDefined;
+    
+    @Column(name = "category_id")
+    private Integer categoryId;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "code", orphanRemoval = true)
     private Set<CodeValue> values;
 
     public static Code fromJson(final JsonCommand command) {
         final String name = command.stringValueOfParameterNamed("name");
-        return new Code(name);
+        final Integer categoryId = command.integerValueSansLocaleOfParameterNamed("categoryId");
+        return new Code(name, categoryId);
     }
 
     protected Code() {
         this.systemDefined = false;
     }
 
-    private Code(final String name) {
+    private Code(final String name, final Integer categoryId) {
         this.name = name;
         this.systemDefined = false;
+        this.categoryId = categoryId;
     }
 
     public String name() {

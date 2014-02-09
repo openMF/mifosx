@@ -32,7 +32,9 @@ import org.mifosplatform.accounting.producttoaccountmapping.service.ProductToGLA
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
+import org.mifosplatform.infrastructure.codes.data.CodeData;
 import org.mifosplatform.infrastructure.codes.data.CodeValueData;
+import org.mifosplatform.infrastructure.codes.service.CodeReadPlatformService;
 import org.mifosplatform.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
@@ -83,6 +85,7 @@ public class LoanProductsApiResource {
     private final PlatformSecurityContext context;
     private final LoanProductReadPlatformService loanProductReadPlatformService;
     private final ChargeReadPlatformService chargeReadPlatformService;
+    private final CodeReadPlatformService codeReadPlatformService;
     private final CurrencyReadPlatformService currencyReadPlatformService;
     private final FundReadPlatformService fundReadPlatformService;
     private final DefaultToApiJsonSerializer<LoanProductData> toApiJsonSerializer;
@@ -106,7 +109,8 @@ public class LoanProductsApiResource {
             final CodeValueReadPlatformService codeValueReadPlatformService,
             final AccountingDropdownReadPlatformService accountingDropdownReadPlatformService,
             final DefaultToApiJsonSerializer<ProductMixData> productMixDataApiJsonSerializer,
-            final ProductMixReadPlatformService productMixReadPlatformService) {
+            final ProductMixReadPlatformService productMixReadPlatformService,
+            final CodeReadPlatformService codeReadPlatformService) {
         this.context = context;
         this.loanProductReadPlatformService = readPlatformService;
         this.chargeReadPlatformService = chargeReadPlatformService;
@@ -121,6 +125,7 @@ public class LoanProductsApiResource {
         this.accountingDropdownReadPlatformService = accountingDropdownReadPlatformService;
         this.productMixDataApiJsonSerializer = productMixDataApiJsonSerializer;
         this.productMixReadPlatformService = productMixReadPlatformService;
+        this.codeReadPlatformService = codeReadPlatformService;
     }
 
     @POST
@@ -235,7 +240,7 @@ public class LoanProductsApiResource {
         if (chargeOptions.isEmpty()) {
             chargeOptions = null;
         }
-
+        Collection<CodeData> categoryOptions = this.codeReadPlatformService.retrieveAllCategoryLoanPurposeCodes();
         Collection<ChargeData> penaltyOptions = this.chargeReadPlatformService.retrieveLoanApplicablePenalties();
         if (penaltyOptions.isEmpty()) {
             penaltyOptions = null;
@@ -270,7 +275,7 @@ public class LoanProductsApiResource {
         return new LoanProductData(productData, chargeOptions, penaltyOptions, paymentTypeOptions, currencyOptions,
                 amortizationTypeOptions, interestTypeOptions, interestCalculationPeriodTypeOptions, repaymentFrequencyTypeOptions,
                 interestRateFrequencyTypeOptions, fundOptions, transactionProcessingStrategyOptions, accountOptions,
-                accountingRuleTypeOptions,loanCycleValueConditionTypeOptions);
+                accountingRuleTypeOptions, loanCycleValueConditionTypeOptions, categoryOptions);
     }
 
 }
