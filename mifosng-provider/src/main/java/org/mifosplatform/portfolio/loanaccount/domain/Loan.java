@@ -2729,7 +2729,7 @@ public class Loan extends AbstractPersistable<Long> {
         }
         return office;
     }
-
+    
     private Boolean isCashBasedAccountingEnabledOnLoanProduct() {
         return this.loanProduct.isCashBasedAccountingEnabled();
     }
@@ -3203,6 +3203,10 @@ public class Loan extends AbstractPersistable<Long> {
             list.add(loanCharge.getId());
         }
         return list;
+    }
+    
+    public Fund getFund() {
+        return this.fund;
     }
 
 }

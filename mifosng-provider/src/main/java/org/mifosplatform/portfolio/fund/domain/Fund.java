@@ -65,7 +65,11 @@ public class Fund extends AbstractPersistable<Long> {
             actualChanges.put(externalIdParamName, newValue);
             this.externalId = StringUtils.defaultIfEmpty(newValue, null);
         }
-
+        
         return actualChanges;
     }
+    
+    public Long getFundTypeId() {
+		return fundTypeId;
+	}
 }

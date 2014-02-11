@@ -21,6 +21,8 @@ import javax.ws.rs.core.UriInfo;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
+import org.mifosplatform.infrastructure.core.service.Page;
+import org.mifosplatform.portfolio.group.service.SearchParameters;
 import org.mifosplatform.portfolio.search.SearchConstants.SEARCH_RESPONSE_PARAMETERS;
 import org.mifosplatform.portfolio.search.data.AdHocQueryDataValidator;
 import org.mifosplatform.portfolio.search.data.AdHocQuerySearchConditions;
@@ -86,13 +88,22 @@ public class SearchApiResource {
     @Path("/advance")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String advancedSearch(@Context final UriInfo uriInfo,final String json) {
+    public String advancedSearch(@Context final UriInfo uriInfo,final String json, @QueryParam("queryType") final String queryType,
+    		@QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit) {
         
         final AdHocQuerySearchConditions searchConditions = this.fromApiJsonDeserializer.retrieveSearchConditions(json);
+        final SearchParameters searchParameters = SearchParameters.adHocQuery(offset, limit);
         
-        final Collection<AdHocSearchQueryData> searchResults = this.searchReadPlatformService.retrieveAdHocQueryMatchingData(searchConditions);
-        
+        Collection<AdHocSearchQueryData> searchResultSummary = null;
+        Page<AdHocSearchQueryData> searchResultDetails = null;
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, searchResults);
+        
+        if (queryType.equals("summary")) {
+        	searchResultSummary = this.searchReadPlatformService.retrieveAdHocQueryMatchingDataSummary(searchConditions);
+        	return this.toApiJsonSerializer.serialize(settings, searchResultSummary);
+        } else {
+        	searchResultDetails = this.searchReadPlatformService.retrieveAdHocQueryMatchingDataDetails(searchConditions, searchParameters);
+        	return this.toApiJsonSerializer.serialize(settings, searchResultDetails);
+        }
     }
 }

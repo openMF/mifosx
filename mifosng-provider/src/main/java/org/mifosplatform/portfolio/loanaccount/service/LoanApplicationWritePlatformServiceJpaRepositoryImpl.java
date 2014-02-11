@@ -8,6 +8,7 @@ package org.mifosplatform.portfolio.loanaccount.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,7 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.codes.domain.CodeValue;
+import org.mifosplatform.infrastructure.codes.domain.CodeValueRepository;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.api.JsonQuery;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
@@ -43,6 +45,8 @@ import org.mifosplatform.portfolio.client.exception.ClientNotActiveException;
 import org.mifosplatform.portfolio.collateral.domain.LoanCollateral;
 import org.mifosplatform.portfolio.collateral.service.CollateralAssembler;
 import org.mifosplatform.portfolio.fund.domain.Fund;
+import org.mifosplatform.portfolio.fund.domain.FundMappingHistory;
+import org.mifosplatform.portfolio.fund.domain.FundMappingHistoryRepository;
 import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.group.domain.GroupRepositoryWrapper;
 import org.mifosplatform.portfolio.group.exception.GroupNotActiveException;
@@ -84,6 +88,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import com.google.gson.JsonElement;
 
@@ -116,6 +121,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     private final AccountAssociationsRepository accountAssociationsRepository;
     private final LoanChargeRepository loanChargeRepository;
     private final LoanReadPlatformService loanReadPlatformService;
+    private final FundMappingHistoryRepository historyRepository;
+    private final CodeValueRepository codeValueRepository;
 
     @Autowired
     public LoanApplicationWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final FromJsonHelper fromJsonHelper,
@@ -130,7 +137,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory,
             final CalendarRepository calendarRepository, final CalendarInstanceRepository calendarInstanceRepository,
             final SavingsAccountAssembler savingsAccountAssembler, final AccountAssociationsRepository accountAssociationsRepository,
-            final LoanChargeRepository loanChargeRepository, final LoanReadPlatformService loanReadPlatformService) {
+            final LoanChargeRepository loanChargeRepository, final LoanReadPlatformService loanReadPlatformService,
+            final FundMappingHistoryRepository historyRepository, final CodeValueRepository codeValueRepository) {
         this.context = context;
         this.fromJsonHelper = fromJsonHelper;
         this.loanApplicationTransitionApiJsonValidator = loanApplicationTransitionApiJsonValidator;
@@ -155,6 +163,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         this.accountAssociationsRepository = accountAssociationsRepository;
         this.loanChargeRepository = loanChargeRepository;
         this.loanReadPlatformService = loanReadPlatformService;
+        this.historyRepository = historyRepository;
+        this.codeValueRepository = codeValueRepository;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -239,6 +249,13 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 final AccountAssociations accountAssociations = AccountAssociations.associateSavingsAccount(newLoanApplication,
                         savingsAccount);
                 this.accountAssociationsRepository.save(accountAssociations);
+            }
+            
+            if (newLoanApplication.getFund().getId() != null) {
+            	Fund fund = this.loanAssembler.findFundByIdIfProvided(newLoanApplication.getFund().getId());
+            	CodeValue codeValue = this.codeValueRepository.findOne(fund.getFundTypeId());
+            	FundMappingHistory mappingHistory = FundMappingHistory.createNewInstance(newLoanApplication, codeValue);
+            	this.historyRepository.save(mappingHistory);
             }
 
             return new CommandProcessingResultBuilder() //
@@ -359,7 +376,22 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             if (changes.containsKey(fundIdParamName)) {
                 final Long fundId = command.longValueOfParameterNamed(fundIdParamName);
                 final Fund fund = this.loanAssembler.findFundByIdIfProvided(fundId);
-
+                
+                if (existingLoanApplication.getFund().getFundTypeId() != fund.getFundTypeId()) {
+                	FundMappingHistory mappingHistory = this.historyRepository.loanAccountFundMapChanged(existingLoanApplication.getId(), fund.getFundTypeId());
+                	if (mappingHistory != null) {
+                		mappingHistory.setEndDate(null);
+                		this.historyRepository.save(mappingHistory);
+                		
+                	} else {
+                		CodeValue newCodeValue = this.codeValueRepository.findOne(fund.getFundTypeId());
+                		FundMappingHistory newMappingHistory = FundMappingHistory.createNewInstance(existingLoanApplication, newCodeValue);
+                		this.historyRepository.save(newMappingHistory);
+                	}
+                	FundMappingHistory mappingHistoryForExistingFund = this.historyRepository.loanAccountFundMapChanged(existingLoanApplication.getId(), existingLoanApplication.getFund().getFundTypeId());
+                	mappingHistoryForExistingFund.setEndDate(existingLoanApplication.getSubmittedOnDate().toDate());
+                	this.historyRepository.save(mappingHistoryForExistingFund);
+                }
                 existingLoanApplication.updateFund(fund);
             }
 
@@ -737,6 +769,56 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         if (group != null) {
             if (group.isNotActive()) { throw new GroupNotActiveException(group.getId()); }
         }
+    }
+
+    @Transactional
+	@Override
+	public CommandProcessingResult modifyLoanAccountForFundMapping(
+			JsonCommand command) {
+    	this.context.authenticatedUser();
+    	
+    	this.fromApiJsonDeserializer.validateForFundMapping(command.json());
+    	final Long fundId = command.longValueOfParameterNamed("fundId");
+    	final Fund fund = this.loanAssembler.findFundByIdIfProvided(fundId);
+    	
+    	final String[] loanIdArray = command.arrayValueOfParameterNamed("loanIdArray");
+    	final Set<Loan> allLoans = assembleSetOfLoans(loanIdArray);
+    	for (Loan existingLoanApplication : allLoans) {
+    		if (existingLoanApplication.getFund().getFundTypeId() != fund.getFundTypeId()) {
+    			FundMappingHistory mappingHistory = this.historyRepository.loanAccountFundMapChanged(existingLoanApplication.getId(), fund.getFundTypeId());
+    			if (mappingHistory != null) {
+    				mappingHistory.setEndDate(null);
+            		this.historyRepository.save(mappingHistory);
+    			} else {
+    				CodeValue newCodeValue = this.codeValueRepository.findOne(fund.getFundTypeId());
+    				FundMappingHistory newMappingHistory = FundMappingHistory.createNewInstance(existingLoanApplication, newCodeValue);
+    				this.historyRepository.save(newMappingHistory);
+    			}
+    			FundMappingHistory mappingHistoryForExistingFund = this.historyRepository.loanAccountFundMapChanged(existingLoanApplication.getId(), existingLoanApplication.getFund().getFundTypeId());
+    			mappingHistoryForExistingFund.setEndDate(existingLoanApplication.getSubmittedOnDate().toDate());
+            	this.historyRepository.save(mappingHistoryForExistingFund);
+    		}
+    		existingLoanApplication.updateFund(fund);
+    		this.loanRepository.saveAndFlush(existingLoanApplication);
+    	}
+    	
+    	return new CommandProcessingResultBuilder() //
+        .withCommandId(command.commandId()).build(); //
+	}
+    
+    private Set<Loan> assembleSetOfLoans(final String[] loanIdArray) {
+        final Set<Loan> allLoans = new HashSet<Loan>();
+        
+        if (!ObjectUtils.isEmpty(loanIdArray)) {
+            for (final String loanId : loanIdArray) {
+                final Long id = Long.valueOf(loanId);
+                final Loan loan = retrieveLoanBy(id);
+                if (loan == null) { throw new LoanNotFoundException(id); }
+                allLoans.add(loan);
+            }
+        }
+        
+        return allLoans;
     }
 
 }

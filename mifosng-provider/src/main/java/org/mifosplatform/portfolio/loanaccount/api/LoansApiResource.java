@@ -474,6 +474,20 @@ public class LoansApiResource {
 
         return this.toApiJsonSerializer.serialize(result);
     }
+    
+    @PUT
+    @Path("fundmapping")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String modifyLoanApplicationForFundMapping(final String apiRequestBodyAsJson) {
+
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().updateLoanApplicationForFundMapping().withJson(apiRequestBodyAsJson)
+                .build();
+
+        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
+        return this.toApiJsonSerializer.serialize(result);
+    }
 
     @DELETE
     @Path("{loanId}")
