@@ -68,4 +68,8 @@ public class Fund extends AbstractPersistable<Long> {
 
         return actualChanges;
     }
+    
+    public Long getFundTypeId() {
+        return fundTypeId;
+    }
 }

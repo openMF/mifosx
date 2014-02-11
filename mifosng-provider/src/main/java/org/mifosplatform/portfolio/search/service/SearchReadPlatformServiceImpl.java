@@ -8,15 +8,22 @@ package org.mifosplatform.portfolio.search.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
+import org.mifosplatform.infrastructure.core.service.Page;
+import org.mifosplatform.infrastructure.core.service.PaginationHelper;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.data.OfficeData;
 import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
+import org.mifosplatform.portfolio.group.service.SearchParameters;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
 import org.mifosplatform.portfolio.loanproduct.service.LoanProductReadPlatformService;
 import org.mifosplatform.portfolio.search.SearchConstants;
@@ -38,10 +45,10 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
     private final PlatformSecurityContext context;
     private final LoanProductReadPlatformService loanProductReadPlatformService;
     private final OfficeReadPlatformService officeReadPlatformService;
-
+    private final PaginationHelper<AdHocSearchQueryData> paginationHelper = new PaginationHelper<AdHocSearchQueryData>();
     @Autowired
     public SearchReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
-            final LoanProductReadPlatformService loanProductReadPlatformService, final OfficeReadPlatformService officeReadPlatformService ) {
+            final LoanProductReadPlatformService loanProductReadPlatformService, final OfficeReadPlatformService officeReadPlatformService) {
         this.context = context;
         this.namedParameterjdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.loanProductReadPlatformService = loanProductReadPlatformService;
@@ -172,7 +179,7 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
     }
 
     @Override
-    public Collection<AdHocSearchQueryData> retrieveAdHocQueryMatchingData(final AdHocQuerySearchConditions searchConditions) {
+    public Collection<AdHocSearchQueryData> retrieveAdHocQueryMatchingDataSummary(final AdHocQuerySearchConditions searchConditions) {
 
         this.context.authenticatedUser();
 
@@ -181,14 +188,50 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
 
         return this.namedParameterjdbcTemplate.query(rm.schema(searchConditions, params), params, rm);
     }
+    
+    @Override
+    public Page<AdHocSearchQueryData> retrieveAdHocQueryMatchingDataDetails(final AdHocQuerySearchConditions searchConditions,
+            final SearchParameters searchParameters) {
+        this.context.authenticatedUser();
+        final AdHocQuerySearchMapper adHocQueryMapper = new AdHocQuerySearchMapper();
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+
+        final StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+        sqlBuilder.append(adHocQueryMapper.fundMappingSchema(searchConditions, params));
+
+        if (searchParameters.isLimited()) {
+            sqlBuilder.append(" limit ").append(searchParameters.getLimit());
+            if (searchParameters.isOffset()) {
+                sqlBuilder.append(" offset ").append(searchParameters.getOffset());
+            }
+        }
+
+        final String sqlCountRows = "SELECT FOUND_ROWS()";
+        return this.paginationHelper.fetchPageForNamedParameter(this.namedParameterjdbcTemplate, sqlCountRows, sqlBuilder.toString(),
+                params, adHocQueryMapper);
+    }
 
     private static final class AdHocQuerySearchMapper implements RowMapper<AdHocSearchQueryData> {
 
         private boolean isWhereClauseAdded = false;
-
+        
+        public String fundMappingSchema(final AdHocQuerySearchConditions searchConditions, final MapSqlParameterSource params) {
+            final StringBuilder sql = new StringBuilder();
+            final String queryType = "details";
+            sql.append(
+                    "a.display_name as clientName, a.name as officeName, a.productName, a.fundName, a.loanId, a.disburseAmt, a.disburseOnDate, ")
+                    .append("a.outstandingAmt as outstanding, a.percentOut as percentOut from (select mc.display_name, mo.name, mp.name as productName, ml.id as loanId, ")
+                    .append("mf.name as fundName, (ifnull(ml.principal_disbursed_derived,0.0)) disburseAmt, ml.disbursedon_date as disburseOnDate, ")
+                    .append("(ifnull(ml.total_outstanding_derived,0.0)) outstandingAmt,  ")
+                    .append("((ifnull(ml.total_outstanding_derived,0.0)) * 100 / (ifnull(ml.principal_disbursed_derived,0.0))) percentOut ")
+                    .append("from m_loan ml inner join m_product_loan mp on mp.id=ml.product_id  inner join m_client mc on  ")
+                    .append("mc.id=ml.client_id join m_fund mf on mf.id=ml.fund_id inner join m_office mo on mo.id=mc.office_id  ");
+            return addConditions(sql, searchConditions, params, queryType);
+        }
         //TODO- build the query dynamically based on selected entity types, for now adding query for only loan entity.
         public String schema(final AdHocQuerySearchConditions searchConditions, final MapSqlParameterSource params) {
-            final StringBuffer sql = new StringBuffer();
+            final StringBuilder sql = new StringBuilder();
             sql.append("Select a.name as officeName, a.Product as productName, a.cnt as 'count', a.outstandingAmt as outstanding, a.percentOut as percentOut  ")
             .append("from (select mo.name, mp.name Product, sum(ifnull(ml.total_expected_repayment_derived,0.0)) TotalAmt, count(*) cnt, ")
             .append("sum(ifnull(ml.total_outstanding_derived,0.0)) outstandingAmt,  ")
@@ -197,6 +240,11 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
             .append("inner join m_client mc on mc.id=ml.client_id  ")
             .append("inner join m_office mo on mo.id=mc.office_id  ");
             
+            return addConditions(sql, searchConditions, params, null);
+        }
+        
+        public String addConditions(final StringBuilder sql, final AdHocQuerySearchConditions searchConditions, 
+        		final MapSqlParameterSource params, final String queryType) {    
             if (searchConditions.getLoanStatus() != null && searchConditions.getLoanStatus().size() > 0) {
                 //If user requests for all statuses no need to add loanStatus filter 
                 if (!searchConditions.getLoanStatus().contains("all")) {
@@ -237,7 +285,11 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                 }
             }
             
-            sql.append(" group by mo.id) a ");
+            if (queryType != "details") {
+                sql.append(" group by mo.id) a ");
+            } else {
+                sql.append(" ) a ");
+            }
             
             //update isWhereClauseAdded to false to add filters for derived table
             isWhereClauseAdded = false;
@@ -279,7 +331,7 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
             return sql.toString();
         }
         
-        private void checkAndUpdateWhereClause(final StringBuffer sql){
+        private void checkAndUpdateWhereClause(final StringBuilder sql){
             if (isWhereClauseAdded) {
                 sql.append(" and ");
             } else {
@@ -290,13 +342,59 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
 
         @Override
         public AdHocSearchQueryData mapRow(ResultSet rs, @SuppressWarnings("unused") int rowNum) throws SQLException {
+            List<String> columnNames = new ArrayList<String>();
+            if (rs != null) {
+                ResultSetMetaData columns = rs.getMetaData();
+                int i = 0;
+                while (i < columns.getColumnCount()) {
+                    i++;
+                    columnNames.add(columns.getColumnLabel(i));
+                }
+            }
+
+            String clientName = null;
+            String fundName = null;
+            BigDecimal disburseAmount = null;
+            LocalDate disburseOnDate = null;
+            Integer loanId = null;
+            if (columnNames.contains("clientName")) {
+                clientName = rs.getString("clientName");
+            }
+
+            if (columnNames.contains("fundName")) {
+                fundName = rs.getString("fundName");
+            }
+
+            if (columnNames.contains("disburseAmt")) {
+                disburseAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "disburseAmt");
+            }
+
+            if (columnNames.contains("disburseOnDate")) {
+                disburseOnDate = JdbcSupport.getLocalDate(rs, "disburseOnDate");
+            }
+
+            if (columnNames.contains("loanId")) {
+                loanId = JdbcSupport.getInteger(rs, "loanId");
+            }
 
             final String officeName = rs.getString("officeName");
             final String loanProductName = rs.getString("productName");
-            final Integer count = JdbcSupport.getInteger(rs, "count");
-            final BigDecimal loanOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "outstanding").setScale(2, RoundingMode.HALF_UP);
-            final Double percentage = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "percentOut").setScale(2, RoundingMode.HALF_UP).doubleValue();
-            return AdHocSearchQueryData.matchedResult(officeName, loanProductName, count, loanOutStanding, percentage);
+
+            Integer count = null;
+            BigDecimal loanOutStanding = null;
+
+            if (columnNames.contains("count")) {
+                count = JdbcSupport.getInteger(rs, "count");
+            }
+
+            if (columnNames.contains("outstanding")) {
+                loanOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "outstanding").setScale(2, RoundingMode.HALF_UP);
+            }
+
+            final Double percentage = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "percentOut").setScale(2, RoundingMode.HALF_UP)
+                    .doubleValue();
+            return AdHocSearchQueryData.matchedResult(clientName, officeName, loanProductName, fundName, count, disburseAmount,
+                    disburseOnDate, loanOutStanding, percentage, loanId);
         }
         
     }
