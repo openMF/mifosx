@@ -44,8 +44,8 @@ public class AdHocQueryDataValidator {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(AdHocQuerySearchConstants.AD_HOC_SEARCH_QUERY_RESOURCE_NAME);
 
-        final String[] entities = this.fromApiJsonHelper.extractArrayNamed(AdHocQuerySearchConstants.entitiesParamName, element);
-        baseDataValidator.reset().parameter(AdHocQuerySearchConstants.entitiesParamName).value(entities).arrayNotEmpty();
+        /*final String[] entities = this.fromApiJsonHelper.extractArrayNamed(AdHocQuerySearchConstants.entitiesParamName, element);
+        baseDataValidator.reset().parameter(AdHocQuerySearchConstants.entitiesParamName).value(entities).arrayNotEmpty();*/
 
         if (this.fromApiJsonHelper.parameterExists(AdHocQuerySearchConstants.loanStatusParamName, element)) {
             final String[] loanStatus = this.fromApiJsonHelper.extractArrayNamed(AdHocQuerySearchConstants.loanStatusParamName, element);

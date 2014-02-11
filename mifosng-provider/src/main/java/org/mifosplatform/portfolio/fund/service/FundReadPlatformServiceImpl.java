@@ -44,7 +44,7 @@ public class FundReadPlatformServiceImpl implements FundReadPlatformService {
             final Long id = rs.getLong("id");
             final String name = rs.getString("name");
             final String externalId = rs.getString("externalId");
-
+            
             return FundData.instance(id, name, externalId);
         }
     }
@@ -77,4 +77,14 @@ public class FundReadPlatformServiceImpl implements FundReadPlatformService {
             throw new FundNotFoundException(fundId);
         }
     }
+
+	@Override
+	public Collection<FundData> retrieveAllFundsByFundType(final Long fundTypeId) {
+		this.context.authenticatedUser();
+
+        final FundMapper rm = new FundMapper();
+        final String sql = "select " + rm.schema() + " where f.fund_type_cv_id=?";
+
+        return this.jdbcTemplate.query(sql, rm, new Object[] {fundTypeId});
+	}
 }

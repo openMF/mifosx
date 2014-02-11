@@ -676,4 +676,8 @@ public class CommandWrapper {
     public boolean isCacheResource() {
         return this.entityName.equalsIgnoreCase("CACHE");
     }
+    
+    public boolean isUpdateLoanAccountForFundMapping() {
+        return this.actionName.equalsIgnoreCase("UPDATE") && this.entityName.equalsIgnoreCase("LOAN");
+    }
 }
