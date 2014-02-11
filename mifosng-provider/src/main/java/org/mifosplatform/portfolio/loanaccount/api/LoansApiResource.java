@@ -380,7 +380,7 @@ public class LoansApiResource {
             fundOptions = this.fundReadPlatformService.retrieveAllFunds();
             repaymentStrategyOptions = this.dropdownReadPlatformService.retreiveTransactionProcessingStrategies();
             final boolean feeChargesOnly = false;
-            chargeOptions = this.chargeReadPlatformService.retrieveLoanApplicableCharges(feeChargesOnly);
+            chargeOptions = this.chargeReadPlatformService.retrieveLoanApplicableCharges(loanId, feeChargesOnly);
             chargeTemplate = this.loanChargeReadPlatformService.retrieveLoanChargeTemplate();
 
             allowedLoanOfficers = this.loanReadPlatformService.retrieveAllowedLoanOfficers(loanBasicDetails.officeId(),
