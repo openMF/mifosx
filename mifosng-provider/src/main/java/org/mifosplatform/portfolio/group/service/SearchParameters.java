@@ -99,6 +99,15 @@ public final class SearchParameters {
         
         return new SearchParameters(sqlSearch, null, externalId, null, null, null, null, offset, maxLimitAllowed, orderBy, sortOrder, staffId, accountNo);
     }
+    
+    public static SearchParameters adHocQuery(Integer offset, final Integer limit) {
+
+        final Integer maxLimitAllowed = getCheckedLimit(limit);
+        final Long staffId = null;
+        final String accountNo = null;
+
+        return new SearchParameters(null, null, null, null, null, null, null, offset, maxLimitAllowed, null, null, staffId, accountNo);
+    }
 
     private SearchParameters(final String sqlSearch, final Long officeId, final String externalId, final String name,
             final String hierarchy, final String firstname, final String lastname, final Integer offset, final Integer limit,

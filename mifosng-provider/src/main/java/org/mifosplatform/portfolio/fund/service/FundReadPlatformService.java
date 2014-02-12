@@ -14,4 +14,6 @@ public interface FundReadPlatformService {
     Collection<FundData> retrieveAllFunds();
 
     FundData retrieveFund(Long fundId);
+    
+    Collection<FundData> retrieveAllFundsByFundType(Long fundTypeId);
 }

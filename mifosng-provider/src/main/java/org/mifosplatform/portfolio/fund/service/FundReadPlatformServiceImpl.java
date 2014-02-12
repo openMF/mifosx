@@ -77,4 +77,14 @@ public class FundReadPlatformServiceImpl implements FundReadPlatformService {
             throw new FundNotFoundException(fundId);
         }
     }
+
+    @Override
+    public Collection<FundData> retrieveAllFundsByFundType(final Long fundTypeId) {
+        this.context.authenticatedUser();
+
+        final FundMapper rm = new FundMapper();
+        final String sql = "select " + rm.schema() + " where f.fund_type_cv_id=?";
+
+        return this.jdbcTemplate.query(sql, rm, new Object[] { fundTypeId });
+    }
 }

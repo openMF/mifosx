@@ -7,6 +7,8 @@ package org.mifosplatform.portfolio.search.service;
 
 import java.util.Collection;
 
+import org.mifosplatform.infrastructure.core.service.Page;
+import org.mifosplatform.portfolio.group.service.SearchParameters;
 import org.mifosplatform.portfolio.search.data.AdHocQuerySearchConditions;
 import org.mifosplatform.portfolio.search.data.AdHocSearchQueryData;
 import org.mifosplatform.portfolio.search.data.SearchConditions;
@@ -18,5 +20,7 @@ public interface SearchReadPlatformService {
 
     AdHocSearchQueryData retrieveAdHocQueryTemplate();
 
-    Collection<AdHocSearchQueryData> retrieveAdHocQueryMatchingData(AdHocQuerySearchConditions searchConditions);
+    Collection<AdHocSearchQueryData> retrieveAdHocQueryMatchingDataSummary(AdHocQuerySearchConditions searchConditions);
+    
+    Page<AdHocSearchQueryData> retrieveAdHocQueryMatchingDataDetails(AdHocQuerySearchConditions searchConditions, SearchParameters searchParameters);
 }
