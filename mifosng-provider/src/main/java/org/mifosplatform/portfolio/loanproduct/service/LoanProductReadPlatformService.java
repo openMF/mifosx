@@ -14,7 +14,7 @@ public interface LoanProductReadPlatformService {
 
     Collection<LoanProductData> retrieveAllLoanProducts();
 
-    Collection<LoanProductData> retrieveAllLoanProductsForLookup();
+    Collection<LoanProductData> retrieveAllLoanProductsForLookup(Long officeId);
 
     LoanProductData retrieveLoanProduct(Long productId);
 

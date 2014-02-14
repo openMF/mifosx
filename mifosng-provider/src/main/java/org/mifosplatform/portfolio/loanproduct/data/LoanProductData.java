@@ -20,6 +20,7 @@ import org.mifosplatform.accounting.producttoaccountmapping.data.PaymentTypeToGL
 import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
+import org.mifosplatform.organisation.office.data.OfficeData;
 import org.mifosplatform.portfolio.charge.data.ChargeData;
 import org.mifosplatform.portfolio.fund.data.FundData;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
@@ -106,6 +107,7 @@ public class LoanProductData {
     private final Map<String, List<GLAccountData>> accountingMappingOptions;
     @SuppressWarnings("unused")
     private final List<EnumOptionData> valueConditionTypeOptions;
+    private Collection<OfficeData> offices;
     /**
      * Used when returning lookup information about loan product for dropdowns.
      */
@@ -429,6 +431,7 @@ public class LoanProductData {
         this.accountingMappingOptions = accountingMappingOptions;
         this.accountingRuleOptions = accountingRuleOptions;
         this.valueConditionTypeOptions = valueConditionTypeOptions;
+        this.offices = productData.offices;
 
     }
 
@@ -610,4 +613,8 @@ public class LoanProductData {
     public Collection<LoanProductBorrowerCycleVariationData> getNumberOfRepaymentVariationsForBorrowerCycle() {
         return this.numberOfRepaymentVariationsForBorrowerCycle;
     }
+    
+	public void setOffices(final Collection<OfficeData> slectedOffices) {
+		this.offices = slectedOffices;
+	}
 }
