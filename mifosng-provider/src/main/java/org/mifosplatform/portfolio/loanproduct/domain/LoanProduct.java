@@ -19,6 +19,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -37,6 +38,7 @@ import org.mifosplatform.accounting.common.AccountingRuleType;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
+import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.fund.domain.Fund;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.AprCalculator;
@@ -111,9 +113,13 @@ public class LoanProduct extends AbstractPersistable<Long> {
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loanProduct", orphanRemoval = true)
     private Set<LoanProductBorrowerCycleVariations> borrowerCycleVariations = new HashSet<LoanProductBorrowerCycleVariations>();
+    
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "m_product_loan_office", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "office_id"))
+    private Set<Office> offices;
 
     public static LoanProduct assembleFromJson(final Fund fund, final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy,
-            final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator) {
+            final List<Charge> productCharges, final Set<Office> offices, final JsonCommand command, final AprCalculator aprCalculator) {
 
         final String name = command.stringValueOfParameterNamed("name");
         final String shortName = command.stringValueOfParameterNamed(LoanProductConstants.shortName);
@@ -170,7 +176,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
                 interestMethod, interestCalculationPeriodMethod, repaymentEvery, repaymentFrequencyType, numberOfRepayments,
                 minNumberOfRepayments, maxNumberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged,
                 amortizationMethod, inArrearsTolerance, productCharges, accountingRuleType, includeInBorrowerCycle, startDate, closeDate,
-                externalId, useBorrowerCycle, loanProductBorrowerCycleVariations);
+                externalId, useBorrowerCycle, loanProductBorrowerCycleVariations, offices);
     }
 
     /**
@@ -379,7 +385,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final AmortizationMethod amortizationMethod, final BigDecimal inArrearsTolerance, final List<Charge> charges,
             final AccountingRuleType accountingRuleType, final boolean includeInBorrowerCycle, final LocalDate startDate,
             final LocalDate closeDate, final String externalId, final boolean useBorrowerCycle,
-            final Set<LoanProductBorrowerCycleVariations> loanProductBorrowerCycleVariations) {
+            final Set<LoanProductBorrowerCycleVariations> loanProductBorrowerCycleVariations, final Set<Office> offices) {
         this.fund = fund;
         this.transactionProcessingStrategy = transactionProcessingStrategy;
         this.name = name.trim();
@@ -424,16 +430,34 @@ public class LoanProduct extends AbstractPersistable<Long> {
         for (LoanProductBorrowerCycleVariations borrowerCycleVariations : this.borrowerCycleVariations) {
             borrowerCycleVariations.updateLoanProduct(this);
         }
+        this.offices = offices;
     }
 
     public MonetaryCurrency getCurrency() {
         return this.loanProductRelatedDetail.getCurrency();
     }
 
-    public void update(final Fund fund) {
-        this.fund = fund;
-    }
+	public void update(final Fund fund) {
+		this.fund = fund;
+	}
+    
+    public boolean update(final Set<Office> newProductoffices) {
+        boolean updated = false;
+        if (this.charges != null) {
+            final Set<Office> currentSetOfOffices = new HashSet<Office>(this.offices);
+            final Set<Office> newSetOfOffices = new HashSet<Office>(newProductoffices);
 
+            if (!currentSetOfOffices.equals(newSetOfOffices)) {
+                updated = true;
+                this.offices = newProductoffices;
+            }
+        } else {
+            updated = true;
+            this.offices = newProductoffices;
+        }
+        return updated;
+    }
+    
     public void update(final LoanTransactionProcessingStrategy strategy) {
         this.transactionProcessingStrategy = strategy;
     }
@@ -507,7 +531,15 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final Long newValue = command.longValueOfParameterNamed(fundIdParamName);
             actualChanges.put(fundIdParamName, newValue);
         }
-
+        
+        final String OfficesParamName = "offices";
+        if (command.hasParameter(OfficesParamName)) {
+            final JsonArray jsonArray = command.arrayOfParameterNamed(OfficesParamName);
+            if (jsonArray != null) {
+                actualChanges.put(OfficesParamName, command.jsonFragment(OfficesParamName));
+            }
+        }
+        
         Long existingStrategyId = null;
         if (this.transactionProcessingStrategy != null) {
             existingStrategyId = this.transactionProcessingStrategy.getId();
@@ -678,7 +710,11 @@ public class LoanProduct extends AbstractPersistable<Long> {
     public boolean useBorrowerCycle() {
         return this.useBorrowerCycle;
     }
-
+    
+    public Set<Office> getOffices() {
+    	return this.offices;
+    }
+    
     public LoanProductBorrowerCycleVariations fetchLoanProductBorrowerCycleVariationById(Long id) {
         LoanProductBorrowerCycleVariations borrowerCycleVariation = null;
         for (LoanProductBorrowerCycleVariations cycleVariation : this.borrowerCycleVariations) {

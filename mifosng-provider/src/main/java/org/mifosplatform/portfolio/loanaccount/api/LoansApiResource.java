@@ -179,9 +179,6 @@ public class LoansApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        // template
-        final Collection<LoanProductData> productOptions = this.loanProductReadPlatformService.retrieveAllLoanProductsForLookup();
-
         // options
         Collection<StaffData> allowedLoanOfficers = null;
         Collection<CodeValueData> loanCollateralOptions = null;
@@ -251,6 +248,9 @@ public class LoansApiResource {
                         PortfolioAccountType.SAVINGS.getValue(), clientId, currencyCode, accountStatus);
 
             }
+            
+            // template
+            final Collection<LoanProductData> productOptions = this.loanProductReadPlatformService.retrieveAllLoanProductsForLookup(officeId);
 
             // add product options, allowed loan officers and calendar options
             // (calendar options will be null in individual loan)
@@ -368,7 +368,7 @@ public class LoansApiResource {
 
         final boolean template = ApiParameterHelper.template(uriInfo.getQueryParameters());
         if (template) {
-            productOptions = this.loanProductReadPlatformService.retrieveAllLoanProductsForLookup();
+            productOptions = this.loanProductReadPlatformService.retrieveAllLoanProductsForLookup(loanBasicDetails.officeId());
             loanTermFrequencyTypeOptions = this.dropdownReadPlatformService.retrieveLoanTermFrequencyTypeOptions();
             repaymentFrequencyTypeOptions = this.dropdownReadPlatformService.retrieveRepaymentFrequencyTypeOptions();
             interestRateFrequencyTypeOptions = this.dropdownReadPlatformService.retrieveInterestRateFrequencyTypeOptions();
