@@ -25,6 +25,7 @@ import javax.persistence.UniqueConstraint;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
+import org.mifosplatform.organisation.office.data.OfficeData;
 import org.mifosplatform.organisation.office.exception.CannotUpdateOfficeWithParentOfficeSameAsSelf;
 import org.mifosplatform.organisation.office.exception.RootOfficeParentCannotBeUpdated;
 import org.springframework.data.jpa.domain.AbstractPersistable;
@@ -225,4 +226,10 @@ public class Office extends AbstractPersistable<Long> {
 
         return match;
     }
+    
+	public OfficeData toData() {
+		return new OfficeData(getId(), this.name, null, this.externalId,
+				this.getOpeningLocalDate(), this.hierarchy,
+				null, null, null);
+	}
 }

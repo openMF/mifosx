@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingEnumerations;
@@ -19,11 +20,15 @@ import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
+import org.mifosplatform.organisation.office.data.OfficeData;
+import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.portfolio.charge.data.ChargeData;
 import org.mifosplatform.portfolio.charge.service.ChargeReadPlatformService;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductBorrowerCycleVariationData;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductParamType;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRepository;
 import org.mifosplatform.portfolio.loanproduct.exception.LoanProductNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -37,13 +42,15 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
     private final PlatformSecurityContext context;
     private final JdbcTemplate jdbcTemplate;
     private final ChargeReadPlatformService chargeReadPlatformService;
-
+    private final LoanProductRepository loanProductRepository;
     @Autowired
     public LoanProductReadPlatformServiceImpl(final PlatformSecurityContext context,
-            final ChargeReadPlatformService chargeReadPlatformService, final RoutingDataSource dataSource) {
+            final ChargeReadPlatformService chargeReadPlatformService, final RoutingDataSource dataSource, 
+            final LoanProductRepository loanProductRepository) {
         this.context = context;
         this.chargeReadPlatformService = chargeReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.loanProductRepository = loanProductRepository;
     }
 
     @Override
@@ -54,8 +61,17 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final Collection<LoanProductBorrowerCycleVariationData> borrowerCycleVariationDatas = retrieveLoanProductBorrowerCycleVariations(loanProductId);
             final LoanProductMapper rm = new LoanProductMapper(charges, borrowerCycleVariationDatas);
             final String sql = "select " + rm.loanProductSchema() + " where lp.id = ?";
-
-            return this.jdbcTemplate.queryForObject(sql, rm, new Object[] { loanProductId });
+            
+            LoanProductData loanProductData = this.jdbcTemplate.queryForObject(sql, rm, new Object[] { loanProductId });
+            
+            final LoanProduct loanProduct = this.loanProductRepository.findOne(loanProductId);
+            final Collection<OfficeData> selectedProductOffices = new ArrayList<OfficeData>();
+            final Set<Office> productOffices = loanProduct.getOffices();
+            for (final Office office : productOffices) {
+            	selectedProductOffices.add(office.toData());
+            }
+            loanProductData.setOffices(selectedProductOffices);
+            return loanProductData;
 
         } catch (final EmptyResultDataAccessException e) {
             throw new LoanProductNotFoundException(loanProductId);
@@ -82,15 +98,19 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
     }
 
     @Override
-    public Collection<LoanProductData> retrieveAllLoanProductsForLookup() {
+    public Collection<LoanProductData> retrieveAllLoanProductsForLookup(final Long officeId) {
 
         this.context.authenticatedUser();
 
         final LoanProductLookupMapper rm = new LoanProductLookupMapper();
+        if (officeId != null) {
+        	final String sql = "select " + rm.restrictProductSchemaByOfficeId();
+        	return this.jdbcTemplate.query(sql, rm, new Object[] {officeId});
 
-        final String sql = "select " + rm.schema();
+        } 
+    	final String sql = "select " + rm.schema();
+    	return this.jdbcTemplate.query(sql, rm, new Object[] {});
 
-        return this.jdbcTemplate.query(sql, rm, new Object[] {});
     }
 
     @Override
@@ -231,7 +251,13 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
         public String schema() {
             return "lp.id as id, lp.name as name from m_product_loan lp";
         }
-
+        
+        public String restrictProductSchemaByOfficeId() {
+            return "lp.id AS id, lp.name AS name FROM m_product_loan lp JOIN m_product_loan_office mp ON mp.product_id = lp.id "+
+            		"WHERE mp.office_id=? UNION Select lp.id,lp.name from m_product_loan lp where lp.id not in  (SELECT lp.id AS id "+
+            		"FROM m_product_loan lp JOIN m_product_loan_office mp ON mp.product_id = lp.id)";
+        }
+        
         public String productMixSchema() {
             return "lp.id as id, lp.name as name FROM m_product_loan lp left join m_product_mix pm on pm.product_id=lp.id where lp.id not IN("
                     + "select lp.id from m_product_loan lp inner join m_product_mix pm on pm.product_id=lp.id)";
