@@ -165,7 +165,7 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
         
         this.context.authenticatedUser();
         
-        final Collection<LoanProductData> loanProducts = this.loanProductReadPlatformService.retrieveAllLoanProductsForLookup();
+        final Collection<LoanProductData> loanProducts = this.loanProductReadPlatformService.retrieveAllLoanProductsForLookup(null);
         final Collection<OfficeData> offices = this.officeReadPlatformService.retrieveAllOfficesForDropdown();
         
         return AdHocSearchQueryData.template(loanProducts, offices);

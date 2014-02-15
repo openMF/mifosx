@@ -6,8 +6,10 @@
 package org.mifosplatform.portfolio.loanproduct.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.producttoaccountmapping.service.ProductToGLAccountMappingWritePlatformService;
@@ -15,7 +17,12 @@ import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+import org.mifosplatform.organisation.holiday.api.HolidayApiConstants;
+import org.mifosplatform.organisation.office.domain.Office;
+import org.mifosplatform.organisation.office.domain.OfficeRepository;
+import org.mifosplatform.organisation.office.exception.OfficeNotFoundException;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.domain.ChargeRepositoryWrapper;
 import org.mifosplatform.portfolio.fund.domain.Fund;
@@ -53,6 +60,8 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
     private final LoanTransactionProcessingStrategyRepository loanTransactionProcessingStrategyRepository;
     private final ChargeRepositoryWrapper chargeRepository;
     private final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService;
+    private final FromJsonHelper fromApiJsonHelper;
+    private final OfficeRepository officeRepository;
 
     @Autowired
     public LoanProductWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -60,7 +69,8 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             final AprCalculator aprCalculator, final FundRepository fundRepository,
             final LoanTransactionProcessingStrategyRepository loanTransactionProcessingStrategyRepository,
             final ChargeRepositoryWrapper chargeRepository,
-            final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService) {
+            final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
+            final FromJsonHelper fromApiJsonHelper, final OfficeRepository officeRepository) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.loanProductRepository = loanProductRepository;
@@ -69,6 +79,8 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
         this.loanTransactionProcessingStrategyRepository = loanTransactionProcessingStrategyRepository;
         this.chargeRepository = chargeRepository;
         this.accountMappingWritePlatformService = accountMappingWritePlatformService;
+        this.fromApiJsonHelper = fromApiJsonHelper;
+        this.officeRepository = officeRepository;
     }
 
     @Transactional
@@ -89,11 +101,11 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
 
             final String currencyCode = command.stringValueOfParameterNamed("currencyCode");
             final List<Charge> charges = assembleListOfProductCharges(command, currencyCode);
-
-            final LoanProduct loanproduct = LoanProduct.assembleFromJson(fund, loanTransactionProcessingStrategy, charges, command,
+            final Set<Office> offices = getSelectedOffices(command);
+            final LoanProduct loanproduct = LoanProduct.assembleFromJson(fund, loanTransactionProcessingStrategy, charges, offices, command,
                     this.aprCalculator);
 
-            this.loanProductRepository.save(loanproduct);
+			this.loanProductRepository.save(loanproduct);
 
             // save accounting mappings
             this.accountMappingWritePlatformService.createLoanProductToGLAccountMapping(loanproduct.getId(), command);
@@ -148,7 +160,15 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
                 final Fund fund = findFundByIdIfProvided(fundId);
                 product.update(fund);
             }
-
+            
+			if (changes.containsKey("offices")) {
+				final Set<Office> offices = getSelectedOffices(command);
+				final boolean updated = product.update(offices);
+				if (!updated) {
+					changes.remove("offices");
+				}
+			}
+            
             if (changes.containsKey("transactionProcessingStrategyId")) {
                 final Long transactionProcessingStrategyId = (Long) changes.get("transactionProcessingStrategyId");
                 final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy = findStrategyByIdIfProvided(transactionProcessingStrategyId);
@@ -260,6 +280,24 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
         if (startDate != null && closeDate != null) {
             if (closeDate.isBefore(startDate)) { throw new LoanProductDateException(startDate.toString(), closeDate.toString()); }
         }
+    }
+    
+    private Set<Office> getSelectedOffices(final JsonCommand command) {
+        Set<Office> offices = null;
+        final JsonObject topLevelJsonElement = this.fromApiJsonHelper.parse(command.json()).getAsJsonObject();
+        if (topLevelJsonElement.has(HolidayApiConstants.officesParamName) && topLevelJsonElement.get(HolidayApiConstants.officesParamName).isJsonArray()) {
+
+            final JsonArray array = topLevelJsonElement.get(HolidayApiConstants.officesParamName).getAsJsonArray();
+            offices = new HashSet<Office>(array.size());
+            for (int i = 0; i < array.size(); i++) {
+                final JsonObject officeElement = array.get(i).getAsJsonObject();
+                final Long officeId = this.fromApiJsonHelper.extractLongNamed(HolidayApiConstants.officeIdParamName, officeElement);
+                final Office office = this.officeRepository.findOne(officeId);
+                if (office == null) { throw new OfficeNotFoundException(officeId); }
+                offices.add(office);
+            }
+        }
+        return offices;
     }
 
     private void logAsErrorUnexpectedDataIntegrityException(final DataIntegrityViolationException dve) {
