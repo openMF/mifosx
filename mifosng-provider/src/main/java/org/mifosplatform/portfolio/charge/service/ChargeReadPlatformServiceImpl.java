@@ -109,13 +109,17 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
     }
 
     @Override
-    public Collection<ChargeData> retrieveLoanApplicableCharges(final boolean feeChargesOnly) {
+    public Collection<ChargeData> retrieveLoanApplicableCharges(final Long loanId, final boolean feeChargesOnly) {
         this.context.authenticatedUser();
 
         final ChargeMapper rm = new ChargeMapper();
 
         String sql = "select " + rm.chargeSchema()
                 + " where c.is_deleted=0 and c.is_active=1 and c.charge_applies_to_enum=? order by c.name ";
+        if(loanId != null) {
+        	sql = "select " + rm.chargeSchema() + " join m_loan l on c.currency_code=l.currency_code"
+                    + " where c.is_deleted=0 and c.is_active=1 and l.id=" + loanId + " and c.charge_applies_to_enum=? order by c.name ";
+        }
         if (feeChargesOnly) {
             sql = "select " + rm.chargeSchema()
                     + " where c.is_deleted=0 and c.is_active=1 and c.is_penalty=0 and c.charge_applies_to_enum=? order by c.name ";
