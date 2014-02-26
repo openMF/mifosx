@@ -100,7 +100,7 @@ public class FundWritePlatformServiceJpaRepositoryImpl implements FundWritePlatf
                     + "' already exists", "externalId", externalId);
         } else if (realCause.getMessage().contains("fund_name_org")) {
             final String name = command.stringValueOfParameterNamed("name");
-            throw new PlatformDataIntegrityException("error.msg.fund.duplicate.name", "A fund with name '" + name + "' already exists",
+            throw new PlatformDataIntegrityException("error.msg.fund.duplicate.name.and.fundTypeId", "A fund with name '" + name + "' and fund type id already exists",
                     "name", name);
         }
 

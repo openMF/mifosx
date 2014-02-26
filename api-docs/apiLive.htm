@@ -863,6 +863,14 @@
 								<td></td>
 							</tr>
 							<tr class="alt">
+								<td><a href="#funds">Funds</a></td>
+								<td>funds/template?codeName={codeName}</td>
+								<td><a></a></td>
+								<td><a href="#funds_template">Retrieve Fund Template</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
 								<td></td>
 								<td>funds/{fundId}</td>
 								<td></td>
@@ -870,7 +878,7 @@
 								<td><a href="#fund_update">Update a Fund</a></td>
 								<td></td>
 							</tr>
-							<tr>
+							<tr class="alt">
 								<td><a href="#staff">Staff</a></td>
 								<td>staff</td>
 								<td><a href="#staff_create">Create a Staff Member</a></td>
@@ -878,7 +886,7 @@
 								<td></td>
 								<td></td>
 							</tr>
-							<tr class="alt">
+							<tr>
 								<td></td>
 								<td>staff/{staffId}</td>
 								<td></td>
@@ -886,7 +894,7 @@
 								<td><a href="#staff_update">Update a Staff Member</a></td>
 								<td></td>
 							</tr>
-							<tr>
+							<tr class="alt">
 								<td><a href="#charges">Charges</a></td>
 								<td>charges</td>
 								<td><a href="#charges_create">Create a Charge</a></td>
@@ -894,7 +902,7 @@
 								<td></td>
 								<td></td>
 							</tr>
-							<tr class="alt">
+							<tr>
 								<td></td>
 								<td>charges/{chargeId}</td>
 								<td></td>
@@ -902,7 +910,7 @@
 								<td><a href="#charges_update">Update a Charge</a></td>
 								<td><a href="#charges_delete">Delete a Charge</a></td>
 							</tr>
-							<tr>
+							<tr class="alt">
 								<td><a href="#loanproductmix">Loan Product Mix</a></td>
 								<td>loanproducts?associations=productMixes</td>
 								<td></td>
@@ -910,7 +918,7 @@
 								<td></td>
 								<td></td>
 							</tr>
-							<tr class="alt">
+							<tr>
 								<td></td>
 								<td>loanproducts/{productId}/productmix</td>
 								<td><a href="#loanproductmix_create">Create a Loan Product Mix</a></td>
@@ -918,7 +926,7 @@
 								<td><a href="#loanproductmix_update">Update Loan Product Mix</a></td>
 								<td><a href="#loanproductmix_delete">Delete Loan Products Mix</a></td>
 							</tr>
-							<tr>
+							<tr class="alt">
 								<td><a href="#holidays">Holidays</a></td>
 								<td>holidays</td>
 								<td><a href="#holidays_create">Create a Holiday</a></td>
@@ -926,7 +934,7 @@
 								<td></td>
 								<td></td>
 							</tr>
-							<tr class="alt">
+							<tr>
 								<td></td>
 								<td>holidays/{holidayId}</td>
 								<td></td>
@@ -11744,7 +11752,8 @@ POST funds
 Content-Type: application/json 
 Request Body: 
 { 
-	"name": "EU Agri Fund"
+	"name": "EU Agri Fund",
+	"fundTypeId": 10
 }
 					</code>
 					<code class="method-response">
@@ -11754,7 +11763,48 @@ Request Body:
 					</code>
 				</div>
 			</div>
-
+			<a id="funds_template" name="fund_template"
+				class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve Fund Details Template</h4>
+					<p>This is a convenience resource. It can be useful when
+						building maintenance user interface screens for client
+						applications. The template data returned consists of any or all
+						of:
+					<ul>
+						<li class=normalli>Field Defaults</li>
+						<li class=normalli>Allowed Value Lists</li>
+					</ul>
+					</p>
+					<p>Example Request:</p>
+					<div class=apiClick>funds/template?codeName=fundType</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/funds/template?codeName=fundType
+					</code>
+					<code class="method-response">
+{
+	"fundTypeOptions": [{
+		"id": 10,
+		"name": "fundType1",
+		"position": 0
+	},
+	{
+		"id": 11,
+		"name": "fundType2",
+		"position": 0
+	},
+	{
+		"id": 13,
+		"name": "fundType3",
+		"position": 0
+	}]
+}
+					</code>
+				</div>
+			</div>
 			<a id="funds_retrieve" name="funds_retrieve" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
@@ -22262,6 +22312,14 @@ No Request Body:
 					<td></td>
 				</tr>
 				<tr>
+					<td><a href="#funds">Funds</a></td>
+					<td>funds/template?codeName={codeName}</td>
+					<td><a></a></td>
+					<td><a href="#funds_template">Retrieve Fund Template</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr class="alt">
 					<td></td>
 					<td>funds/{fundId}</td>
 					<td></td>
@@ -22269,7 +22327,7 @@ No Request Body:
 					<td><a href="#fund_update">Update a Fund</a></td>
 					<td></td>
 				</tr>
-				<tr class="alt">
+				<tr>
 					<td><a href="#staff">Staff</a></td>
 					<td>staff</td>
 					<td><a href="#staff_create">Create a Staff</a></td>
@@ -22277,7 +22335,7 @@ No Request Body:
 					<td></td>
 					<td></td>
 				</tr>
-				<tr>
+				<tr class="alt">
 					<td></td>
 					<td>staff/{staffId}</td>
 					<td></td>
@@ -22285,7 +22343,7 @@ No Request Body:
 					<td><a href="#staff_update">Update a Staff Member</a></td>
 					<td></td>
 				</tr>
-				<tr class="alt">
+				<tr>
 					<td><a href="#charges">Charges</a></td>
 					<td>charges</td>
 					<td><a href="#charges_create">Create a Charge</a></td>
@@ -22293,7 +22351,7 @@ No Request Body:
 					<td></td>
 					<td></td>
 				</tr>
-				<tr>
+				<tr class="alt">
 					<td></td>
 					<td>charges/{chargeId}</td>
 					<td></td>
@@ -22301,7 +22359,7 @@ No Request Body:
 					<td><a href="#charges_update">Update a Charge</a></td>
 					<td><a href="#charges_delete">Delete a Charge</a></td>
 				</tr>
-				<tr class="alt">
+				<tr>
 					<td><a href="#datatables">Data Table</a></td>
 					<td>datatables</td>
                     <td><a href="#datatables_createTable">Create Data Table</a></td>
@@ -22309,7 +22367,7 @@ No Request Body:
 					<td></td>
 					<td></td>
 				</tr>
-                <tr>
+                <tr class="alt">
                     <td></td>
                     <td>datatables/{datatable}</td>
                     <td></td>
