@@ -278,17 +278,23 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             }
             
             final Set<LoanCharge> possiblyModifedLoanCharges = this.loanChargeAssembler.fromParsedJson(command.parsedJson());
+            final List<Long> possiblyModifedLoanChargeIds = new ArrayList<Long>(possiblyModifedLoanCharges.size()); 
             boolean isChargeModified = false;
             for(LoanCharge loanCharge : possiblyModifedLoanCharges){
                 if(loanCharge.getId() == null){
                     isChargeModified = true;
                 }else{
                     LoanChargeData chargeData = chargesMap.get(loanCharge.getId());
+                    possiblyModifedLoanChargeIds.add(loanCharge.getId());
                     if(loanCharge.amountOrPercentage().compareTo(chargeData.amountOrPercentage()) != 0 || 
                             (loanCharge.isSpecifiedDueDate() && !loanCharge.getDueLocalDate().equals(chargeData.getDueDate()))){
                         isChargeModified = true;
                     }
                 }
+            }
+            
+            if (!possiblyModifedLoanChargeIds.containsAll(chargesMap.keySet())) {
+                isChargeModified = true;
             }
             
             final Set<LoanCollateral> possiblyModifedLoanCollateralItems = this.loanCollateralAssembler
