@@ -18,14 +18,17 @@ public class FundData implements Serializable {
     private final String name;
     @SuppressWarnings("unused")
     private final String externalId;
+    @SuppressWarnings("unused")
+    private final Long fundTypeId;
 
-    public static FundData instance(final Long id, final String name, final String externalId) {
-        return new FundData(id, name, externalId);
+    public static FundData instance(final Long id, final String name, final String externalId, final Long fundTypeId) {
+        return new FundData(id, name, externalId, fundTypeId);
     }
 
-    private FundData(final Long id, final String name, final String externalId) {
+    private FundData(final Long id, final String name, final String externalId, final Long fundTypeId) {
         this.id = id;
         this.name = name;
         this.externalId = externalId;
+        this.fundTypeId = fundTypeId;
     }
 }

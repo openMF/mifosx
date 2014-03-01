@@ -18,7 +18,7 @@ import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 @Entity
-@Table(name = "m_fund", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }, name = "fund_name_org"),
+@Table(name = "m_fund", uniqueConstraints = { @UniqueConstraint(columnNames = { "name", "fund_type_cv_id" }, name = "fund_name_org"),
         @UniqueConstraint(columnNames = { "external_id" }, name = "fund_externalid_org") })
 public class Fund extends AbstractPersistable<Long> {
 
@@ -27,6 +27,9 @@ public class Fund extends AbstractPersistable<Long> {
 
     @Column(name = "external_id", length = 100)
     private String externalId;
+    
+    @Column(name = "fund_type_cv_id")
+    private Integer fundTypeId;
 
     public static Fund fromJson(final JsonCommand command) {
 
@@ -35,17 +38,21 @@ public class Fund extends AbstractPersistable<Long> {
 
         final String lastnameParamName = "externalId";
         final String externalId = command.stringValueOfParameterNamed(lastnameParamName);
+        
+        final String fundTypeIdParamName = "fundTypeId";
+        final Integer fundTypeId = command.integerValueSansLocaleOfParameterNamed(fundTypeIdParamName);
 
-        return new Fund(name, externalId);
+        return new Fund(name, externalId, fundTypeId);
     }
 
     protected Fund() {
         //
     }
 
-    private Fund(final String fundName, final String externalId) {
+    private Fund(final String fundName, final String externalId, final Integer fundTypeId) {
         this.name = StringUtils.defaultIfEmpty(fundName, null);
         this.externalId = StringUtils.defaultIfEmpty(externalId, null);
+        this.fundTypeId = fundTypeId;
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -64,6 +71,13 @@ public class Fund extends AbstractPersistable<Long> {
             final String newValue = command.stringValueOfParameterNamed(externalIdParamName);
             actualChanges.put(externalIdParamName, newValue);
             this.externalId = StringUtils.defaultIfEmpty(newValue, null);
+        }
+        
+        final String fundTypeIdParamName = "fundTypeId";
+        if (command.isChangeInIntegerSansLocaleParameterNamed(fundTypeIdParamName, this.fundTypeId)) {
+        	final Integer newValue = command.integerValueSansLocaleOfParameterNamed(fundTypeIdParamName);
+            actualChanges.put(fundTypeIdParamName, newValue);
+            this.fundTypeId = newValue;
         }
 
         return actualChanges;
