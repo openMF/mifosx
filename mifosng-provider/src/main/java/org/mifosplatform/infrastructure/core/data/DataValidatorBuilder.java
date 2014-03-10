@@ -81,20 +81,20 @@ public class DataValidatorBuilder {
         return this;
     }
 
-    public void failWithCode(final String errorCode) {
+    public void failWithCode(final String errorCode, final Object... defaultUserMessageArgs) {
         final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
                 .append(this.parameter).append(".").append(errorCode);
         final StringBuilder defaultEnglishMessage = new StringBuilder("Failed data validation due to: ").append(errorCode).append(".");
         final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultEnglishMessage.toString(),
-                this.parameter, this.value);
+                this.parameter, this.value, defaultUserMessageArgs);
         this.dataValidationErrors.add(error);
     }
 
-    public void failWithCodeNoParameterAddedToErrorCode(final String errorCode) {
+    public void failWithCodeNoParameterAddedToErrorCode(final String errorCode, final Object... defaultUserMessageArgs) {
         final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".").append(errorCode);
         final StringBuilder defaultEnglishMessage = new StringBuilder("Failed data validation due to: ").append(errorCode).append(".");
         final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultEnglishMessage.toString(),
-                this.parameter, this.value);
+                this.parameter, this.value, defaultUserMessageArgs);
         this.dataValidationErrors.add(error);
     }
 
@@ -382,7 +382,25 @@ public class DataValidatorBuilder {
         }
         return this;
     }
+    
+    public DataValidatorBuilder integerEqualToOrGreaterThanNumber(Integer number) {
+        if (this.value == null && this.ignoreNullValue) { return this; }
 
+        if (this.value != null) {
+            final Integer intValue = Integer.valueOf(this.value.toString());
+            if (intValue < number) {
+                final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
+                        .append(this.parameter).append(".not.equal.to.or.greater.than.specified.number");
+                final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(this.parameter).append(
+                        " must be equal to or greater than").append(number);
+                final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                        defaultEnglishMessage.toString(), this.parameter, intValue, number);
+                this.dataValidationErrors.add(error);
+            }
+        }
+        return this;
+    }
+    
     public DataValidatorBuilder integerSameAsNumber(Integer number) {
         if (this.value == null && this.ignoreNullValue) { return this; }
 

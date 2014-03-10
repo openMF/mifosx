@@ -5,6 +5,8 @@
  */
 package org.mifosplatform.commands.domain;
 
+import org.mifosplatform.portfolio.savings.DepositAccountType;
+
 public class CommandWrapper {
 
     private final Long commandId;
@@ -27,6 +29,8 @@ public class CommandWrapper {
     private final Long supportedEntityId;
     private final Long productId;
     private Long templateId;
+    private Long interestRatechartId;
+    private DepositAccountType depositAccountType;
 
     public static CommandWrapper wrap(final String actionName, final String entityName, final Long resourceId, final Long subresourceId) {
         return new CommandWrapper(null, actionName, entityName, resourceId, subresourceId, null, null);
@@ -62,7 +66,8 @@ public class CommandWrapper {
     public CommandWrapper(final Long officeId, final Long groupId, final Long clientId, final Long loanId, final Long savingsId,
             final String actionName, final String entityName, final Long entityId, final Long subentityId, final Long codeId,
             final String supportedEntityType, final Long supportedEntityId, final String href, final String json,
-            final String transactionId, final Long productId, final Long templateId) {
+            final String transactionId, final Long productId, final Long templateId, Long interestRatechartId,
+            DepositAccountType depositAccountType) {
         this.commandId = null;
         this.officeId = officeId;
         this.groupId = groupId;
@@ -82,6 +87,8 @@ public class CommandWrapper {
         this.transactionId = transactionId;
         this.productId = productId;
         this.templateId = templateId;
+        this.interestRatechartId = interestRatechartId;
+        this.depositAccountType = depositAccountType;
     }
 
     public Long commandId() {
@@ -551,6 +558,14 @@ public class CommandWrapper {
         return this.actionName.equalsIgnoreCase("PAY") && this.entityName.equalsIgnoreCase("SAVINGSACCOUNTCHARGE");
     }
 
+    public boolean isInterestRateChartResource() {
+        return this.entityName.equalsIgnoreCase("INTERESTRATECHART");
+    }
+
+    public boolean isInterestRateChartSlabResource() {
+        return this.entityName.equalsIgnoreCase("CHARTSLAB");
+    }
+
     public boolean isCalendarResource() {
         return this.entityName.equalsIgnoreCase("CALENDAR");
     }
@@ -687,5 +702,81 @@ public class CommandWrapper {
 
     public boolean isCacheResource() {
         return this.entityName.equalsIgnoreCase("CACHE");
+    }
+
+    public Long interestRatechartId() {
+        return this.interestRatechartId;
+    }
+
+    // Begin - Deposit product
+    public boolean isFixedDepositProductResource() {
+        return this.entityName.equalsIgnoreCase("FIXEDDEPOSITPRODUCT");
+    }
+
+    public boolean isRecurringDepositProductResource() {
+        return this.entityName.equalsIgnoreCase("RECURRINGDEPOSITPRODUCT");
+    }
+
+    // End - Deposit product
+
+    // Begin - Deposit accounts
+    public boolean isDepositAccountResource() {
+        return this.entityName.equalsIgnoreCase("FIXEDDEPOSITACCOUNT") || this.entityName.equalsIgnoreCase("RECURRINGDEPOSITACCOUNT");
+    }
+    
+    public boolean isRejectionOfDepositAccountApplication() {
+        return this.actionName.equalsIgnoreCase("REJECT") && isDepositAccountResource();
+    }
+    
+    public boolean isWithdrawFromDepositAccountApplicationByApplicant() {
+        return this.actionName.equalsIgnoreCase("WITHDRAW") && isDepositAccountResource();
+    }
+    
+    public boolean isApprovalOfDepositAccountApplication() {
+        return this.actionName.equalsIgnoreCase("APPROVE") && isDepositAccountResource();
+    }
+ 
+    public boolean isUndoApprovalOfDepositAccountApplication() {
+        return this.actionName.equalsIgnoreCase("APPROVALUNDO") && isDepositAccountResource();
+    }
+    
+    //Account transaction actions
+
+    public boolean isDepositAccountDeposit() {
+        return this.actionName.equalsIgnoreCase("DEPOSIT") && isDepositAccountResource();
+    }
+    
+    public boolean isDepositAccountWithdrawal() {
+        return this.actionName.equalsIgnoreCase("WITHDRAWAL") && isDepositAccountResource();
+    }
+ 
+    public boolean isDepositAccountActivation() {
+        return this.actionName.equalsIgnoreCase("ACTIVATE") && isDepositAccountResource();
+    }
+    
+    public boolean isDepositAccountInterestCalculation() {
+        return this.actionName.equalsIgnoreCase("CALCULATEINTEREST") && isDepositAccountResource();
+    }
+    
+    public boolean isDepositAccountInterestPosting() {
+        return this.actionName.equalsIgnoreCase("POSTINTEREST") && isDepositAccountResource();
+    }
+    
+    public boolean isDepositAccountUndoTransaction() {
+        return this.actionName.equalsIgnoreCase("UNDOTRANSACTION") && isDepositAccountResource();
+    }
+
+    public boolean isAdjustDeopsitAccountTransaction() {
+        return this.actionName.equalsIgnoreCase("ADJUSTTRANSACTION") && isDepositAccountResource();
+    }
+    
+    public boolean isDepositAccountClose() {
+        return this.actionName.equalsIgnoreCase("CLOSE") && isDepositAccountResource();
+    }
+    
+    // End - Deposit accounts
+    
+    public DepositAccountType depositAccountType(){
+        return this.depositAccountType;
     }
 }
