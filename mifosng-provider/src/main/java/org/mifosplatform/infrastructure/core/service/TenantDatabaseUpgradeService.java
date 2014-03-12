@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.googlecode.flyway.core.Flyway;
 
+
 /**
  * A service that picks up on tenants that are configured to auto-update their
  * specific schema on application startup.
@@ -35,6 +36,7 @@ public class TenantDatabaseUpgradeService {
         final List<MifosPlatformTenant> tenants = this.tenantDetailsService.findAllTenants();
         for (final MifosPlatformTenant tenant : tenants) {
             if (tenant.isAutoUpdateEnabled()) {
+            	
                 final Flyway flyway = new Flyway();
                 flyway.setDataSource(tenant.databaseURL(), tenant.getSchemaUsername(), tenant.getSchemaPassword());
                 flyway.setLocations("sql");
