@@ -88,7 +88,7 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
     @Temporal(TemporalType.DATE)
     private Date lastTimePasswordUpdated;
 
-    public static AppUser fromJson(final Office userOffice, final Set<Role> allRoles, final JsonCommand command) {
+    public static AppUser fromJson(final Office userOffice,final Staff linkedStaff, final Set<Role> allRoles, final JsonCommand command) {
 
         final String username = command.stringValueOfParameterNamed("username");
         String password = command.stringValueOfParameterNamed("password");
@@ -112,8 +112,8 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
         final String email = command.stringValueOfParameterNamed("email");
         final String firstname = command.stringValueOfParameterNamed("firstname");
         final String lastname = command.stringValueOfParameterNamed("lastname");
-
-        return new AppUser(userOffice, user, allRoles, email, firstname, lastname);
+         
+        return new AppUser(userOffice, user, allRoles, email, firstname, lastname, linkedStaff);
     }
 
     protected AppUser() {
@@ -123,7 +123,7 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
     }
 
     public AppUser(final Office office, final User user, final Set<Role> roles, final String email, final String firstname,
-            final String lastname) {
+            final String lastname, final Staff staff) {
         this.office = office;
         this.email = email.trim();
         this.username = user.getUsername().trim();
@@ -136,7 +136,8 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
         this.enabled = user.isEnabled();
         this.roles = roles;
         this.firstTimeLoginRemaining = true;
-       this.lastTimePasswordUpdated = DateUtils.getDateOfTenant();
+        this.lastTimePasswordUpdated = DateUtils.getDateOfTenant();
+        this.staff = staff;
     }
 
     public EnumOptionData organisationalRoleData() {
