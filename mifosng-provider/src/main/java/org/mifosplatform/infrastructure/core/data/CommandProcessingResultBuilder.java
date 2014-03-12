@@ -90,5 +90,6 @@ public class CommandProcessingResultBuilder {
         this.rollbackTransaction = this.rollbackTransaction || rollbackTransaction;
         return this;
     }
+    
 
 }
