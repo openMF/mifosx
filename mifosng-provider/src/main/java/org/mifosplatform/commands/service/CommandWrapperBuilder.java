@@ -27,7 +27,7 @@ public class CommandWrapperBuilder {
     private Long supportedEntityId;
     private Long productId;
     private Long templateId;
-
+    
     public CommandWrapper build() {
         return new CommandWrapper(this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId, this.actionName,
                 this.entityName, this.entityId, this.subentityId, this.codeId, this.supportedEntityType, this.supportedEntityId, this.href,

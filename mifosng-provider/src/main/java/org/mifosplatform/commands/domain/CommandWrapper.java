@@ -27,7 +27,7 @@ public class CommandWrapper {
     private final Long supportedEntityId;
     private final Long productId;
     private Long templateId;
-
+    
     public static CommandWrapper wrap(final String actionName, final String entityName, final Long resourceId, final Long subresourceId) {
         return new CommandWrapper(null, actionName, entityName, resourceId, subresourceId, null, null);
     }
@@ -187,7 +187,7 @@ public class CommandWrapper {
     public Long getProductId() {
         return this.productId;
     }
-
+    
     public boolean isUpdate() {
         // permissions resource has special update which involves no resource.
         return isPermissionResource() && isUpdateOperation() || isCurrencyResource() && isUpdateOperation() || isCacheResource()
