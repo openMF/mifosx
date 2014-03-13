@@ -35,6 +35,7 @@ import org.mifosplatform.useradministration.domain.AppUserRepository;
 import org.mifosplatform.useradministration.domain.Role;
 import org.mifosplatform.useradministration.domain.RoleRepository;
 import org.mifosplatform.useradministration.domain.UserDomainService;
+import org.mifosplatform.useradministration.exception.OfficeIdMismatchException;
 import org.mifosplatform.useradministration.exception.PasswordPreviouslyUsedException;
 import org.mifosplatform.useradministration.exception.RoleNotFoundException;
 import org.mifosplatform.useradministration.exception.UserNotFoundException;
@@ -97,15 +98,21 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             final Office userOffice = this.officeRepository.findOne(officeId);
             if (userOffice == null) { throw new OfficeNotFoundException(officeId); }
 
-            final String staffIdParamName = "staffId";
-            final Long staffId = command.longValueOfParameterNamed(staffIdParamName);
-            final Staff linkedStaff = this.staffRepository.findOne(staffId);
-            if(linkedStaff == null) {throw new StaffNotFoundException(staffId);};
-            
             final String[] roles = command.arrayValueOfParameterNamed("roles");
             final Set<Role> allRoles = assembleSetOfRoles(roles);
 
-            final AppUser appUser = AppUser.fromJson(userOffice, linkedStaff, allRoles, command);
+            AppUser appUser = AppUser.fromJson(userOffice, allRoles, command);                
+
+            final String staffIdParamName = "staffId";
+            final Long staffId = command.longValueOfParameterNamed(staffIdParamName);
+            
+            if(staffId != null) {
+                final Staff linkedStaff = this.staffRepository.findOne(staffId);
+                if(linkedStaff == null) {throw new StaffNotFoundException(staffId);};
+                if(linkedStaff.officeId() != userOffice.getId()) {throw new OfficeIdMismatchException(linkedStaff.officeId(), userOffice.getId());}
+                appUser  = AppUser.fromJson(userOffice, linkedStaff, allRoles, command);
+            } 
+
             final Boolean sendPasswordToEmail = command.booleanObjectValueOfParameterNamed("sendPasswordToEmail");
             this.userDomainService.create(appUser, sendPasswordToEmail);
 
@@ -113,7 +120,6 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
                     .withCommandId(command.commandId()) //
                     .withEntityId(appUser.getId()) //
                     .withOfficeId(userOffice.getId()) //
-                    .withStaffId(linkedStaff.getId()) //
                     .build();
         } catch (final DataIntegrityViolationException dve) {
             handleDataIntegrityIssues(command, dve);
