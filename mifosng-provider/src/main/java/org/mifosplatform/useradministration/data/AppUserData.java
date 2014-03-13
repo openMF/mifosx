@@ -30,7 +30,7 @@ public class AppUserData {
 
     public static AppUserData template(final AppUserData user, final Collection<OfficeData> officesForDropdown) {
         return new AppUserData(user.id, user.username, user.email, user.officeId, user.officeName, user.firstname, user.lastname,
-                user.availableRoles, user.selectedRoles, officesForDropdown, null);
+                user.availableRoles, user.selectedRoles, officesForDropdown, user.staffId);
     }
 
     public static AppUserData template(final Collection<OfficeData> offices, final Collection<RoleData> availableRoles) {

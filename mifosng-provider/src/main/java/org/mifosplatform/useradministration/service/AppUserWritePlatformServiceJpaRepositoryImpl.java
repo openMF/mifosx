@@ -113,6 +113,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
                     .withCommandId(command.commandId()) //
                     .withEntityId(appUser.getId()) //
                     .withOfficeId(userOffice.getId()) //
+                    .withStaffId(linkedStaff.getId()) //
                     .build();
         } catch (final DataIntegrityViolationException dve) {
             handleDataIntegrityIssues(command, dve);
