@@ -215,8 +215,10 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
             }
         }
 
-        // change client group membership
-        client.getGroups().remove(sourceGroup);
+        // change client group membership if only source group and destination are not the same
+        if(!sourceGroup.getId().equals(destinationGroup.getId())) {
+            client.getGroups().remove(sourceGroup);
+        }
 
     }
 
