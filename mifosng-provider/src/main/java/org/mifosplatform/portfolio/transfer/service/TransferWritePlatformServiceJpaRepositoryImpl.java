@@ -191,8 +191,12 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
          * loans
          **/
         final Staff destinationGroupLoanOfficer = destinationGroup.getStaff();
-        if (destinationGroupLoanOfficer != null) {
-            client.updateStaff(destinationGroupLoanOfficer);
+        if(!sourceGroup.getId().equals(destinationGroup.getId())) {
+            if (destinationGroupLoanOfficer != null) {
+                client.updateStaff(destinationGroupLoanOfficer);
+            }
+        }else{
+            client.updateStaff(newLoanOfficer);
         }
 
         client.getGroups().add(destinationGroup);
