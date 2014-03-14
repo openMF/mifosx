@@ -43,8 +43,8 @@ public class AppUserData {
 
     public static AppUserData instance(final Long id, final String username, final String email, final Long officeId,
             final String officeName, final String firstname, final String lastname, final Collection<RoleData> availableRoles,
-            final Collection<RoleData> selectedRoles) {
-        return new AppUserData(id, username, email, officeId, officeName, firstname, lastname, availableRoles, selectedRoles, null, null);
+            final Collection<RoleData> selectedRoles, final Long staffId) {
+        return new AppUserData(id, username, email, officeId, officeName, firstname, lastname, availableRoles, selectedRoles, null, staffId);
     }
 
     private AppUserData(final Long id, final String username, final String email, final Long officeId, final String officeName,
