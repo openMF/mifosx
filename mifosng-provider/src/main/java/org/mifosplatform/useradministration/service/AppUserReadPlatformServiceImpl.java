@@ -109,7 +109,7 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
         availableRoles.removeAll(selectedUserRoles);
 
         return AppUserData.instance(user.getId(), user.getUsername(), user.getEmail(), user.getOffice().getId(),
-                user.getOffice().getName(), user.getFirstname(), user.getLastname(), availableRoles, selectedUserRoles);
+                user.getOffice().getName(), user.getFirstname(), user.getLastname(), availableRoles, selectedUserRoles, user.getStaffId());
     }
 
     private static final class AppUserMapper implements RowMapper<AppUserData> {
@@ -130,15 +130,16 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
             final String email = rs.getString("email");
             final Long officeId = JdbcSupport.getLong(rs, "officeId");
             final String officeName = rs.getString("officeName");
+            final Long staffId = JdbcSupport.getLong(rs, "staffId");
 
             final Collection<RoleData> selectedRoles = this.roleReadPlatformService.retrieveAppUserRoles(id);
 
-            return AppUserData.instance(id, username, email, officeId, officeName, firstname, lastname, null, selectedRoles);
+            return AppUserData.instance(id, username, email, officeId, officeName, firstname, lastname, null, selectedRoles, staffId);
         }
 
         public String schema() {
             return " u.id as id, u.username as username, u.firstname as firstname, u.lastname as lastname, u.email as email,"
-                    + " u.office_id as officeId, o.name as officeName from m_appuser u "
+                    + " u.office_id as officeId, o.name as officeName, u.staff_id as staffId from m_appuser u "
                     + " join m_office o on o.id = u.office_id where o.hierarchy like ? and u.is_deleted=0 order by u.username";
         }
 

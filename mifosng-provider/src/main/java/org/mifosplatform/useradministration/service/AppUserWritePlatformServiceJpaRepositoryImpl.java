@@ -24,6 +24,9 @@ import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.office.domain.OfficeRepository;
 import org.mifosplatform.organisation.office.exception.OfficeNotFoundException;
+import org.mifosplatform.organisation.staff.domain.Staff;
+import org.mifosplatform.organisation.staff.domain.StaffRepository;
+import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
 import org.mifosplatform.useradministration.api.AppUserApiConstant;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.mifosplatform.useradministration.domain.AppUserPreviousPassword;
@@ -32,6 +35,7 @@ import org.mifosplatform.useradministration.domain.AppUserRepository;
 import org.mifosplatform.useradministration.domain.Role;
 import org.mifosplatform.useradministration.domain.RoleRepository;
 import org.mifosplatform.useradministration.domain.UserDomainService;
+import org.mifosplatform.useradministration.exception.OfficeIdMismatchException;
 import org.mifosplatform.useradministration.exception.PasswordPreviouslyUsedException;
 import org.mifosplatform.useradministration.exception.RoleNotFoundException;
 import org.mifosplatform.useradministration.exception.UserNotFoundException;
@@ -60,12 +64,13 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
     private final RoleRepository roleRepository;
     private final UserDataValidator fromApiJsonDeserializer;
     private final AppUserPreviousPasswordRepository appUserPreviewPasswordRepository;
+    private final StaffRepository staffRepository;
 
     @Autowired
     public AppUserWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final AppUserRepository appUserRepository,
             final UserDomainService userDomainService, final OfficeRepository officeRepository, final RoleRepository roleRepository,
             final PlatformPasswordEncoder platformPasswordEncoder, final UserDataValidator fromApiJsonDeserializer,
-            final AppUserPreviousPasswordRepository appUserPreviewPasswordRepository) {
+            final AppUserPreviousPasswordRepository appUserPreviewPasswordRepository, final StaffRepository staffRepository) {
         this.context = context;
         this.appUserRepository = appUserRepository;
         this.userDomainService = userDomainService;
@@ -74,6 +79,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
         this.platformPasswordEncoder = platformPasswordEncoder;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.appUserPreviewPasswordRepository = appUserPreviewPasswordRepository;
+        this.staffRepository = staffRepository;
     }
 
     @Transactional
@@ -95,7 +101,18 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             final String[] roles = command.arrayValueOfParameterNamed("roles");
             final Set<Role> allRoles = assembleSetOfRoles(roles);
 
-            final AppUser appUser = AppUser.fromJson(userOffice, allRoles, command);
+            AppUser appUser = AppUser.fromJson(userOffice, allRoles, command);                
+
+            final String staffIdParamName = "staffId";
+            final Long staffId = command.longValueOfParameterNamed(staffIdParamName);
+            
+            if(staffId != null) {
+                final Staff linkedStaff = this.staffRepository.findOne(staffId);
+                if(linkedStaff == null) {throw new StaffNotFoundException(staffId);};
+                if(linkedStaff.officeId() != userOffice.getId()) {throw new OfficeIdMismatchException(linkedStaff.officeId(), userOffice.getId());}
+                appUser  = AppUser.fromJson(userOffice, linkedStaff, allRoles, command);
+            } 
+
             final Boolean sendPasswordToEmail = command.booleanObjectValueOfParameterNamed("sendPasswordToEmail");
             this.userDomainService.create(appUser, sendPasswordToEmail);
 
@@ -145,6 +162,13 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
                 if (office == null) { throw new OfficeNotFoundException(officeId); }
 
                 userToUpdate.changeOffice(office);
+            }
+            
+            if (changes.containsKey("staffId")) {
+                final Long staffId = (Long) changes.get("staffId");
+                final Staff linkedStaff = this.staffRepository.findOne(staffId);
+                if (linkedStaff == null) { throw new StaffNotFoundException(staffId); }
+                userToUpdate.changeStaff(linkedStaff);
             }
 
             if (changes.containsKey("roles")) {
@@ -225,6 +249,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
                 allRoles.add(role);
             }
         }
+        
 
         return allRoles;
     }
