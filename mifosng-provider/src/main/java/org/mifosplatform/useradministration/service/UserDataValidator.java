@@ -114,6 +114,11 @@ public final class UserDataValidator {
             baseDataValidator.reset().parameter("officeId").value(officeId).notNull().integerGreaterThanZero();
         }
 
+        if(this.fromApiJsonHelper.parameterExists("staffId", element)) {
+            final Long staffId = this.fromApiJsonHelper.extractLongNamed("staffId", element);
+            baseDataValidator.reset().parameter("staffId").value(staffId).notNull().integerGreaterThanZero();            
+        }
+        
         if (this.fromApiJsonHelper.parameterExists("username", element)) {
             final String username = this.fromApiJsonHelper.extractStringNamed("username", element);
             baseDataValidator.reset().parameter("username").value(username).notBlank().notExceedingLengthOf(100);

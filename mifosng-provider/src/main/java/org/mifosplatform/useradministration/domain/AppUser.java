@@ -24,6 +24,8 @@ import org.mifosplatform.infrastructure.security.service.PlatformPasswordEncoder
 import org.mifosplatform.infrastructure.security.service.RandomPasswordGenerator;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
+import org.mifosplatform.organisation.staff.exception.NoStaffLinkedException;
+import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.domain.AbstractPersistable;
@@ -143,6 +145,23 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
          
         return new AppUser(userOffice, user, allRoles, email, firstname, lastname);
     }
+    
+    public AppUser(final Office office, final User user, final Set<Role> roles, final String email, final String firstname,
+            final String lastname) {
+        this.office = office;
+        this.email = email.trim();
+        this.username = user.getUsername().trim();
+        this.firstname = firstname.trim();
+        this.lastname = lastname.trim();
+        this.password = user.getPassword().trim();
+        this.accountNonExpired = user.isAccountNonExpired();
+        this.accountNonLocked = user.isAccountNonLocked();
+        this.credentialsNonExpired = user.isCredentialsNonExpired();
+        this.enabled = user.isEnabled();
+        this.roles = roles;
+        this.firstTimeLoginRemaining = true;
+        this.lastTimePasswordUpdated = DateUtils.getDateOfTenant();
+    }
 
     protected AppUser() {
         this.accountNonLocked = false;
@@ -168,22 +187,7 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
         this.staff = staff;
     }
     
-    public AppUser(final Office office, final User user, final Set<Role> roles, final String email, final String firstname,
-            final String lastname) {
-        this.office = office;
-        this.email = email.trim();
-        this.username = user.getUsername().trim();
-        this.firstname = firstname.trim();
-        this.lastname = lastname.trim();
-        this.password = user.getPassword().trim();
-        this.accountNonExpired = user.isAccountNonExpired();
-        this.accountNonLocked = user.isAccountNonLocked();
-        this.credentialsNonExpired = user.isCredentialsNonExpired();
-        this.enabled = user.isEnabled();
-        this.roles = roles;
-        this.firstTimeLoginRemaining = true;
-        this.lastTimePasswordUpdated = DateUtils.getDateOfTenant();
-    }
+
 
     public EnumOptionData organisationalRoleData() {
         EnumOptionData organisationalRole = null;
@@ -202,6 +206,10 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
 
     public void changeOffice(final Office differentOffice) {
         this.office = differentOffice;
+    }
+    
+    public void changeStaff(final Staff differentStaff) {
+        this.staff = differentStaff;
     }
 
     public void updateRoles(final Set<Role> allRoles) {
@@ -239,6 +247,18 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
         if (command.isChangeInLongParameterNamed(officeIdParamName, this.office.getId())) {
             final Long newValue = command.longValueOfParameterNamed(officeIdParamName);
             actualChanges.put(officeIdParamName, newValue);
+        }
+        
+        final String staffIdParamName = "staffId";
+        if(command.hasParameter(staffIdParamName)) {      
+            try {
+                if (command.isChangeInLongParameterNamed(staffIdParamName, this.staff.getId())) {
+                    final Long newValue = command.longValueOfParameterNamed(staffIdParamName);
+                    actualChanges.put(staffIdParamName, newValue);
+                }
+            }catch(NullPointerException npe) {
+                throw new NoStaffLinkedException(this.getId());
+            }
         }
 
         final String rolesParamName = "roles";
@@ -370,6 +390,10 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
 
     public Office getOffice() {
         return this.office;
+    }
+    
+    public Staff getStaff() {
+        return this.staff;
     }
 
     public Date getLastTimePasswordUpdated(){ return this.lastTimePasswordUpdated; }
