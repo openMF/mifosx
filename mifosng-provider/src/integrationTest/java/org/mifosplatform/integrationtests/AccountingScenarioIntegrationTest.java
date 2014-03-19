@@ -1,10 +1,13 @@
 package org.mifosplatform.integrationtests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.HashMap;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mifosplatform.integrationtests.common.ClientHelper;
+import org.mifosplatform.integrationtests.common.CommonConstants;
 import org.mifosplatform.integrationtests.common.Utils;
 import org.mifosplatform.integrationtests.common.accounting.Account;
 import org.mifosplatform.integrationtests.common.accounting.AccountHelper;
@@ -14,6 +17,9 @@ import org.mifosplatform.integrationtests.common.loans.LoanApplicationTestBuilde
 import org.mifosplatform.integrationtests.common.loans.LoanProductTestBuilder;
 import org.mifosplatform.integrationtests.common.loans.LoanStatusChecker;
 import org.mifosplatform.integrationtests.common.loans.LoanTransactionHelper;
+import org.mifosplatform.integrationtests.common.savings.SavingsAccountHelper;
+import org.mifosplatform.integrationtests.common.savings.SavingsProductHelper;
+import org.mifosplatform.integrationtests.common.savings.SavingsStatusChecker;
 
 import com.jayway.restassured.builder.RequestSpecBuilder;
 import com.jayway.restassured.builder.ResponseSpecBuilder;
@@ -35,8 +41,17 @@ public class AccountingScenarioIntegrationTest {
     private final String LP_INTEREST_RATE = "1";
     private final String EXPECTED_DISBURSAL_DATE = "04 March 2011";
     private final String LOAN_APPLICATION_SUBMISSION_DATE = "3 March 2011";
+    private final String TRANSACTION_DATE = "10 January 2013";
     private final String LOAN_TERM_FREQUENCY = "10";
     private final String INDIVIDUAL_LOAN = "individual";
+    public static final String ACCOUNT_TYPE_INDIVIDUAL = "INDIVIDUAL";
+    public static final String MINIMUM_OPENING_BALANCE = "1000.0";
+    public static final String DEPOSIT_AMOUNT = "7000";
+    public static final String WITHDRAWAL_AMOUNT = "3000";
+
+    Float SP_OPENING_BALANCE = new Float(MINIMUM_OPENING_BALANCE);
+    Float SP_DEPOSIT_AMOUNT = new Float(DEPOSIT_AMOUNT);
+    Float SP_WITHDRAWAL_AMOUNT = new Float(WITHDRAWAL_AMOUNT);
 
     private final String REPAYMENT_DATE[] = { "", "04 May 2011", "04 July 2011", "04 September 2011", "04 November 2011", "04 January 2012" };
     private final Float REPAYMENT_AMOUNT[] = { .0f, 2200.0f, 3000.0f, 900.0f, 2000.0f, 2500.0f };
@@ -45,6 +60,7 @@ public class AccountingScenarioIntegrationTest {
     private LoanTransactionHelper loanTransactionHelper;
     private AccountHelper accountHelper;
     private JournalEntryHelper journalEntryHelper;
+    private SavingsAccountHelper savingsAccountHelper;
 
     @Before
     public void setup() {
@@ -179,5 +195,78 @@ public class AccountingScenarioIntegrationTest {
                 .withExpectedDisbursementDate(this.EXPECTED_DISBURSAL_DATE).withSubmittedOnDate(this.LOAN_APPLICATION_SUBMISSION_DATE)
                 .withLoanType(this.INDIVIDUAL_LOAN).build(clientID.toString(), loanProductID.toString());
         return this.loanTransactionHelper.getLoanId(loanApplicationJSON);
+    }
+
+    @Test
+    public void checkAccountingWithSavingsFlow() {
+        this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+
+        final Account assetAccount = this.accountHelper.createAssetAccount();
+        final Account incomeAccount = this.accountHelper.createIncomeAccount();
+        final Account expenseAccount = this.accountHelper.createExpenseAccount();
+        final Account liabilityAccount = this.accountHelper.createLiabilityAccount();
+
+        final Integer savingsProductID = createSavingsProduct(MINIMUM_OPENING_BALANCE, assetAccount, incomeAccount, expenseAccount,
+                liabilityAccount);
+
+        final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec, this.DATE_OF_JOINING);
+        final Integer savingsID = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+
+        HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsID);
+        SavingsStatusChecker.verifySavingsIsPending(savingsStatusHashMap);
+
+        savingsStatusHashMap = this.savingsAccountHelper.approveSavings(savingsID);
+        SavingsStatusChecker.verifySavingsIsApproved(savingsStatusHashMap);
+
+        savingsStatusHashMap = this.savingsAccountHelper.activateSavings(savingsID);
+        SavingsStatusChecker.verifySavingsIsActive(savingsStatusHashMap);
+
+        // Checking initial Account entries.
+        final JournalEntry[] assetAccountInitialEntry = { new JournalEntry(this.SP_OPENING_BALANCE, JournalEntry.TransactionType.DEBIT) };
+        final JournalEntry[] liablilityAccountInitialEntry = { new JournalEntry(this.SP_OPENING_BALANCE,
+                JournalEntry.TransactionType.CREDIT) };
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, this.TRANSACTION_DATE, assetAccountInitialEntry);
+        this.journalEntryHelper.checkJournalEntryForLiablityAccount(liabilityAccount, this.TRANSACTION_DATE, liablilityAccountInitialEntry);
+
+        // First Transaction-Deposit
+        this.savingsAccountHelper.depositToSavingsAccount(savingsID, DEPOSIT_AMOUNT, SavingsAccountHelper.TRANSACTION_DATE,
+                CommonConstants.RESPONSE_RESOURCE_ID);
+        Float openingBalance = SP_OPENING_BALANCE + SP_DEPOSIT_AMOUNT;
+        HashMap summary = this.savingsAccountHelper.getSavingsSummary(savingsID);
+        assertEquals("Verifying opening Balance", openingBalance, summary.get("accountBalance"));
+
+        System.out.println("Verifying Journal Entry after the Transaction Deposit");
+        final JournalEntry[] assetAccountFirstTransactionEntry = { new JournalEntry(this.SP_DEPOSIT_AMOUNT,
+                JournalEntry.TransactionType.DEBIT) };
+        final JournalEntry[] liablilityAccountFirstTransactionEntry = { new JournalEntry(this.SP_DEPOSIT_AMOUNT,
+                JournalEntry.TransactionType.CREDIT) };
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, this.TRANSACTION_DATE, assetAccountFirstTransactionEntry);
+        this.journalEntryHelper.checkJournalEntryForLiablityAccount(liabilityAccount, this.TRANSACTION_DATE,
+                liablilityAccountFirstTransactionEntry);
+
+        // Second Transaction-Withdrawal
+        this.savingsAccountHelper.withdrawalFromSavingsAccount(savingsID, WITHDRAWAL_AMOUNT, SavingsAccountHelper.TRANSACTION_DATE,
+                CommonConstants.RESPONSE_RESOURCE_ID);
+        openingBalance -= SP_WITHDRAWAL_AMOUNT;
+        summary = this.savingsAccountHelper.getSavingsSummary(savingsID);
+        assertEquals("Verifying opening Balance", openingBalance, summary.get("accountBalance"));
+
+        System.out.println("Verifying Journal Entry after the Transaction Withdrawal");
+        final JournalEntry[] assetAccountSecondTransactionEntry = { new JournalEntry(this.SP_WITHDRAWAL_AMOUNT,
+                JournalEntry.TransactionType.CREDIT) };
+        final JournalEntry[] liablilityAccountSecondTransactionEntry = { new JournalEntry(this.SP_WITHDRAWAL_AMOUNT,
+                JournalEntry.TransactionType.DEBIT) };
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, this.TRANSACTION_DATE, assetAccountSecondTransactionEntry);
+        this.journalEntryHelper.checkJournalEntryForLiablityAccount(liabilityAccount, this.TRANSACTION_DATE,
+                liablilityAccountSecondTransactionEntry);
+    }
+
+    private Integer createSavingsProduct(final String minOpenningBalance, final Account... accounts) {
+        System.out.println("------------------------------CREATING NEW SAVINGS PRODUCT ---------------------------------------");
+        final String savingsProductJSON = new SavingsProductHelper().withInterestCompoundingPeriodTypeAsDaily() //
+                .withInterestPostingPeriodTypeAsMonthly() //
+                .withInterestCalculationPeriodTypeAsDailyBalance() //
+                .withMinimumOpenningBalance(minOpenningBalance).withAccountingRuleAsCashBased(accounts).build();
+        return SavingsProductHelper.createSavingsProduct(savingsProductJSON, requestSpec, responseSpec);
     }
 }
