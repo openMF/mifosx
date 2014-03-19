@@ -33,6 +33,10 @@ public class JournalEntryHelper {
     public void checkJournalEntryForIncomeAccount(final Account incomeAccount, final String date, final JournalEntry accountEntries) {
         checkJournalEntry(incomeAccount, date, accountEntries);
     }
+    
+    public void checkJournalEntryForLiablityAccount(final Account liabilityAccount, final String date, final JournalEntry... accountEntries) {
+        checkJournalEntry(liabilityAccount, date, accountEntries);
+    }
 
     private String getEntryValueFromJournalEntry(final ArrayList<HashMap> entryResponse, final int entryNumber) {
         final HashMap map = (HashMap) entryResponse.get(entryNumber).get("entryType");
