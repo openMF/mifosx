@@ -26,6 +26,7 @@ import org.mifosplatform.organisation.office.domain.OfficeRepository;
 import org.mifosplatform.organisation.office.exception.OfficeNotFoundException;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepository;
+import org.mifosplatform.organisation.staff.domain.StaffRepositoryWrapper;
 import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
 import org.mifosplatform.useradministration.api.AppUserApiConstant;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -64,13 +65,13 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
     private final RoleRepository roleRepository;
     private final UserDataValidator fromApiJsonDeserializer;
     private final AppUserPreviousPasswordRepository appUserPreviewPasswordRepository;
-    private final StaffRepository staffRepository;
+    private final StaffRepositoryWrapper staffRepositoryWrapper;
 
     @Autowired
     public AppUserWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final AppUserRepository appUserRepository,
             final UserDomainService userDomainService, final OfficeRepository officeRepository, final RoleRepository roleRepository,
             final PlatformPasswordEncoder platformPasswordEncoder, final UserDataValidator fromApiJsonDeserializer,
-            final AppUserPreviousPasswordRepository appUserPreviewPasswordRepository, final StaffRepository staffRepository) {
+            final AppUserPreviousPasswordRepository appUserPreviewPasswordRepository, final StaffRepositoryWrapper staffRepositoryWrapper) {
         this.context = context;
         this.appUserRepository = appUserRepository;
         this.userDomainService = userDomainService;
@@ -79,7 +80,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
         this.platformPasswordEncoder = platformPasswordEncoder;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.appUserPreviewPasswordRepository = appUserPreviewPasswordRepository;
-        this.staffRepository = staffRepository;
+        this.staffRepositoryWrapper = staffRepositoryWrapper;
     }
 
     @Transactional
@@ -101,17 +102,19 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             final String[] roles = command.arrayValueOfParameterNamed("roles");
             final Set<Role> allRoles = assembleSetOfRoles(roles);
 
-            AppUser appUser = AppUser.fromJson(userOffice, allRoles, command);                
+            AppUser appUser;               
 
             final String staffIdParamName = "staffId";
             final Long staffId = command.longValueOfParameterNamed(staffIdParamName);
             
             if(staffId != null) {
-                final Staff linkedStaff = this.staffRepository.findOne(staffId);
-                if(linkedStaff == null) {throw new StaffNotFoundException(staffId);};
+                final Staff linkedStaff = this.staffRepositoryWrapper.findOneWithNotFoundDetection(staffId);
                 if(linkedStaff.officeId() != userOffice.getId()) {throw new OfficeIdMismatchException(linkedStaff.officeId(), userOffice.getId());}
-                appUser  = AppUser.fromJson(userOffice, linkedStaff, allRoles, command);
-            } 
+                appUser = AppUser.fromJson(userOffice,linkedStaff, allRoles, command);                
+
+            } else {                
+                appUser  = AppUser.fromJson(userOffice, null, allRoles, command);
+            }
 
             final Boolean sendPasswordToEmail = command.booleanObjectValueOfParameterNamed("sendPasswordToEmail");
             this.userDomainService.create(appUser, sendPasswordToEmail);
@@ -166,8 +169,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             
             if (changes.containsKey("staffId")) {
                 final Long staffId = (Long) changes.get("staffId");
-                final Staff linkedStaff = this.staffRepository.findOne(staffId);
-                if (linkedStaff == null) { throw new StaffNotFoundException(staffId); }
+                final Staff linkedStaff = this.staffRepositoryWrapper.findOneWithNotFoundDetection(staffId);
                 userToUpdate.changeStaff(linkedStaff);
             }
 

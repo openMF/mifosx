@@ -28,8 +28,6 @@ public class CommandWrapper {
     private final Long productId;
     private Long templateId;
     
-    private Long staffId;
-
     public static CommandWrapper wrap(final String actionName, final String entityName, final Long resourceId, final Long subresourceId) {
         return new CommandWrapper(null, actionName, entityName, resourceId, subresourceId, null, null);
     }
@@ -64,7 +62,7 @@ public class CommandWrapper {
     public CommandWrapper(final Long officeId, final Long groupId, final Long clientId, final Long loanId, final Long savingsId,
             final String actionName, final String entityName, final Long entityId, final Long subentityId, final Long codeId,
             final String supportedEntityType, final Long supportedEntityId, final String href, final String json,
-            final String transactionId, final Long productId, final Long templateId, final Long staffId) {
+            final String transactionId, final Long productId, final Long templateId) {
         this.commandId = null;
         this.officeId = officeId;
         this.groupId = groupId;
@@ -84,7 +82,6 @@ public class CommandWrapper {
         this.transactionId = transactionId;
         this.productId = productId;
         this.templateId = templateId;
-        this.staffId = staffId;
     }
 
     public Long commandId() {
@@ -189,10 +186,6 @@ public class CommandWrapper {
 
     public Long getProductId() {
         return this.productId;
-    }
-
-    public Long getStaffId(){
-    	return this.staffId;
     }
     
     public boolean isUpdate() {

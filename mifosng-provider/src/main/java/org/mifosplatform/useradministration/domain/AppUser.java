@@ -24,8 +24,10 @@ import org.mifosplatform.infrastructure.security.service.PlatformPasswordEncoder
 import org.mifosplatform.infrastructure.security.service.RandomPasswordGenerator;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
+import org.mifosplatform.organisation.staff.domain.StaffRepositoryWrapper;
 import org.mifosplatform.organisation.staff.exception.NoStaffLinkedException;
 import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
+import org.mifosplatform.useradministration.exception.OfficeIdMismatchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.domain.AbstractPersistable;
@@ -90,7 +92,7 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
     @Temporal(TemporalType.DATE)
     private Date lastTimePasswordUpdated;
 
-    public static AppUser fromJson(final Office userOffice,final Staff linkedStaff, final Set<Role> allRoles, final JsonCommand command) {
+    public static AppUser fromJson(final Office userOffice, final Staff linkedStaff, final Set<Role> allRoles, final JsonCommand command) {
 
         final String username = command.stringValueOfParameterNamed("username");
         String password = command.stringValueOfParameterNamed("password");
@@ -113,55 +115,11 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
 
         final String email = command.stringValueOfParameterNamed("email");
         final String firstname = command.stringValueOfParameterNamed("firstname");
-        final String lastname = command.stringValueOfParameterNamed("lastname");
-         
+        final String lastname = command.stringValueOfParameterNamed("lastname");     
+
         return new AppUser(userOffice, user, allRoles, email, firstname, lastname, linkedStaff);
     }
     
-    public static AppUser fromJson(final Office userOffice, final Set<Role> allRoles, final JsonCommand command) {
-
-        final String username = command.stringValueOfParameterNamed("username");
-        String password = command.stringValueOfParameterNamed("password");
-        final Boolean sendPasswordToEmail = command.booleanObjectValueOfParameterNamed("sendPasswordToEmail");
-
-        if (sendPasswordToEmail.booleanValue()) {
-            password = new RandomPasswordGenerator(13).generate();
-        }
-
-        final boolean userEnabled = true;
-        final boolean userAccountNonExpired = true;
-        final boolean userCredentialsNonExpired = true;
-        final boolean userAccountNonLocked = true;
-
-        final Collection<SimpleGrantedAuthority> authorities = new ArrayList<SimpleGrantedAuthority>();
-        authorities.add(new SimpleGrantedAuthority("DUMMY_ROLE_NOT_USED_OR_PERSISTED_TO_AVOID_EXCEPTION"));
-
-        final User user = new User(username, password, userEnabled, userAccountNonExpired, userCredentialsNonExpired, userAccountNonLocked,
-                authorities);
-
-        final String email = command.stringValueOfParameterNamed("email");
-        final String firstname = command.stringValueOfParameterNamed("firstname");
-        final String lastname = command.stringValueOfParameterNamed("lastname");
-         
-        return new AppUser(userOffice, user, allRoles, email, firstname, lastname);
-    }
-    
-    public AppUser(final Office office, final User user, final Set<Role> roles, final String email, final String firstname,
-            final String lastname) {
-        this.office = office;
-        this.email = email.trim();
-        this.username = user.getUsername().trim();
-        this.firstname = firstname.trim();
-        this.lastname = lastname.trim();
-        this.password = user.getPassword().trim();
-        this.accountNonExpired = user.isAccountNonExpired();
-        this.accountNonLocked = user.isAccountNonLocked();
-        this.credentialsNonExpired = user.isCredentialsNonExpired();
-        this.enabled = user.isEnabled();
-        this.roles = roles;
-        this.firstTimeLoginRemaining = true;
-        this.lastTimePasswordUpdated = DateUtils.getDateOfTenant();
-    }
 
     protected AppUser() {
         this.accountNonLocked = false;

@@ -25,7 +25,6 @@ public class CommandProcessingResultBuilder {
     private Map<String, Object> changes;
     private Long productId;
     private boolean rollbackTransaction = false;
-    private Long staffId;
 
     public CommandProcessingResult build() {
         return CommandProcessingResult.fromDetails(this.commandId, this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId,
@@ -92,9 +91,5 @@ public class CommandProcessingResultBuilder {
         return this;
     }
     
-    public CommandProcessingResultBuilder withStaffId(final Long staffId) {
-        this.staffId = staffId;
-        return this;
-    }
 
 }
