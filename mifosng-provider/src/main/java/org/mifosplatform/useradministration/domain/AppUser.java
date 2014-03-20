@@ -7,34 +7,42 @@ package org.mifosplatform.useradministration.domain;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Date;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.UniqueConstraint;
 
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
+import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.security.domain.PlatformUser;
 import org.mifosplatform.infrastructure.security.exception.NoAuthorizationException;
 import org.mifosplatform.infrastructure.security.service.PlatformPasswordEncoder;
 import org.mifosplatform.infrastructure.security.service.RandomPasswordGenerator;
 import org.mifosplatform.organisation.office.domain.Office;
+import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.organisation.staff.domain.Staff;
-import org.mifosplatform.organisation.staff.domain.StaffRepositoryWrapper;
 import org.mifosplatform.organisation.staff.exception.NoStaffLinkedException;
-import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
-import org.mifosplatform.useradministration.exception.OfficeIdMismatchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
-import org.mifosplatform.infrastructure.core.service.DateUtils;
 
 
 @Entity
@@ -209,14 +217,16 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
         
         final String staffIdParamName = "staffId";
         if(command.hasParameter(staffIdParamName)) {      
-            try {
-                if (command.isChangeInLongParameterNamed(staffIdParamName, this.staff.getId())) {
+            if(this.staff==null) {        
+              final Long newValue = command.longValueOfParameterNamed(staffIdParamName);
+              actualChanges.put(staffIdParamName, newValue);
+            } else {
+                if (command.isChangeInLongParameterNamed(staffIdParamName, this.staff.getId())) {         
                     final Long newValue = command.longValueOfParameterNamed(staffIdParamName);
                     actualChanges.put(staffIdParamName, newValue);
-                }
-            }catch(NullPointerException npe) {
-                throw new NoStaffLinkedException(this.getId());
+                }  
             }
+            
         }
 
         final String rolesParamName = "roles";

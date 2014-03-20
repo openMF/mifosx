@@ -169,7 +169,12 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             
             if (changes.containsKey("staffId")) {
                 final Long staffId = (Long) changes.get("staffId");
-                final Staff linkedStaff = this.staffRepositoryWrapper.findOneWithNotFoundDetection(staffId);
+                final Staff linkedStaff;
+                if(staffId!=null) { 
+                    linkedStaff = this.staffRepositoryWrapper.findOneWithNotFoundDetection(staffId); 
+                } else { 
+                    linkedStaff = null;
+                }
                 userToUpdate.changeStaff(linkedStaff);
             }
 
