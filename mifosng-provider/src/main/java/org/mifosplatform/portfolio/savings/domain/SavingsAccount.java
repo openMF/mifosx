@@ -362,25 +362,28 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
             final LocalDate interestPostingTransactionDate = interestPostingPeriod.dateOfPostingTransaction();
             final Money interestEarnedToBePostedForPeriod = interestPostingPeriod.getInterestEarned();
+            
+            if (interestEarnedToBePostedForPeriod.isGreaterThanZero()) {
 
-            if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate)) {
+                if (!interestPostingTransactionDate.isAfter(interestPostingUpToDate)) {
 
-                interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
+                    interestPostedToDate = interestPostedToDate.plus(interestEarnedToBePostedForPeriod);
 
-                final SavingsAccountTransaction postingTransaction = findInterestPostingTransactionFor(interestPostingTransactionDate);
-                if (postingTransaction == null) {
-                    final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
-                            interestPostingTransactionDate, interestEarnedToBePostedForPeriod);
-                    this.transactions.add(newPostingTransaction);
-                    recalucateDailyBalanceDetails = true;
-                } else {
-                    final boolean correctionRequired = postingTransaction.hasNotAmount(interestEarnedToBePostedForPeriod);
-                    if (correctionRequired) {
-                        postingTransaction.reverse();
+                    final SavingsAccountTransaction postingTransaction = findInterestPostingTransactionFor(interestPostingTransactionDate);
+                    if (postingTransaction == null) {
                         final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                                 interestPostingTransactionDate, interestEarnedToBePostedForPeriod);
                         this.transactions.add(newPostingTransaction);
                         recalucateDailyBalanceDetails = true;
+                    } else {
+                        final boolean correctionRequired = postingTransaction.hasNotAmount(interestEarnedToBePostedForPeriod);
+                        if (correctionRequired) {
+                            postingTransaction.reverse();
+                            final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this,
+                                    office(), interestPostingTransactionDate, interestEarnedToBePostedForPeriod);
+                            this.transactions.add(newPostingTransaction);
+                            recalucateDailyBalanceDetails = true;
+                        }
                     }
                 }
             }
@@ -1162,6 +1165,10 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public Client getClient() {
         return this.client;
+    }
+
+    public BigDecimal getNominalAnnualInterestRate() {
+        return this.nominalAnnualInterestRate;
     }
 
     public Map<String, Object> approveApplication(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate) {
