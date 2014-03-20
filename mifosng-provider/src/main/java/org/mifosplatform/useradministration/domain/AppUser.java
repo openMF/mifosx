@@ -34,9 +34,7 @@ import org.mifosplatform.infrastructure.security.exception.NoAuthorizationExcept
 import org.mifosplatform.infrastructure.security.service.PlatformPasswordEncoder;
 import org.mifosplatform.infrastructure.security.service.RandomPasswordGenerator;
 import org.mifosplatform.organisation.office.domain.Office;
-import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.organisation.staff.domain.Staff;
-import org.mifosplatform.organisation.staff.exception.NoStaffLinkedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.domain.AbstractPersistable;
