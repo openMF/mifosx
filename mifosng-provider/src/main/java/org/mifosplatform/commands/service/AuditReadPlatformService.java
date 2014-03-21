@@ -19,6 +19,8 @@ public interface AuditReadPlatformService {
     Page<AuditData> retrievePaginatedAuditEntries(String extraCriteria, boolean includeJson, PaginationParameters parameters);
 
     Collection<AuditData> retrieveAllEntriesToBeChecked(String extraCriteria, boolean includeJson);
+    
+    Collection<AuditData> retrieveAuditEntry(Long auditId, String extraCriteria, boolean includeJson);
 
     AuditData retrieveAuditEntry(Long auditId);
 

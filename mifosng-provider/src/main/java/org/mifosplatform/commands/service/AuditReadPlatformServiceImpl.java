@@ -213,6 +213,21 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
 
         return retrieveEntries("makerchecker", updatedExtraCriteria, includeJson);
     }
+    
+    @Override
+    public Collection<AuditData> retrieveAuditEntry(Long auditId, String extraCriteria, boolean includeJson){
+    	String updatedExtraCriteria = "";
+        if (StringUtils.isNotBlank(extraCriteria)) {
+            updatedExtraCriteria = " where (" + extraCriteria + ")" + " and aud.processing_result_enum = 2 and aud.id = "+auditId;
+        } else {
+            updatedExtraCriteria = " where aud.processing_result_enum = 2 and aud.id = "+auditId;
+        }
+
+        updatedExtraCriteria += " order by aud.id";
+
+        return retrieveEntries("makerchecker", updatedExtraCriteria, includeJson);
+    	
+    }
 
     public Collection<AuditData> retrieveEntries(final String useType, final String extraCriteria, final boolean includeJson) {
 
