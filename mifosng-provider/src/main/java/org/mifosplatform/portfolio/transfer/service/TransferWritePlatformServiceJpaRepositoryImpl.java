@@ -191,8 +191,12 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
          * loans
          **/
         final Staff destinationGroupLoanOfficer = destinationGroup.getStaff();
-        if (destinationGroupLoanOfficer != null) {
-            client.updateStaff(destinationGroupLoanOfficer);
+        if(!sourceGroup.getId().equals(destinationGroup.getId())) {
+            if (destinationGroupLoanOfficer != null) {
+                client.updateStaff(destinationGroupLoanOfficer);
+            }
+        }else{
+            client.updateStaff(newLoanOfficer);
         }
 
         client.getGroups().add(destinationGroup);
@@ -215,8 +219,10 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
             }
         }
 
-        // change client group membership
-        client.getGroups().remove(sourceGroup);
+        // change client group membership if only source group and destination are not the same
+        if(!sourceGroup.getId().equals(destinationGroup.getId())) {
+            client.getGroups().remove(sourceGroup);
+        }
 
     }
 
