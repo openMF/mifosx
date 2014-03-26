@@ -90,7 +90,7 @@
 <body>
 	<div id="page-wrapper">
 		<div id="flybar">
-			<div id="nav-logo">1.19.0.RELEASE</div>
+			<div id="nav-logo">1.20.1.RELEASE</div>
 			<div class="flybar-nav">
 				<h2 class="flybar-button">Overview</h2>
 				<div class="flybar-menu-overview">
@@ -306,6 +306,218 @@
 			</div>
 
 			<div class="flybar-nav">
+				<h2 class="flybar-button">Savings</h2>
+				<div id="toc-menu-client" class="flybar-menu">
+					<div class="tocMatrix">
+						<table class=matrixHeading>
+							<tr class="matrixHeadingBG">
+								<td colspan=2 valign="top"><div class="matrixHeadingVerbs">
+										<table>
+											<tr>
+												<td>RESOURCES</td>
+											</tr>
+										</table>
+									</div></td>
+								<td><table>
+										<tr>
+											<td><div class="matrixHeadingVerbs">POST</div></td>
+										</tr>
+										<tr>
+											<td><div class=matrixHeadingCommands>create/complex
+													update</div></td>
+										</tr>
+									</table></td>
+								<td><table>
+										<tr>
+											<td><div class="matrixHeadingVerbs">GET</div></td>
+										</tr>
+										<tr>
+											<td><div class=matrixHeadingCommands>read</div></td>
+										</tr>
+									</table></td>
+								<td><table>
+										<tr>
+											<td><div class="matrixHeadingVerbs">PUT</div></td>
+										</tr>
+										<tr>
+											<td><div class=matrixHeadingCommands>update</div></td>
+										</tr>
+									</table></td>
+								<td><table>
+										<tr>
+											<td><div class="matrixHeadingVerbs">DELETE</div></td>
+										</tr>
+										<tr>
+											<td><div class=matrixHeadingCommands>delete</div></td>
+										</tr>
+									</table></td>
+							</tr>
+							<tr>
+								<td><a href="#savingsaccounts">Savings Accounts</a></td>
+								<td>savingsaccounts</td>
+								<td><a href="#savingsaccounts_create">Submit new savings application</a></td>
+								<td><a href="#savingsaccounts_list">List savings application/accounts</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>savingsaccounts/{accountId}</td>
+								<td></td>
+								<td><a href="#savingsaccounts_retrieve">Retrieve a savings application/account</a></td>
+								<td><a href="#savingsaccounts_update">Modify a savings application</a></td>
+								<td><a href="#savingsaccounts_delete">Delete a savings application</a></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>savingsaccounts/{accountId}?command=approve</td>
+								<td><a href="#savingsaccounts_approve">Approve a savings application</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>savingsaccounts/{accountId}?command=undoApproval</td>
+								<td><a href="#savingsaccounts_undoapproval">Undo savings application approval</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>savingsaccounts/{accountId}?command=reject</td>
+								<td><a href="#savingsaccounts_reject">Reject a savings application</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>savingsaccounts/{accountId}?command=withdraw</td>
+								<td><a href="#savingsaccounts_withdrawbyapplicant">Withdraw savings application</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>savingsaccounts/{accountId}?command=activate</td>
+								<td><a href="#savingsaccounts_activate">Activate a savings account</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>savingsaccounts/{accountId}?command=close</td>
+								<td><a href="#savingsaccounts_close">Close a savings account</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>savingsaccounts/{accountId}?command=calculateInterest</td>
+								<td><a href="#savingsaccounts_calculate_interest">Calculate interest on a savings account</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>savingsaccounts/{accountId}?command=postInterest</td>
+								<td><a href="#savingsaccounts_post_interest">Post interest on a savings account</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td><a href="#savingsaccounts_transactions">Savings Transactions</a></td>
+								<td>savingsaccounts/{accountId}/transactions?command=deposit</td>
+								<td><a href="#savingsaccounts_deposit">Make a deposit</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>savingsaccounts/{accountId}/transactions?command=withdrawal</td>
+								<td><a href="#savingsaccounts_withdrawal">Make a withdrawal</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>savingsaccounts/{accountId}/transactions/{transactionId}?command=undo</td>
+								<td><a href="#savingsaccounts_undotransaction">Undo transaction</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>savingsaccounts/{accountId}/transactions/{transactionId}?command=modify</td>
+								<td><a href="#savingsaccounts_adjusttransaction">Adjust transaction</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>savingsaccounts/{accountId}/transactions/template</td>
+								<td></td>
+								<td><a href="#savingsaccounts_transactions_template">Retrieve savings account transaction template</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>savingsaccounts/{accountId}/transactions/{transactionId}</td>
+								<td></td>
+								<td><a href="#savingsaccounts_transaction">Retrieve savings account transaction</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td><a href="#savings_charges">Savings Account Charges</a></td>
+								<td>savingsaccounts/{accountId}/charges</td>
+								<td><a href="#savings_charges_create">Add a Savings Account Charge</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>savingsaccounts/{accountId}/charges/{savingsAccountChargeId}</td>
+								<td></td>
+								<td><a href="#savings_charges_retrieve">Retrieve a Savings Account Charge</a></td>
+								<td><a href="#savings_charges_update">Modify a Savings Account Charge</a></td>
+								<td><a href="#savings_charges_delete">Delete a Savings Account Charge</a></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>savingsaccounts/{accountId}/charges/{savingsAccountChargeId}?command=paycharge</td>
+								<td><a href="#savings_charges_pay">Pay a Savings Account Charge</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td></td>
+								<td>savingsaccounts/{accountId}/charges/{savingsAccountChargeId}?command=waive</td>
+								<td><a href="#savings_charges_waive">Waive a Savings Account Charge</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<div class="flybar-nav">
 				<h2 class="flybar-button">Loan</h2>
 				<div id="toc-menu-loan" class="flybar-menu">
 					<div class="tocMatrix">
@@ -373,7 +585,7 @@
 								<td>loans/{loanId}</td>
 								<td></td>
 								<td><a href="#loans_retrieve">Retrieve a Loan</a></td>
-								<td></td>
+								<td><a href="#loans_update">Update a Loan</a></td>
 								<td><a href="#loans_delete">Delete a Loan Application</a></td>
 							</tr>
 							<tr>
@@ -853,6 +1065,22 @@
 								<td></td>
 							</tr>
 							<tr class="alt">
+								<td><a href="#savingsproducts">Savings Product</a></td>
+								<td>savingsproducts</td>
+								<td><a href="#savingsproducts_create">Create a Savings product</a></td>
+								<td><a href="#savingsproducts_list">List Savings products</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>savingsproducts/{productId}</td>
+								<td></td>
+								<td><a href="#savingsproducts_retrieve">Retrieve a savings product</a></td>
+								<td><a href="#savingsproducts_update">Update a savings product</a></td>
+								<td><a href="#savingsproducts_delete">Delete a savings product</a></td>
+							</tr>
+							<tr class="alt">
 								<td><a href="#configs">Currency</a></td>
 								<td>currencies</td>
 								<td></td>
@@ -1155,8 +1383,17 @@
 								<td><a href="#configs_global">Global Configuration</a></td>
 								<td>configurations</td>
 								<td></td>
-								<td><a href="#configs_globalconfig_retrieve">Retrieve
+								<td><a href="#configs_globalconfig_retrieve">List
 										Global Configuration</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr class="alt">
+								<td><a href="#configs_global">Global Configuration</a></td>
+								<td>configurations/{configId}</td>
+								<td></td>
+								<td><a href="#configs_globalconfig_retrieve_one">Retrieve
+										a Global Configuration</a></td>
 								<td><a href="#configs_globalconfig_update">Update
 										Global Configuration</a></td>
 								<td></td>
@@ -1608,6 +1845,18 @@
                                 <td>accountingrules/template</td>
                                 <td><a href="#accountingrules_template">Retrieve Accounting Rule Template</a></td>
 	                        </tr>
+	                        <tr >
+								<td>savingproducts/template</td>
+								<td><a href="#savingsproducts_template">Retrieve Savings Product Template</a></td>
+							</tr>
+							<tr class="alt">
+								<td>savingsaccounts/template?clientId={clientId}</td>
+								<td><a href="#savingsaccounts_template">Retrieve savings template</a></td>
+							</tr>
+							<tr>
+								<td>savingsaccounts/{accountId}/transactions/template</td>
+								<td><a href="#savingsaccounts_transactions_template">Retrieve savings account transaction template</a></td>
+							</tr>
 						</table>
 					</div>
 				</div>
@@ -4849,6 +5098,13 @@ GET https://DomainName/mifosng-provider/api/v1/groups?paged=true
 							</td>
 						</tr>
 						<tr class=alt>
+							<td>graceOnArrearsAgeing</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Optional: Integer -  Used in Arrears calculation to only take into account loans that are more than graceOnArrearsAgeing days overdue.
+							</td>
+						</tr>
+						<tr class=alt>
 							<td>interestChargedFromDate</td>
 						</tr>
 						<tr>
@@ -5510,7 +5766,52 @@ GET https://DomainName/api/v1/loans/{loanId}
     "disbursementDetails":[{"id":71,"expectedDisbursementDate":[2013,11,1],"principal":22000.000000,"approvedPrincipal":22000.000000}],
     "fixedEmiAmount":1100.000000,
     "maxOutstandingLoanBalance":35000,
-    "canDisburse":false
+    "canDisburse":false,
+    "emiAmountVariations": [],
+  "inArrears": true,
+  "overdueCharges": [
+    {
+      "id": 20,
+      "name": "overdraft penality",
+      "active": true,
+      "penalty": true,
+      "currency": {
+        "code": "USD",
+        "name": "US Dollar",
+        "decimalPlaces": 2,
+        "displaySymbol": "$",
+        "nameCode": "currency.USD",
+        "displayLabel": "US Dollar ($)"
+      },
+      "amount": 3.000000,
+      "chargeTimeType": {
+        "id": 9,
+        "code": "chargeTimeType.overdueInstallment",
+        "value": "overdue fees"
+      },
+      "chargeAppliesTo": {
+        "id": 1,
+        "code": "chargeAppliesTo.loan",
+        "value": "Loan"
+      },
+      "chargeCalculationType": {
+        "id": 2,
+        "code": "chargeCalculationType.percent.of.amount",
+        "value": "% Amount"
+      },
+      "chargePaymentMode": {
+        "id": 0,
+        "code": "chargepaymentmode.regular",
+        "value": "Regular"
+      },
+      "feeInterval": 2,
+      "feeFrequency": {
+        "id": 1,
+        "code": "feeFrequencyperiodFrequencyType.weeks",
+        "value": "Weeks"
+      }
+    }
+  ]
   }
 }
 					</code>
@@ -5754,9 +6055,41 @@ GET https://DomainName/mifosng-provider/api/v1/loans
           1
         ]
       },
-      "feeChargesAtDisbursementCharged": 0
+      "feeChargesAtDisbursementCharged": 0,
+      "inArrears":false
     }
   ]
+}
+					</code>
+				</div>
+			</div>
+
+			<a id="loans_update" name="loans_update" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h2>Modify a loan application</h2>
+					<p>Loan application can only be modified when in 'Submitted and pending approval' state. Once the application is approved, the details cannot be changed using this method.</p>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">PUT https://Domain Name/api/v1/loans/{loanId}</code>
+					<code class="method-request">PUT loans/1              
+Content-Type: application/json
+No Request Body:
+{
+  "locale": "en", 
+  "principal": "5000",
+}
+					</code>
+					<code class="method-response">
+{
+  "officeId": 2,
+  "clientId": 1,
+  "loanId": 1,
+  "resourceId": 1,
+  "changes": {
+    "principal": 5000,
+    "locale": "en"
+  }
 }
 					</code>
 				</div>
@@ -5935,8 +6268,8 @@ Request Body:
 							<td><div class="mifosXHeading2">Optional Fields</div></td>
 						</tr>
 						<tr class=alt>
-							<td>graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged,linkAccountId,
-								fixedEmiAmount,maxOutstandingLoanBalance,disbursementData
+							<td>graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, linkAccountId,
+								 fixedEmiAmount, maxOutstandingLoanBalance, disbursementData, graceOnArrearsAgeing
 							</td>
 						</tr>
 					</table>
@@ -8203,7 +8536,13 @@ An enumeration that indicates the type of transaction processing strategy to be 
 							<td class=fielddesc>Optional: Integer - represents the number of repayment periods that should be interest-free.
 							</td>
 						</tr>
-
+						<tr class=alt>
+							<td>graceOnArrearsAgeing</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Optional: Integer -  Used in Arrears calculation to only take into account loans that are more than graceOnArrearsAgeing days overdue.
+							</td>
+						</tr>
 						<tr class=alt>
 							<td>accountingRule</td>
 						</tr>
@@ -9310,7 +9649,7 @@ GET https://DomainName/api/v1/loanproducts/{productId}
 							<td><div class="mifosXHeading2">Optional Fields</div></td>
 						</tr>
 						<tr class=alt>
-							<td>inArrearsTolerance, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, charges, paymentChannelToFundSourceMappings, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, includeInBorrowerCycle,
+							<td>inArrearsTolerance, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, graceOnArrearsAgeing, charges, paymentChannelToFundSourceMappings, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, includeInBorrowerCycle,
 							useBorrowerCycle,principalVariationsForBorrowerCycle,
 							numberOfRepaymentVariationsForBorrowerCycle,
 							interestRateVariationsForBorrowerCycle,
@@ -10361,6 +10700,29 @@ GET https://DomainName/api/v1/configurations
     },
   ]
 }
+					</code>
+				</div>
+			</div>
+
+<a id="configs_globalconfig_retrieve_one" name="configs_globalconfig_retrieve_one" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve Global Configuration</h4>
+					<p>Returns a global enable/disable configurations.</p>
+					<p>Example Requests:</p>
+					<div class=apiClick>configurations/1</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/configurations/1
+					</code>
+					<code class="method-response">
+    {
+    "name": "maker-checker",
+    "enabled": true,
+    "value": 0,
+    "id": 1
+    }
 					</code>
 				</div>
 			</div>
@@ -12275,9 +12637,15 @@ Request Body:
 				<td>feeInterval</td>
 			</tr>
 			<tr>
-            	<td class=fielddesc>Fee to be applied on a specified interval (number of months).<br/>
-            		This field is mandatory if <i>chargeTimeType</i> is of type <b>Monthly Fee</b>
+            	<td class=fielddesc>Fee to be applied on a specified interval.<br/>
+            		This field is mandatory if <i>chargeTimeType</i> is of type <b>Monthly Fee</b> or <i>feeFrequency<i> is selcted
             	</td>
+            </tr>
+            <tr class=alt>
+				<td>feeFrequency</td>
+			</tr>
+            <tr>
+            	<td class=fielddesc>This field is Optional Used to indicate the recurring(days,weeks,months and Years) charge due date starting on system calculated date for overdue penalty.<br/></td>
             </tr>						
 		</table>
 	</div>
@@ -12327,6 +12695,16 @@ GET https://DomainName/api/v1/charges/template
       "id": 2,
       "code": "chargeCalculationType.percent.of.amount",
       "value": "% Amount"
+    },
+    {
+      "id": 3,
+      "code": "chargeCalculationType.percent.of.amount.and.interest",
+      "value": "% Loan Amount + Interest"
+    },
+    {
+      "id": 4,
+      "code": "chargeCalculationType.percent.of.interest",
+      "value": "% Interest"
     }
   ],
   "chargeAppliesToOptions": [
@@ -12371,6 +12749,21 @@ GET https://DomainName/api/v1/charges/template
       "id": 7,
       "code": "chargeTimeType.monthlyFee",
       "value": "Monthly Fee"
+    },
+    {
+      "id": 8,
+      "code": "chargeTimeType.instalmentFee",
+      "value": "Instalment Fee"
+    },
+    {
+      "id": 9,
+      "code": "chargeTimeType.overdueInstallment",
+      "value": "overdue fees"
+    },
+    {
+      "id": 10,
+      "code": "chargeTimeType.overdraftFee",
+      "value": "Overdraft Fee"
     }
   ],
   "chargePaymetModeOptions": [
@@ -12395,6 +12788,16 @@ GET https://DomainName/api/v1/charges/template
       "id": 2,
       "code": "chargeCalculationType.percent.of.amount",
       "value": "% Amount"
+    },
+    {
+      "id": 3,
+      "code": "chargeCalculationType.percent.of.amount.and.interest",
+      "value": "% Loan Amount + Interest"
+    },
+    {
+      "id": 4,
+      "code": "chargeCalculationType.percent.of.interest",
+      "value": "% Interest"
     }
   ],
   "loanChargeTimeTypeOptions": [
@@ -12407,6 +12810,16 @@ GET https://DomainName/api/v1/charges/template
       "id": 2,
       "code": "chargeTimeType.specifiedDueDate",
       "value": "Specified due date"
+    },
+    {
+      "id": 8,
+      "code": "chargeTimeType.instalmentFee",
+      "value": "Instalment Fee"
+    },
+    {
+      "id": 9,
+      "code": "chargeTimeType.overdueInstallment",
+      "value": "overdue fees"
     }
   ],
   "savingsChargeCalculationTypeOptions": [
@@ -12446,6 +12859,33 @@ GET https://DomainName/api/v1/charges/template
       "id": 7,
       "code": "chargeTimeType.monthlyFee",
       "value": "Monthly Fee"
+    },
+    {
+      "id": 10,
+      "code": "chargeTimeType.overdraftFee",
+      "value": "Overdraft Fee"
+    }
+  ],
+  "feeFrequencyOptions": [
+    {
+      "id": 0,
+      "code": "loanTermFrequency.periodFrequencyType.days",
+      "value": "Days"
+    },
+    {
+      "id": 1,
+      "code": "loanTermFrequency.periodFrequencyType.weeks",
+      "value": "Weeks"
+    },
+    {
+      "id": 2,
+      "code": "loanTermFrequency.periodFrequencyType.months",
+      "value": "Months"
+    },
+    {
+      "id": 3,
+      "code": "loanTermFrequency.periodFrequencyType.years",
+      "value": "Years"
     }
   ]
 }
@@ -12553,6 +12993,31 @@ Request Body:
 			<code class="method-response">
 {
 "resourceId": 6
+}
+			</code>
+			<code class="method-request">
+POST charges
+Content-Type: application/json 
+Request Body:
+{
+	"chargeAppliesTo":1,
+	"feeFrequency":1,
+	"feeInterval":"2",
+	"name":"overdue charge",
+	"currencyCode":"USD",
+	"chargeTimeType":9,
+	"chargeCalculationType":1,
+	"chargePaymentMode":0,
+	"amount":"50",
+	"active":true,
+	"penalty":"true",
+	"locale":"en",
+	"monthDayFormat":"dd MMM"
+}
+			</code>
+			<code class="method-response">
+{
+"resourceId": 7
 }
 			</code>										
 		</div>
@@ -22681,7 +23146,15 @@ No Request Body:
 					<td><a href="#configs_global">Global Configuration</a></td>
 					<td>configurations</td>
 					<td></td>
-					<td><a href="#configs_globalconfig_retrieve">Retrieve Global Configuration</a></td>
+					<td><a href="#configs_globalconfig_retrieve">List Global Configuration</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>configurations/{configId}</td>
+					<td></td>
+					<td><a href="#configs_globalconfig_retrieve_one">Retrieve a Global Configuration</a></td>
 					<td><a href="#configs_globalconfig_update">Update Global Configuration</a></td>
 					<td></td>
 				</tr>
@@ -22829,99 +23302,6 @@ No Request Body:
 				<td></td>
 				<td></td>
 			</tr>
-			</table>
-		</div>
-
-	<a id="betaapi_matrix" name="betaapi_matrix" class="old-syle-anchor">&nbsp;</a>
-	<div class=fullMatrixOuter>
-		<table width="80%">
-			<tr>
-				<td><h3>Beta API Matrix</h3></td>
-			</tr>
-		</table>
-			<table class=matrixHeading>
-				<tr class="matrixHeadingBG">
-					<td colspan=2 valign="top"><div class="matrixHeadingVerbs">
-							<table>
-								<tr>
-									<td>RESOURCES</td>
-								</tr>
-							</table>
-						</div></td>
-					<td><table>
-							<tr>
-								<td><div class="matrixHeadingVerbs">POST</div></td>
-							</tr>
-							<tr>
-								<td><div class=matrixHeadingCommands>create/complex update</div></td>
-							</tr>
-						</table></td>
-					<td><table>
-							<tr>
-								<td><div class="matrixHeadingVerbs">GET</div></td>
-							</tr>
-							<tr>
-								<td><div class=matrixHeadingCommands>read</div></td>
-							</tr>
-						</table></td>
-					<td><table>
-							<tr>
-								<td><div class="matrixHeadingVerbs">PUT</div></td>
-							</tr>
-							<tr>
-								<td><div class=matrixHeadingCommands>update</div></td>
-							</tr>
-						</table></td>
-					<td><table>
-							<tr>
-								<td><div class="matrixHeadingVerbs">DELETE</div></td>
-							</tr>
-							<tr>
-								<td><div class=matrixHeadingCommands>delete</div></td>
-							</tr>
-						</table>
-					</td>
-				</tr>
-				<tr class="alt">
-					<td><a href="#cache">Cache</a></td>
-					<td>caches</td>
-					<td></td>
-					<td><a href="#caches_list">List Cache Types</a></td>
-					<td><a href="#caches_switch">Switch Cache</a></td>
-					<td></td>
-				</tr>
-				<tr class="alt">
-					<td><a href="#centers">Center</a></td>
-					<td>centers</td>
-					<td><a href="#centers_create">Create a Center</a></td>
-					<td><a href="#centers_list">List Centers</a></td>
-					<td></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td></td>
-                    <td>centers/template</td>
-                    <td></td>
-                    <td><a href="#centers_template">Retrieve Center Template</a></td>
-                    <td></td>
-					<td></td>
-                </tr>
-				<tr class="alt">
-					<td></td>
-					<td>centers/{centerId}</td>
-					<td></td>
-					<td><a href="#centers_retrieve">Retrieve a Center</a></td>
-					<td><a href="#centers_update">Update a Center</a></td>
-					<td><a href="#centers_delete">Delete a Center</a></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td>centers/{centerId}?command=activate</td>
-					<td><a href="#centers_activate">Activate a Center</a></td>
-					<td></td>
-					<td></td>
-					<td></td>
-				</tr>
 				<tr class="alt">
 					<td><a href="#savingsproducts">Savings Product</a></td>
 					<td>savingsproducts</td>
@@ -23110,6 +23490,99 @@ No Request Body:
 					<td></td>
 					<td>savingsaccounts/{accountId}/charges/{savingsAccountChargeId}?command=waive</td>
 					<td><a href="#savings_charges_waive">Waive a Savings Account Charge</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+			</table>
+		</div>
+
+	<a id="betaapi_matrix" name="betaapi_matrix" class="old-syle-anchor">&nbsp;</a>
+	<div class=fullMatrixOuter>
+		<table width="80%">
+			<tr>
+				<td><h3>Beta API Matrix</h3></td>
+			</tr>
+		</table>
+			<table class=matrixHeading>
+				<tr class="matrixHeadingBG">
+					<td colspan=2 valign="top"><div class="matrixHeadingVerbs">
+							<table>
+								<tr>
+									<td>RESOURCES</td>
+								</tr>
+							</table>
+						</div></td>
+					<td><table>
+							<tr>
+								<td><div class="matrixHeadingVerbs">POST</div></td>
+							</tr>
+							<tr>
+								<td><div class=matrixHeadingCommands>create/complex update</div></td>
+							</tr>
+						</table></td>
+					<td><table>
+							<tr>
+								<td><div class="matrixHeadingVerbs">GET</div></td>
+							</tr>
+							<tr>
+								<td><div class=matrixHeadingCommands>read</div></td>
+							</tr>
+						</table></td>
+					<td><table>
+							<tr>
+								<td><div class="matrixHeadingVerbs">PUT</div></td>
+							</tr>
+							<tr>
+								<td><div class=matrixHeadingCommands>update</div></td>
+							</tr>
+						</table></td>
+					<td><table>
+							<tr>
+								<td><div class="matrixHeadingVerbs">DELETE</div></td>
+							</tr>
+							<tr>
+								<td><div class=matrixHeadingCommands>delete</div></td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr class="alt">
+					<td><a href="#cache">Cache</a></td>
+					<td>caches</td>
+					<td></td>
+					<td><a href="#caches_list">List Cache Types</a></td>
+					<td><a href="#caches_switch">Switch Cache</a></td>
+					<td></td>
+				</tr>
+				<tr class="alt">
+					<td><a href="#centers">Center</a></td>
+					<td>centers</td>
+					<td><a href="#centers_create">Create a Center</a></td>
+					<td><a href="#centers_list">List Centers</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+                    <td>centers/template</td>
+                    <td></td>
+                    <td><a href="#centers_template">Retrieve Center Template</a></td>
+                    <td></td>
+					<td></td>
+                </tr>
+				<tr class="alt">
+					<td></td>
+					<td>centers/{centerId}</td>
+					<td></td>
+					<td><a href="#centers_retrieve">Retrieve a Center</a></td>
+					<td><a href="#centers_update">Update a Center</a></td>
+					<td><a href="#centers_delete">Delete a Center</a></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>centers/{centerId}?command=activate</td>
+					<td><a href="#centers_activate">Activate a Center</a></td>
 					<td></td>
 					<td></td>
 					<td></td>

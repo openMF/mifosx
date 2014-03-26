@@ -39,7 +39,12 @@ public class JdbcTenantDetailsService implements TenantDetailsService {
 
         private final StringBuilder sqlBuilder = new StringBuilder(
                 "id, name,identifier, schema_name as schemaName, schema_server as schemaServer, schema_server_port as schemaServerPort, auto_update as autoUpdate, ")//
-                .append(" schema_username as schemaUsername, schema_password as schemaPassword , timezone_id as timezoneId ")//
+                .append(" schema_username as schemaUsername, schema_password as schemaPassword , timezone_id as timezoneId , pool_initial_size as initialSize, ") //
+                .append(" pool_validation_interval as validationInterval, pool_remove_abandoned as removeAbandoned, pool_remove_abandoned_timeout as removeAbandonedTimeout, ")//
+                .append(" pool_log_abandoned as logAbandoned, pool_abandon_when_percentage_full as abandonedWhenPercentageFull, pool_test_on_borrow as testOnBorrow,  ")//
+                .append(" pool_max_active as poolMaxActive, pool_min_idle as poolMinIdle, pool_max_idle as poolMaxIdle, ")//
+                .append(" pool_suspect_timeout as poolSuspectTimeout, pool_time_between_eviction_runs_millis as poolTimeBetweenEvictionRunsMillis, ")//
+                .append(" pool_min_evictable_idle_time_millis as poolMinEvictableIdleTimeMillis ")//
                 .append(" from tenants t");//
 
         public String schema() {
@@ -59,9 +64,24 @@ public class JdbcTenantDetailsService implements TenantDetailsService {
             final String schemaPassword = rs.getString("schemaPassword");
             final String timezoneId = rs.getString("timezoneId");
             final boolean autoUpdateEnabled = rs.getBoolean("autoUpdate");
+            final int initialSize = rs.getInt("initialSize");
+            final boolean testOnBorrow = rs.getBoolean("testOnBorrow");
+            final long validationInterval = rs.getLong("validationInterval");
+            final boolean removeAbandoned = rs.getBoolean("removeAbandoned");
+            final int removeAbandonedTimeout = rs.getInt("removeAbandonedTimeout");
+            final boolean logAbandoned = rs.getBoolean("logAbandoned");
+            final int abandonWhenPercentageFull = rs.getInt("abandonedWhenPercentageFull");
+            final int maxActive = rs.getInt("poolMaxActive");
+            final int minIdle = rs.getInt("poolMinIdle");
+            final int maxIdle = rs.getInt("poolMaxIdle");
+            final int suspectTimeout = rs.getInt("poolSuspectTimeout");
+            final int timeBetweenEvictionRunsMillis = rs.getInt("poolTimeBetweenEvictionRunsMillis");
+            final int minEvictableIdleTimeMillis = rs.getInt("poolMinEvictableIdleTimeMillis");
 
             return new MifosPlatformTenant(id, tenantIdentifier, name, schemaName, schemaServer, schemaServerPort, schemaUsername,
-                    schemaPassword, timezoneId, autoUpdateEnabled);
+                    schemaPassword, timezoneId, autoUpdateEnabled, initialSize, testOnBorrow, validationInterval, removeAbandoned,
+                    removeAbandonedTimeout, logAbandoned, abandonWhenPercentageFull, maxActive, minIdle, maxIdle, suspectTimeout,
+                    timeBetweenEvictionRunsMillis, minEvictableIdleTimeMillis);
         }
     }
 

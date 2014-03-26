@@ -12,7 +12,7 @@ import org.mifosplatform.organisation.holiday.domain.Holiday;
 import org.mifosplatform.organisation.holiday.service.HolidayUtil;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDays;
 import org.mifosplatform.organisation.workingdays.service.WorkingDaysUtil;
-import org.mifosplatform.portfolio.loanproduct.domain.PeriodFrequencyType;
+import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 
 public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
 
@@ -23,22 +23,25 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
         final int numberOfRepayments = loanApplicationTerms.getNumberOfRepayments();
 
         LocalDate lastRepaymentDate = loanApplicationTerms.getExpectedDisbursementDate();
-
+        boolean isFirstRepayment = true;
         for (int repaymentPeriod = 1; repaymentPeriod <= numberOfRepayments; repaymentPeriod++) {
-            lastRepaymentDate = generateNextRepaymentDate(lastRepaymentDate, loanApplicationTerms);
+            lastRepaymentDate = generateNextRepaymentDate(lastRepaymentDate, loanApplicationTerms, isFirstRepayment);
+            isFirstRepayment = false;
         }
         lastRepaymentDate = adjustRepaymentDate(lastRepaymentDate, loanApplicationTerms, isHolidayEnabled, holidays, workingDays);
         return lastRepaymentDate;
     }
 
     @Override
-    public LocalDate generateNextRepaymentDate(final LocalDate lastRepaymentDate, final LoanApplicationTerms loanApplicationTerms) {
+    public LocalDate generateNextRepaymentDate(final LocalDate lastRepaymentDate, final LoanApplicationTerms loanApplicationTerms,
+            boolean isFirstRepayment) {
         final LocalDate firstRepaymentPeriodDate = loanApplicationTerms.getCalculatedRepaymentsStartingFromLocalDate();
         LocalDate dueRepaymentPeriodDate = null;
-        if (firstRepaymentPeriodDate != null && firstRepaymentPeriodDate.isAfter(lastRepaymentDate)) {
+        if (isFirstRepayment && firstRepaymentPeriodDate != null) {
             dueRepaymentPeriodDate = firstRepaymentPeriodDate;
         } else {
-            dueRepaymentPeriodDate = getRepaymentPeriodDate(loanApplicationTerms, lastRepaymentDate);
+            dueRepaymentPeriodDate = getRepaymentPeriodDate(loanApplicationTerms.getRepaymentPeriodFrequencyType(),
+                    loanApplicationTerms.getRepaymentEvery(), lastRepaymentDate);
         }
         return dueRepaymentPeriodDate;
     }
@@ -47,7 +50,8 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
     public LocalDate adjustRepaymentDate(final LocalDate dueRepaymentPeriodDate, final LoanApplicationTerms loanApplicationTerms,
             final boolean isHolidayEnabled, final List<Holiday> holidays, final WorkingDays workingDays) {
         LocalDate adjustedDate = dueRepaymentPeriodDate;
-        final LocalDate nextDueRepaymentPeriodDate = getRepaymentPeriodDate(loanApplicationTerms, adjustedDate);
+        final LocalDate nextDueRepaymentPeriodDate = getRepaymentPeriodDate(loanApplicationTerms.getRepaymentPeriodFrequencyType(),
+                loanApplicationTerms.getRepaymentEvery(), adjustedDate);
         adjustedDate = WorkingDaysUtil.getOffSetDateIfNonWorkingDay(adjustedDate, nextDueRepaymentPeriodDate, workingDays);
         if (isHolidayEnabled) {
             adjustedDate = HolidayUtil.getRepaymentRescheduleDateToIfHoliday(adjustedDate, holidays);
@@ -55,10 +59,10 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
         return adjustedDate;
     }
 
-    private LocalDate getRepaymentPeriodDate(final LoanApplicationTerms loanApplicationTerms, final LocalDate startDate) {
-        final int repaidEvery = loanApplicationTerms.getRepaymentEvery();
+    @Override
+    public LocalDate getRepaymentPeriodDate(final PeriodFrequencyType frequency, final int repaidEvery, final LocalDate startDate) {
         LocalDate dueRepaymentPeriodDate = startDate;
-        switch (loanApplicationTerms.getRepaymentPeriodFrequencyType()) {
+        switch (frequency) {
             case DAYS:
                 dueRepaymentPeriodDate = startDate.plusDays(repaidEvery);
             break;

@@ -58,7 +58,7 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
     private final static Logger logger = LoggerFactory.getLogger(AuditReadPlatformServiceImpl.class);
     private final static Set<String> supportedOrderByValues = new HashSet<String>(Arrays.asList("id", "actionName", "entityName",
             "resourceId", "subresourceId", "madeOnDate", "checkedOnDate", "officeName", "groupName", "clientName", "loanAccountNo",
-            "savingsAccountNo"));
+            "savingsAccountNo", "clientId", "loanId"));
 
     private final JdbcTemplate jdbcTemplate;
     private final PlatformSecurityContext context;
@@ -98,7 +98,7 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
             }
 
             String partSql = " aud.id as id, aud.action_name as actionName, aud.entity_name as entityName,"
-                    + " aud.resource_id as resourceId, aud.subresource_id as subresourceId,"
+                    + " aud.resource_id as resourceId, aud.subresource_id as subresourceId,aud.client_id as clientId, aud.loan_id as loanId,"
                     + " mk.username as maker, aud.made_on_date as madeOnDate, "
                     + "ck.username as checker, aud.checked_on_date as checkedOnDate, ev.enum_message_property as processingResult "
                     + commandAsJsonString + ", "
@@ -126,6 +126,8 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
             final String actionName = rs.getString("actionName");
             final String entityName = rs.getString("entityName");
             final Long resourceId = JdbcSupport.getLong(rs, "resourceId");
+            final Long clientId = JdbcSupport.getLong(rs, "clientId");
+            final Long loanId = JdbcSupport.getLong(rs, "loanId");
             final Long subresourceId = JdbcSupport.getLong(rs, "subresourceId");
             final String maker = rs.getString("maker");
             final DateTime madeOnDate = JdbcSupport.getDateTime(rs, "madeOnDate");
@@ -148,7 +150,8 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
             final String savingsAccountNo = rs.getString("savingsAccountNo");
 
             return new AuditData(id, actionName, entityName, resourceId, subresourceId, maker, madeOnDate, checker, checkedOnDate,
-                    processingResult, commandAsJson, officeName, groupLevelName, groupName, clientName, loanAccountNo, savingsAccountNo);
+                    processingResult, commandAsJson, officeName, groupLevelName, groupName, clientName, loanAccountNo, savingsAccountNo,
+                    clientId, loanId);
         }
     }
 

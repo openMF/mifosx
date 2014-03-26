@@ -73,6 +73,19 @@ CREATE TABLE `tenants` (
   `schema_username` varchar(100) NOT NULL DEFAULT 'root',
   `schema_password` varchar(100) NOT NULL DEFAULT 'mysql',
   `auto_update` tinyint(1) NOT NULL DEFAULT '1',
+  `pool_initial_size` int(5) DEFAULT 5,
+  `pool_validation_interval` int(11) DEFAULT 30000,
+  `pool_remove_abandoned` tinyint(1) DEFAULT 1,
+  `pool_remove_abandoned_timeout` int(5) DEFAULT 60,
+  `pool_log_abandoned` tinyint(1) DEFAULT 1,
+  `pool_abandon_when_percentage_full` int(5) DEFAULT 50,
+  `pool_test_on_borrow` tinyint(1) DEFAULT 1,
+  `pool_max_active` int(5) DEFAULT 40,
+  `pool_min_idle` int(5) DEFAULT 20,
+  `pool_max_idle` int(5) DEFAULT 10,
+  `pool_suspect_timeout` int(5) DEFAULT 60,
+  `pool_time_between_eviction_runs_millis` int(11) DEFAULT 34000,
+  `pool_min_evictable_idle_time_millis` int(11) DEFAULT 60000,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;

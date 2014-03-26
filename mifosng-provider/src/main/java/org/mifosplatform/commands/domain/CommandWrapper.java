@@ -37,6 +37,13 @@ public class CommandWrapper {
         return new CommandWrapper(commandId, actionName, entityName, resourceId, subresourceId, resourceGetUrl, productId);
     }
 
+    public static CommandWrapper fromExistingCommand(final Long commandId, final String actionName, final String entityName,
+            final Long resourceId, final Long subresourceId, final String resourceGetUrl, final Long productId, final Long officeId,
+            final Long groupId, final Long clientId, final Long loanId, final Long savingsId) {
+        return new CommandWrapper(commandId, actionName, entityName, resourceId, subresourceId, resourceGetUrl, productId, officeId,
+                groupId, clientId, loanId, savingsId);
+    }
+
     private CommandWrapper(final Long commandId, final String actionName, final String entityName, final Long resourceId,
             final Long subresourceId, final String resourceGetUrl, final Long productId) {
         this.commandId = commandId;
@@ -82,6 +89,30 @@ public class CommandWrapper {
         this.transactionId = transactionId;
         this.productId = productId;
         this.templateId = templateId;
+    }
+
+    private CommandWrapper(final Long commandId, final String actionName, final String entityName, final Long resourceId,
+            final Long subresourceId, final String resourceGetUrl, final Long productId, final Long officeId, final Long groupId,
+            final Long clientId, final Long loanId, final Long savingsId) {
+
+        this.commandId = commandId;
+        this.officeId = officeId;
+        this.groupId = groupId;
+        this.clientId = clientId;
+        this.loanId = loanId;
+        this.savingsId = savingsId;
+        this.actionName = actionName;
+        this.entityName = entityName;
+        this.taskPermissionName = actionName + "_" + entityName;
+        this.entityId = resourceId;
+        this.subentityId = subresourceId;
+        this.codeId = null;
+        this.supportedEntityType = null;
+        this.supportedEntityId = null;
+        this.href = resourceGetUrl;
+        this.json = null;
+        this.transactionId = null;
+        this.productId = productId;
     }
 
     public Long commandId() {
@@ -660,7 +691,7 @@ public class CommandWrapper {
     public boolean isRejectClientTransfer() {
         return this.actionName.equalsIgnoreCase("REJECTTRANSFER") && this.entityName.equalsIgnoreCase("CLIENT");
     }
-    
+
     public boolean isUpdateClientSavingsAccount() {
         return this.actionName.equalsIgnoreCase("UPDATESAVINGSACCOUNT") && this.entityName.equalsIgnoreCase("CLIENT");
     }

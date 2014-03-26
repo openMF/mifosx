@@ -3,12 +3,12 @@ package org.mifosplatform.portfolio.loanaccount;
 import java.math.BigDecimal;
 
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
+import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRelatedDetail;
-import org.mifosplatform.portfolio.loanproduct.domain.PeriodFrequencyType;
 
 /**
  * This class is used to keep in one place configurations for setting up
@@ -126,10 +126,11 @@ public class LoanProductRelatedDetailTestHelper {
         final Integer graceOnPrincipalPayment = Integer.valueOf(0);
         final Integer graceOnInterestPayment = Integer.valueOf(0);
         final Integer graceOnInterestCharged = Integer.valueOf(0);
+        final Integer graceOnArrearsAgeing = Integer.valueOf(0);
 
         return new LoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod, interestPeriodFrequencyType,
                 defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
                 defaultNumberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, amortizationMethod,
-                inArrearsTolerance);
+                inArrearsTolerance, graceOnArrearsAgeing);
     }
 }

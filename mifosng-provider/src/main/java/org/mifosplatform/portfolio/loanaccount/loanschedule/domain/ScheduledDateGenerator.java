@@ -10,7 +10,7 @@ import java.util.List;
 import org.joda.time.LocalDate;
 import org.mifosplatform.organisation.holiday.domain.Holiday;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDays;
-import org.mifosplatform.portfolio.loanproduct.domain.PeriodFrequencyType;
+import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 
 public interface ScheduledDateGenerator {
 
@@ -20,8 +20,11 @@ public interface ScheduledDateGenerator {
     LocalDate idealDisbursementDateBasedOnFirstRepaymentDate(PeriodFrequencyType repaymentPeriodFrequencyType, int repaidEvery,
             final LocalDate firstRepaymentDate);
 
-    LocalDate generateNextRepaymentDate(LocalDate lastRepaymentDate, LoanApplicationTerms loanApplicationTerms);
+    LocalDate generateNextRepaymentDate(LocalDate lastRepaymentDate, LoanApplicationTerms loanApplicationTerms, boolean isFirstRepayment);
 
     LocalDate adjustRepaymentDate(LocalDate dueRepaymentPeriodDate, LoanApplicationTerms loanApplicationTerms, boolean isHolidayEnabled,
             List<Holiday> holidays, WorkingDays workingDays);
+
+    LocalDate getRepaymentPeriodDate(PeriodFrequencyType frequency, int repaidEvery, LocalDate startDate);
+
 }
