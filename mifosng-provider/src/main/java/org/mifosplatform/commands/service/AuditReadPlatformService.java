@@ -20,7 +20,7 @@ public interface AuditReadPlatformService {
 
     Collection<AuditData> retrieveAllEntriesToBeChecked(String extraCriteria, boolean includeJson);
     
-    Collection<AuditData> retrieveAuditEntry(Long auditId, String extraCriteria, boolean includeJson);
+    Collection<AuditData> retrieveAuditEntry(Long auditId, boolean includeJson);
 
     AuditData retrieveAuditEntry(Long auditId);
 

@@ -215,18 +215,39 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
     }
     
     @Override
-    public Collection<AuditData> retrieveAuditEntry(Long auditId, String extraCriteria, boolean includeJson){
-    	String updatedExtraCriteria = "";
-        if (StringUtils.isNotBlank(extraCriteria)) {
-            updatedExtraCriteria = " where (" + extraCriteria + ")" + " and aud.processing_result_enum = 2 and aud.id = "+auditId;
-        } else {
-            updatedExtraCriteria = " where aud.processing_result_enum = 2 and aud.id = "+auditId;
+    public Collection<AuditData> retrieveAuditEntry(Long auditId, boolean includeJson){
+        return retrieveEntry("makerchecker", includeJson);
+    	
+    }
+    
+    public Collection<AuditData> retrieveEntry(final String useType, final boolean includeJson) {
+
+        if (!(useType.equals("audit") || useType.equals("makerchecker"))) { throw new PlatformDataIntegrityException(
+                "error.msg.invalid.auditSearchTemplate.useType", "Invalid Audit Search Template UseType: " + useType); }
+
+        final AppUser currentUser = this.context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+
+        final AuditMapper rm = new AuditMapper();
+        String sql = "select " + rm.schema(includeJson, hierarchy);
+
+        Boolean isLimitedChecker = false;
+        if (useType.equals("makerchecker")) {
+            if (currentUser.hasNotPermissionForAnyOf("ALL_FUNCTIONS", "CHECKER_SUPER_USER")) {
+                isLimitedChecker = true;
+            }
         }
 
-        updatedExtraCriteria += " order by aud.id";
+        if (isLimitedChecker) {
+            sql += " join m_permission p on p.action_name = aud.action_name and p.entity_name = aud.entity_name and p.code like '%\\_CHECKER'"
+                    + " join m_role_permission rp on rp.permission_id = p.id"
+                    + " join m_role r on r.id = rp.role_id "
+                    + " join m_appuser_role ur on ur.role_id = r.id and ur.appuser_id = " + currentUser.getId();
+        }
 
-        return retrieveEntries("makerchecker", updatedExtraCriteria, includeJson);
-    	
+        logger.info("sql: " + sql);
+
+        return this.jdbcTemplate.query(sql, rm, new Object[] {});
     }
 
     public Collection<AuditData> retrieveEntries(final String useType, final String extraCriteria, final boolean includeJson) {

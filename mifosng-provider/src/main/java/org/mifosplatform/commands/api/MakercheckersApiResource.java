@@ -89,20 +89,11 @@ public class MakercheckersApiResource {
     @Path("{auditId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveCommand(@PathParam("auditId") final Long auditId, @Context final UriInfo uriInfo, @QueryParam("actionName") final String actionName,
-            @QueryParam("entityName") final String entityName, @QueryParam("resourceId") final Long resourceId,
-            @QueryParam("makerId") final Long makerId, @QueryParam("makerDateTimeFrom") final String makerDateTimeFrom,
-            @QueryParam("makerDateTimeTo") final String makerDateTimeTo, @QueryParam("officeId") final Integer officeId,
-            @QueryParam("groupId") final Integer groupId, @QueryParam("clientId") final Integer clientId,
-            @QueryParam("loanid") final Integer loanId, @QueryParam("savingsAccountId") final Integer savingsAccountId) {
-
-        final String extraCriteria = getExtraCriteria(actionName, entityName, resourceId, makerId, makerDateTimeFrom, makerDateTimeTo,
-                officeId, groupId, clientId, loanId, savingsAccountId);
+    public String retrieveCommand(@PathParam("auditId") final Long auditId, @Context final UriInfo uriInfo) {
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
-        final Collection<AuditData> auditEntry = this.readPlatformService.retrieveAuditEntry(auditId, extraCriteria,
-                settings.isIncludeJson());
+        final Collection<AuditData> auditEntry = this.readPlatformService.retrieveAuditEntry(auditId, settings.isIncludeJson());
 
         return this.toApiJsonSerializerAudit.serialize(settings, auditEntry, this.RESPONSE_DATA_PARAMETERS);
     }
