@@ -32,7 +32,7 @@ public final class UserDataValidator {
      * The parameters supported for this command.
      */
     private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("username", "firstname", "lastname", "password",
-            "repeatPassword", "email", "officeId", "notSelectedRoles", "roles", "sendPasswordToEmail"));
+            "repeatPassword", "email", "officeId", "notSelectedRoles", "roles", "sendPasswordToEmail", "staffId"));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -81,6 +81,13 @@ public final class UserDataValidator {
         final Long officeId = this.fromApiJsonHelper.extractLongNamed("officeId", element);
         baseDataValidator.reset().parameter("officeId").value(officeId).notNull().integerGreaterThanZero();
 
+        
+        if(this.fromApiJsonHelper.parameterExists("staffId", element)) {
+            final Long staffId = this.fromApiJsonHelper.extractLongNamed("staffId", element);
+            baseDataValidator.reset().parameter("staffId").value(staffId).notNull().integerGreaterThanZero();            
+        }
+        
+                
         final String[] roles = this.fromApiJsonHelper.extractArrayNamed("roles", element);
         baseDataValidator.reset().parameter("roles").value(roles).arrayNotEmpty();
 
@@ -107,6 +114,11 @@ public final class UserDataValidator {
             baseDataValidator.reset().parameter("officeId").value(officeId).notNull().integerGreaterThanZero();
         }
 
+        if(this.fromApiJsonHelper.parameterExists("staffId", element)) {
+            final Long staffId = this.fromApiJsonHelper.extractLongNamed("staffId", element);
+            baseDataValidator.reset().parameter("staffId").value(staffId).integerGreaterThanZero();            
+        }
+        
         if (this.fromApiJsonHelper.parameterExists("username", element)) {
             final String username = this.fromApiJsonHelper.extractStringNamed("username", element);
             baseDataValidator.reset().parameter("username").value(username).notBlank().notExceedingLengthOf(100);

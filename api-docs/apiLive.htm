@@ -1278,7 +1278,23 @@
 								<td><a href="#users_update">Update a User</a></td>
 								<td><a href="#users_delete">Delete a User</a></td>
 							</tr>
-							<tr class="alt">
+                            <tr>
+                                <td></td>
+                                <td>users/{userId}</td>
+                                <td></td>
+                                <td></td>
+                                <td><a href="#users_link_staff">Associate Staff to a User</a></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>users/{userId}</td>
+                                <td></td>
+                                <td></td>
+                                <td><a href="#users_unlink_staff">Dissociate Staff from a User</a></td>
+                                <td></td>
+                            </tr>
+                            <tr class="alt">
 								<td><a href="#roles">Role</a></td>
 								<td>roles</td>
 								<td><a href="#roles_create">Create a New Role</a></td>
@@ -1505,7 +1521,7 @@
 							<tr class="alt">
 								<td></td>
 								<td>scheduler?command=stop</td>
-								<td><a href="#suspend_scheduler">Suspend a scheduler service</td>
+								<td><a href="#suspend_scheduler">Suspend a scheduler service</a></td>
 								<td></td>
 								<td></td>
 								<td></td>
@@ -1619,7 +1635,7 @@
 							<tr>
 								<td><a href="#notes">Notes</a></td>
 								<td>{resource}/{resourceId}/notes</td>
-								<td><a href="#resources_addnote">Add a Resource Note</td>
+								<td><a href="#resources_addnote">Add a Resource Note</a></td>
 								<td><a href="#resource_notelist">Retrieve a Resource's Notes</a></td>
 								<td></td>
 								<td></td>
@@ -1636,7 +1652,7 @@
 							<tr>
 								<td><a href="#documents">Documents</a></td>
 								<td>{entityType}/{entityId}/documents</td>
-								<td><a href="#documents_create">Create a Document</td>
+								<td><a href="#documents_create">Create a Document</a></td>
 								<td><a href="#documents_list">List All Document Details</a></td>
 								<td></td>
 								<td></td>
@@ -1664,14 +1680,14 @@
 								<td><a href="#search">Search</a></td>
 								<td>search</td>
 								<td></td>
-								<td><a href="#search_resource">Search Resources</td>
+								<td><a href="#search_resource">Search Resources</a></td>
 								<td></td>
 								<td></td>
 							</tr>
 							<tr class="alt">
 								<td><a href="#advance_search">AdHoc Search</a></td>
 								<td>search/advance</td>
-								<td><a href="#advance_search_resource">Advance Search</td>
+								<td><a href="#advance_search_resource">Advance Search</a></td>
 								<td></td>
 								<td></td>
 								<td></td>
@@ -3349,6 +3365,7 @@ No Request Body:
 					  Images can be uploaded using Multi part forms and downloaded as regular binary files 
 					 	</li>
 					 <br/>
+                    </ul>
 				</div>
 			</div>
 
@@ -5154,7 +5171,7 @@ An enumeration that indicates the type of transaction processing strategy to be 
 	
 <p>A number of out of the box appraches exist, some are custom to specific MFIs, some are more general and indicate the order in which payments are processed.</p>
 
-<p>Refer to the <a href="#paymentapplicationlogic">Payment Application Logic / Transaction Processing Strategy<a> section in the appendix for more detailed overview of each available <b>payment application logic</b> provided out of the box.</p>
+<p>Refer to the <a href="#paymentapplicationlogic">Payment Application Logic / Transaction Processing Strategy</a> section in the appendix for more detailed overview of each available <b>payment application logic</b> provided out of the box.</p>
 
 <i>List of current approaches</i>:<br/>
 <ul>
@@ -8484,7 +8501,7 @@ An enumeration that indicates the type of transaction processing strategy to be 
 	
 <p>A number of out of the box appraches exist, some are custom to specific MFIs, some are more general and indicate the order in which payments are processed.</p>
 
-<p>Refer to the <a href="#paymentapplicationlogic">Payment Application Logic / Transaction Processing Strategy<a> section in the appendix for more detailed overview of each available <b>payment application logic</b> provided out of the box.</p>
+<p>Refer to the <a href="#paymentapplicationlogic">Payment Application Logic / Transaction Processing Strategy</a> section in the appendix for more detailed overview of each available <b>payment application logic</b> provided out of the box.</p>
 
 <i>List of current approaches</i>:<br/>
 <ul>
@@ -19555,6 +19572,12 @@ GET https://DomainName/api/v1/users/template
 					<br>
 					<br>
 					<div class=apiClick>users/1?fields=username,officeName</div>
+                    <tr class="matrixHeadingBG">
+                        <td><div class="mifosXHeading2">Optional Field</div></td>
+                    </tr>
+                    <tr class=alt>
+                        <td>staffId</td>
+                    </tr>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
@@ -19648,6 +19671,29 @@ Request body:
     "resourceId": 12
 }
 					</code>
+                    <code class="method-request">
+POST users
+Content-Type: application/json
+Request body:
+{
+    "username": "newuser",
+    "firstname": "Test",
+    "lastname": "User",
+    "email": "whatever@mifos.org",
+    "officeId": 1,
+    "roles": [2,3],
+    "sendPasswordToEmail": false,
+    "password": "123",
+    "repeatPassword": "123",
+    "staffId": 2
+}
+                    </code>
+                    <code class="method-response">
+{
+    "officeId": 1,
+    "resourceId": 13
+}
+                    </code>
 				</div>
 			</div>
 
@@ -19686,6 +19732,66 @@ Request body:
 					</code>
 				</div>
 			</div>
+
+            <a id="users_link_staff" name="users_link_staff" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Associate Staff to a User</h4>
+                    <p>Staff can be associated to user by the update request.</p>
+                    <p><b>Note:</b> This request also works with normal Update request.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">
+PUT https://DomainName/api/v1/users/{userId)
+                    </code>
+                    <code class="method-request">
+PUT users/3
+Content-Type: application/json
+Request body:
+{
+    "staffId": 2
+}
+                    </code>
+                    <code class="method-response">
+{
+    officeId: 1,
+    resourceId: 15,
+    changes: {
+        staffId: 2
+    }
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="users_unlink_staff" name="users_unlink_staff" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Dissociate Staff from a User</h4>
+                    <p>Staff can be dissociated to user by the update request.</p>
+                    <p><b>Note:</b> This request also works with normal Update request.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">
+PUT https://DomainName/api/v1/users/{userId)
+                    </code>
+                    <code class="method-request">
+PUT users/3
+Content-Type: application/json
+Request body:
+{
+    "staffId": null
+}
+                    </code>
+                    <code class="method-response">
+{
+    officeId: 1,
+    resourceId: 15,
+    changes: { }
+}
+                    </code>
+                </div>
+            </div>
 
 			<a id="users_delete" name="users_delete" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
@@ -21558,7 +21664,7 @@ Content-Type: application/json
 						<tr class=alt>
 							<td rowspan="3"><a href="#clients">Client</a></td>
 							<td>Display Name</td>
-						</td>	
+						</tr>
 						<tr class=alt>
 							<td>Account Number</td>
 						</tr>
@@ -21568,18 +21674,18 @@ Content-Type: application/json
 						<tr>
 							<td><a href="#loans">Loan</a></td>
 							<td>Account Number</td>
-						</td>
+						</tr>
 						<tr class=alt>
 							<td><a href="#client_identifiers">Client Identifiers</a></td>
 							<td>Document Key</td>
-						</td>
+						</tr>
 						<tr>
 							<td rowspan=2><a href="#groups">Group</a></td>
 							<td>Name</td>
-						</td>
+						</tr>
 						<tr>
 							<td>External Id</td>
-						</td>
+						</tr>
 					</table>
 				</div>
 			</div>
@@ -22786,7 +22892,7 @@ No Request Body:
 					<td><a href="#search">Search</a></td>
 					<td>search</td>
 					<td></td>
-					<td><a href="#search_resource">Search Resources</td>
+					<td><a href="#search_resource">Search Resources</a></td>
 					<td></td>
 					<td></td>
 				</tr>
@@ -22929,7 +23035,7 @@ No Request Body:
 				<tr>
 					<td><a href="#documents">Documents</a></td>
 					<td>{entityType}/{entityId}/documents</td>
-					<td><a href="#documents_create">Create a Document</td>
+					<td><a href="#documents_create">Create a Document</a></td>
 					<td><a href="#documents_list">List All Document Details</a></td>
 					<td></td>
 					<td></td>
@@ -22956,7 +23062,7 @@ No Request Body:
 				<tr>
 					<td><a href="#notes">Notes</a></td>
 					<td>{resource}/{resourceId}/notes</td>
-					<td><a href="#resources_addnote">Add a Resource Note</td>
+					<td><a href="#resources_addnote">Add a Resource Note</a></td>
 					<td><a href="#resource_notelist">Retrieve a Resource's Notes</a></td>
 					<td></td>
 					<td></td>
@@ -23191,7 +23297,7 @@ No Request Body:
 			<tr class="alt">
 				<td></td>
 				<td>scheduler?command=stop</td>
-				<td><a href="#suspend_scheduler">Suspend a scheduler service</td>
+				<td><a href="#suspend_scheduler">Suspend a scheduler service</a></td>
 				<td></td>
 				<td></td>
 				<td></td>
