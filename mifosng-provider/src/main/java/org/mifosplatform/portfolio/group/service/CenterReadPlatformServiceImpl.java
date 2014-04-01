@@ -239,10 +239,12 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
             final String location = rs.getString("location");
             final LocalDate startDate = JdbcSupport.getLocalDate(rs, "startDate");
             final LocalDate endDate = JdbcSupport.getLocalDate(rs, "endDate");
+            final Integer eventStartTime = rs.getInt("eventStartTime");
+            final Integer duration = rs.getInt("duration");
             final String recurrence = rs.getString("recurrence");
 
             CalendarData calendarData = CalendarData.instance(calendarId, calendarInstanceId, entityId, entityType, title, description,
-                    location, startDate, endDate, null, null, false, recurrence, null, null, null, null, null, null, null, null, null,
+                    location, startDate, endDate, eventStartTime, duration, null, false, recurrence, null, null, null, null, null, null, null, null, null,
                     null, null, null, null);
             return CenterData.instance(id, name, externalId, status, activationDate, officeId, null, staffId, staffName, hierarchy, null,
                     calendarData);

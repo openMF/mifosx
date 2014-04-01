@@ -62,6 +62,8 @@ public class CalendarCommandFromApiJsonDeserializer extends AbstractFromApiJsonD
         final LocalDate endDate = this.fromApiJsonHelper.extractLocalDateNamed(CALENDAR_SUPPORTED_PARAMETERS.END_DATE.getValue(), element);
         final LocalDate createdDate = this.fromApiJsonHelper.extractLocalDateNamed(CALENDAR_SUPPORTED_PARAMETERS.CREATED_DATE.getValue(),
                 element);
+        final Integer eventStartTime = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(CALENDAR_SUPPORTED_PARAMETERS.START_TIME.getValue(),
+                element);
         final Integer duration = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue(),
                 element);
         final Integer typeId = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(CALENDAR_SUPPORTED_PARAMETERS.TYPE_ID.getValue(),
@@ -74,7 +76,7 @@ public class CalendarCommandFromApiJsonDeserializer extends AbstractFromApiJsonD
         final Integer secondReminder = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
                 CALENDAR_SUPPORTED_PARAMETERS.SECOND_REMINDER.getValue(), element);
 
-        return new CalendarCommand(title, description, location, startDate, endDate, createdDate, duration, typeId, repeating, remindById,
+        return new CalendarCommand(title, description, location, startDate, endDate, createdDate, eventStartTime, duration, typeId, repeating, remindById,
                 firstReminder, secondReminder);
     }
 
@@ -125,10 +127,16 @@ public class CalendarCommandFromApiJsonDeserializer extends AbstractFromApiJsonD
             baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.END_DATE.getValue()).value(endDate).notNull();
         }
 
+        if (this.fromApiJsonHelper.parameterExists(CALENDAR_SUPPORTED_PARAMETERS.START_TIME.getValue(), element)) {
+            final Integer eventStartTime = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
+                    CALENDAR_SUPPORTED_PARAMETERS.START_TIME.getValue(), element);
+            baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.START_TIME.getValue()).value(eventStartTime).ignoreIfNull().inTimeFormatHHMM();
+        }
+
         if (this.fromApiJsonHelper.parameterExists(CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue(), element)) {
             final Integer duration = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
                     CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue(), element);
-            baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue()).value(duration).ignoreIfNull();
+            baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue()).value(duration).ignoreIfNull().inMinMaxRange(0, 7200);
         }
 
         final Integer typeId = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(CALENDAR_SUPPORTED_PARAMETERS.TYPE_ID.getValue(),
@@ -234,10 +242,16 @@ public class CalendarCommandFromApiJsonDeserializer extends AbstractFromApiJsonD
             baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.END_DATE.getValue()).value(endDate).notNull();
         }
 
+        if (this.fromApiJsonHelper.parameterExists(CALENDAR_SUPPORTED_PARAMETERS.START_TIME.getValue(), element)) {
+            final Integer eventStartTime = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
+                    CALENDAR_SUPPORTED_PARAMETERS.START_TIME.getValue(), element);
+            baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.START_TIME.getValue()).value(eventStartTime).ignoreIfNull().inTimeFormatHHMM();;
+        }
+
         if (this.fromApiJsonHelper.parameterExists(CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue(), element)) {
             final Integer duration = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
                     CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue(), element);
-            baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue()).value(duration).ignoreIfNull();
+            baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue()).value(duration).ignoreIfNull().inMinMaxRange(0, 7200);
         }
         // TODO: AA do not allow to change calendar type.
         if (this.fromApiJsonHelper.parameterExists(CALENDAR_SUPPORTED_PARAMETERS.TYPE_ID.getValue(), element)) {

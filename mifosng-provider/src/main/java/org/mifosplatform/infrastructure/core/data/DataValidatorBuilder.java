@@ -220,6 +220,25 @@ public class DataValidatorBuilder {
         return this;
     }
 
+    public DataValidatorBuilder inTimeFormatHHMM() {
+        if (this.value == null && this.ignoreNullValue) { return this; }
+
+        if (this.value != null) {
+            final Integer number = Integer.valueOf(this.value.toString());
+            if (number/100 < 0 || number/100 > 23 || number%100 < 0 || number%100 > 55) {
+                final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
+                        .append(this.parameter).append(".is.not.within.expected.range");
+                final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter should be in HHMM format & ")
+                        .append(number/100).append(" of ").append(this.parameter).append(" must be between ").append(0).append(" and ").append(23).append(". ")
+                        .append(number%100).append(" of ").append(this.parameter).append(" must be between ").append(0).append(" and ").append(55).append(".");
+                final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                        defaultEnglishMessage.toString(), this.parameter, number, 0, 2355);
+                this.dataValidationErrors.add(error);
+            }
+        }
+        return this;
+    }
+
     public DataValidatorBuilder isOneOfTheseValues(final Object... values) {
         if (this.value == null && this.ignoreNullValue) { return this; }
 
