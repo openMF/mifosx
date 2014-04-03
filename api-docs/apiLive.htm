@@ -1278,7 +1278,23 @@
 								<td><a href="#users_update">Update a User</a></td>
 								<td><a href="#users_delete">Delete a User</a></td>
 							</tr>
-							<tr class="alt">
+                            <tr>
+                                <td></td>
+                                <td>users/{userId}</td>
+                                <td></td>
+                                <td></td>
+                                <td><a href="#users_link_staff">Associate Staff to a User</a></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>users/{userId}</td>
+                                <td></td>
+                                <td></td>
+                                <td><a href="#users_unlink_staff">Dissociate Staff from a User</a></td>
+                                <td></td>
+                            </tr>
+                            <tr class="alt">
 								<td><a href="#roles">Role</a></td>
 								<td>roles</td>
 								<td><a href="#roles_create">Create a New Role</a></td>
@@ -19608,11 +19624,17 @@ GET https://DomainName/api/v1/users/{userId}
 					</p>
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
-							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
-						</tr>
-						<tr class=alt>
-							<td>username, firstname, lastname, email, officeId, roles, sendPasswordToEmail</td>
-						</tr>
+                        <td><div class="mifosXHeading2">Mandatory Fields</div></td>
+                    </tr>
+                        <tr class=alt>
+                            <td>username, firstname, lastname, email, officeId, roles, sendPasswordToEmail</td>
+                        </tr>
+                        <tr class="matrixHeadingBG">
+                            <td><div class="mifosXHeading2">Optional Fields</div></td>
+                        </tr>
+                        <tr class=alt>
+                            <td>staffId</td>
+                        </tr>
 					</table>
 				</div>
 				<div class="method-example">
@@ -19661,6 +19683,29 @@ Request body:
     "resourceId": 12
 }
 					</code>
+                    <code class="method-request">
+POST users
+Content-Type: application/json
+Request body:
+{
+    "username": "newuser",
+    "firstname": "Test",
+    "lastname": "User",
+    "email": "whatever@mifos.org",
+    "officeId": 1,
+    "roles": [2,3],
+    "sendPasswordToEmail": false,
+    "password": "123",
+    "repeatPassword": "123"
+    "staffId": "2"
+}
+                    </code>
+                    <code class="method-response">
+{
+    "officeId": 1,
+    "resourceId": 12
+}
+                    </code>
 				</div>
 			</div>
 
@@ -19700,7 +19745,68 @@ Request body:
 				</div>
 			</div>
 
-			<a id="users_delete" name="users_delete" class="old-syle-anchor">&nbsp;</a>
+            <a id="users_link_staff" name="users_link_staff" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Associate Staff to a User</h4>
+                    <p>Staff can be associated to user by the update request.</p>
+                    <p><b>Note:</b> This request also works with normal Update request.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">
+PUT https://DomainName/api/v1/users/{userId)
+                    </code>
+                    <code class="method-request">
+PUT users/3
+Content-Type: application/json
+Request body:
+{
+    "staffId": 2
+}
+                    </code>
+                    <code class="method-response">
+{
+    officeId: 1,
+    resourceId: 15,
+    changes: {
+        staffId: 2
+    }
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="users_unlink_staff" name="users_unlink_staff" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Dissociate Staff from a User</h4>
+                    <p>Staff can be dissociated to user by the update request.</p>
+                    <p><b>Note:</b> This request also works with normal Update request.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">
+PUT https://DomainName/api/v1/users/{userId)
+                    </code>
+                    <code class="method-request">
+PUT users/3
+Content-Type: application/json
+Request body:
+{
+    "staffId": null
+}
+                    </code>
+                    <code class="method-response">
+{
+    officeId: 1,
+    resourceId: 15,
+    changes: { }
+}
+                    </code>
+                </div>
+            </div>
+
+
+            <a id="users_delete" name="users_delete" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Delete a User</h4>
@@ -23007,14 +23113,30 @@ No Request Body:
 					<td></td>
 					<td></td>
 				</tr>
-				<tr class="alt">
-					<td></td>
-					<td>users/{userId}</td>
-					<td></td>
-					<td><a href="#users_retrieve">Retrieve a User</a></td>
-					<td><a href="#users_update">Update a User</a></td>
-					<td><a href="#users_delete">Delete a User</a></td>
-				</tr>
+                <tr>
+                    <td></td>
+                    <td>users/{userId}</td>
+                    <td></td>
+                    <td><a href="#users_retrieve">Retrieve a User</a></td>
+                    <td><a href="#users_update">Update a User</a></td>
+                    <td><a href="#users_delete">Delete a User</a></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>users/{userId}</td>
+                    <td></td>
+                    <td></td>
+                    <td><a href="#users_link_staff">Associate Staff to a User</a></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>users/{userId}</td>
+                    <td></td>
+                    <td></td>
+                    <td><a href="#users_unlink_staff">Dissociate Staff from a User</a></td>
+                    <td></td>
+                </tr>
 				<tr>
 					<td><a href="#roles">Role</a></td>
 					<td>roles</td>
