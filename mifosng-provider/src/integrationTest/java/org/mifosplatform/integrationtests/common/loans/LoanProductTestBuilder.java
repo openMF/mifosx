@@ -11,7 +11,6 @@ import com.google.gson.Gson;
 public class LoanProductTestBuilder {
 
     private static final String LOCALE = "en_GB";
-    private static final String DIGITS_AFTER_DECIMAL = "2";
     private static final String INR = "INR";
     private static final String DAYS = "0";
     private static final String WEEK = "1";
@@ -30,6 +29,8 @@ public class LoanProductTestBuilder {
     private static final String CASH_BASED = "2";
     private static final String ACCRUAL_BASED = "3";
 
+    private String digitsAfterDecimal = "2";
+    private String inMultiplesOf = "0";
     private String nameOfLoanProduct = Utils.randomNameGenerator("LOAN_PRODUCT_", 6);
     private String shortName = Utils.randomNameGenerator("", 4);
     private String principal = "10000.00";
@@ -47,6 +48,10 @@ public class LoanProductTestBuilder {
     private String amortizationType = EQUAL_INSTALLMENTS;
     private String minPrincipal = "1000.00";
     private String maxPrincipal = "100000.00";
+    private String graceOnPrincipalPayment = "0";
+    private String graceOnInterestPayment = "0";
+    private String graceOnInterestCharged = "0";
+    
     private Account[] accountList = null;
 
     public String build() {
@@ -56,7 +61,8 @@ public class LoanProductTestBuilder {
         map.put("shortName", this.shortName);
         map.put("currencyCode", this.currencyCode);
         map.put("locale", LOCALE);
-        map.put("digitsAfterDecimal", DIGITS_AFTER_DECIMAL);
+        map.put("digitsAfterDecimal", this.digitsAfterDecimal);
+        map.put("inMultiplesOf", this.inMultiplesOf);
         map.put("principal", this.principal);
         map.put("numberOfRepayments", this.numberOfRepayments);
         map.put("repaymentEvery", this.repaymentPeriod);
@@ -71,6 +77,9 @@ public class LoanProductTestBuilder {
         map.put("accountingRule", this.accountingRule);
         map.put("minPrincipal", this.minPrincipal);
         map.put("maxPrincipal", this.maxPrincipal);
+        map.put("graceOnPrincipalPayment", this.graceOnPrincipalPayment);
+        map.put("graceOnInterestPayment", this.graceOnInterestPayment);
+        map.put("graceOnInterestCharged", this.graceOnInterestCharged);
 
         if (this.accountingRule.equals(ACCRUAL_BASED)) {
             map.putAll(getAccountMappingForAccrualBased());
@@ -79,7 +88,18 @@ public class LoanProductTestBuilder {
         }
         return new Gson().toJson(map);
     }
-
+    
+    public LoanProductTestBuilder withDigitsAfterDecimal(final String digitsAfterDecimal) {
+        this.digitsAfterDecimal = digitsAfterDecimal;
+        return this;
+    }
+    
+    public LoanProductTestBuilder withInMultiplesOf(final String inMultiplesOf) {
+        this.inMultiplesOf = inMultiplesOf;
+        return this;
+    }
+    
+    
     public LoanProductTestBuilder withMinPrincipal(final String minPrincipal) {
         this.minPrincipal = minPrincipal;
         return this;
@@ -174,6 +194,21 @@ public class LoanProductTestBuilder {
         this.inArrearsTolerance = amountCanBeWaved;
         return this;
     }
+    
+    public LoanProductTestBuilder withGraceOnPrincipalPayment (final String graceOnPrincipalPayment) {
+        this.graceOnPrincipalPayment = graceOnPrincipalPayment;
+        return this;
+    }
+            
+    public LoanProductTestBuilder withGraceOnInterestPayment (final String graceOnInterestPayment) {
+        this.graceOnInterestPayment = graceOnInterestPayment;
+        return this;
+    }
+            
+    public LoanProductTestBuilder withGraceOnInterestCharged (final String graceOnInterestCharged) {
+        this.graceOnInterestCharged = graceOnInterestCharged;
+        return this;
+    }    
 
     public LoanProductTestBuilder withAccountingRuleAsNone() {
         this.accountingRule = NONE;
