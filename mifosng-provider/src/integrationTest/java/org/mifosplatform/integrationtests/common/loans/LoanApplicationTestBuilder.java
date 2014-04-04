@@ -32,9 +32,14 @@ public class LoanApplicationTestBuilder {
     private String expectedDisbursmentDate = "";
     private String submittedOnDate = "";
     private String loanType = "individual";
+    private String graceOnPrincipalPayment = "0";
+    private String graceOnInterestPayment = "0";
+    private String graceOnInterestCharged = "0";
+    private String repaymentsStartingFromDate = "";
 
     public String build(final String ID, final String loanProductId) {
 
+        
         final HashMap<String, String> map = new HashMap<String, String>();
         map.put("dateFormat", "dd MMMM yyyy");
         map.put("locale", "en_GB");
@@ -57,7 +62,17 @@ public class LoanApplicationTestBuilder {
         map.put("transactionProcessingStrategyId", this.transactionProcessingID);
         map.put("expectedDisbursementDate", this.expectedDisbursmentDate);
         map.put("submittedOnDate", this.submittedOnDate);
+        
+        if(repaymentsStartingFromDate != "")
+        {
+            map.put("repaymentsStartingFromDate", this.repaymentsStartingFromDate);
+        }
+        
         map.put("loanType", this.loanType);
+        map.put("graceOnPrincipalPayment", this.graceOnPrincipalPayment);
+        map.put("graceOnInterestPayment", this.graceOnInterestPayment);
+        map.put("graceOnInterestCharged", this.graceOnInterestCharged);
+
         return new Gson().toJson(map);
     }
 
@@ -156,6 +171,11 @@ public class LoanApplicationTestBuilder {
         return this;
     }
 
+    public LoanApplicationTestBuilder withRepaymentsStartingFromDate(final String repaymentsStartingFromDate) {
+        this.repaymentsStartingFromDate = repaymentsStartingFromDate;
+        return this;
+    }
+
     public LoanApplicationTestBuilder withSubmittedOnDate(final String loanApplicationSubmittedDate) {
         this.submittedOnDate = loanApplicationSubmittedDate;
         return this;
@@ -165,5 +185,20 @@ public class LoanApplicationTestBuilder {
         this.loanType = loanType;
         return this;
     }
+    
+    public LoanApplicationTestBuilder withGraceOnPrincipalPayment (final String graceOnPrincipalPayment) {
+        this.graceOnPrincipalPayment = graceOnPrincipalPayment;
+        return this;
+    }
+            
+    public LoanApplicationTestBuilder withGraceOnInterestPayment (final String graceOnInterestPayment) {
+        this.graceOnInterestPayment = graceOnInterestPayment;
+        return this;
+    }
+            
+    public LoanApplicationTestBuilder withGraceOnInterestCharged (final String graceOnInterestCharged) {
+        this.graceOnInterestCharged = graceOnInterestCharged;
+        return this;
+    }   
 
 }
