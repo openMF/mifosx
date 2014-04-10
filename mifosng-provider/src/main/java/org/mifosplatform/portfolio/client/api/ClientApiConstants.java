@@ -68,7 +68,8 @@ public class ClientApiConstants {
 
     public static final Set<String> CLIENT_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
             dateFormatParamName, accountNoParamName, externalIdParamName, mobileNoParamName, firstnameParamName, middlenameParamName,
-            lastnameParamName, fullnameParamName, activeParamName, activationDateParamName, staffIdParamName, savingsProductIdParamName));
+            lastnameParamName, fullnameParamName, activeParamName, activationDateParamName, staffIdParamName, submittedOnDateParamName,
+            savingsProductIdParamName));
 
     /**
      * These parameters will match the class level parameters of
@@ -76,7 +77,7 @@ public class ClientApiConstants {
      * match those of request parameters.
      */
     public static final Set<String> CLIENT_RESPONSE_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(idParamName, accountNoParamName,
-            externalIdParamName, statusParamName, activeParamName, activationDateParamName, firstnameParamName, middlenameParamName,
+            externalIdParamName, statusParamName, activeParamName, activationDateParamName, submittedOnDateParamName, firstnameParamName, middlenameParamName,
             lastnameParamName, fullnameParamName, displayNameParamName, mobileNoParamName, officeIdParamName, officeNameParamName,
             transferToOfficeIdParamName, transferToOfficeNameParamName, hierarchyParamName, imageIdParamName, imagePresentParamName,
             staffIdParamName, staffNameParamName, timelineParamName, groupsParamName, officeOptionsParamName, staffOptionsParamName));
