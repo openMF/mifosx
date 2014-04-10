@@ -424,6 +424,16 @@ public final class Client extends AbstractPersistable<Long> {
             this.activationDate = newValue.toDate();
             this.officeJoiningDate = this.activationDate;
         }
+        
+        if (command.isChangeInLocalDateParameterNamed(ClientApiConstants.submittedOnDateParamName, getSubmittedOnDate())) {
+            final String valueAsInput = command.stringValueOfParameterNamed(ClientApiConstants.submittedOnDateParamName);
+            actualChanges.put(ClientApiConstants.submittedOnDateParamName, valueAsInput);
+            actualChanges.put(ClientApiConstants.dateFormatParamName, dateFormatAsInput);
+            actualChanges.put(ClientApiConstants.localeParamName, localeAsInput);
+
+            final LocalDate newValue = command.localDateValueOfParameterNamed(ClientApiConstants.submittedOnDateParamName);
+            this.submittedOnDate = newValue.toDate();
+        }
 
         validate();
 
