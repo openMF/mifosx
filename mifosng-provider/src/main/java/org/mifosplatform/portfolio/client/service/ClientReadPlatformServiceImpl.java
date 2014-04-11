@@ -360,7 +360,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                     closedByUsername, closedByFirstname, closedByLastname);
 
             return ClientData.instance(accountNo, status, officeId, officeName, transferToOfficeId, transferToOfficeName, id, firstname,
-                    middlename, lastname, fullname, displayName, externalId, mobileNo, activationDate, imageId, staffId, staffName,
+                    middlename, lastname, fullname, displayName, externalId, mobileNo, activationDate, submittedOnDate, imageId, staffId, staffName,
                     timeline, savingsProductId, savingsProductName,savingsAccountId);
 
         }
