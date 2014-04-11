@@ -33,6 +33,7 @@ final public class ClientData implements Comparable<ClientData> {
     @SuppressWarnings("unused")
     private final Boolean active;
     private final LocalDate activationDate;
+    private final LocalDate submittedOnDate;
 
     private final String firstname;
     private final String middlename;
@@ -71,7 +72,7 @@ final public class ClientData implements Comparable<ClientData> {
     public static ClientData template(final Long officeId, final LocalDate joinedDate, final Collection<OfficeData> officeOptions,
             final Collection<StaffData> staffOptions, final Collection<CodeValueData> closureReasons,
             final Collection<SavingsProductData> savingProductOptions) {
-        return new ClientData(null, null, officeId, null, null, null, null, null, null, null, null, null, null, null, joinedDate, null,
+        return new ClientData(null, null, officeId, null, null, null, null, null, null, null, null, null, null, null, joinedDate, null, null,
                 null, null, officeOptions, null, staffOptions, closureReasons, null, savingProductOptions, null, null, null, null);
 
     }
@@ -81,7 +82,7 @@ final public class ClientData implements Comparable<ClientData> {
         return new ClientData(clientData.accountNo, clientData.status, clientData.officeId, clientData.officeName,
                 clientData.transferToOfficeId, clientData.transferToOfficeName, clientData.id, clientData.firstname, clientData.middlename,
                 clientData.lastname, clientData.fullname, clientData.displayName, clientData.externalId, clientData.mobileNo,
-                clientData.activationDate, clientData.imageId, clientData.staffId, clientData.staffName, templateData.officeOptions,
+                clientData.activationDate, clientData.submittedOnDate, clientData.imageId, clientData.staffId, clientData.staffName, templateData.officeOptions,
                 clientData.groups, templateData.staffOptions, null, null, templateData.savingProductOptions, clientData.savingsProductId,
                 clientData.savingsProductName, clientData.savingsAccountId, clientData.savingAccountOptions);
 
@@ -93,7 +94,7 @@ final public class ClientData implements Comparable<ClientData> {
         return new ClientData(clientData.accountNo, clientData.status, clientData.officeId, clientData.officeName,
                 clientData.transferToOfficeId, clientData.transferToOfficeName, clientData.id, clientData.firstname, clientData.middlename,
                 clientData.lastname, clientData.fullname, clientData.displayName, clientData.externalId, clientData.mobileNo,
-                clientData.activationDate, clientData.imageId, clientData.staffId, clientData.staffName, clientData.officeOptions,
+                clientData.activationDate, clientData.submittedOnDate, clientData.imageId, clientData.staffId, clientData.staffName, clientData.officeOptions,
                 clientData.groups, clientData.staffOptions, null, null, clientData.savingProductOptions, clientData.savingsProductId,
                 clientData.savingsProductName, clientData.savingsAccountId, savingAccountOptions);
 
@@ -103,7 +104,7 @@ final public class ClientData implements Comparable<ClientData> {
         return new ClientData(clientData.accountNo, clientData.status, clientData.officeId, clientData.officeName,
                 clientData.transferToOfficeId, clientData.transferToOfficeName, clientData.id, clientData.firstname, clientData.middlename,
                 clientData.lastname, clientData.fullname, clientData.displayName, clientData.externalId, clientData.mobileNo,
-                clientData.activationDate, clientData.imageId, clientData.staffId, clientData.staffName, clientData.officeOptions,
+                clientData.activationDate, clientData.submittedOnDate, clientData.imageId, clientData.staffId, clientData.staffName, clientData.officeOptions,
                 parentGroups, clientData.staffOptions, null, clientData.timeline, clientData.savingProductOptions,
                 clientData.savingsProductId, clientData.savingsProductName, clientData.savingsAccountId, clientData.savingAccountOptions);
 
@@ -114,23 +115,23 @@ final public class ClientData implements Comparable<ClientData> {
             final String officeName) {
 
         return new ClientData(accountNo, status, officeId, officeName, null, null, id, firstname, middlename, lastname, fullname,
-                displayName, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                displayName, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
     }
 
     public static ClientData lookup(final Long id, final String displayName, final Long officeId, final String officeName) {
         return new ClientData(null, null, officeId, officeName, null, null, id, null, null, null, null, displayName, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
     }
 
     public static ClientData instance(final String accountNo, final EnumOptionData status, final Long officeId, final String officeName,
             final Long transferToOfficeId, final String transferToOfficeName, final Long id, final String firstname,
             final String middlename, final String lastname, final String fullname, final String displayName, final String externalId,
-            final String mobileNo, final LocalDate activationDate, final Long imageId, final Long staffId, final String staffName,
+            final String mobileNo, final LocalDate activationDate, final LocalDate submittedOnDate, final Long imageId, final Long staffId, final String staffName,
             final ClientTimelineData timeline, final Long savingsProductId, final String savingsProductName, final Long savingsAccountId) {
         return new ClientData(accountNo, status, officeId, officeName, transferToOfficeId, transferToOfficeName, id, firstname, middlename,
-                lastname, fullname, displayName, externalId, mobileNo, activationDate, imageId, staffId, staffName, null, null, null, null,
+                lastname, fullname, displayName, externalId, mobileNo, activationDate, submittedOnDate, imageId, staffId, staffName, null, null, null, null,
                 timeline, null, savingsProductId, savingsProductName, savingsAccountId, null);
 
     }
@@ -138,7 +139,7 @@ final public class ClientData implements Comparable<ClientData> {
     private ClientData(final String accountNo, final EnumOptionData status, final Long officeId, final String officeName,
             final Long transferToOfficeId, final String transferToOfficeName, final Long id, final String firstname,
             final String middlename, final String lastname, final String fullname, final String displayName, final String externalId,
-            final String mobileNo, final LocalDate activationDate, final Long imageId, final Long staffId, final String staffName,
+            final String mobileNo, final LocalDate activationDate, final LocalDate submittedOnDate, final Long imageId, final Long staffId, final String staffName,
             final Collection<OfficeData> allowedOffices, final Collection<GroupGeneralData> groups,
             final Collection<StaffData> staffOptions, final Collection<CodeValueData> closureReasons, final ClientTimelineData timeline,
             final Collection<SavingsProductData> savingProductOptions, final Long savingsProductId, final String savingsProductName,
@@ -163,6 +164,7 @@ final public class ClientData implements Comparable<ClientData> {
         this.externalId = StringUtils.defaultIfEmpty(externalId, null);
         this.mobileNo = StringUtils.defaultIfEmpty(mobileNo, null);
         this.activationDate = activationDate;
+        this.submittedOnDate = submittedOnDate;
         this.imageId = imageId;
         if (imageId != null) {
             this.imagePresent = Boolean.TRUE;
@@ -261,5 +263,9 @@ final public class ClientData implements Comparable<ClientData> {
 
     public LocalDate getActivationDate() {
         return this.activationDate;
+    }
+    
+    public LocalDate getSubmittedOnDate() {
+        return this.submittedOnDate;
     }
 }
