@@ -23,12 +23,13 @@ public class SmsApiConstants {
     public static final String clientIdParamName = "clientId";
     public static final String staffIdParamName = "staffId";
     public static final String messageParamName = "message";
-
+    public static final String gatewayIdParamName = "gatewayId";
+    
     // response parameters
     public static final String statusParamName = "status";
 
     public static final Set<String> CREATE_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
-            dateFormatParamName, groupIdParamName, clientIdParamName, staffIdParamName, messageParamName));
+            dateFormatParamName, groupIdParamName, clientIdParamName, staffIdParamName, messageParamName, gatewayIdParamName));
 
     public static final Set<String> UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(messageParamName));
 

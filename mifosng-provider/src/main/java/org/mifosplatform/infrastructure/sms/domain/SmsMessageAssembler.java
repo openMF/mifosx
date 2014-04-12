@@ -66,9 +66,11 @@ public class SmsMessageAssembler {
             mobileNo = staff.mobileNo();
         }
 
+        final Long gatewayId = this.fromApiJsonHelper.extractLongNamed(SmsApiConstants.gatewayIdParamName, element);
+        
         final String message = this.fromApiJsonHelper.extractStringNamed(SmsApiConstants.messageParamName, element);
 
-        return SmsMessage.pendingSms(group, client, staff, message, mobileNo);
+        return SmsMessage.pendingSms(group, client, staff, message, mobileNo, gatewayId);
     }
 
     public SmsMessage assembleFromResourceId(final Long resourceId) {

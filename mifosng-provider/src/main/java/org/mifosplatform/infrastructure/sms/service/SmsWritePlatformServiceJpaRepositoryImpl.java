@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.infrastructure.sms.service;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
@@ -15,6 +16,9 @@ import org.mifosplatform.infrastructure.sms.data.SmsDataValidator;
 import org.mifosplatform.infrastructure.sms.domain.SmsMessage;
 import org.mifosplatform.infrastructure.sms.domain.SmsMessageAssembler;
 import org.mifosplatform.infrastructure.sms.domain.SmsMessageRepository;
+import org.mifosplatform.infrastructure.smsgateway.domain.SmsGateway;
+import org.mifosplatform.infrastructure.smsgateway.domain.SmsGatewayRepository;
+import org.mifosplatform.infrastructure.smsgateway.domain.frontlinesms.FrontlineSMSMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +34,15 @@ public class SmsWritePlatformServiceJpaRepositoryImpl implements SmsWritePlatfor
     private final SmsMessageAssembler assembler;
     private final SmsMessageRepository repository;
     private final SmsDataValidator validator;
-
+    private final SmsGatewayRepository smsGatewayRepository;
+    
     @Autowired
     public SmsWritePlatformServiceJpaRepositoryImpl(final SmsMessageAssembler assembler, final SmsMessageRepository repository,
-            final SmsDataValidator validator) {
+            final SmsDataValidator validator, final SmsGatewayRepository smsGatewayRepository) {
         this.assembler = assembler;
         this.repository = repository;
         this.validator = validator;
+        this.smsGatewayRepository = smsGatewayRepository;
     }
 
     @Transactional
@@ -47,9 +53,15 @@ public class SmsWritePlatformServiceJpaRepositoryImpl implements SmsWritePlatfor
             this.validator.validateForCreate(command.json());
 
             final SmsMessage message = this.assembler.assembleFromJson(command);
-
-            // TODO: at this point we also want to fire off request using third
-            // party service to send SMS.
+            final SmsGateway smsGateway = this.smsGatewayRepository.findOne(message.gatewayId());	
+            final FrontlineSMSMessage frontlineSMSMessage = new FrontlineSMSMessage(smsGateway.authToken(), message.message(), message.mobileNo(), smsGateway.url());
+            
+            try {
+				frontlineSMSMessage.sendPostRequest();
+			} catch (IOException e) {
+				return CommandProcessingResult.empty();
+			}
+            
             // TODO: decision to be made on wheter we 'wait' for response or use
             // 'future/promise' to capture response and update the SmsMessage
             // table

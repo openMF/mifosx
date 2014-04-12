@@ -276,6 +276,38 @@ public class CommandWrapperBuilder {
         this.href = "/sms/" + resourceId;
         return this;
     }
+    
+    public CommandWrapperBuilder createSmsGateway() {
+        this.actionName = "CREATE";
+        this.entityName = "SMSGATEWAY";
+        this.entityId = null;
+        this.href = "/smsgateway/template";
+        return this;
+    }
+
+    public CommandWrapperBuilder updateSmsGateway(final Long resourceId) {
+        this.actionName = "UPDATE";
+        this.entityName = "SMSGATEWAY";
+        this.entityId = resourceId;
+        this.href = "/sms/" + resourceId;
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteSmsGateway(final Long resourceId) {
+        this.actionName = "DELETE";
+        this.entityName = "SMSGATEWAY";
+        this.entityId = resourceId;
+        this.href = "/smsgateway/" + resourceId;
+        return this;
+    }
+
+    public CommandWrapperBuilder testSmsGateway(final Long resourceId) {
+        this.actionName = "TEST";
+        this.entityName = "SMSGATEWAY";
+        this.entityId = resourceId;
+        this.href = "/smsgateway/" + resourceId + "?command=test";
+        return this;
+    }
 
     public CommandWrapperBuilder createCode() {
         this.actionName = "CREATE";

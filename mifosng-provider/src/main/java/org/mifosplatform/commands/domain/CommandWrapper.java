@@ -233,7 +233,15 @@ public class CommandWrapper {
     public boolean isSmsResource() {
         return this.entityName.equalsIgnoreCase("SMS");
     }
+    
+    public boolean isSmsGatewayResource() {
+        return this.entityName.equalsIgnoreCase("SMSGATEWAY");
+    }
 
+    public boolean isSmsGatewayTest() {
+        return this.actionName.equalsIgnoreCase("TEST") && this.entityName.equalsIgnoreCase("SMSGATEWAY");
+    }
+    
     public boolean isCodeResource() {
         return this.entityName.equalsIgnoreCase("CODE");
     }
