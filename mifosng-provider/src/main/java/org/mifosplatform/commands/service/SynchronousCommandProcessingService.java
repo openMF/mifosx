@@ -5,8 +5,6 @@
  */
 package org.mifosplatform.commands.service;
 
-import java.util.Map;
-
 import org.joda.time.DateTime;
 import org.mifosplatform.commands.domain.CommandSource;
 import org.mifosplatform.commands.domain.CommandSourceRepository;
@@ -25,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Service
 public class SynchronousCommandProcessingService implements CommandProcessingService {
@@ -63,7 +63,7 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
         CommandSource commandSourceResult = null;
         if (command.commandId() != null) {
             commandSourceResult = this.commandSourceRepository.findOne(command.commandId());
-            commandSourceResult.markAsChecked(maker, DateTime.now());
+                commandSourceResult.markAsChecked(maker, DateTime.now());
         } else {
             commandSourceResult = CommandSource.fullEntryFrom(wrapper, command, maker);
         }
