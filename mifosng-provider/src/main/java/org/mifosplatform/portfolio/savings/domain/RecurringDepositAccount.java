@@ -57,6 +57,8 @@ import org.mifosplatform.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.mifosplatform.portfolio.savings.domain.interest.PostingPeriod;
 import org.mifosplatform.portfolio.savings.service.SavingsEnumerations;
 import org.mifosplatform.useradministration.domain.AppUser;
+import org.mifosplatform.portfolio.savings.exception.FirstDepositDateAfterActivationAndMaturityDateException;
+import org.mifosplatform.portfolio.savings.exception.RecurringDepositPeriodNotAllowedException;
 
 @Entity
 @DiscriminatorValue("300")
@@ -251,7 +253,7 @@ public class RecurringDepositAccount extends SavingsAccount {
                 .fromInt(this.interestCalculationDaysInYearType);
 
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
-                accountSubmittedOrActivationDate(), maturityDate, postingPeriodType);
+        		depositStartDate(), maturityDate, postingPeriodType);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<PostingPeriod>();
 
@@ -357,7 +359,9 @@ public class RecurringDepositAccount extends SavingsAccount {
     public LocalDate depositStartDate() {
         // TODO: Support to add deposit start date which can be a date after
         // account activation date.
-        final LocalDate depositStartDate = accountSubmittedOrActivationDate();
+        final LocalDate depositStartDate = accountTermAndPreClosure.getExpectedFirstDepositOnDate();
+        if(depositStartDate == null)
+        	return accountSubmittedOrActivationDate();
         return depositStartDate;
     }
 
@@ -438,7 +442,8 @@ public class RecurringDepositAccount extends SavingsAccount {
     @Override
     protected void processAccountUponActivation(final DateTimeFormatter fmt) {
         final Money recurringDepositAmount = Money.of(this.currency, this.recurringDetail.recurringDepositAmount());
-        if (recurringDepositAmount.isGreaterThanZero()) {
+      //We don't necessarily deposit amount at time of activation
+        if (recurringDepositAmount.isGreaterThanZero() && depositStartDate().equals(accountSubmittedOrActivationDate())) {
 
             final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, getActivationLocalDate(),
                     recurringDepositAmount.getAmount(), null, new Date());
@@ -448,6 +453,18 @@ public class RecurringDepositAccount extends SavingsAccount {
             // correct.
             recalculateDailyBalances(Money.zero(this.currency), interestPostingUpToDate);
         }
+        
+       /* final Money depositAmount = Money.of(this.currency, this.accountTermAndPreClosure.depositAmount());
+        if (depositAmount.isGreaterThanZero()) {
+
+            final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, getActivationLocalDate(),
+                    depositAmount.getAmount(), null, new Date());
+            deposit(transactionDTO);
+            final LocalDate interestPostingUpToDate = interestPostingUpToDate(DateUtils.getLocalDateOfTenant());
+            // update existing transactions so derived balance fields are
+            // correct.
+            recalculateDailyBalances(Money.zero(this.currency), interestPostingUpToDate);
+        }*/
     }
 
     public SavingsAccountTransaction close(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate,
@@ -805,7 +822,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
         final BigDecimal minRequiredOpeningBalance = null;
-        final BigDecimal interestRate = null;
+        final BigDecimal interestRate = BigDecimal.ZERO;
         final Set<SavingsAccountCharge> savingsAccountCharges = null;
         final SavingsPeriodFrequencyType lockinPeriodFrequencyType = SavingsPeriodFrequencyType.fromInt(this.lockinPeriodFrequencyType);
         final Integer lockinPeriodFrequency = this.lockinPeriodFrequency;
@@ -816,5 +833,41 @@ public class RecurringDepositAccount extends SavingsAccount {
                 daysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
                 withdrawalFeeApplicableForTransfer, savingsAccountCharges, newAccountTermAndPreClosure, recurringDetail, newChart);
 
+    }
+    
+    public void validateRecurringAccount() {
+        
+		int depositPeriodFrequencyTypeInt = accountTermAndPreClosure.depositPeriodFrequency();
+		SavingsPeriodFrequencyType depositPeriodFrequencyType  = SavingsPeriodFrequencyType.fromInt(depositPeriodFrequencyTypeInt);
+		
+		int recurringPeriodFrequencyTypeInt = recurringDetail.recurringDetail().recurringDepositFrequencyTypeId();
+		SavingsPeriodFrequencyType recurringPeriodFrequencyType  = SavingsPeriodFrequencyType.fromInt(recurringPeriodFrequencyTypeInt);
+    	
+    	int depositPeriod = accountTermAndPreClosure.depositPeriod();
+    	int recurringPeriodFrequency = recurringDetail.recurringDetail().recurringDepositFrequency();
+    	
+    	if(depositPeriodFrequencyTypeInt != recurringPeriodFrequencyTypeInt || recurringPeriodFrequency > depositPeriod) {
+        		throw new RecurringDepositPeriodNotAllowedException("recurring.period.not.allowed", depositPeriod,  
+        				depositPeriodFrequencyType.name(), recurringPeriodFrequency,recurringPeriodFrequencyType.name());
+    	}
+    }
+    
+    protected void validateFirstDepositDateNotBeforeMaturityOrActivationDate() {
+    	LocalDate expectedFirstDepositLocalDate = accountTermAndPreClosure.getExpectedFirstDepositOnDate();
+    	LocalDate maturityLocalDate = accountTermAndPreClosure.getMaturityLocalDate();
+    	LocalDate activateOnLocalDate = activatedOnDate == null ? null : new LocalDate(activatedOnDate);
+    	
+    	if(activatedOnDate == null || expectedFirstDepositLocalDate == null || maturityLocalDate == null) {
+    		throw new FirstDepositDateAfterActivationAndMaturityDateException("NULL",
+                    "");
+    	}
+    	
+    	if(expectedFirstDepositLocalDate.isBefore(activateOnLocalDate)) {
+    		
+    	}
+    	
+    	if(!maturityLocalDate.isAfter(expectedFirstDepositLocalDate)) {
+    		
+    	}
     }
 }

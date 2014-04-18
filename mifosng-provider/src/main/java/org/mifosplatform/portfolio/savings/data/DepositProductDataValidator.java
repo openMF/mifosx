@@ -27,6 +27,9 @@ import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosur
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.recurringDepositFrequencyParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.recurringDepositFrequencyTypeIdParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.recurringDepositTypeIdParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositAmountParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositMinAmountParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositMaxAmountParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.currencyCodeParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.descriptionParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.digitsAfterDecimalParamName;
@@ -48,6 +51,8 @@ import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawal
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -159,6 +164,7 @@ public class DepositProductDataValidator {
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
+
 
     public void validateForRecurringDepositUpdate(final String json) {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
@@ -385,6 +391,8 @@ public class DepositProductDataValidator {
                     .cantBeBlankWhenParameterProvidedIs(inMultiplesOfDepositTermParamName, inMultiplesOfDepositTerm)
                     .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues());
         }
+        
+        validateDepositAmount(element, baseDataValidator);
     }
 
     private void validateChartsData(JsonElement element, DataValidatorBuilder baseDataValidator) {
@@ -617,6 +625,8 @@ public class DepositProductDataValidator {
             baseDataValidator.reset().parameter(inMultiplesOfDepositTermTypeIdParamName).value(inMultiplesOfDepositTermType)
                     .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues());
         }
+        
+        validateDepositAmount(element, baseDataValidator);
     }
 
     private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
@@ -733,4 +743,95 @@ public class DepositProductDataValidator {
                     .isOneOfTheseValues(SavingsPeriodFrequencyType.integerValues());
         }
     }
+    
+    private void validateDepositAmount(JsonElement element, DataValidatorBuilder baseDataValidator) {
+    	final BigDecimal depositAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(depositAmountParamName, element);
+        baseDataValidator.reset().parameter(depositAmountParamName).value(depositAmount).notNull().positiveAmount();
+        
+        BigDecimal depositMinAmount = null;
+        if (this.fromApiJsonHelper.parameterExists(depositMinAmountParamName, element)) {
+        	depositMinAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(depositMinAmountParamName, element);
+            baseDataValidator.reset().parameter(depositMinAmountParamName).value(depositMinAmount).notNull().positiveAmount();
+        }
+
+        BigDecimal depositMaxAmount = null;
+        if (this.fromApiJsonHelper.parameterExists(depositMaxAmountParamName, element)) {
+        	depositMaxAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(depositMaxAmountParamName, element);
+            baseDataValidator.reset().parameter(depositMaxAmountParamName).value(depositMaxAmount).notNull().positiveAmount();
+        }
+
+        if (depositMaxAmount != null && depositMaxAmount.compareTo(BigDecimal.ZERO) != -1) {
+            if (depositMinAmount != null && depositMinAmount.compareTo(BigDecimal.ZERO) != -1) {
+                baseDataValidator.reset().parameter(depositMaxAmountParamName).value(depositMaxAmount).notLessThanMin(depositMinAmount);
+                if (depositMinAmount.compareTo(depositMaxAmount) <= 0) {
+                    baseDataValidator.reset().parameter(depositAmountParamName).value(depositAmount)
+                            .inMinAndMaxAmountRange(depositMinAmount, depositMaxAmount);
+                }
+            } else {
+                baseDataValidator.reset().parameter(depositAmountParamName).value(depositAmount).notGreaterThanMax(depositMaxAmount);
+            }
+        } else if (depositMinAmount != null && depositMinAmount.compareTo(BigDecimal.ZERO) != -1) {
+            baseDataValidator.reset().parameter(depositAmountParamName).value(depositAmount).notLessThanMin(depositMinAmount);
+        }
+    }
+    
+    private void validateCompoundPeriodFallsWithinPostingPeriod(final FromJsonHelper fromApiJsonHelper,
+            final DataValidatorBuilder baseDataValidator, final JsonElement element, final boolean isPenalty) {
+    	
+    	final Integer interestCompoundingPeriodType = fromApiJsonHelper.extractIntegerSansLocaleNamed(
+                interestCompoundingPeriodTypeParamName, element);
+        baseDataValidator.reset().parameter(interestCompoundingPeriodTypeParamName).value(interestCompoundingPeriodType).notNull()
+                .isOneOfTheseValues(SavingsCompoundingInterestPeriodType.integerValues());
+
+        final Integer interestPostingPeriodType = fromApiJsonHelper.extractIntegerSansLocaleNamed(interestPostingPeriodTypeParamName,
+                element);
+        baseDataValidator.reset().parameter(interestPostingPeriodTypeParamName).value(interestPostingPeriodType).notNull()
+                .isOneOfTheseValues(SavingsPostingInterestPeriodType.integerValues());
+
+        Map<SavingsPostingInterestPeriodType,List<SavingsCompoundingInterestPeriodType>> postingCompMap = 
+        		new HashMap<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>>();
+        
+        postingCompMap.put(SavingsPostingInterestPeriodType.MONTHLY
+        		, Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,SavingsCompoundingInterestPeriodType.MONTHLY}));
+        
+        postingCompMap.put(SavingsPostingInterestPeriodType.QUATERLY
+        		, Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,SavingsCompoundingInterestPeriodType.MONTHLY,
+        				SavingsCompoundingInterestPeriodType.QUATERLY}));
+        
+        postingCompMap.put(SavingsPostingInterestPeriodType.BIANNUAL
+        		, Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,SavingsCompoundingInterestPeriodType.MONTHLY,
+        				SavingsCompoundingInterestPeriodType.QUATERLY,SavingsCompoundingInterestPeriodType.BI_ANNUAL}));
+        
+        postingCompMap.put(SavingsPostingInterestPeriodType.ANNUAL
+        		, Arrays.asList(new SavingsCompoundingInterestPeriodType[]{SavingsCompoundingInterestPeriodType.DAILY,SavingsCompoundingInterestPeriodType.MONTHLY,
+        				SavingsCompoundingInterestPeriodType.QUATERLY,SavingsCompoundingInterestPeriodType.BI_ANNUAL,SavingsCompoundingInterestPeriodType.ANNUAL}));
+        String parameterName;
+        if (isPenalty) {
+            parameterName = SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_INCOME_ACCOUNT_MAPPING.getValue();
+        } else {
+            parameterName = SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEE_INCOME_ACCOUNT_MAPPING.getValue();
+        }
+
+        if (fromApiJsonHelper.parameterExists(parameterName, element)) {
+            final JsonArray chargeToIncomeAccountMappingArray = fromApiJsonHelper.extractJsonArrayNamed(parameterName, element);
+            if (chargeToIncomeAccountMappingArray != null && chargeToIncomeAccountMappingArray.size() > 0) {
+                int i = 0;
+                do {
+                    final JsonObject jsonObject = chargeToIncomeAccountMappingArray.get(i).getAsJsonObject();
+                    final Long chargeId = fromApiJsonHelper.extractLongNamed(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.CHARGE_ID.getValue(),
+                            jsonObject);
+                    final Long incomeAccountId = fromApiJsonHelper.extractLongNamed(
+                            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_ACCOUNT_ID.getValue(), jsonObject);
+                    baseDataValidator.reset()
+                            .parameter(parameterName + "[" + i + "]." + SAVINGS_PRODUCT_ACCOUNTING_PARAMS.CHARGE_ID.getValue())
+                            .value(chargeId).notNull().integerGreaterThanZero();
+                    baseDataValidator.reset()
+                            .parameter(parameterName + "[" + i + "]." + SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_ACCOUNT_ID.getValue())
+                            .value(incomeAccountId).notNull().integerGreaterThanZero();
+                    i++;
+                } while (i < chargeToIncomeAccountMappingArray.size());
+            }
+        }
+    }
+
 }

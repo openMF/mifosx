@@ -209,8 +209,23 @@ public class ReadReportingServiceImpl implements ReadReportingService {
 
         sql = this.genericDataService.wrapSQL(sql);
 
-        return sql;
+        return updateSQLWithLimitAndOffset(sql, queryParams);
 
+    }
+    
+    private String updateSQLWithLimitAndOffset(String sql, final Map<String, String> queryParams) {
+    	Set<String> keys = queryParams.keySet();
+    	if(keys.contains("${limit}") && keys.contains("${offset}")) {
+    		sql = sql + " limit ${limit} offset ${offset}";
+    	}
+    	
+    	 for (final String key : keys) {
+             final String pValue = queryParams.get(key);
+             // logger.info("(" + key + " : " + pValue + ")");
+             sql = this.genericDataService.replace(sql, key, pValue);
+         }
+    	
+    	return sql;
     }
 
     private String getSql(final String name, final String type) {

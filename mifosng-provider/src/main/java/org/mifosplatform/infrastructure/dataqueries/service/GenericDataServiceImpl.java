@@ -36,8 +36,8 @@ public class GenericDataServiceImpl implements GenericDataService {
     }
 
     @Override
-    public GenericResultsetData fillGenericResultSet(final String sql) {
-
+    public GenericResultsetData fillGenericResultSet(String sql) {
+    	sql = selectWithFoundRows(sql);
         final SqlRowSet rs = this.jdbcTemplate.queryForRowSet(sql);
 
         final List<ResultsetColumnHeaderData> columnHeaders = new ArrayList<ResultsetColumnHeaderData>();
@@ -66,7 +66,20 @@ public class GenericDataServiceImpl implements GenericDataService {
             resultsetDataRows.add(resultsetDataRow);
         }
 
-        return new GenericResultsetData(columnHeaders, resultsetDataRows);
+        return new GenericResultsetData(columnHeaders, resultsetDataRows,getTotalRecords(sql));
+    }
+    
+    @Override
+    public long getTotalRecords(final String sql) {
+    	/*StringBuilder queryBuilder = new StringBuilder("select count(*) from (");
+    	queryBuilder.append(sql).append(") as q"); 
+    	
+		long totalRecords = jdbcTemplate.queryForObject(queryBuilder.toString(), Long.class);*/
+		
+		long totalRecords = jdbcTemplate.queryForObject("SELECT FOUND_ROWS()", Long.class);
+		return totalRecords;
+			
+		
     }
 
     @Override
@@ -284,4 +297,8 @@ public class GenericDataServiceImpl implements GenericDataService {
 
         return rsValues;
     }
+	
+	private String selectWithFoundRows(final String sql) {
+		return sql.toLowerCase().replaceFirst("select", "select SQL_CALC_FOUND_ROWS ");
+	}
 }

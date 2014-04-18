@@ -54,6 +54,7 @@ import org.mifosplatform.portfolio.savings.SavingsPeriodFrequencyType;
 import org.mifosplatform.portfolio.savings.SavingsPostingInterestPeriodType;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.mifosplatform.portfolio.savings.domain.interest.PostingPeriod;
+import org.mifosplatform.portfolio.savings.exception.DepositAmountNotAllowedException;
 import org.mifosplatform.portfolio.savings.service.SavingsEnumerations;
 import org.mifosplatform.useradministration.domain.AppUser;
 
@@ -362,7 +363,7 @@ public class FixedDepositAccount extends SavingsAccount {
             // update existing transactions so derived balance fields are
             // correct.
             recalculateDailyBalances(Money.zero(this.currency), interestPostingUpToDate);
-        }
+        }    
     }
 
     public SavingsAccountTransaction close(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate,
@@ -586,6 +587,21 @@ public class FixedDepositAccount extends SavingsAccount {
         return actualChanges;
     }
 
+    @Override
+   	public void validateDepositAmountBetweenMinAndMaxAllowed() {
+   		// TODO Auto-generated method stub
+   		BigDecimal depositAmount = accountTermAndPreClosure.depositAmount();
+   		FixedDepositProduct fixedDepositProduct =  (FixedDepositProduct)product;
+   		DepositProductAmountDetails depositProductAmountDetails = fixedDepositProduct.depositProductTermAndPreClosure().depositProductAmountDetails();
+   		Money minAmount = Money.of(getCurrency(), depositProductAmountDetails.getMinDepositAmount());
+   		Money maxAmount = Money.of(getCurrency(), depositProductAmountDetails.getMaxDepositAmount());
+   		Money amount = Money.of(getCurrency(), depositAmount);
+   		
+   		if(!amount.isGreaterThanZero() || amount.isLessThan(minAmount) || amount.isGreaterThan(maxAmount))
+   		throw new DepositAmountNotAllowedException("depositAmount", depositAmount,  
+   				minAmount.getAmount(), maxAmount.getAmount());
+   	}
+    
     private LocalDate depositStartDate() {
         // TODO: Support to add deposit start date which can be a date after
         // account activation date.

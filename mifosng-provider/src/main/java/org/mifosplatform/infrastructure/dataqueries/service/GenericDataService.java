@@ -21,4 +21,5 @@ public interface GenericDataService {
     String wrapSQL(String sql);
 
     List<ResultsetColumnHeaderData> fillResultsetColumnHeaders(String datatable);
+    long getTotalRecords(final String sql);
 }
