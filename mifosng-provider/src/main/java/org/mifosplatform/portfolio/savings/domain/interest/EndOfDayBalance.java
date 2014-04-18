@@ -81,18 +81,18 @@ public class EndOfDayBalance {
     /**
      * @param compoundingPeriodInterval
      * @param upToInterestCalculationDate
-     *            : For calculating maturity details in advance upToInterestCalculationDate
-     *            will be maturity date else it will be
-     *            DateUtils.getLocalDateOfTenant().
+     *            : For calculating maturity details in advance
+     *            upToInterestCalculationDate will be maturity date else it will
+     *            be DateUtils.getLocalDateOfTenant().
      * @return
      */
     public EndOfDayBalance upTo(final LocalDateInterval compoundingPeriodInterval, final LocalDate upToInterestCalculationDate) {
 
         Money startingBalance = this.openingBalance;
         LocalDate balanceStartDate = this.date;
-        
+
         LocalDate oldBalanceEndDate = this.date.plusDays(this.numberOfDays - 1);
-        
+
         int daysOfBalance = this.numberOfDays;
 
         if (this.date.isBefore(compoundingPeriodInterval.startDate())) {
@@ -102,7 +102,6 @@ public class EndOfDayBalance {
             daysOfBalance = balancePeriodInterval.daysInPeriodInclusiveOfEndDate();
         }
 
-       
         LocalDate balanceEndDate = balanceStartDate.plusDays(daysOfBalance - 1);
         if (balanceEndDate.isAfter(compoundingPeriodInterval.endDate())) {
             balanceEndDate = compoundingPeriodInterval.endDate();

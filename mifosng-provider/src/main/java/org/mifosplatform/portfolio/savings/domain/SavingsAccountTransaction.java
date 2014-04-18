@@ -429,39 +429,39 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
 
     public EndOfDayBalance toEndOfDayBalanceBoundedBy(final Money openingBalance, final LocalDateInterval boundedBy) {
 
-    	final MonetaryCurrency currency = openingBalance.getCurrency();
-    	Money endOfDayBalance = openingBalance.copy();
+        final MonetaryCurrency currency = openingBalance.getCurrency();
+        Money endOfDayBalance = openingBalance.copy();
 
-    	int numberOfDaysOfBalance = this.balanceNumberOfDays;
+        int numberOfDaysOfBalance = this.balanceNumberOfDays;
 
-    	LocalDate balanceStartDate = getTransactionLocalDate();
-    	LocalDate balanceEndDate = getEndOfBalanceLocalDate();
+        LocalDate balanceStartDate = getTransactionLocalDate();
+        LocalDate balanceEndDate = getEndOfBalanceLocalDate();
 
-    	if (boundedBy.startDate().isAfter(balanceStartDate)) {
-    		balanceStartDate = boundedBy.startDate();
-    		final LocalDateInterval spanOfBalance = LocalDateInterval.create(balanceStartDate, balanceEndDate);
-    		numberOfDaysOfBalance = spanOfBalance.daysInPeriodInclusiveOfEndDate();
-    	} else {
-    		if (isDeposit()) {
-    			endOfDayBalance = openingBalance.plus(getAmount(currency));
-    			if (endOfDayBalance.isLessThanZero()) {
-    				endOfDayBalance = Money.of(currency, this.runningBalance);
-    			}
-    		} else if (isWithdrawal() || isChargeTransactionAndNotReversed()) {
-    			endOfDayBalance = openingBalance.minus(getAmount(currency));
-    			if (endOfDayBalance.isLessThanZero()) {
-    				endOfDayBalance = Money.of(currency, this.runningBalance);
-    			}
-    		}
-    	}
+        if (boundedBy.startDate().isAfter(balanceStartDate)) {
+            balanceStartDate = boundedBy.startDate();
+            final LocalDateInterval spanOfBalance = LocalDateInterval.create(balanceStartDate, balanceEndDate);
+            numberOfDaysOfBalance = spanOfBalance.daysInPeriodInclusiveOfEndDate();
+        } else {
+            if (isDeposit()) {
+                endOfDayBalance = openingBalance.plus(getAmount(currency));
+                if (endOfDayBalance.isLessThanZero()) {
+                    endOfDayBalance = Money.of(currency, this.runningBalance);
+                }
+            } else if (isWithdrawal() || isChargeTransactionAndNotReversed()) {
+                endOfDayBalance = openingBalance.minus(getAmount(currency));
+                if (endOfDayBalance.isLessThanZero()) {
+                    endOfDayBalance = Money.of(currency, this.runningBalance);
+                }
+            }
+        }
 
-    	if (balanceEndDate.isAfter(boundedBy.endDate())) {
-    		balanceEndDate = boundedBy.endDate();
-    		final LocalDateInterval spanOfBalance = LocalDateInterval.create(balanceStartDate, balanceEndDate);
-    		numberOfDaysOfBalance = spanOfBalance.daysInPeriodInclusiveOfEndDate();
-    	}
+        if (balanceEndDate.isAfter(boundedBy.endDate())) {
+            balanceEndDate = boundedBy.endDate();
+            final LocalDateInterval spanOfBalance = LocalDateInterval.create(balanceStartDate, balanceEndDate);
+            numberOfDaysOfBalance = spanOfBalance.daysInPeriodInclusiveOfEndDate();
+        }
 
-    	return EndOfDayBalance.from(balanceStartDate, openingBalance, endOfDayBalance, numberOfDaysOfBalance);
+        return EndOfDayBalance.from(balanceStartDate, openingBalance, endOfDayBalance, numberOfDaysOfBalance);
     }
 
     public boolean isBalanceInExistencesForOneDayOrMore() {
