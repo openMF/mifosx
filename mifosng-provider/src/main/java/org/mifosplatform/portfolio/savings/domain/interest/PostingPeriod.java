@@ -266,63 +266,63 @@ public class PostingPeriod {
     }
 
     private static LocalDate determineInterestPeriodEndDateFrom(final LocalDate periodStartDate,
-            final SavingsCompoundingInterestPeriodType interestPeriodType, final LocalDate upToInterestCalculationDate) {
+    		final SavingsCompoundingInterestPeriodType interestPeriodType, final LocalDate upToInterestCalculationDate) {
 
-        LocalDate periodEndDate = upToInterestCalculationDate;
+    	LocalDate periodEndDate = upToInterestCalculationDate;
 
-        switch (interestPeriodType) {
-            case INVALID:
-            break;
-            case DAILY:
-                periodEndDate = periodStartDate;
-            break;
-            // case WEEKLY:
-            // periodEndDate = periodStartDate.dayOfWeek().withMaximumValue();
-            // break;
-            // case BIWEEKLY:
-            // final LocalDate closestEndOfWeek =
-            // periodStartDate.dayOfWeek().withMaximumValue();
-            // periodEndDate = closestEndOfWeek.plusWeeks(1);
-            // break;
-            case MONTHLY:
-                // produce period end date on last day of current month
-                periodEndDate = periodStartDate.dayOfMonth().withMaximumValue();
-            break;
-          case QUATERLY:
-        // // jan 1st to mar 31st, 1st apr to jun 30, jul 1st to sept 30,
-        // // oct 1st to dec 31
-				int year = periodStartDate.getYearOfEra();
-				int monthofYear = periodStartDate.getMonthOfYear();
-				if (monthofYear <= 3) {
-					periodEndDate = new DateTime().withDate(year, 3, 31).toLocalDate();
-				} else if (monthofYear <= 6) {
-					periodEndDate = new DateTime().withDate(year, 6, 30).toLocalDate();
-				} else if (monthofYear <= 9) {
-					periodEndDate = new DateTime().withDate(year, 9, 30).toLocalDate();
-				} else if (monthofYear <= 12) {
-					periodEndDate = new DateTime().withDate(year, 12, 31).toLocalDate();
-				}
-	         break;
-         case BI_ANNUAL:
-        // // jan 1st to 30, jul 1st to dec 31
-        	 	year = periodStartDate.getYearOfEra();
-        	 	monthofYear = periodStartDate.getMonthOfYear();
-        	 	if (monthofYear <= 6) {
-        	 		periodEndDate = new DateTime().withDate(year, 6, 30).toLocalDate();
-        	 	} else if (monthofYear <= 12) {
-        	 		periodEndDate = new DateTime().withDate(year, 12, 31).toLocalDate();
-        	 	}
-        	 	break;
-         case ANNUAL:
-        	 	periodEndDate = periodStartDate.monthOfYear().withMaximumValue();
-        	 	periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
-        	 	break;
-        // case NO_COMPOUNDING_SIMPLE_INTEREST:
-        // periodEndDate = periodStartDate.monthOfYear().withMaximumValue();
-        // periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
-        // break;
-        }
+    	switch (interestPeriodType) {
+    	case INVALID:
+    		break;
+    	case DAILY:
+    		periodEndDate = periodStartDate;
+    		break;
+    		// case WEEKLY:
+    			// periodEndDate = periodStartDate.dayOfWeek().withMaximumValue();
+    		// break;
+    		// case BIWEEKLY:
+    		// final LocalDate closestEndOfWeek =
+    		// periodStartDate.dayOfWeek().withMaximumValue();
+    		// periodEndDate = closestEndOfWeek.plusWeeks(1);
+    		// break;
+    	case MONTHLY:
+    		// produce period end date on last day of current month
+    		periodEndDate = periodStartDate.dayOfMonth().withMaximumValue();
+    		break;
+    	case QUATERLY:
+    		// // jan 1st to mar 31st, 1st apr to jun 30, jul 1st to sept 30,
+    		// // oct 1st to dec 31
+    		int year = periodStartDate.getYearOfEra();
+    		int monthofYear = periodStartDate.getMonthOfYear();
+    		if (monthofYear <= 3) {
+    			periodEndDate = new DateTime().withDate(year, 3, 31).toLocalDate();
+    		} else if (monthofYear <= 6) {
+    			periodEndDate = new DateTime().withDate(year, 6, 30).toLocalDate();
+    		} else if (monthofYear <= 9) {
+    			periodEndDate = new DateTime().withDate(year, 9, 30).toLocalDate();
+    		} else if (monthofYear <= 12) {
+    			periodEndDate = new DateTime().withDate(year, 12, 31).toLocalDate();
+    		}
+    		break;
+    	case BI_ANNUAL:
+    		// // jan 1st to 30, jul 1st to dec 31
+    		year = periodStartDate.getYearOfEra();
+    		monthofYear = periodStartDate.getMonthOfYear();
+    		if (monthofYear <= 6) {
+    			periodEndDate = new DateTime().withDate(year, 6, 30).toLocalDate();
+    		} else if (monthofYear <= 12) {
+    			periodEndDate = new DateTime().withDate(year, 12, 31).toLocalDate();
+    		}
+    		break;
+    	case ANNUAL:
+    		periodEndDate = periodStartDate.monthOfYear().withMaximumValue();
+    		periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
+    		break;
+    		// case NO_COMPOUNDING_SIMPLE_INTEREST:
+    		// periodEndDate = periodStartDate.monthOfYear().withMaximumValue();
+    		// periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
+    		// break;
+    	}
 
-        return periodEndDate;
+    	return periodEndDate;
     }
 }

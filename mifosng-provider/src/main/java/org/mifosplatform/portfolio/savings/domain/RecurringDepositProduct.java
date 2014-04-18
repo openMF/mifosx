@@ -116,36 +116,4 @@ public class RecurringDepositProduct extends FixedDepositProduct {
     public DepositProductRecurringDetail depositRecurringDetail() {
         return this.recurringDetail;
     }
-    
-   	public void validatDepositPeriodAndTerm(final DataValidatorBuilder baseDataValidator) {
-       
-   			/*int depositTermTypeInt = depositProductTermAndPreClosure().depositTermDetail().depositTermType();
-   			SavingsPeriodFrequencyType depositTermType  = SavingsPeriodFrequencyType.fromInt(depositTermTypeInt);
-   			
-   			int recurringPeriodFrequencyTypeInt = recurringDetail.recurringDetail().recurringDepositFrequencyTypeId();
-   			SavingsPeriodFrequencyType recurringPeriodFrequencyType  = SavingsPeriodFrequencyType.fromInt(recurringPeriodFrequencyTypeInt);
-           	
-           	int depositTermFrequency = depositProductTermAndPreClosure().depositTermDetail().maxDepositTerm();
-           	int recurringPeriodFrequency = recurringDetail.recurringDetail().recurringDepositFrequency();
-           	
-           	SavingsInterestCalculationDaysInYearType savingsInterestCalculationDaysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(interestCalculationDaysInYearType);
-           	*/
-           	/*int totalTermAsDays = depositTermFrequency * PeriodFrequencyType.asDays
-           			(depositTermTypeInt,savingsInterestCalculationDaysInYearType );
-           	
-           	int totalRecurringPeriodAsDays = recurringPeriodFrequency * PeriodFrequencyType.asDays
-           			(recurringPeriodFrequencyTypeInt, savingsInterestCalculationDaysInYearType);
-           	
-           	if(totalTermAsDays < totalRecurringPeriodAsDays) {
-           		baseDataValidator.failWithCodeNoParameterAddedToErrorCode("max.deposit.term.is.less.than.deposit.period",
-           				depositTermFrequency,depositTermType.name(),
-           				recurringPeriodFrequency,recurringPeriodFrequencyType.name());		
-           } */
-           	
-         /*  	if(depositTermTypeInt != recurringPeriodFrequencyTypeInt) {
-           		baseDataValidator.failWithCodeNoParameterAddedToErrorCode("max.deposit.term.is.less.than.deposit.period",
-           				depositTermFrequency,depositTermType.name(),
-           				recurringPeriodFrequency,recurringPeriodFrequencyType.name());		
-           }*/
-       }
 }

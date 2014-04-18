@@ -180,7 +180,7 @@ public class DepositProductAssembler {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_PRODUCT_RESOURCE_NAME);
         recurringDepositProduct.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
-        recurringDepositProduct.validatDepositPeriodAndTerm(baseDataValidator);
+        //recurringDepositProduct.validatDepositPeriodAndTerm(baseDataValidator);
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 

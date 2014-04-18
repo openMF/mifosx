@@ -857,9 +857,10 @@ public class RecurringDepositAccount extends SavingsAccount {
     	LocalDate maturityLocalDate = accountTermAndPreClosure.getMaturityLocalDate();
     	LocalDate activateOnLocalDate = activatedOnDate == null ? null : new LocalDate(activatedOnDate);
     	
+    	//TODO check activatedOnDate <= expectedFirstDepositLocalDate <= maturityLocalDate
     	if(activatedOnDate == null || expectedFirstDepositLocalDate == null || maturityLocalDate == null) {
-    		throw new FirstDepositDateAfterActivationAndMaturityDateException("NULL",
-                    "");
+    		//throw new FirstDepositDateAfterActivationAndMaturityDateException("NULL",
+             //       "");
     	}
     	
     	if(expectedFirstDepositLocalDate.isBefore(activateOnLocalDate)) {
