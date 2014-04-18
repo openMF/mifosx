@@ -14,12 +14,10 @@ public final class GenericResultsetData {
 
     private final List<ResultsetColumnHeaderData> columnHeaders;
     private final List<ResultsetRowData> data;
-    private final long totalRecords;
 
-    public GenericResultsetData(final List<ResultsetColumnHeaderData> columnHeaders, final List<ResultsetRowData> resultsetDataRows, final long totalRecords) {
+    public GenericResultsetData(final List<ResultsetColumnHeaderData> columnHeaders, final List<ResultsetRowData> resultsetDataRows) {
         this.columnHeaders = columnHeaders;
         this.data = resultsetDataRows;
-        this.totalRecords = totalRecords;
     }
 
     public List<ResultsetColumnHeaderData> getColumnHeaders() {
@@ -29,10 +27,6 @@ public final class GenericResultsetData {
     public List<ResultsetRowData> getData() {
         return this.data;
     }
-    
-    public long getTotalRecords() {
-		return totalRecords;
-	}
 
     public String getColTypeOfColumnNamed(final String columnName) {
 
