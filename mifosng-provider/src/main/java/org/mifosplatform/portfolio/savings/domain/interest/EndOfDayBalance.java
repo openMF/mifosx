@@ -81,9 +81,9 @@ public class EndOfDayBalance {
     /**
      * @param compoundingPeriodInterval
      * @param upToInterestCalculationDate
-     *            : For calculating maturity details in advance
-     *            upToInterestCalculationDate will be maturity date else it will
-     *            be DateUtils.getLocalDateOfTenant().
+     *            : For calculating maturity details in advance upToInterestCalculationDate
+     *            will be maturity date else it will be
+     *            DateUtils.getLocalDateOfTenant().
      * @return
      */
     public EndOfDayBalance upTo(final LocalDateInterval compoundingPeriodInterval, final LocalDate upToInterestCalculationDate) {
