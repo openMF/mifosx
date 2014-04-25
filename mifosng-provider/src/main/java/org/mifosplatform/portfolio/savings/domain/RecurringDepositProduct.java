@@ -116,5 +116,4 @@ public class RecurringDepositProduct extends FixedDepositProduct {
     public DepositProductRecurringDetail depositRecurringDetail() {
         return this.recurringDetail;
     }
-
 }
