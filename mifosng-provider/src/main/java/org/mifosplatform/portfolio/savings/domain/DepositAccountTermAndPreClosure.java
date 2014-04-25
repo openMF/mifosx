@@ -242,6 +242,7 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistable<Long> {
     public DepositAccountTermAndPreClosure deepCopy(Money depositAmount) {
         final SavingsAccount account = null;
         final BigDecimal maturityAmount = null;
+        final BigDecimal actualDepositAmount = null;
         final LocalDate maturityDate = null;
         final Integer depositPeriod = this.depositPeriod;
         final SavingsPeriodFrequencyType depositPeriodFrequency = SavingsPeriodFrequencyType.fromInt(this.depositPeriodFrequency);
@@ -250,7 +251,11 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistable<Long> {
         final LocalDate expectedFirstDepositOnDate = null;
         
         final DepositAccountOnClosureType accountOnClosureType = null;
-        return DepositAccountTermAndPreClosure.createNew(preClosureDetail, depositTermDetail, account, depositAmount.getAmount(), maturityAmount,
+        return DepositAccountTermAndPreClosure.createNew(preClosureDetail, depositTermDetail, account, actualDepositAmount, maturityAmount,
                 maturityDate, depositPeriod, depositPeriodFrequency, expectedFirstDepositOnDate, accountOnClosureType);
+    }
+    
+    public void updateExpectedFirstDepositDate(final LocalDate expectedFirstDepositOnDate) {
+        this.expectedFirstDepositOnDate = expectedFirstDepositOnDate.toDate();
     }
 }

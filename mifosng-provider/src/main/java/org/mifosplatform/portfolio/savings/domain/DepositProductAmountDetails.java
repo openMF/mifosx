@@ -64,7 +64,7 @@ public class DepositProductAmountDetails {
         }
 
         final String maxDepositAmountParamName = "maxDepositAmount";
-        if (command.isChangeInBigDecimalParameterNamedWithNullCheck(maxDepositAmountParamName, this.minDepositAmount)) {
+        if (command.isChangeInBigDecimalParameterNamedWithNullCheck(maxDepositAmountParamName, this.maxDepositAmount)) {
             final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(maxDepositAmountParamName);
             actualChanges.put(maxDepositAmountParamName, newValue);
             actualChanges.put("locale", localeAsInput);

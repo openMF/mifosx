@@ -587,21 +587,6 @@ public class FixedDepositAccount extends SavingsAccount {
         return actualChanges;
     }
 
-    @Override
-   	public void validateDepositAmountBetweenMinAndMaxAllowed() {
-   		// TODO Auto-generated method stub
-   		BigDecimal depositAmount = accountTermAndPreClosure.depositAmount();
-   		FixedDepositProduct fixedDepositProduct =  (FixedDepositProduct)product;
-   		DepositProductAmountDetails depositProductAmountDetails = fixedDepositProduct.depositProductTermAndPreClosure().depositProductAmountDetails();
-   		Money minAmount = Money.of(getCurrency(), depositProductAmountDetails.getMinDepositAmount());
-   		Money maxAmount = Money.of(getCurrency(), depositProductAmountDetails.getMaxDepositAmount());
-   		Money amount = Money.of(getCurrency(), depositAmount);
-   		
-   		if(!amount.isGreaterThanZero() || amount.isLessThan(minAmount) || amount.isGreaterThan(maxAmount))
-   		throw new DepositAmountNotAllowedException("depositAmount", depositAmount,  
-   				minAmount.getAmount(), maxAmount.getAmount());
-   	}
-    
     private LocalDate depositStartDate() {
         // TODO: Support to add deposit start date which can be a date after
         // account activation date.

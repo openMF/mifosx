@@ -171,19 +171,10 @@ public class DepositProductAssembler {
                     .failWithCodeNoParameterAddedToErrorCode("max.term.lessthan.min.term");
         }
         fixedDepositProduct.validateCharts(baseDataValidator);
-
+        fixedDepositProduct.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
-    
-    private void validateRecurringDepositProduct(RecurringDepositProduct recurringDepositProduct) {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
-        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
-                .resource(RECURRING_DEPOSIT_PRODUCT_RESOURCE_NAME);
-        recurringDepositProduct.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
-        //recurringDepositProduct.validatDepositPeriodAndTerm(baseDataValidator);
-        throwExceptionIfValidationWarningsExist(dataValidationErrors);
-    }
-
+   
     public RecurringDepositProduct assembleRecurringDepositProduct(final JsonCommand command) {
 
         final String name = command.stringValueOfParameterNamed(nameParamName);
@@ -256,7 +247,6 @@ public class DepositProductAssembler {
         // update product reference
         productTermAndPreClosure.updateProductReference(recurringDepositProduct);
         productRecurringDetail.updateProductReference(recurringDepositProduct);
-        validateRecurringDepositProduct(recurringDepositProduct);
         validateRecurringDepositProductDomainRules(recurringDepositProduct);
         
         return recurringDepositProduct;
@@ -274,6 +264,7 @@ public class DepositProductAssembler {
                     .failWithCodeNoParameterAddedToErrorCode("max.term.lessthan.min.term");
         }
         recurringDepositProduct.validateCharts(baseDataValidator);
+        recurringDepositProduct.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
