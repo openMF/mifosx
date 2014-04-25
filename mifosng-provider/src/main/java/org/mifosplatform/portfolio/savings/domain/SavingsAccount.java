@@ -2040,8 +2040,4 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     public DepositAccountType depositAccountType() {
         return DepositAccountType.fromInt(depositType);
     }
-    
-    public void validateDepositAmountBetweenMinAndMaxAllowed() {
-		  
-   	}
 }

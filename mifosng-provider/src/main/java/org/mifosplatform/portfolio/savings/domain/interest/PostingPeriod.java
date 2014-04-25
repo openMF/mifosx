@@ -145,7 +145,8 @@ public class PostingPeriod {
     }
 
     private static List<CompoundingPeriod> compoundingPeriodsInPostingPeriod(final LocalDateInterval postingPeriodInterval,
-            final SavingsCompoundingInterestPeriodType interestPeriodType, final List<EndOfDayBalance> allEndOfDayBalances, final LocalDate upToInterestCalculationDate) {
+            final SavingsCompoundingInterestPeriodType interestPeriodType, final List<EndOfDayBalance> allEndOfDayBalances,
+            final LocalDate upToInterestCalculationDate) {
 
         final List<CompoundingPeriod> compoundingPeriods = new ArrayList<CompoundingPeriod>();
 
@@ -183,10 +184,10 @@ public class PostingPeriod {
                     periodStartDate = periodEndDate.plusDays(1);
                 }
             break;
-        // case WEEKLY:
-        // break;
-        // case BIWEEKLY:
-        // break;
+            // case WEEKLY:
+            // break;
+            // case BIWEEKLY:
+            // break;
             case QUATERLY:
                 final LocalDate qPostingPeriodEndDate = postingPeriodInterval.endDate();
 
@@ -270,7 +271,7 @@ public class PostingPeriod {
     }
 
     private static LocalDate determineInterestPeriodEndDateFrom(final LocalDate periodStartDate,
-                final SavingsCompoundingInterestPeriodType interestPeriodType, final LocalDate upToInterestCalculationDate) {
+            final SavingsCompoundingInterestPeriodType interestPeriodType, final LocalDate upToInterestCalculationDate) {
 
         LocalDate periodEndDate = upToInterestCalculationDate;
 

@@ -343,7 +343,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         return allTransactions;
     }
 
-    LocalDate nextDepositDate(LocalDate depositDate) {
+    private LocalDate nextDepositDate(LocalDate depositDate) {
         final LocalDate depositStartDate = depositStartDate();
         LocalDate nextDepositDate = depositStartDate;
         while (!depositDate.isBefore(nextDepositDate)) {
@@ -465,50 +465,30 @@ public class RecurringDepositAccount extends SavingsAccount {
         final Money minRequiredOpeningBalance = Money.of(this.currency, this.minRequiredOpeningBalance);
         boolean depositInAccountOnActivation = false;
         //We don't necessarily deposit amount at time of activation
+        //Don't make initial deposit if reinvesting
+        //TODO remove "&& !minRequiredOpeningBalance.isGreaterThanZero()" and make permanent
+        //fix after discussings betwen Ashok, Michael,Binny, Ernest
         if (recurringDepositAmount.isGreaterThanZero() && depositStartDate().equals(accountSubmittedOrActivationDate())
                 && !minRequiredOpeningBalance.isGreaterThanZero()) {
 
             final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, getActivationLocalDate(),
                     recurringDepositAmount.getAmount(), null, new Date());
             deposit(transactionDTO);
-           // final LocalDate interestPostingUpToDate = interestPostingUpToDate(DateUtils.getLocalDateOfTenant());
             depositInAccountOnActivation = true;
-            // update existing transactions so derived balance fields are
-            // correct.
-           // recalculateDailyBalances(Money.zero(this.currency), interestPostingUpToDate);
         }
         
         if (minRequiredOpeningBalance.isGreaterThanZero()) {
             final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, getActivationLocalDate(),
                     minRequiredOpeningBalance.getAmount(), null, new Date());
             deposit(transactionDTO);
-
-            // no openingBalance concept supported yet but probably will to
-            // allow
-            // for migrations.
-           // final Money openingAccountBalance = Money.zero(this.currency);
             depositInAccountOnActivation = true;
-
-            // update existing transactions so derived balance fields are
-            // correct.
-            //recalculateDailyBalances(openingAccountBalance, DateUtils.getLocalDateOfTenant());
         }
         
         if(depositInAccountOnActivation) {
+         // update existing transactions so derived balance fields are
+            // correct.
             recalculateDailyBalances(Money.zero(this.currency), DateUtils.getLocalDateOfTenant());
         }
-        
-       /* final Money depositAmount = Money.of(this.currency, this.accountTermAndPreClosure.depositAmount());
-        if (depositAmount.isGreaterThanZero()) {
-
-            final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, getActivationLocalDate(),
-                    depositAmount.getAmount(), null, new Date());
-            deposit(transactionDTO);
-            final LocalDate interestPostingUpToDate = interestPostingUpToDate(DateUtils.getLocalDateOfTenant());
-            // update existing transactions so derived balance fields are
-            // correct.
-            recalculateDailyBalances(Money.zero(this.currency), interestPostingUpToDate);
-        }*/
     }
 
     public SavingsAccountTransaction close(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate,
@@ -858,13 +838,6 @@ public class RecurringDepositAccount extends SavingsAccount {
         if(!recurringFrequencyBeforeDepositPeriod) {
             baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("recurring.frequency.not.before.deposit.period");
         }
-        
-       /* final boolean recurringDepositAmountBetweenMinAndMaxAllowed = recurringDepositAmountBetweenMinAndMaxAllowed();
-        
-        if(!recurringDepositAmountBetweenMinAndMaxAllowed) {
-            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("recurring.deposit.amount.not.between.min.and.max.allowed");
-        }*/
-        
     }
 
     public boolean isReinvestOnClosure() {
