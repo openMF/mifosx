@@ -28,6 +28,7 @@ import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepositoryWrapper;
+import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.client.domain.AccountNumberGenerator;
 import org.mifosplatform.portfolio.client.domain.AccountNumberGeneratorFactory;
 import org.mifosplatform.portfolio.client.domain.Client;
@@ -140,7 +141,26 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
 
             final SavingsAccount account = this.savingAccountAssembler.assembleFrom(command, submittedBy);
             this.savingAccountRepository.save(account);
+            
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            
+            final SavingsProduct savingProduct = account.getProduct();
+            final Set<SavingsAccountCharge> savingCharges = account.charges();
+            List<Long> savingChargesId = fetchAllChargeIds(savingCharges);
+            final Set<Charge> charges = savingProduct.charges();
 
+            for (final Charge charge : charges) {
+                if (charge.isMandatory() && !savingChargesId.contains(charge.getId())) {
+                    final ApiParameterError error = ApiParameterError.parameterError(
+                            "validation.msg.saving.charge.mandatory.must.be.attached.when.creating.saving.account", "The chargeId "
+                                    + charge.getId() + " i.e " + charge.getName() + " is not attached while creating saving.", "chargeId",
+                            charge.getId(), charge.getName());
+                    dataValidationErrors.add(error);
+                }
+            }
+
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+            
             if (account.isAccountNumberRequiresAutoGeneration()) {
                 final AccountNumberGenerator accountNoGenerator = this.accountIdentifierGeneratorFactory
                         .determineSavingsAccountNoGenerator(account.getId());
@@ -237,6 +257,28 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                 }
 
                 this.savingAccountRepository.saveAndFlush(account);
+                
+                if (changes.containsKey("charges")) {
+                    final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+                    
+                    final SavingsProduct savingProduct = account.getProduct();
+                    final Set<SavingsAccountCharge> savingCharges = account.charges();
+                    List<Long> savingChargesId = fetchAllChargeIds(savingCharges);
+                    final Set<Charge> charges = savingProduct.charges();
+                    
+                    for (final Charge charge : charges) {
+                        if (charge.isMandatory() && !savingChargesId.contains(charge.getId())) {
+                            final ApiParameterError error = ApiParameterError.parameterError(
+                                    "validation.msg.saving.charge.mandatory.must.be.attached.when.creating.saving.account", "The chargeId "
+                                            + charge.getId() + " i.e " + charge.getName()
+                                            + " is not attached while creating saving.", "chargeId", charge.getId(), 
+                                            charge.getName());
+                            dataValidationErrors.add(error);
+                        }
+                    }
+
+                    if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+                }
             }
 
             return new CommandProcessingResultBuilder() //
@@ -457,5 +499,15 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             .withSavingsId(account.getId()) //
             .setRollbackTransaction(rollbackTransaction)//
             .build();
+    }
+    
+    public List<Long> fetchAllChargeIds(final Set<SavingsAccountCharge> charges) {
+        List<Long> list = new ArrayList<Long>();
+        for (SavingsAccountCharge savingCharge : charges) {
+            if (savingCharge.isActive()) {
+                list.add(savingCharge.getCharge().getId());
+            }
+        }
+        return list;
     }
 }

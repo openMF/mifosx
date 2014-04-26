@@ -2040,4 +2040,8 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     public DepositAccountType depositAccountType() {
         return DepositAccountType.fromInt(depositType);
     }
+    
+    public SavingsProduct getProduct() {
+        return this.product;
+    }
 }

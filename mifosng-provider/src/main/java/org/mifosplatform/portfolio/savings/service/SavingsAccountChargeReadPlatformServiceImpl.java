@@ -66,7 +66,7 @@ public class SavingsAccountChargeReadPlatformServiceImpl implements SavingsAccou
                     + "sc.amount_outstanding_derived as amountOutstanding, "
                     + "sc.calculation_percentage as percentageOf, sc.calculation_on_amount as amountPercentageAppliedTo, "
                     + "sc.charge_time_enum as chargeTime, "
-                    + "sc.is_penalty as penalty, "
+                    + "sc.is_penalty as penalty, c.is_mandatory as isMandatory, "
                     + "sc.charge_due_date as dueAsOfDate, "
                     + "sc.fee_on_month as feeOnMonth, "
                     + "sc.fee_on_day as feeOnDay, sc.fee_interval as feeInterval, "
@@ -119,12 +119,13 @@ public class SavingsAccountChargeReadPlatformServiceImpl implements SavingsAccou
             final int chargeCalculation = rs.getInt("chargeCalculation");
             final EnumOptionData chargeCalculationType = ChargeEnumerations.chargeCalculationType(chargeCalculation);
             final boolean penalty = rs.getBoolean("penalty");
+            final boolean isMandatory = rs.getBoolean("isMandatory");
 
             final Collection<ChargeData> chargeOptions = null;
 
             return SavingsAccountChargeData.instance(id, chargeId, accountId, name, currency, amount, amountPaid, amountWaived,
                     amountWrittenOff, amountOutstanding, chargeTimeType, dueAsOfDate, chargeCalculationType, percentageOf,
-                    amountPercentageAppliedTo, chargeOptions, penalty, feeOnMonthDay, feeInterval);
+                    amountPercentageAppliedTo, chargeOptions, penalty, feeOnMonthDay, feeInterval, isMandatory);
         }
     }
 

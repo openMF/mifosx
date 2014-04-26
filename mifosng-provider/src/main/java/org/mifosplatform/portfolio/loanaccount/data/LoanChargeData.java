@@ -48,6 +48,8 @@ public class LoanChargeData {
     private final Collection<ChargeData> chargeOptions;
 
     private final boolean penalty;
+    
+    private final boolean isMandatory;
 
     private final EnumOptionData chargePaymentMode;
 
@@ -68,7 +70,7 @@ public class LoanChargeData {
 
     public static LoanChargeData template(final Collection<ChargeData> chargeOptions) {
         return new LoanChargeData(null, null, null, null, null, null, null, null, chargeOptions, false, null, false, false, null, null,
-                null, null, null);
+                null, null, null, false);
     }
 
     /**
@@ -78,9 +80,9 @@ public class LoanChargeData {
     public static LoanChargeData newLoanChargeDetails(final Long chargeId, final String name, final CurrencyData currency,
             final BigDecimal amount, final BigDecimal percentage, final EnumOptionData chargeTimeType,
             final EnumOptionData chargeCalculationType, final boolean penalty, final EnumOptionData chargePaymentMode,
-            final BigDecimal minCap, final BigDecimal maxCap) {
+            final BigDecimal minCap, final BigDecimal maxCap, final boolean isMandatory) {
         return new LoanChargeData(null, chargeId, name, currency, amount, percentage, chargeTimeType, chargeCalculationType, null, penalty,
-                chargePaymentMode, false, false, null, minCap, maxCap, null, null);
+                chargePaymentMode, false, false, null, minCap, maxCap, null, null, isMandatory);
     }
 
     public LoanChargeData(final Long id, final Long chargeId, final String name, final CurrencyData currency, final BigDecimal amount,
@@ -89,7 +91,7 @@ public class LoanChargeData {
             final EnumOptionData chargeCalculationType, final BigDecimal percentage, final BigDecimal amountPercentageAppliedTo,
             final boolean penalty, final EnumOptionData chargePaymentMode, final boolean paid, final boolean waived, final Long loanId,
             final BigDecimal minCap, final BigDecimal maxCap, final BigDecimal amountOrPercentage,
-            Collection<LoanInstallmentChargeData> installmentChargeData) {
+            Collection<LoanInstallmentChargeData> installmentChargeData, final boolean isMandatory) {
         this.id = id;
         this.chargeId = chargeId;
         this.name = name;
@@ -110,6 +112,7 @@ public class LoanChargeData {
         this.waived = waived;
         this.minCap = minCap;
         this.maxCap = maxCap;
+        this.isMandatory = isMandatory;
         if (amountOrPercentage == null) {
             if (chargeCalculationType != null && chargeCalculationType.getId().intValue() > 1) {
                 this.amountOrPercentage = this.percentage;
@@ -130,7 +133,7 @@ public class LoanChargeData {
             final BigDecimal percentage, final EnumOptionData chargeTimeType, final EnumOptionData chargeCalculationType,
             final Collection<ChargeData> chargeOptions, final boolean penalty, final EnumOptionData chargePaymentMode, final boolean paid,
             final boolean waived, final Long loanId, final BigDecimal minCap, final BigDecimal maxCap, final BigDecimal amountOrPercentage,
-            Collection<LoanInstallmentChargeData> installmentChargeData) {
+            Collection<LoanInstallmentChargeData> installmentChargeData, final boolean isMandatory) {
         this.id = id;
         this.chargeId = chargeId;
         this.name = name;
@@ -149,7 +152,8 @@ public class LoanChargeData {
         this.chargePaymentMode = chargePaymentMode;
         this.paid = paid;
         this.waived = waived;
-
+        this.isMandatory = isMandatory;
+        
         if (amountOrPercentage == null) {
             if (chargeCalculationType != null && chargeCalculationType.getId().intValue() > 1) {
                 this.amountOrPercentage = this.percentage;
@@ -195,6 +199,7 @@ public class LoanChargeData {
         this.minCap = null;
         this.maxCap = null;
         this.installmentChargeData = installmentChargeData;
+        this.isMandatory = false;
     }
 
     public LoanChargeData(LoanChargeData chargeData, Collection<LoanInstallmentChargeData> installmentChargeData) {
@@ -223,6 +228,7 @@ public class LoanChargeData {
         this.chargePayable = chargeData.chargePayable;
         this.loanId = chargeData.loanId;
         this.installmentChargeData = installmentChargeData;
+        this.isMandatory = chargeData.isMandatory;
     }
 
     public LoanChargeData(final Long id, final LocalDate dueAsOfDate, final BigDecimal amountOrPercentage) {
@@ -251,6 +257,7 @@ public class LoanChargeData {
         this.minCap = null;
         this.maxCap = null;
         this.installmentChargeData = null;
+        this.isMandatory = false;
     }
 
     public boolean isChargePayable() {

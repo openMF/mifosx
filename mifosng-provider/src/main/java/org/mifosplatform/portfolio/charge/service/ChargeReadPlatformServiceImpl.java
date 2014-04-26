@@ -172,7 +172,7 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
         public String chargeSchema() {
             return "c.id as id, c.name as name, c.amount as amount, c.currency_code as currencyCode, "
                     + "c.charge_applies_to_enum as chargeAppliesTo, c.charge_time_enum as chargeTime, "
-                    + "c.charge_payment_mode_enum as chargePaymentMode, "
+                    + "c.charge_payment_mode_enum as chargePaymentMode, c.is_mandatory as isMandatory, "
                     + "c.charge_calculation_enum as chargeCalculation, c.is_penalty as penalty, "
                     + "c.is_active as active, oc.name as currencyName, oc.decimal_places as currencyDecimalPlaces, "
                     + "oc.currency_multiplesof as inMultiplesOf, oc.display_symbol as currencyDisplaySymbol, "
@@ -219,6 +219,7 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
 
             final boolean penalty = rs.getBoolean("penalty");
             final boolean active = rs.getBoolean("active");
+            final boolean isMandatory = rs.getBoolean("isMandatory");
 
             final Integer feeInterval = JdbcSupport.getInteger(rs, "feeInterval");
             EnumOptionData feeFrequencyType = null;
@@ -236,7 +237,7 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
             final BigDecimal maxCap = rs.getBigDecimal("maxCap");
 
             return ChargeData.instance(id, name, amount, currency, chargeTimeType, chargeAppliesToType, chargeCalculationType,
-                    chargePaymentMode, feeOnMonthDay, feeInterval, penalty, active, minCap, maxCap, feeFrequencyType);
+                    chargePaymentMode, feeOnMonthDay, feeInterval, penalty, active, minCap, maxCap, feeFrequencyType, isMandatory);
         }
     }
 

@@ -41,7 +41,7 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
      */
     private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("name", "amount", "locale", "currencyCode",
             "currencyOptions", "chargeAppliesTo", "chargeTimeType", "chargeCalculationType", "chargeCalculationTypeOptions", "penalty",
-            "active", "chargePaymentMode", "feeOnMonthDay", "feeInterval", "monthDayFormat", "minCap", "maxCap", "feeFrequency"));
+            "active", "chargePaymentMode", "feeOnMonthDay", "feeInterval", "monthDayFormat", "minCap", "maxCap", "feeFrequency", "isMandatory"));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -158,6 +158,11 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
             final BigDecimal maxCap = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("maxCap", element.getAsJsonObject());
             baseDataValidator.reset().parameter("maxCap").value(maxCap).notNull().positiveAmount();
         }
+        
+        if (this.fromApiJsonHelper.parameterExists("isMandatory", element)) {
+            final Boolean isMandatory = this.fromApiJsonHelper.extractBooleanNamed("isMandatory", element);
+            baseDataValidator.reset().parameter("isMandatory").value(isMandatory).notNull();
+        }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
@@ -259,6 +264,11 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
         if (this.fromApiJsonHelper.parameterExists("feeFrequency", element)) {
             final Integer feeFrequency = this.fromApiJsonHelper.extractIntegerNamed("feeFrequency", element, Locale.getDefault());
             baseDataValidator.reset().parameter("feeFrequency").value(feeFrequency).inMinMaxRange(0, 3);
+        }
+        
+        if (this.fromApiJsonHelper.parameterExists("isMandatory", element)) {
+            final Boolean isMandatory = this.fromApiJsonHelper.extractBooleanNamed("isMandatory", element);
+            baseDataValidator.reset().parameter("isMandatory").value(isMandatory).notNull();
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
