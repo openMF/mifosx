@@ -31,21 +31,26 @@ public class DepositProductTermAndPreClosure extends AbstractPersistable<Long> {
     @OneToOne
     @JoinColumn(name = "savings_product_id", nullable = false)
     private FixedDepositProduct product;
+    
+    @Embedded
+    private DepositProductAmountDetails depositProductAmountDetails;
 
     protected DepositProductTermAndPreClosure() {
         super();
     }
 
     public static DepositProductTermAndPreClosure createNew(DepositPreClosureDetail preClosureDetail, DepositTermDetail depositTermDetail,
+    		DepositProductAmountDetails depositProductMinMaxAmountDetails, 
             SavingsProduct product) {
 
-        return new DepositProductTermAndPreClosure(preClosureDetail, depositTermDetail, product);
+        return new DepositProductTermAndPreClosure(preClosureDetail, depositTermDetail, depositProductMinMaxAmountDetails, product);
     }
 
     private DepositProductTermAndPreClosure(DepositPreClosureDetail preClosureDetail, DepositTermDetail depositTermDetail,
-            SavingsProduct product) {
+    		DepositProductAmountDetails depositProductMinMaxAmountDetails, SavingsProduct product) {
         this.preClosureDetail = preClosureDetail;
         this.depositTermDetail = depositTermDetail;
+        this.depositProductAmountDetails = depositProductMinMaxAmountDetails;
         this.product = (FixedDepositProduct)product;
     }
 
@@ -58,6 +63,10 @@ public class DepositProductTermAndPreClosure extends AbstractPersistable<Long> {
         if (this.depositTermDetail != null) {
             actualChanges.putAll(this.depositTermDetail.update(command, baseDataValidator));
         }
+        
+        if(this.depositProductAmountDetails != null) {
+        	actualChanges.putAll(this.depositProductAmountDetails.update(command, baseDataValidator));
+        }
         return actualChanges;
     }
     
@@ -69,7 +78,11 @@ public class DepositProductTermAndPreClosure extends AbstractPersistable<Long> {
         return this.depositTermDetail;
     }
     
-    public void updateProductReference(final SavingsProduct product){
+    public DepositProductAmountDetails depositProductAmountDetails() {
+		return this.depositProductAmountDetails;
+	}
+
+	public void updateProductReference(final SavingsProduct product){
         this.product = (FixedDepositProduct)product;
     }
 }

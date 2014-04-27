@@ -61,12 +61,21 @@ public final class SavingsHelper {
                 final int monthofYear = periodStartDate.getMonthOfYear();
                 if (monthofYear <= 3) {
                     periodEndDate = new DateTime().withDate(year, 3, 31).toLocalDate();
-            } else if (monthofYear <= 6) {
+                } else if (monthofYear <= 6) {
                     periodEndDate = new DateTime().withDate(year, 6, 30).toLocalDate();
                 } else if (monthofYear <= 9) {
                     periodEndDate = new DateTime().withDate(year, 9, 30).toLocalDate();
                 } else if (monthofYear <= 12) {
                     periodEndDate = new DateTime().withDate(year, 12, 31).toLocalDate();
+                }
+            break;
+            case BIANNUAL:
+                final int byear = periodStartDate.getYearOfEra();
+                final int bmonthofYear = periodStartDate.getMonthOfYear();
+                if (bmonthofYear <= 6) {
+                    periodEndDate = new DateTime().withDate(byear, 6, 30).toLocalDate();
+                } else if (bmonthofYear <= 12) {
+                    periodEndDate = new DateTime().withDate(byear, 12, 31).toLocalDate();
                 }
             break;
             case ANNUAL:
