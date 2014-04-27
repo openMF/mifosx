@@ -835,4 +835,8 @@ public class LoanProduct extends AbstractPersistable<Long> {
         }
         return borrowerCycleVariations;
     }
+    
+    public List<Charge> getCharges() {
+        return this.charges;
+    }
 }

@@ -65,7 +65,7 @@ public class LoanChargeReadPlatformServiceImpl implements LoanChargeReadPlatform
                     + "lc.waived as waied, "
                     + "lc.min_cap as minCap, lc.max_cap as maxCap, "
                     + "lc.charge_amount_or_percentage as amountOrPercentage, "
-                    + "c.currency_code as currencyCode, oc.name as currencyName, "
+                    + "c.currency_code as currencyCode, oc.name as currencyName, c.is_mandatory as isMandatory, "
                     + "oc.decimal_places as currencyDecimalPlaces, oc.currency_multiplesof as inMultiplesOf, oc.display_symbol as currencyDisplaySymbol, "
                     + "oc.internationalized_name_code as currencyNameCode from m_charge c "
                     + "join m_organisation_currency oc on c.currency_code = oc.code " + "join m_loan_charge lc on lc.charge_id = c.id ";
@@ -104,6 +104,7 @@ public class LoanChargeReadPlatformServiceImpl implements LoanChargeReadPlatform
             final int chargeCalculation = rs.getInt("chargeCalculation");
             final EnumOptionData chargeCalculationType = ChargeEnumerations.chargeCalculationType(chargeCalculation);
             final boolean penalty = rs.getBoolean("penalty");
+            final boolean isMandatory = rs.getBoolean("isMandatory");
 
             final int chargePaymentMode = rs.getInt("chargePaymentMode");
             final EnumOptionData paymentMode = ChargeEnumerations.chargePaymentMode(chargePaymentMode);
@@ -115,7 +116,7 @@ public class LoanChargeReadPlatformServiceImpl implements LoanChargeReadPlatform
 
             return new LoanChargeData(id, chargeId, name, currency, amount, amountPaid, amountWaived, amountWrittenOff, amountOutstanding,
                     chargeTimeType, dueAsOfDate, chargeCalculationType, percentageOf, amountPercentageAppliedTo, penalty, paymentMode,
-                    paid, waived, null, minCap, maxCap, amountOrPercentage, null);
+                    paid, waived, null, minCap, maxCap, amountOrPercentage, null, isMandatory);
         }
     }
 

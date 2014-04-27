@@ -84,6 +84,9 @@ public class Charge extends AbstractPersistable<Long> {
 
     @Column(name = "fee_frequency", nullable = true)
     private Integer feeFrequency;
+    
+    @Column(name = "is_mandatory", nullable = false)
+    private boolean isMandatory;
 
     public static Charge fromJson(final JsonCommand command) {
 
@@ -106,9 +109,10 @@ public class Charge extends AbstractPersistable<Long> {
         final BigDecimal minCap = command.bigDecimalValueOfParameterNamed("minCap");
         final BigDecimal maxCap = command.bigDecimalValueOfParameterNamed("maxCap");
         final Integer feeFrequency = command.integerValueOfParameterNamed("feeFrequency");
+        final boolean isMandatory = command.booleanPrimitiveValueOfParameterNamed("isMandatory");
 
         return new Charge(name, amount, currencyCode, chargeAppliesTo, chargeTimeType, chargeCalculationType, penalty, active, paymentMode,
-                feeOnMonthDay, feeInterval, minCap, maxCap, feeFrequency);
+                feeOnMonthDay, feeInterval, minCap, maxCap, feeFrequency, isMandatory);
     }
 
     protected Charge() {
@@ -118,7 +122,7 @@ public class Charge extends AbstractPersistable<Long> {
     private Charge(final String name, final BigDecimal amount, final String currencyCode, final ChargeAppliesTo chargeAppliesTo,
             final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculationType, final boolean penalty,
             final boolean active, final ChargePaymentMode paymentMode, final MonthDay feeOnMonthDay, final Integer feeInterval,
-            final BigDecimal minCap, final BigDecimal maxCap, final Integer feeFrequency) {
+            final BigDecimal minCap, final BigDecimal maxCap, final Integer feeFrequency, final boolean isMandatory) {
         this.name = name;
         this.amount = amount;
         this.currencyCode = currencyCode;
@@ -138,6 +142,7 @@ public class Charge extends AbstractPersistable<Long> {
         }
         this.feeInterval = feeInterval;
         this.feeFrequency = feeFrequency;
+        this.isMandatory = isMandatory;
 
         if (isSavingsCharge()) {
 
@@ -430,7 +435,14 @@ public class Charge extends AbstractPersistable<Long> {
                 this.maxCap = newValue;
             }
         }
-
+        
+        final String isMandatoryParamName = "isMandatory";
+        if (command.isChangeInBooleanParameterNamed(isMandatoryParamName, this.isMandatory)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(isMandatoryParamName);
+            actualChanges.put(isMandatoryParamName, newValue);
+            this.isMandatory = newValue;
+        }
+        
         if (this.penalty && ChargeTimeType.fromInt(this.chargeTime).isTimeOfDisbursement()) { throw new ChargeDueAtDisbursementCannotBePenaltyException(
                 this.name); }
         if (!penalty && ChargeTimeType.fromInt(this.chargeTime).isOverdueInstallment()) { throw new ChargeMustBePenaltyException(name); }
@@ -461,7 +473,7 @@ public class Charge extends AbstractPersistable<Long> {
         final CurrencyData currency = new CurrencyData(this.currencyCode, null, 0, 0, null, null);
         return ChargeData.instance(getId(), this.name, this.amount, currency, chargeTimeType, chargeAppliesTo, chargeCalculationType,
                 chargePaymentmode, getFeeOnMonthDay(), this.feeInterval, this.penalty, this.active, this.minCap, this.maxCap,
-                feeFrequencyType);
+                feeFrequencyType, this.isMandatory);
     }
 
     public Integer getChargePaymentMode() {
@@ -494,5 +506,9 @@ public class Charge extends AbstractPersistable<Long> {
 
     public Integer feeFrequency() {
         return this.feeFrequency;
+    }
+    
+    public boolean isMandatory() {
+        return this.isMandatory;
     }
 }
