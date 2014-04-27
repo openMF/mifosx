@@ -235,6 +235,14 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
     public boolean isInterestDue(final MonetaryCurrency currency) {
         return getInterestOutstanding(currency).isGreaterThanZero();
     }
+    
+    public boolean isPenaltyDue(final MonetaryCurrency currency) {
+        return getPenaltyChargesOutstanding(currency).isGreaterThanZero();
+    }
+    
+    public boolean isChargesDue(final MonetaryCurrency currency) {
+        return getFeeChargesOutstanding(currency).isGreaterThanZero();
+    }
 
     public Money getTotalPrincipalAndInterest(final MonetaryCurrency currency) {
         return getPrincipal(currency).plus(getInterestCharged(currency));

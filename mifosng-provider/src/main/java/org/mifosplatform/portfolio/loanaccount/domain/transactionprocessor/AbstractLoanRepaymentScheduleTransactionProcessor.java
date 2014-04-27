@@ -160,26 +160,27 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
         Money transactionAmountUnprocessed = loanTransaction.getAmount(currency);
 
         for (final LoanRepaymentScheduleInstallment currentInstallment : installments) {
+            // before updating repayments check whether the remain amount is greater than Zero.
+            if (transactionAmountUnprocessed.isGreaterThanZero()) {
+                if (currentInstallment.isNotFullyPaidOff()) {
 
-            if (currentInstallment.isNotFullyPaidOff()) {
-
-                // is this transaction early/late/on-time with respect to the
-                // current installment?
-                if (isTransactionInAdvanceOfInstallment(installmentIndex, installments, transactionDate, transactionAmountUnprocessed)) {
-                    transactionAmountUnprocessed = handleTransactionThatIsPaymentInAdvanceOfInstallment(currentInstallment, installments,
-                            loanTransaction, transactionDate, transactionAmountUnprocessed);
-                } else if (isTransactionALateRepaymentOnInstallment(installmentIndex, installments, loanTransaction.getTransactionDate())) {
-                    // does this result in a late payment of existing
-                    // installment?
-                    transactionAmountUnprocessed = handleTransactionThatIsALateRepaymentOfInstallment(currentInstallment, installments,
-                            loanTransaction, transactionAmountUnprocessed);
-                } else {
-                    // standard transaction
-                    transactionAmountUnprocessed = handleTransactionThatIsOnTimePaymentOfInstallment(currentInstallment, loanTransaction,
-                            transactionAmountUnprocessed);
-                }
+                    // is this transaction early/late/on-time with respect to the
+                    // current installment?
+                    if (isTransactionInAdvanceOfInstallment(installmentIndex, installments, transactionDate, transactionAmountUnprocessed)) {
+                        transactionAmountUnprocessed = handleTransactionThatIsPaymentInAdvanceOfInstallment(currentInstallment, installments,
+                                loanTransaction, transactionDate, transactionAmountUnprocessed);
+                    } else if (isTransactionALateRepaymentOnInstallment(installmentIndex, installments, loanTransaction.getTransactionDate())) {
+                        // does this result in a late payment of existing
+                        // installment?
+                        transactionAmountUnprocessed = handleTransactionThatIsALateRepaymentOfInstallment(currentInstallment, installments,
+                                loanTransaction, transactionAmountUnprocessed);
+                    } else {
+                        // standard transaction
+                        transactionAmountUnprocessed = handleTransactionThatIsOnTimePaymentOfInstallment(currentInstallment, loanTransaction,
+                                transactionAmountUnprocessed);
+                    }
+                }   
             }
-
             installmentIndex++;
         }
 
