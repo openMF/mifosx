@@ -50,6 +50,9 @@ CREATE TABLE IF NOT EXISTS `m_deposit_product_term_and_preclosure` (
   `pre_closure_penal_applicable` smallint(5) DEFAULT NULL,
   `pre_closure_penal_interest` decimal(19,6) DEFAULT NULL,
   `pre_closure_penal_interest_on_enum` smallint(5) DEFAULT NULL,
+  `min_deposit_amount` DECIMAL(19,6) NULL DEFAULT NULL,
+  `max_deposit_amount` DECIMAL(19,6) NULL DEFAULT NULL,
+  `deposit_amount` DECIMAL(19,6) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKDPTP00000000000001` (`savings_product_id`),
   CONSTRAINT `FKDPTP00000000000001` FOREIGN KEY (`savings_product_id`) REFERENCES `m_savings_product` (`id`)
@@ -128,6 +131,7 @@ CREATE TABLE IF NOT EXISTS `m_deposit_account_term_and_preclosure` (
   `deposit_amount` decimal(19,6) DEFAULT NULL,
   `maturity_amount` decimal(19,6) DEFAULT NULL,
   `maturity_date` date DEFAULT NULL,
+  `expected_firstdepositon_date` DATE NULL DEFAULT NULL,
   `on_account_closure_enum` smallint(5) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKDATP00000000000001` (`savings_account_id`),
