@@ -70,6 +70,7 @@ import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRelatedDetail;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRepository;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanTransactionProcessingStrategy;
+import org.mifosplatform.portfolio.loanproduct.domain.ProductLoanCharge;
 import org.mifosplatform.portfolio.loanproduct.exception.LinkedAccountRequiredException;
 import org.mifosplatform.portfolio.loanproduct.exception.LoanProductNotFoundException;
 import org.mifosplatform.portfolio.loanproduct.serialization.LoanProductDataValidator;
@@ -177,6 +178,23 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final Long productId = this.fromJsonHelper.extractLongNamed("productId", command.parsedJson());
             final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
             if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
+            
+            final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(command.parsedJson());
+            List<Long> loanChargesId = fetchAllChargeIds(loanCharges);
+            final Set<ProductLoanCharge> productLoanCharges = loanProduct.getCharges();
+
+            for (final ProductLoanCharge productLoanCharge : productLoanCharges) {
+                if (productLoanCharge.isMandatory() && !loanChargesId.contains(productLoanCharge.getCharge().getId())) {
+                    final ApiParameterError error = ApiParameterError.parameterError(
+                            "validation.msg.loan.charge.mandatory.must.be.attached.when.creating.loan.account",
+                            "The chargeId " + productLoanCharge.getId() + " i.e " + productLoanCharge.getCharge().getName() + " is not attached while creating loan.",
+                            "chargeId", productLoanCharge.getId(), productLoanCharge.getCharge().getName());
+                    dataValidationErrors.add(error);
+                }
+            }
+            
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+            
             if (loanProduct.useBorrowerCycle()) {
                 final Long clientId = this.fromJsonHelper.extractLongNamed("clientId", command.parsedJson());
                 final Long groupId = this.fromJsonHelper.extractLongNamed("groupId", command.parsedJson());
@@ -265,6 +283,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             this.fromApiJsonDeserializer.validateForModify(command.json());
 
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            
             final Loan existingLoanApplication = retrieveLoanBy(loanId);
             checkClientOrGroupActive(existingLoanApplication);
 
@@ -309,6 +329,26 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                     }
                 }
             }
+            
+            /** checking mandatory charges are attached to loan or not **/
+            if (isChargeModified) {
+                final LoanProduct loanProduct = existingLoanApplication.loanProduct();
+                List<Long> loanChargesId = fetchAllChargeIds(possiblyModifedLoanCharges);
+                final Set<ProductLoanCharge> productLoanCharges = loanProduct.getCharges();
+
+                for (final ProductLoanCharge productLoanCharge : productLoanCharges) {
+                    if (productLoanCharge.isMandatory() && !loanChargesId.contains(productLoanCharge.getCharge().getId())) {
+                        final ApiParameterError error = ApiParameterError.parameterError(
+                                "validation.msg.loan.charge.mandatory.must.be.attached.when.creating.loan.account", "The chargeId "
+                                        + productLoanCharge.getId() + " i.e " + productLoanCharge.getCharge().getName() + " is not attached while creating loan.",
+                                "chargeId", productLoanCharge.getId(), productLoanCharge.getCharge().getName());
+                        dataValidationErrors.add(error);
+                    }
+                }
+
+                if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+            }
+
 
             final Set<LoanCollateral> possiblyModifedLoanCollateralItems = this.loanCollateralAssembler
                     .fromParsedJson(command.parsedJson());
@@ -348,7 +388,6 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 if (!changes.containsKey("interestRateFrequencyType")) {
                     existingLoanApplication.updateInterestRateFrequencyType();
                 }
-                final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
                 final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
                 if (loanProduct.useBorrowerCycle()) {
                     final Long clientId = this.fromJsonHelper.extractLongNamed("clientId", command.parsedJson());
@@ -769,6 +808,16 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         if (group != null) {
             if (group.isNotActive()) { throw new GroupNotActiveException(group.getId()); }
         }
+    }
+    
+    public List<Long> fetchAllChargeIds(final Set<LoanCharge> loanCharges) {
+        List<Long> list = new ArrayList<Long>();
+        for (LoanCharge loanCharge : loanCharges) {
+            if (loanCharge.isActive()) {
+                list.add(loanCharge.getCharge().getId());
+            }
+        }
+        return list;
     }
 
 }

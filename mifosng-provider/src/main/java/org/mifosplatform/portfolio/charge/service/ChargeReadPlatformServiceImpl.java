@@ -7,7 +7,9 @@ package org.mifosplatform.portfolio.charge.service;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -182,7 +184,7 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
         }
 
         public String loanProductChargeSchema() {
-            return chargeSchema() + " join m_product_loan_charge plc on plc.charge_id = c.id";
+            return "plc.id as productChargeId, plc.is_mandatory as isMandatory, "+chargeSchema() + " join m_product_loan_charge plc on plc.charge_id = c.id";
         }
 
         public String savingsProductChargeSchema() {
@@ -234,9 +236,28 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
             }
             final BigDecimal minCap = rs.getBigDecimal("minCap");
             final BigDecimal maxCap = rs.getBigDecimal("maxCap");
-
+            
+            List<String> columnNames = new ArrayList<String>();
+            ResultSetMetaData columns = rs.getMetaData();
+            int i = 0;
+            while (i < columns.getColumnCount()) {
+                i++;
+                columnNames.add(columns.getColumnLabel(i));
+            }
+            
+            boolean isMandatory = false;
+            if (columnNames.contains("isMandatory")) {
+                isMandatory = rs.getBoolean("isMandatory");
+            }
+            
+            Long productChargeId = null;
+            if (columnNames.contains("productChargeId")) {
+                productChargeId = rs.getLong("productChargeId");
+            }
+            
             return ChargeData.instance(id, name, amount, currency, chargeTimeType, chargeAppliesToType, chargeCalculationType,
-                    chargePaymentMode, feeOnMonthDay, feeInterval, penalty, active, minCap, maxCap, feeFrequencyType);
+                    chargePaymentMode, feeOnMonthDay, feeInterval, penalty, active, minCap, maxCap, feeFrequencyType,
+                    isMandatory, productChargeId);
         }
     }
 

@@ -5,9 +5,10 @@
  */
 package org.mifosplatform.portfolio.loanproduct.service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.producttoaccountmapping.service.ProductToGLAccountMappingWritePlatformService;
@@ -15,18 +16,23 @@ import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.domain.ChargeRepositoryWrapper;
+import org.mifosplatform.portfolio.charge.exception.ProductLoanChargeNotFoundException;
 import org.mifosplatform.portfolio.fund.domain.Fund;
 import org.mifosplatform.portfolio.fund.domain.FundRepository;
 import org.mifosplatform.portfolio.fund.exception.FundNotFoundException;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionProcessingStrategyRepository;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanTransactionProcessingStrategyNotFoundException;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.AprCalculator;
+import org.mifosplatform.portfolio.loanproduct.data.ProductLoanChargeData;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRepository;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanTransactionProcessingStrategy;
+import org.mifosplatform.portfolio.loanproduct.domain.ProductLoanCharge;
+import org.mifosplatform.portfolio.loanproduct.domain.ProductLoanChargeRepository;
 import org.mifosplatform.portfolio.loanproduct.exception.InvalidCurrencyException;
 import org.mifosplatform.portfolio.loanproduct.exception.LoanProductDateException;
 import org.mifosplatform.portfolio.loanproduct.exception.LoanProductNotFoundException;
@@ -53,6 +59,8 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
     private final LoanTransactionProcessingStrategyRepository loanTransactionProcessingStrategyRepository;
     private final ChargeRepositoryWrapper chargeRepository;
     private final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService;
+    private final ProductLoanChargeRepository productChargeRepository;
+    private final FromJsonHelper fromApiJsonHelper;
 
     @Autowired
     public LoanProductWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -60,7 +68,8 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             final AprCalculator aprCalculator, final FundRepository fundRepository,
             final LoanTransactionProcessingStrategyRepository loanTransactionProcessingStrategyRepository,
             final ChargeRepositoryWrapper chargeRepository,
-            final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService) {
+            final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
+            final ProductLoanChargeRepository productChargeRepository, final FromJsonHelper fromApiJsonHelper) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.loanProductRepository = loanProductRepository;
@@ -69,6 +78,8 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
         this.loanTransactionProcessingStrategyRepository = loanTransactionProcessingStrategyRepository;
         this.chargeRepository = chargeRepository;
         this.accountMappingWritePlatformService = accountMappingWritePlatformService;
+        this.productChargeRepository = productChargeRepository;
+        this.fromApiJsonHelper = fromApiJsonHelper;
     }
 
     @Transactional
@@ -88,7 +99,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy = findStrategyByIdIfProvided(transactionProcessingStrategyId);
 
             final String currencyCode = command.stringValueOfParameterNamed("currencyCode");
-            final List<Charge> charges = assembleListOfProductCharges(command, currencyCode);
+            final Set<ProductLoanCharge> charges = assembleListOfProductCharges(command, currencyCode);
 
             final LoanProduct loanproduct = LoanProduct.assembleFromJson(fund, loanTransactionProcessingStrategy, charges, command,
                     this.aprCalculator);
@@ -141,8 +152,50 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             this.fromApiJsonDeserializer.validateForUpdate(command.json(), product);
             validateInputDates(command);
 
-            final Map<String, Object> changes = product.update(command, this.aprCalculator);
+            final Set<ProductLoanCharge> existingCharges = product.getCharges();
+            Map<Long, ProductLoanChargeData> chargesMap = new HashMap<Long, ProductLoanChargeData>();
+            for (ProductLoanCharge prodctLoanCharge : existingCharges) {
+                ProductLoanChargeData chargeData = ProductLoanChargeData.instance(prodctLoanCharge.getId(), prodctLoanCharge.isMandatory(),
+                        prodctLoanCharge.getCharge().getId());
+                chargesMap.put(prodctLoanCharge.getId(), chargeData);
+            }
 
+            /**
+             * Stores all charges which are passed in during modify loan product
+             **/
+            final Set<ProductLoanCharge> possiblyModifedProductLoanCharges = assembleListOfProductCharges(command, product.getCurrency()
+                    .getCode());
+            /** Boolean determines if any charge has been modified **/
+            Boolean isChargesModified = false;
+
+            /**
+             * If there are any charges already present, which are now not
+             * passed in as a part of the request, deem the charges as modified
+             **/
+
+            if (!possiblyModifedProductLoanCharges.containsAll(existingCharges)) {
+                isChargesModified = true;
+            }
+            
+            /**
+             * If any new charges are added or values of existing charges are
+             * modified
+             **/
+            if (!isChargesModified) {
+                for (ProductLoanCharge productLoanCharge : possiblyModifedProductLoanCharges) {
+                    if (productLoanCharge.getId() == null) {
+                        isChargesModified = true;
+                    } else {
+                        ProductLoanChargeData chargeData = chargesMap.get(productLoanCharge.getId());
+                        if (!productLoanCharge.isMandatory().equals(chargeData.getIsMandatory())) {
+                            isChargesModified = true;
+                        }
+                    }
+                }
+            }
+            
+            final Map<String, Object> changes = product.update(command, this.aprCalculator, possiblyModifedProductLoanCharges, isChargesModified);
+            
             if (changes.containsKey("fundId")) {
                 final Long fundId = (Long) changes.get("fundId");
                 final Fund fund = findFundByIdIfProvided(fundId);
@@ -156,11 +209,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             }
 
             if (changes.containsKey("charges")) {
-                final List<Charge> productCharges = assembleListOfProductCharges(command, product.getCurrency().getCode());
-                final boolean updated = product.update(productCharges);
-                if (!updated) {
-                    changes.remove("charges");
-                }
+                product.update(possiblyModifedProductLoanCharges);
             }
 
             // accounting related changes
@@ -186,9 +235,9 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
 
     }
 
-    private List<Charge> assembleListOfProductCharges(final JsonCommand command, final String currencyCode) {
+    private Set<ProductLoanCharge> assembleListOfProductCharges(final JsonCommand command, final String currencyCode) {
 
-        final List<Charge> charges = new ArrayList<Charge>();
+        final Set<ProductLoanCharge> productCharges = new HashSet<ProductLoanCharge>();
 
         String loanProductCurrencyCode = command.stringValueOfParameterNamed("currencyCode");
         if (loanProductCurrencyCode == null) {
@@ -201,22 +250,30 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
                 for (int i = 0; i < chargesArray.size(); i++) {
 
                     final JsonObject jsonObject = chargesArray.get(i).getAsJsonObject();
-                    if (jsonObject.has("id")) {
-                        final Long id = jsonObject.get("id").getAsLong();
-
+                    final Long id = jsonObject.get("id").getAsLong();
+                    final Long productChargeId = this.fromApiJsonHelper.extractLongNamed("productChargeId", jsonObject);
+                    final boolean isMandatory = jsonObject.get("isMandatory").getAsBoolean();
+                    if (productChargeId == null) {
                         final Charge charge = this.chargeRepository.findOneWithNotFoundDetection(id);
-
+                        final ProductLoanCharge productLoanCharge = ProductLoanCharge.createNewFromJson(charge, isMandatory);
                         if (!loanProductCurrencyCode.equals(charge.getCurrencyCode())) {
                             final String errorMessage = "Charge and Loan Product must have the same currency.";
                             throw new InvalidCurrencyException("charge", "attach.to.loan.product", errorMessage);
                         }
-                        charges.add(charge);
+                        productCharges.add(productLoanCharge);
+                    } else {
+                        final ProductLoanCharge productLoanCharge = this.productChargeRepository.findOne(productChargeId);
+                        if (productLoanCharge == null) { throw new ProductLoanChargeNotFoundException(productChargeId); }
+
+                        productLoanCharge.update(isMandatory);
+
+                        productCharges.add(productLoanCharge);
                     }
                 }
             }
         }
 
-        return charges;
+        return productCharges;
     }
 
     /*

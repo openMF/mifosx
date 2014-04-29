@@ -112,10 +112,11 @@ public class LoanChargeReadPlatformServiceImpl implements LoanChargeReadPlatform
             final BigDecimal minCap = rs.getBigDecimal("minCap");
             final BigDecimal maxCap = rs.getBigDecimal("maxCap");
             final BigDecimal amountOrPercentage = rs.getBigDecimal("amountOrPercentage");
+            final Boolean isMandatory = rs.getBoolean("isMandatory");
 
             return new LoanChargeData(id, chargeId, name, currency, amount, amountPaid, amountWaived, amountWrittenOff, amountOutstanding,
                     chargeTimeType, dueAsOfDate, chargeCalculationType, percentageOf, amountPercentageAppliedTo, penalty, paymentMode,
-                    paid, waived, null, minCap, maxCap, amountOrPercentage, null);
+                    paid, waived, null, minCap, maxCap, amountOrPercentage, null, isMandatory);
         }
     }
 
@@ -156,7 +157,10 @@ public class LoanChargeReadPlatformServiceImpl implements LoanChargeReadPlatform
 
         final LoanChargeMapper rm = new LoanChargeMapper();
 
-        final String sql = "select " + rm.schema() + " where lc.loan_id=? AND lc.is_active = 1"
+        final String sql = "select plc.is_mandatory as isMandatory, "
+                + rm.schema()
+                + " JOIN m_product_loan_charge plc ON plc.charge_id = c.id JOIN m_loan ml ON ml.id = lc.loan_id where lc.loan_id=? AND lc.is_active = 1"
+                + " AND plc.product_loan_id = ml.product_id"
                 + " order by lc.charge_time_enum ASC, lc.due_for_collection_as_of_date ASC, lc.is_penalty ASC";
 
         return this.jdbcTemplate.query(sql, rm, new Object[] { loanId });

@@ -9898,7 +9898,7 @@ GET https://DomainName/api/v1/loanproducts/{productId}
   },
   "transactionProcessingStrategyId": 1,
   "transactionProcessingStrategyName": "Mifos style",
-  "charges": [],
+  "charges": [{id=2, isMandatory=true}],
   "principalVariationsForBorrowerCycle": [
     {
       "id": 21,
@@ -10080,7 +10080,7 @@ GET https://DomainName/api/v1/loanproducts/{productId}
 							numberOfRepaymentVariationsForBorrowerCycle,
 							interestRateVariationsForBorrowerCycle,
 							multiDisburseLoan,maxTrancheCount,
-							outstandingLoanBalance,overdueDaysForNPA
+							outstandingLoanBalance,overdueDaysForNPA, isMandatory
 							</td>
 						</tr>
 
@@ -10150,7 +10150,7 @@ Request Body:
 "paymentChannelToFundSourceMappings":[],
 "feeToIncomeAccountMappings":[],
 "penaltyToIncomeAccountMappings":[],
-"charges":[],
+"charges":[{id=2, isMandatory=true}],
 "overdueDaysForNPA":2,
 "dateFormat":"dd MMMM yyyy",
 "locale":"en",
@@ -10288,7 +10288,8 @@ Content-Type: application/json
 Request Body: 
 {
     "locale": "en_GB",
-    "principal": "70,000.00"
+    "principal": "70,000.00",
+    "charges": [{id=2, isMandatory=true}]
 }
 					</code>
 					<code class="method-response">

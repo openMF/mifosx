@@ -20,8 +20,6 @@ import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -37,11 +35,11 @@ import org.mifosplatform.accounting.common.AccountingRuleType;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
-import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 import org.mifosplatform.portfolio.fund.domain.Fund;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.AprCalculator;
 import org.mifosplatform.portfolio.loanproduct.LoanProductConstants;
+import org.mifosplatform.portfolio.loanproduct.data.ProductLoanChargeData;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 import com.google.gson.JsonArray;
@@ -79,10 +77,10 @@ public class LoanProduct extends AbstractPersistable<Long> {
     @Column(name = "description")
     private String description;
 
-    @ManyToMany
-    @JoinTable(name = "m_product_loan_charge", joinColumns = @JoinColumn(name = "product_loan_id"), inverseJoinColumns = @JoinColumn(name = "charge_id"))
-    private List<Charge> charges;
-
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "loanProduct", orphanRemoval = true)
+    private Set<ProductLoanCharge> charges = new HashSet<ProductLoanCharge>();
+    
     @Embedded
     private final LoanProductRelatedDetail loanProductRelatedDetail;
 
@@ -118,9 +116,9 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
     @Column(name = "overdue_days_for_npa", nullable = true)
     private Integer overdueDaysForNPA;
-
+    
     public static LoanProduct assembleFromJson(final Fund fund, final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy,
-            final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator) {
+            final Set<ProductLoanCharge> productCharges, final JsonCommand command, final AprCalculator aprCalculator) {
 
         final String name = command.stringValueOfParameterNamed("name");
         final String shortName = command.stringValueOfParameterNamed(LoanProductConstants.shortName);
@@ -397,7 +395,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final PeriodFrequencyType repaymentFrequencyType, final Integer defaultNumberOfInstallments,
             final Integer defaultMinNumberOfInstallments, final Integer defaultMaxNumberOfInstallments,
             final Integer graceOnPrincipalPayment, final Integer graceOnInterestPayment, final Integer graceOnInterestCharged,
-            final AmortizationMethod amortizationMethod, final BigDecimal inArrearsTolerance, final List<Charge> charges,
+            final AmortizationMethod amortizationMethod, final BigDecimal inArrearsTolerance, final Set<ProductLoanCharge> charges,
             final AccountingRuleType accountingRuleType, final boolean includeInBorrowerCycle, final LocalDate startDate,
             final LocalDate closeDate, final String externalId, final boolean useBorrowerCycle,
             final Set<LoanProductBorrowerCycleVariations> loanProductBorrowerCycleVariations, final boolean multiDisburseLoan,
@@ -414,7 +412,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
         }
 
         if (charges != null) {
-            this.charges = charges;
+            this.charges = associateChargesWithThisLoanProduct(new HashSet<ProductLoanCharge>(charges));
         }
 
         this.loanProductRelatedDetail = new LoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod,
@@ -467,30 +465,22 @@ public class LoanProduct extends AbstractPersistable<Long> {
         return this.loanProductRelatedDetail.hasCurrencyCodeOf(currencyCode);
     }
 
-    public boolean update(final List<Charge> newProductCharges) {
-        if (newProductCharges == null) { return false; }
-
-        boolean updated = false;
-        if (this.charges != null) {
-            final Set<Charge> currentSetOfCharges = new HashSet<Charge>(this.charges);
-            final Set<Charge> newSetOfCharges = new HashSet<Charge>(newProductCharges);
-
-            if (!currentSetOfCharges.equals(newSetOfCharges)) {
-                updated = true;
-                this.charges = newProductCharges;
+    public void update(final Set<ProductLoanCharge> prodctLoanCharges) {
+        this.charges.clear();
+        for (final ProductLoanCharge productLoanCharge : prodctLoanCharges) {
+            if (productLoanCharge.getId() == null) {
+                productLoanCharge.update(this);
             }
-        } else {
-            updated = true;
-            this.charges = newProductCharges;
         }
-        return updated;
+        this.charges.addAll(prodctLoanCharges);
     }
 
     public Integer getAccountingType() {
         return this.accountingRule;
     }
 
-    public Map<String, Object> update(final JsonCommand command, final AprCalculator aprCalculator) {
+    public Map<String, Object> update(final JsonCommand command, final AprCalculator aprCalculator, Set<ProductLoanCharge> possiblyModifedProductLoanCharges,
+            Boolean isChargesModified) {
 
         final Map<String, Object> actualChanges = this.loanProductRelatedDetail.update(command, aprCalculator);
         actualChanges.putAll(loanProductMinMaxConstraints().update(command));
@@ -544,11 +534,8 @@ public class LoanProduct extends AbstractPersistable<Long> {
         }
 
         final String chargesParamName = "charges";
-        if (command.hasParameter(chargesParamName)) {
-            final JsonArray jsonArray = command.arrayOfParameterNamed(chargesParamName);
-            if (jsonArray != null) {
-                actualChanges.put(chargesParamName, command.jsonFragment(chargesParamName));
-            }
+        if (isChargesModified) {
+            actualChanges.put(chargesParamName, getProductLoanCharges(possiblyModifedProductLoanCharges));
         }
 
         final String includeInBorrowerCycleParamName = "includeInBorrowerCycle";
@@ -835,4 +822,35 @@ public class LoanProduct extends AbstractPersistable<Long> {
         }
         return borrowerCycleVariations;
     }
+    
+    private Set<ProductLoanCharge> associateChargesWithThisLoanProduct(final Set<ProductLoanCharge> productCharges) {
+        for (final ProductLoanCharge productCharge : productCharges) {
+            productCharge.update(this);
+        }
+        return productCharges;
+    }
+    
+    public Set<ProductLoanCharge> getCharges() {
+        Set<ProductLoanCharge> productLoanCharges = new HashSet<ProductLoanCharge>();
+        if (this.charges != null) {
+            for (ProductLoanCharge charge : this.charges) {
+                 productLoanCharges.add(charge);
+            }
+        }
+        return productLoanCharges;
+    }
+    
+    private ProductLoanChargeData[] getProductLoanCharges(final Set<ProductLoanCharge> setOfProductLoanCharges) {
+        ProductLoanChargeData[] existingLoanCharges = null;
+
+        final List<ProductLoanChargeData> productLoanChargesList = new ArrayList<ProductLoanChargeData>();
+        for (final ProductLoanCharge productLoanCharge : setOfProductLoanCharges) {
+            productLoanChargesList.add(productLoanCharge.toObject());
+        }
+
+        existingLoanCharges = productLoanChargesList.toArray(new ProductLoanChargeData[productLoanChargesList.size()]);
+
+        return existingLoanCharges;
+    }
+    
 }
