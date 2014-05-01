@@ -79,7 +79,7 @@ public class CollateralsApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermission);
 
-        final Collection<CodeValueData> codeValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanCollateral");
+        final Collection<CodeValueData> codeValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("Loan Collateral");
         final CollateralData collateralData = CollateralData.template(codeValues);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());

@@ -213,10 +213,10 @@ public class AccountingConstants {
         }
     }
 
-    public static final String ASSESTS_TAG_OPTION_CODE_NAME = "AssetAccountTags";
-    public static final String LIABILITIES_TAG_OPTION_CODE_NAME = "LiabilityAccountTags";
-    public static final String EQUITY_TAG_OPTION_CODE_NAME = "EquityAccountTags";
-    public static final String INCOME_TAG_OPTION_CODE_NAME = "IncomeAccountTags";
-    public static final String EXPENSES_TAG_OPTION_CODE_NAME = "ExpenseAccountTags";
+    public static final String ASSESTS_TAG_OPTION_CODE_NAME = "Asset Account Tags";
+    public static final String LIABILITIES_TAG_OPTION_CODE_NAME = "Liability Account Tags";
+    public static final String EQUITY_TAG_OPTION_CODE_NAME = "Equity Account Tags";
+    public static final String INCOME_TAG_OPTION_CODE_NAME = "Income Account Tags";
+    public static final String EXPENSES_TAG_OPTION_CODE_NAME = "Expense Account Tags";
 
 }

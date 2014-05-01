@@ -10,7 +10,7 @@ import java.util.Set;
 
 public class GuarantorConstants {
 
-    public static final String GUARANTOR_RELATIONSHIP_CODE_NAME = "GuarantorRelationship";
+    public static final String GUARANTOR_RELATIONSHIP_CODE_NAME = "Guarantor Relationship";
 
     /***
      * Enum of all parameters passed in while creating/updating a loan product

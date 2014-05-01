@@ -14,7 +14,7 @@ import org.mifosplatform.portfolio.client.data.ClientData;
 public class ClientApiConstants {
 
     public static final String CLIENT_RESOURCE_NAME = "client";
-    public static final String CLIENT_CLOSURE_REASON = "ClientClosureReason";
+    public static final String CLIENT_CLOSURE_REASON = "Client Closure Reason";
 
     // general
     public static final String localeParamName = "locale";

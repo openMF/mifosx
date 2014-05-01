@@ -19,9 +19,9 @@ public class GroupingTypesApiConstants {
 
     // group roles
     public static final String GROUP_ROLE_RESOURCE_NAME = "grouprole";
-    public static final String GROUP_ROLE_NAME = "GROUPROLE";
+    public static final String GROUP_ROLE_NAME = "Group Role";
 
-    public static final String GROUP_CLOSURE_REASON = "GroupClosureReason";
+    public static final String GROUP_CLOSURE_REASON = "Group Closure Reason";
 
     public static final String roleParamName = "role";
     public static final String groupIdParamName = "groupId";

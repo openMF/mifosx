@@ -10,7 +10,7 @@ import java.util.Set;
 
 public class CollateralApiConstants {
 
-    public static final String COLLATERAL_CODE_NAME = "LoanCollateral";
+    public static final String COLLATERAL_CODE_NAME = "Loan Collateral";
 
     /***
      * Enum of all parameters passed in while creating/updating a collateral

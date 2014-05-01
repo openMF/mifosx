@@ -419,8 +419,8 @@ public class LoansApiResource {
             allowedLoanOfficers = this.loanReadPlatformService.retrieveAllowedLoanOfficers(loanBasicDetails.officeId(),
                     staffInSelectedOfficeOnly);
 
-            loanPurposeOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanPurpose");
-            loanCollateralOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanCollateral");
+            loanPurposeOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("Loan Purpose");
+            loanCollateralOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("Loan Collateral");
             final CurrencyData currencyData = loanBasicDetails.currency();
             String currencyCode = null;
             if (currencyData != null) {
