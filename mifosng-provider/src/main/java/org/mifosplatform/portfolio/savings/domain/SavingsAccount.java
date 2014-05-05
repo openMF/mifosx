@@ -463,7 +463,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
 
-        final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(getActivationLocalDate(),
+        final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(accountSubmittedOrActivationDate(),
                 upToInterestCalculationDate, postingPeriodType);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<PostingPeriod>();
