@@ -1142,8 +1142,56 @@ public class LoanAccountData {
         return this.group;
     }
 
+    public BigDecimal principal() {
+    	return this.principal;
+    }
+
     public Long loanProductId() {
         return this.loanProductId;
+    }
+
+    public int loanTermFrequency() {
+    	return this.termFrequency;
+    }
+    
+    public Long loanTermFrequencyType() {
+    	return this.termPeriodFrequencyType.getId();
+    }
+    
+    public int numberOfRepayments() {
+    	return this.numberOfRepayments;
+    }
+    
+    public int repaymentEvery() {
+    	return this.repaymentEvery;
+    }
+    
+    public Long repaymentFrequencyType() {
+    	return this.repaymentFrequencyType.getId();
+    }
+    
+    public BigDecimal interestRatePerPeriod() {
+    	return this.interestRatePerPeriod;
+    }
+    
+    public Long amortizationType() {
+    	return this.amortizationType.getId();
+    }
+    
+    public Long interestType() {
+    	return this.interestType.getId();
+    }
+    
+    public Long interestCalculationPeriodType() {
+    	return this.interestCalculationPeriodType.getId();
+    }
+    
+    public String expectedDisbursementDate() {
+    	return this.timeline.expectedDisbursementDate().toString();
+    }
+    
+    public long transactionProcessingStrategyId() {
+    	return this.transactionProcessingStrategyId;
     }
 
 }

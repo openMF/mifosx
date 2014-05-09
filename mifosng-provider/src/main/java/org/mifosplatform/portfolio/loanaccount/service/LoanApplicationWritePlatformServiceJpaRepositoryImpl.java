@@ -46,6 +46,7 @@ import org.mifosplatform.portfolio.fund.domain.Fund;
 import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.group.domain.GroupRepositoryWrapper;
 import org.mifosplatform.portfolio.group.exception.GroupNotActiveException;
+import org.mifosplatform.portfolio.loanaccount.data.LoanAccountData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanChargeData;
 import org.mifosplatform.portfolio.loanaccount.domain.DefaultLoanLifecycleStateMachine;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
@@ -414,8 +415,70 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             if (changes.containsKey("recalculateLoanSchedule")) {
                 changes.remove("recalculateLoanSchedule");
 
-                final JsonElement parsedQuery = this.fromJsonHelper.parse(command.json());
-                final JsonQuery query = JsonQuery.from(command.json(), parsedQuery, this.fromJsonHelper);
+                String input = command.json().substring(0, command.json().length()-1);
+                
+                final LoanAccountData loanBasicDetails = this.loanReadPlatformService.retrieveOne(loanId);
+                StringBuilder str = new StringBuilder(input + ",");                
+                
+                //adds all the missing mandatory fields to json input
+                if(!input.contains("principal")) {
+                	str.append("principal : " + loanBasicDetails.principal() + ",");
+                }
+                
+                if(!input.contains("productId")) {
+                	str.append("productId : " + loanBasicDetails.loanProductId() + ",");
+                }
+                
+                if(!input.contains("loanTermFrequency")){
+                	str.append("loanTermFrequency : " + loanBasicDetails.loanTermFrequency() + ",");
+                }
+                
+                if(!input.contains("loanTermFrequencyType")){
+                	str.append("loanTermFrequencyType : " + loanBasicDetails.loanTermFrequencyType() + ",");
+                }
+                
+                if(!input.contains("numberOfRepayments")){
+                	str.append("numberOfRepayments : " + loanBasicDetails.numberOfRepayments() + ",");
+                }
+                
+                if(!input.contains("repaymentEvery")){
+                	str.append("repaymentEvery : " + loanBasicDetails.repaymentEvery() + ",");
+                }
+                
+                if(!input.contains("repaymentFrequencyType")){
+                	str.append("repaymentFrequencyType : " + loanBasicDetails.repaymentFrequencyType() + ",");
+                }
+                
+                if(!input.contains("interestRatePerPeriod")){
+                	str.append("interestRatePerPeriod : " + loanBasicDetails.interestRatePerPeriod() + ",");
+                }
+                
+                if(!input.contains("amortizationType")){
+                	str.append("amortizationType : " + loanBasicDetails.amortizationType()+ ",");
+                }
+                
+                if(!input.contains("interestType")){
+                	str.append("interestType : " + loanBasicDetails.interestType()+ ",");
+                }
+                
+                if(!input.contains("interestCalculationPeriodType")){
+                	str.append("interestCalculationPeriodType : " + loanBasicDetails.interestCalculationPeriodType()+ ",");
+                }
+                
+                if(!input.contains("expectedDisbursementDate")){
+                	str.append("expectedDisbursementDate : '" + loanBasicDetails.expectedDisbursementDate()+ "',");
+                	//hard-coded dateFormat, to be updated
+                	str.append("dateFormat : 'yyyy-mm-dd', ");
+                }
+                
+                if(!input.contains("transactionProcessingStrategyId")){
+                	str.append("transactionProcessingStrategyId : " + loanBasicDetails.transactionProcessingStrategyId() + ",");
+                }
+                
+                str.replace(str.length() - 1, str.length(), "}");            
+                
+                final JsonElement parsedQuery = this.fromJsonHelper.parse(str.toString());
+                final JsonQuery query = JsonQuery.from(str.toString(), parsedQuery, this.fromJsonHelper);
 
                 final LoanScheduleModel loanSchedule = this.calculationPlatformService.calculateLoanSchedule(query, false);
                 existingLoanApplication.updateLoanSchedule(loanSchedule);
