@@ -4,9 +4,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.domain.LocalDateInterval;
-import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.portfolio.savings.SavingsCompoundingInterestPeriodType;
@@ -29,7 +29,6 @@ public class PostingPeriod {
     private Money interestEarnedRounded;
 
     // opening/closing details
-    @SuppressWarnings("unused")
     private final Money openingBalance;
     private final Money closingBalance;
     private final SavingsInterestCalculationType interestCalculationType;
@@ -37,7 +36,7 @@ public class PostingPeriod {
     public static PostingPeriod createFrom(final LocalDateInterval periodInterval, final Money periodStartingBalance,
             final List<SavingsAccountTransaction> orderedListOfTransactions, final MonetaryCurrency currency,
             final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
-            final SavingsInterestCalculationType interestCalculationType, final BigDecimal interestRateAsFraction, final long daysInYear) {
+            final SavingsInterestCalculationType interestCalculationType, final BigDecimal interestRateAsFraction, final long daysInYear, final LocalDate upToInterestCalculationDate) {
 
         final List<EndOfDayBalance> accountEndOfDayBalances = new ArrayList<EndOfDayBalance>();
 
@@ -62,8 +61,19 @@ public class PostingPeriod {
         }
 
         if (accountEndOfDayBalances.isEmpty()) {
-            final EndOfDayBalance endOfDayBalance = EndOfDayBalance.from(periodInterval.startDate(), openingDayBalance, closeOfDayBalance,
-                    periodInterval.daysInPeriodInclusiveOfEndDate());
+            LocalDate balanceStartDate = periodInterval.startDate();
+            LocalDate balanceEndDate = periodInterval.endDate();
+            Integer numberOfDaysOfBalance = periodInterval.daysInPeriodInclusiveOfEndDate();
+            
+            if (balanceEndDate.isAfter(upToInterestCalculationDate)) {
+                balanceEndDate = upToInterestCalculationDate;
+                final LocalDateInterval spanOfBalance = LocalDateInterval.create(balanceStartDate, balanceEndDate);
+                numberOfDaysOfBalance = spanOfBalance.daysInPeriodInclusiveOfEndDate();
+            }
+            
+            final EndOfDayBalance endOfDayBalance = EndOfDayBalance.from(balanceStartDate, openingDayBalance, closeOfDayBalance,
+                    numberOfDaysOfBalance);
+            
             accountEndOfDayBalances.add(endOfDayBalance);
 
             closeOfDayBalance = endOfDayBalance.closingBalance();
@@ -71,7 +81,7 @@ public class PostingPeriod {
         }
 
         final List<CompoundingPeriod> compoundingPeriods = compoundingPeriodsInPostingPeriod(periodInterval, interestCompoundingPeriodType,
-                accountEndOfDayBalances);
+                accountEndOfDayBalances, upToInterestCalculationDate);
 
         return new PostingPeriod(periodInterval, currency, periodStartingBalance, openingDayBalance, interestCompoundingPeriodType,
                 interestCalculationType, interestRateAsFraction, daysInYear, compoundingPeriods);
@@ -105,6 +115,10 @@ public class PostingPeriod {
     public Money closingBalance() {
         return this.closingBalance;
     }
+    
+    public Money openingBalance() {
+        return this.openingBalance;
+    }
 
     public BigDecimal calculateInterest(final BigDecimal interestFromPreviousPostingPeriod) {
         BigDecimal interestEarned = BigDecimal.ZERO;
@@ -131,7 +145,7 @@ public class PostingPeriod {
     }
 
     private static List<CompoundingPeriod> compoundingPeriodsInPostingPeriod(final LocalDateInterval postingPeriodInterval,
-            final SavingsCompoundingInterestPeriodType interestPeriodType, final List<EndOfDayBalance> allEndOfDayBalances) {
+            final SavingsCompoundingInterestPeriodType interestPeriodType, final List<EndOfDayBalance> allEndOfDayBalances, final LocalDate upToInterestCalculationDate) {
 
         final List<CompoundingPeriod> compoundingPeriods = new ArrayList<CompoundingPeriod>();
 
@@ -140,7 +154,7 @@ public class PostingPeriod {
             case INVALID:
             break;
             case DAILY:
-                compoundingPeriod = DailyCompoundingPeriod.create(postingPeriodInterval, allEndOfDayBalances);
+                compoundingPeriod = DailyCompoundingPeriod.create(postingPeriodInterval, allEndOfDayBalances, upToInterestCalculationDate);
                 compoundingPeriods.add(compoundingPeriod);
             break;
             case MONTHLY:
@@ -152,7 +166,7 @@ public class PostingPeriod {
 
                 while (!periodStartDate.isAfter(postingPeriodEndDate) && !periodEndDate.isAfter(postingPeriodEndDate)) {
 
-                    periodEndDate = determineInterestPeriodEndDateFrom(periodStartDate, interestPeriodType);
+                    periodEndDate = determineInterestPeriodEndDateFrom(periodStartDate, interestPeriodType, upToInterestCalculationDate);
                     if (periodEndDate.isAfter(postingPeriodEndDate)) {
                         periodEndDate = postingPeriodEndDate;
                     }
@@ -160,7 +174,7 @@ public class PostingPeriod {
                     final LocalDateInterval compoundingPeriodInterval = LocalDateInterval.create(periodStartDate, periodEndDate);
                     if (postingPeriodInterval.contains(compoundingPeriodInterval)) {
 
-                        compoundingPeriod = MonthlyCompoundingPeriod.create(compoundingPeriodInterval, allEndOfDayBalances);
+                        compoundingPeriod = MonthlyCompoundingPeriod.create(compoundingPeriodInterval, allEndOfDayBalances, upToInterestCalculationDate);
                         compoundingPeriods.add(compoundingPeriod);
                     }
 
@@ -172,23 +186,92 @@ public class PostingPeriod {
         // break;
         // case BIWEEKLY:
         // break;
-        // case QUATERLY:
-        // break;
-        // case BI_ANNUAL:
-        // break;
-        // case ANNUAL:
-        // break;
-        // case NO_COMPOUNDING_SIMPLE_INTEREST:
-        // break;
+       case QUATERLY:
+                final LocalDate qPostingPeriodEndDate = postingPeriodInterval.endDate();
+
+                periodStartDate = postingPeriodInterval.startDate();
+                periodEndDate = periodStartDate;
+
+                while (!periodStartDate.isAfter(qPostingPeriodEndDate) && !periodEndDate.isAfter(qPostingPeriodEndDate)) {
+
+                    periodEndDate = determineInterestPeriodEndDateFrom(periodStartDate, interestPeriodType, upToInterestCalculationDate);
+                    if (periodEndDate.isAfter(qPostingPeriodEndDate)) {
+                        periodEndDate = qPostingPeriodEndDate;
+                    }
+
+                    final LocalDateInterval compoundingPeriodInterval = LocalDateInterval.create(periodStartDate, periodEndDate);
+                    if (postingPeriodInterval.contains(compoundingPeriodInterval)) {
+
+                        compoundingPeriod = QuarterlyCompoundingPeriod.create(compoundingPeriodInterval, allEndOfDayBalances,
+                                upToInterestCalculationDate);
+                        compoundingPeriods.add(compoundingPeriod);
+                    }
+
+                    // move periodStartDate forward to day after this period
+                    periodStartDate = periodEndDate.plusDays(1);
+                }
+                break;
+            case BI_ANNUAL:
+                final LocalDate bPostingPeriodEndDate = postingPeriodInterval.endDate();
+
+                periodStartDate = postingPeriodInterval.startDate();
+                periodEndDate = periodStartDate;
+
+                while (!periodStartDate.isAfter(bPostingPeriodEndDate) && !periodEndDate.isAfter(bPostingPeriodEndDate)) {
+
+                    periodEndDate = determineInterestPeriodEndDateFrom(periodStartDate, interestPeriodType, upToInterestCalculationDate);
+                    if (periodEndDate.isAfter(bPostingPeriodEndDate)) {
+                        periodEndDate = bPostingPeriodEndDate;
+                    }
+
+                    final LocalDateInterval compoundingPeriodInterval = LocalDateInterval.create(periodStartDate, periodEndDate);
+                    if (postingPeriodInterval.contains(compoundingPeriodInterval)) {
+
+                        compoundingPeriod = BiAnnualCompoundingPeriod.create(compoundingPeriodInterval, allEndOfDayBalances,
+                                upToInterestCalculationDate);
+                        compoundingPeriods.add(compoundingPeriod);
+                    }
+
+                    // move periodStartDate forward to day after this period
+                    periodStartDate = periodEndDate.plusDays(1);
+                }
+                break;
+            case ANNUAL:
+                final LocalDate aPostingPeriodEndDate = postingPeriodInterval.endDate();
+
+                periodStartDate = postingPeriodInterval.startDate();
+                periodEndDate = periodStartDate;
+
+                while (!periodStartDate.isAfter(aPostingPeriodEndDate) && !periodEndDate.isAfter(aPostingPeriodEndDate)) {
+
+                    periodEndDate = determineInterestPeriodEndDateFrom(periodStartDate, interestPeriodType, upToInterestCalculationDate);
+                    if (periodEndDate.isAfter(aPostingPeriodEndDate)) {
+                        periodEndDate = aPostingPeriodEndDate;
+                    }
+
+                    final LocalDateInterval compoundingPeriodInterval = LocalDateInterval.create(periodStartDate, periodEndDate);
+                    if (postingPeriodInterval.contains(compoundingPeriodInterval)) {
+
+                        compoundingPeriod = AnnualCompoundingPeriod.create(compoundingPeriodInterval, allEndOfDayBalances,
+                                upToInterestCalculationDate);
+                        compoundingPeriods.add(compoundingPeriod);
+                    }
+
+                    // move periodStartDate forward to day after this period
+                    periodStartDate = periodEndDate.plusDays(1);
+                }
+                break;
+                // case NO_COMPOUNDING_SIMPLE_INTEREST:
+                // break;
         }
 
         return compoundingPeriods;
     }
 
     private static LocalDate determineInterestPeriodEndDateFrom(final LocalDate periodStartDate,
-            final SavingsCompoundingInterestPeriodType interestPeriodType) {
+            final SavingsCompoundingInterestPeriodType interestPeriodType, final LocalDate upToInterestCalculationDate) {
 
-        LocalDate periodEndDate = DateUtils.getLocalDateOfTenant();
+        LocalDate periodEndDate = upToInterestCalculationDate;
 
         switch (interestPeriodType) {
             case INVALID:
@@ -208,39 +291,41 @@ public class PostingPeriod {
                 // produce period end date on last day of current month
                 periodEndDate = periodStartDate.dayOfMonth().withMaximumValue();
             break;
-        // case QUATERLY:
-        // // jan 1st to mar 31st, 1st apr to jun 30, jul 1st to sept 30,
-        // // oct 1st to dec 31
-        // int year = periodStartDate.getYearOfEra();
-        // int monthofYear = periodStartDate.getMonthOfYear();
-        // if (monthofYear <= 3) {
-        // periodEndDate = new DateTime().withDate(year, 3, 31).toLocalDate();
-        // } else if (monthofYear <= 6) {
-        // periodEndDate = new DateTime().withDate(year, 6, 30).toLocalDate();
-        // } else if (monthofYear <= 9) {
-        // periodEndDate = new DateTime().withDate(year, 9, 30).toLocalDate();
-        // } else if (monthofYear <= 12) {
-        // periodEndDate = new DateTime().withDate(year, 12, 31).toLocalDate();
-        // }
-        // break;
-        // case BI_ANNUAL:
-        // // jan 1st to 30, jul 1st to dec 31
-        // year = periodStartDate.getYearOfEra();
-        // monthofYear = periodStartDate.getMonthOfYear();
-        // if (monthofYear <= 6) {
-        // periodEndDate = new DateTime().withDate(year, 6, 30).toLocalDate();
-        // } else if (monthofYear <= 12) {
-        // periodEndDate = new DateTime().withDate(year, 12, 31).toLocalDate();
-        // }
-        // break;
-        // case ANNUAL:
-        // periodEndDate = periodStartDate.monthOfYear().withMaximumValue();
-        // periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
-        // break;
-        // case NO_COMPOUNDING_SIMPLE_INTEREST:
-        // periodEndDate = periodStartDate.monthOfYear().withMaximumValue();
-        // periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
-        // break;
+      case QUATERLY:
+                // // jan 1st to mar 31st, 1st apr to jun 30, jul 1st to sept
+                // 30,
+                // // oct 1st to dec 31
+                int year = periodStartDate.getYearOfEra();
+                int monthofYear = periodStartDate.getMonthOfYear();
+                if (monthofYear <= 3) {
+                    periodEndDate = new DateTime().withDate(year, 3, 31).toLocalDate();
+                } else if (monthofYear <= 6) {
+                    periodEndDate = new DateTime().withDate(year, 6, 30).toLocalDate();
+                } else if (monthofYear <= 9) {
+                    periodEndDate = new DateTime().withDate(year, 9, 30).toLocalDate();
+                } else if (monthofYear <= 12) {
+                    periodEndDate = new DateTime().withDate(year, 12, 31).toLocalDate();
+                }
+                break;
+            case BI_ANNUAL:
+                // // jan 1st to 30, jul 1st to dec 31
+                year = periodStartDate.getYearOfEra();
+                monthofYear = periodStartDate.getMonthOfYear();
+                if (monthofYear <= 6) {
+                    periodEndDate = new DateTime().withDate(year, 6, 30).toLocalDate();
+                } else if (monthofYear <= 12) {
+                    periodEndDate = new DateTime().withDate(year, 12, 31).toLocalDate();
+                }
+                break;
+            case ANNUAL:
+                periodEndDate = periodStartDate.monthOfYear().withMaximumValue();
+                periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
+                break;
+
+                // case NO_COMPOUNDING_SIMPLE_INTEREST:
+                // periodEndDate = periodStartDate.monthOfYear().withMaximumValue();
+                // periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
+                // break;
         }
 
         return periodEndDate;

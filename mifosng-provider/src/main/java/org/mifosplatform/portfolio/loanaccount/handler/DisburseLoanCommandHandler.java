@@ -27,6 +27,6 @@ public class DisburseLoanCommandHandler implements NewCommandSourceHandler {
     @Override
     public CommandProcessingResult processCommand(final JsonCommand command) {
 
-        return this.writePlatformService.disburseLoan(command.entityId(), command);
+        return this.writePlatformService.disburseLoan(command.entityId(), command, false);
     }
 }

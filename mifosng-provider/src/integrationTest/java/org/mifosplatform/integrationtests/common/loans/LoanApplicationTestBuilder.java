@@ -1,6 +1,8 @@
 package org.mifosplatform.integrationtests.common.loans;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import com.google.gson.Gson;
 
@@ -32,10 +34,14 @@ public class LoanApplicationTestBuilder {
     private String expectedDisbursmentDate = "";
     private String submittedOnDate = "";
     private String loanType = "individual";
+    private String fixedEmiAmount = "10000";
+    private String maxOutstandingLoanBalance = "36000";
+    private List<HashMap> disbursementData = null;
+    private List<HashMap> charges = new ArrayList<HashMap>();
 
     public String build(final String ID, final String loanProductId, final String savingsID) {
 
-        final HashMap<String, String> map = new HashMap<String, String>();
+        final HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("dateFormat", "dd MMMM yyyy");
         map.put("locale", "en_GB");
         if (this.loanType == "group") {
@@ -58,9 +64,20 @@ public class LoanApplicationTestBuilder {
         map.put("expectedDisbursementDate", this.expectedDisbursmentDate);
         map.put("submittedOnDate", this.submittedOnDate);
         map.put("loanType", this.loanType);
+        if (charges != null) {
+            map.put("charges", charges);
+        }
         if (savingsID != null) {
             map.put("linkAccountId", savingsID);
         }
+
+        if (disbursementData != null) {
+            map.put("disbursementData", disbursementData);
+            map.put("fixedEmiAmount", fixedEmiAmount);
+            map.put("maxOutstandingLoanBalance", maxOutstandingLoanBalance);
+
+        }
+
         return new Gson().toJson(map);
     }
 
@@ -164,9 +181,18 @@ public class LoanApplicationTestBuilder {
         return this;
     }
 
+    public LoanApplicationTestBuilder withCharges(final List<HashMap> charges) {
+        this.charges = charges;
+        return this;
+    }
+
     public LoanApplicationTestBuilder withLoanType(final String loanType) {
         this.loanType = loanType;
         return this;
     }
 
+    public LoanApplicationTestBuilder withTranches(final List<HashMap> disbursementData) {
+        this.disbursementData = disbursementData;
+        return this;
+    }
 }

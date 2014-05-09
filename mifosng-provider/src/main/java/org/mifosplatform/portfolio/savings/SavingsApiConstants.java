@@ -35,6 +35,7 @@ public class SavingsApiConstants {
     public static String closeAction = ".close";
     public static String payChargeTransactionAction = ".paycharge";
     public static String waiveChargeTransactionAction = ".waivecharge";
+    public static String updateMaturityDetailsAction = ".updateMaturityDetails";
 
     // command
     public static String COMMAND_UNDO_TRANSACTION = "undo";
@@ -129,6 +130,7 @@ public class SavingsApiConstants {
     // Savings account associations
     public static final String transactions = "transactions";
     public static final String charges = "charges";
+    public static final String linkedAccount = "linkedAccount";
 
     public static final Set<String> SAVINGS_PRODUCT_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
             monthDayFormatParamName, nameParamName, shortNameParamName, descriptionParamName, currencyCodeParamName,

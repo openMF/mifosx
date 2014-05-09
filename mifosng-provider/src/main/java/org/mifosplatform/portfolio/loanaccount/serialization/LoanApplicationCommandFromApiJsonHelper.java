@@ -205,7 +205,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
 
         final Integer graceOnArrearsAgeing = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(
                 LoanProductConstants.graceOnArrearsAgeingParameterName, element);
-        baseDataValidator.reset().parameter(LoanProductConstants.graceOnArrearsAgeingParameterName).value(graceOnArrearsAgeing).zeroOrPositiveAmount();
+        baseDataValidator.reset().parameter(LoanProductConstants.graceOnArrearsAgeingParameterName).value(graceOnArrearsAgeing)
+                .zeroOrPositiveAmount();
 
         final String interestChargedFromDateParameterName = "interestChargedFromDate";
         if (this.fromApiJsonHelper.parameterExists(interestChargedFromDateParameterName, element)) {
@@ -251,7 +252,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                 .integerGreaterThanZero();
 
         final String linkAccountIdParameterName = "linkAccountId";
-        if (this.fromApiJsonHelper.parameterExists(submittedOnNoteParameterName, element)) {
+        if (this.fromApiJsonHelper.parameterExists(linkAccountIdParameterName, element)) {
             final Long linkAccountId = this.fromApiJsonHelper.extractLongNamed(linkAccountIdParameterName, element);
             baseDataValidator.reset().parameter(linkAccountIdParameterName).value(linkAccountId).ignoreIfNull().longGreaterThanZero();
         }
@@ -814,7 +815,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                     baseDataValidator.reset().parameter(LoanApiConstants.disbursementDateParameterName)
                             .failWithCode(LoanApiConstants.DISBURSEMENT_DATE_START_WITH_ERROR);
                 }
-                if (!tatalDisbursement.equals(totalPrincipal)) {
+                if (tatalDisbursement.compareTo(totalPrincipal) != 0) {
                     baseDataValidator.reset().parameter(LoanApiConstants.disbursementPrincipalParameterName)
                             .failWithCode(LoanApiConstants.PRINCIPAL_AMOUNT_SHOULD_BE_SAME);
                 }

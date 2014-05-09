@@ -42,6 +42,7 @@ public class LoanProductTestBuilder {
     private String interestRatePerPeriod = "2";
     private String interestRateFrequencyType = MONTHS;
     private String interestType = FLAT_BALANCE;
+    private String overdueDaysForNPA = "5";
     private String interestCalculationPeriodType = CALCULATION_PERIOD_SAME_AS_REPAYMENT_PERIOD;
     private String inArrearsTolerance = "0";
     private final String transactionProcessingStrategy = MIFOS_STANDARD_STRATEGY;
@@ -51,6 +52,10 @@ public class LoanProductTestBuilder {
     private String minPrincipal = "1000.00";
     private String maxPrincipal = "100000.00";
     private Account[] accountList = null;
+
+    private Boolean multiDisburseLoan = false;
+    private String outstandingLoanBalance = "35000";
+    private String maxTrancheCount = "35000";
 
     public String build(final String chargeId) {
         final HashMap<String, Object> map = new HashMap<String, Object>();
@@ -81,6 +86,12 @@ public class LoanProductTestBuilder {
         map.put("accountingRule", this.accountingRule);
         map.put("minPrincipal", this.minPrincipal);
         map.put("maxPrincipal", this.maxPrincipal);
+        map.put("overdueDaysForNPA", this.overdueDaysForNPA);
+        if (multiDisburseLoan) {
+            map.put("multiDisburseLoan", this.multiDisburseLoan);
+            map.put("maxTrancheCount", this.maxTrancheCount);
+            map.put("outstandingLoanBalance", this.outstandingLoanBalance);
+        }
 
         if (this.accountingRule.equals(ACCRUAL_UPFRONT) || this.accountingRule.equals(ACCRUAL_PERIODIC)) {
             map.putAll(getAccountMappingForAccrualBased());
@@ -170,6 +181,11 @@ public class LoanProductTestBuilder {
         return this;
     }
 
+    public LoanProductTestBuilder withOverdueDaysForNPA(String days) {
+        this.overdueDaysForNPA = days;
+        return this;
+    }
+
     public LoanProductTestBuilder withInterestCalculationPeriodTypeAsDays() {
         this.interestCalculationPeriodType = DAYS;
         return this;
@@ -205,6 +221,11 @@ public class LoanProductTestBuilder {
     public LoanProductTestBuilder withAccountingRulePeriodicAccrual(final Account[] account_list) {
         this.accountingRule = ACCRUAL_PERIODIC;
         this.accountList = account_list;
+        return this;
+    }
+
+    public LoanProductTestBuilder withTranches(boolean multiDisburseLoan) {
+        this.multiDisburseLoan = multiDisburseLoan;
         return this;
     }
 
