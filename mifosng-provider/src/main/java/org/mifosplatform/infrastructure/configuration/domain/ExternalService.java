@@ -30,6 +30,10 @@ public class ExternalService extends AbstractPersistable<Long> {
 
     protected ExternalService() {}
 
+    public String getName() {
+        return this.name;
+    }
+
     public String getValue() {
         return this.value;
     }

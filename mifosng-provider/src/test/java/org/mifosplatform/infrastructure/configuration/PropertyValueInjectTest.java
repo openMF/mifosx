@@ -15,16 +15,37 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import edu.emory.mathcs.backport.java.util.Collections;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration
+@ContextConfiguration(/*
+                       * initializers = TestApplicationContextInitializer.class
+                       * req. newer Spring
+                       */)
 public class PropertyValueInjectTest {
+
+    // public static class TestApplicationContextInitializer implements
+    // ApplicationContextInitializer<ConfigurableApplicationContext> {
+    // @Override
+    // public void initialize(ConfigurableApplicationContext applicationContext)
+    // {
+    // }
+    // }
 
     @Configuration
     public static class PropertyValueInjectTestConfiguration extends PropertyConfigurerConfiguration {
 
+        // @Autowired
+        // // TODO move
+        // private AutowireCapableBeanFactory beanFactory;
+
+        // protected <T> T get(Class<T> type) {
+        // return type.cast(beanFactory.createBean(type,
+        // AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR, true));
+        // }
+
         @Bean
         ExampleTestConfigurableService exampleTestConfigurableService() {
-            // TODO
+            // TODO @see
             // http://stackoverflow.com/questions/13583524/spring-annotations-configuration-to-invoke-spring-bean-auto-building
+            // return get(ExampleTestConfigurableService.class);
             return new ExampleTestConfigurableService(dependency());
         }
 
