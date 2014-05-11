@@ -59,7 +59,7 @@ public class PropertyValueInjectTest {
         protected Iterable<PropertySource<?>> getPropertySources() {
             MockPropertySource properties = new MockPropertySource();
             properties.setProperty("sample.string", "hello, world");
-            properties.setProperty("sample.int", 123);
+            properties.setProperty("sample.int", "123");
             return Collections.singleton(properties);
         }
     }
