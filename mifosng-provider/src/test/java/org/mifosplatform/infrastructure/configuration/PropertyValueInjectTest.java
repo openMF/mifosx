@@ -21,6 +21,8 @@ import edu.emory.mathcs.backport.java.util.Collections;
                        */)
 public class PropertyValueInjectTest {
 
+    // TODO uncomment stuff once https://github.com/openMF/mifosx/pull/906 is in
+
     // public static class TestApplicationContextInitializer implements
     // ApplicationContextInitializer<ConfigurableApplicationContext> {
     // @Override
