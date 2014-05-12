@@ -52,8 +52,14 @@
 	<jpa:repositories base-package="org.mifosplatform.mix.domain" />
 	<jpa:repositories base-package="org.mifosplatform.scheduledjobs.domain" />
 	<jpa:repositories base-package="org.mifosplatform.template.domain" />
-
+	<jpa:repositories base-package="org.mifosplatform.**.*" />
+	
 	<import resource="infrastructure.xml" />
+
+	<!-- do NOT <import resource="jndi.xml" />  here;
+	     because we want the TestDataSourceConfiguration to not have that;
+	     we'll manually list jndi.xml in web.xml
+	-->
 
 	<import resource="securityContext.xml" />
 

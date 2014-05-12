@@ -22,12 +22,16 @@
 				<property name="databasePlatform" value="org.hibernate.dialect.MySQLDialect" />
 			</bean>
 		</property>
+		<property name="packagesToScan">
+		    <list>
+		        <value>org.mifosplatform.accounting.closure.domain.*</value>
+		        <value>org.mifosplatform.**.*"</value>
+		    </list>
+		</property>
 	</bean>
 
 	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
 		<property name="entityManagerFactory" ref="entityManagerFactory" />
 	</bean>
 
-	<jee:jndi-lookup jndi-name="java:comp/env/jdbc/mifosplatform-tenants"
-		id="tenantDataSourceJndi" />
 </beans>
