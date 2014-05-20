@@ -30,12 +30,13 @@ public class BatchResponse {
 	 * @see Header
 	 */
 	public BatchResponse(Long requestId, Integer statusCode, Set<Header> headers, String body) {
+
 		this.requestId = requestId;
 		this.statusCode = statusCode;
 		this.headers = headers;
 		this.body = body;		
 	}
-	
+
 	/**
 	 * Constructs a default constructor of 'BatchResponse' 
 	 */
@@ -88,7 +89,7 @@ public class BatchResponse {
 	public Set<Header> getHeaders() {
 		return this.headers;
 	}
-	
+
 	/**
 	 * sets the value of 'headers' of {@link Header} type of an object of this class.
 	 * 
@@ -98,7 +99,7 @@ public class BatchResponse {
 	public void setHeaders(Set<Header> headers) {
 		this.headers = headers;
 	}
-	
+
 	/**
 	 * returns the 'body' of an object of this class.
 	 * 
@@ -106,8 +107,8 @@ public class BatchResponse {
 	 */
 	public String getBody() {
 		return this.body;
-	}
-	
+	}	
+
 	/**
 	 * sets the value of 'body' of an object of this class.
 	 * 
