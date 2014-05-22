@@ -39,6 +39,7 @@ public class DeleteOneToOneDatatableEntryCommandHandler implements NewCommandSou
                 .withClientId(commandProcessingResult.getClientId()) //
                 .withSavingsId(commandProcessingResult.getSavingsId()) //
                 .withLoanId(commandProcessingResult.getLoanId()) //
+                .withUserId(commandProcessingResult.getUserId()) //
                 .build();
     }
 }
