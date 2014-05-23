@@ -3,6 +3,7 @@ package org.mifosplatform.batch.service;
 import java.util.ArrayList;
 import java.util.List;
 
+<<<<<<< HEAD
 import org.mifosplatform.batch.command.CommandContext;
 import org.mifosplatform.batch.command.CommandStrategy;
 import org.mifosplatform.batch.command.CommandStrategyProvider;
@@ -51,6 +52,24 @@ public class BatchApiServiceImpl implements BatchApiService{
 			
 			responseList.add(response);
 		}
+=======
+import org.mifosplatform.batch.domain.BatchRequest;
+import org.mifosplatform.batch.domain.BatchResponse;
+
+public class BatchApiServiceImpl {
+	
+	public BatchApiServiceImpl() {
+		
+	}
+	
+	List<BatchResponse> handleBatchRequests(List<BatchRequest> requestList) {
+		
+		BatchRequest req = requestList.get(0);
+		BatchResponse response = new BatchResponse(req.getRequestId(), 501, req.getHeaders(), req.getBody());
+		
+		List<BatchResponse> responseList = new ArrayList<BatchResponse>();
+		responseList.add(response);
+>>>>>>> added javadocs in domain and api classes
 		
 		return responseList;
 	}

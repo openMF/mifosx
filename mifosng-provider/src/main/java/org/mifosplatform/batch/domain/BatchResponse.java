@@ -49,6 +49,7 @@ public class BatchResponse {
 	 * 
 	 * @return requestId of the HTTP request.
 	 */
+
 	public Long getRequest() {
 		return this.requestId;
 	}
@@ -89,7 +90,7 @@ public class BatchResponse {
 	public Set<Header> getHeaders() {
 		return this.headers;
 	}
-
+	
 	/**
 	 * sets the value of 'headers' of {@link Header} type of an object of this class.
 	 * 

@@ -10,13 +10,17 @@ import org.mifosplatform.batch.domain.BatchResponse;
  * handle separate Batch Requests.
  * 
  * @author Rishabh Shukla
+<<<<<<< HEAD
  * 
+=======
+>>>>>>> added javadocs in domain and api classes
  * @see org.mifosplatform.batch.domain.BatchRequest
  * @see org.mifosplatform.batch.domain.BatchResponse
  * @see BatchApiServiceImpl
  */
 public interface BatchApiService {
 	
+<<<<<<< HEAD
 	/**
 	 * returns a list of {@link org.mifosplatform.batch.domain.BatchResponse}s by getting
 	 * the appropriate CommandStrategy for every {@link org.mifosplatform.batch.domain.BatchRequest}.
@@ -24,6 +28,8 @@ public interface BatchApiService {
 	 * @param requestList
 	 * @return List<BatchResponse>
 	 */
+=======
+>>>>>>> added javadocs in domain and api classes
 	List<BatchResponse> handleBatchRequests(List<BatchRequest> requestList);
 	
 }

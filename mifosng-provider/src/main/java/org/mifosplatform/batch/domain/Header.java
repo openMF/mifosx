@@ -13,7 +13,6 @@ public class Header {
 	
 	private String name;
 	private String value;
-	
 
 	/**
 	 * Constructs a 'Header' with the name and value of HTTP headers.
@@ -25,7 +24,6 @@ public class Header {
 		this.name = name;
 		this.value = value;
 	}
-	
 
 	/**
 	 * Constructs a default constructor of 'Header' 
@@ -61,7 +59,6 @@ public class Header {
 		return this.value;
 	}
 	
-
 	/**
 	 * sets 'value' data field of this class.
 	 * 
