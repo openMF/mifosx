@@ -136,11 +136,15 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
     }
 
     @Override
-    public Collection<StaffData> retrieveAllStaffForDropdown(final Long officeId) {
+    public Collection<StaffData> retrieveAllStaffForDropdown(final Long officeId , final boolean loanOfficersOnly) {
 
         final Long defaultOfficeId = defaultToUsersOfficeIfNull(officeId);
 
-        final String sql = "select " + this.lookupMapper.schema() + " where s.office_id = ?";
+        String sql = "select " + this.lookupMapper.schema() + " where s.office_id = ? ";
+        
+        if (loanOfficersOnly) {
+        	sql = sql + "and s.is_loan_officer is true ";
+        }
 
         return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[] { defaultOfficeId });
     }

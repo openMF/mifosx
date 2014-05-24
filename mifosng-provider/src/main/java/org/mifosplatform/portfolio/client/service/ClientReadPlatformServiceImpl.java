@@ -74,7 +74,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     }
 
     @Override
-    public ClientData retrieveTemplate(final Long officeId, final boolean staffInSelectedOfficeOnly) {
+    public ClientData retrieveTemplate(final Long officeId, final boolean staffInSelectedOfficeOnly, final boolean loanOfficersOnly) {
         this.context.authenticatedUser();
 
         final Long defaultOfficeId = defaultToUsersOfficeIfNull(officeId);
@@ -85,9 +85,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         Collection<StaffData> staffOptions = null;
 
-        final boolean loanOfficersOnly = false;
         if (staffInSelectedOfficeOnly) {
-            staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(defaultOfficeId);
+            staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(defaultOfficeId, loanOfficersOnly);
         } else {
             staffOptions = this.staffReadPlatformService.retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(defaultOfficeId,
                     loanOfficersOnly);

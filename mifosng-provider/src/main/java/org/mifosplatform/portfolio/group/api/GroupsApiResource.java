@@ -124,7 +124,8 @@ public class GroupsApiResource {
     public String retrieveTemplate(@Context final UriInfo uriInfo, @QueryParam("officeId") final Long officeId,
             @QueryParam("center") final boolean isCenterGroup, @QueryParam("centerId") final Long centerId,
             @QueryParam("command") final String commandParam,
-            @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly) {
+            @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
+            @DefaultValue("true") @QueryParam("loanOfficersOnly") final boolean loanOfficersOnly) {
 
         this.context.authenticatedUser().validateHasReadPermission(GroupingTypesApiConstants.GROUP_RESOURCE_NAME);
 
@@ -136,14 +137,14 @@ public class GroupsApiResource {
         }
 
         if (centerId != null) {
-            final GroupGeneralData centerGroupTemplate = this.centerReadPlatformService.retrieveCenterGroupTemplate(centerId);
+            final GroupGeneralData centerGroupTemplate = this.centerReadPlatformService.retrieveCenterGroupTemplate(centerId,loanOfficersOnly);
             final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
             return this.groupGeneralApiJsonSerializer.serialize(settings, centerGroupTemplate,
                     GroupingTypesApiConstants.CENTER_GROUP_RESPONSE_DATA_PARAMETERS);
         }
 
         final GroupGeneralData groupTemplate = this.groupReadPlatformService.retrieveTemplate(officeId, isCenterGroup,
-                staffInSelectedOfficeOnly);
+                staffInSelectedOfficeOnly,loanOfficersOnly);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.groupGeneralApiJsonSerializer.serialize(settings, groupTemplate,
                 GroupingTypesApiConstants.GROUP_RESPONSE_DATA_PARAMETERS);
@@ -180,7 +181,8 @@ public class GroupsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOne(@Context final UriInfo uriInfo, @PathParam("groupId") final Long groupId,
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
-            @QueryParam("roleId") final Long roleId) {
+            @QueryParam("roleId") final Long roleId,
+            @DefaultValue("true") @QueryParam("loanOfficersOnly") final boolean loanOfficersOnly ) {
 
         this.context.authenticatedUser().validateHasReadPermission(GroupingTypesApiConstants.GROUP_RESOURCE_NAME);
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
@@ -256,7 +258,7 @@ public class GroupsApiResource {
         final boolean template = ApiParameterHelper.template(uriInfo.getQueryParameters());
         if (template) {
             final GroupGeneralData templateGroup = this.groupReadPlatformService.retrieveTemplate(group.officeId(), false,
-                    staffInSelectedOfficeOnly);
+                    staffInSelectedOfficeOnly, loanOfficersOnly);
             group = GroupGeneralData.withTemplate(templateGroup, group);
         }
 

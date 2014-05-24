@@ -16,7 +16,7 @@ import org.mifosplatform.portfolio.group.data.StaffCenterData;
 
 public interface CenterReadPlatformService {
 
-    CenterData retrieveTemplate(Long officeId, boolean staffInSelectedOfficeOnly);
+    CenterData retrieveTemplate(Long officeId, boolean staffInSelectedOfficeOnly, boolean loanOfficersOnly);
 
     CenterData retrieveOne(Long centerId);
 
@@ -26,7 +26,7 @@ public interface CenterReadPlatformService {
 
     Collection<CenterData> retrieveAll(SearchParameters searchParameters, PaginationParameters parameters);
 
-    GroupGeneralData retrieveCenterGroupTemplate(Long centerId);
+    GroupGeneralData retrieveCenterGroupTemplate(Long centerId, boolean loanOfficersOnly);
 
     Collection<GroupGeneralData> retrieveAssociatedGroups(Long centerId);
 
