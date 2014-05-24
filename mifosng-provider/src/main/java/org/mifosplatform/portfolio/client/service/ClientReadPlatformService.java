@@ -13,7 +13,7 @@ import org.mifosplatform.portfolio.group.service.SearchParameters;
 
 public interface ClientReadPlatformService {
 
-    ClientData retrieveTemplate(Long officeId, boolean staffInSelectedOfficeOnly);
+    ClientData retrieveTemplate(Long officeId, boolean staffInSelectedOfficeOnly, boolean loanOfficersOnly);
 
     Page<ClientData> retrieveAll(SearchParameters searchParameters);
 

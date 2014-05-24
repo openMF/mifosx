@@ -13,7 +13,7 @@ import org.mifosplatform.portfolio.group.data.GroupGeneralData;
 
 public interface GroupReadPlatformService {
 
-    GroupGeneralData retrieveTemplate(Long officeId, boolean isCenterGroup, boolean staffInSelectedOfficeOnly);
+    GroupGeneralData retrieveTemplate(Long officeId, boolean isCenterGroup, boolean staffInSelectedOfficeOnly, boolean loanOfficersOnly);
 
     Page<GroupGeneralData> retrievePagedAll(SearchParameters searchParameters, PaginationParameters parameters);
 

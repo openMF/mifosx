@@ -13,7 +13,7 @@ public interface StaffReadPlatformService {
 
     StaffData retrieveStaff(Long staffId);
 
-    Collection<StaffData> retrieveAllStaffForDropdown(Long officeId);
+    Collection<StaffData> retrieveAllStaffForDropdown(Long officeId, boolean loanOfficersOnly );
 
     Collection<StaffData> retrieveAllLoanOfficersInOfficeById(final Long officeId);
 

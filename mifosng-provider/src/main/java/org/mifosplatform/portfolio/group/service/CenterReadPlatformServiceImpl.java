@@ -392,16 +392,15 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
     }
 
     @Override
-    public CenterData retrieveTemplate(final Long officeId, final boolean staffInSelectedOfficeOnly) {
+    public CenterData retrieveTemplate(final Long officeId, final boolean staffInSelectedOfficeOnly, final boolean loanOfficersOnly) {
 
         final Long officeIdDefaulted = defaultToUsersOfficeIfNull(officeId);
 
         final Collection<OfficeData> officeOptions = this.officeReadPlatformService.retrieveAllOfficesForDropdown();
 
-        final boolean loanOfficersOnly = false;
         Collection<StaffData> staffOptions = null;
         if (staffInSelectedOfficeOnly) {
-            staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(officeIdDefaulted);
+            staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(officeIdDefaulted, loanOfficersOnly);
         } else {
             staffOptions = this.staffReadPlatformService.retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(officeIdDefaulted,
                     loanOfficersOnly);
@@ -462,7 +461,7 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
     }
 
     @Override
-    public GroupGeneralData retrieveCenterGroupTemplate(final Long centerId) {
+    public GroupGeneralData retrieveCenterGroupTemplate(final Long centerId, final boolean loanOfficersOnly) {
 
         final CenterData center = retrieveOne(centerId);
 
@@ -480,7 +479,7 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
         final Collection<CenterData> centerOptions = Arrays.asList(center);
         final Collection<OfficeData> officeOptions = Arrays.asList(centerOffice);
 
-        Collection<StaffData> staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(centerOfficeId);
+        Collection<StaffData> staffOptions = this.staffReadPlatformService.retrieveAllStaffForDropdown(centerOfficeId,loanOfficersOnly);
         if (CollectionUtils.isEmpty(staffOptions)) {
             staffOptions = null;
         }
