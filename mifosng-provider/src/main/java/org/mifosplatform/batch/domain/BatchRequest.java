@@ -18,24 +18,30 @@ public class BatchRequest {
 	private String relativeUrl;
 	private String method;
 	private Set<Header> headers;
+	private Integer reference;
 	private String body;
 	
 	/**
-	 * Constructs a 'BatchRequest' with requestId, relativeUrl, method, headers and
+	 * Constructs a 'BatchRequest' with requestId, relativeUrl, method, headers, reference and
 	 * body of the incoming request.
 	 * 
 	 * @param requestId of HTTP request.
 	 * @param relativeUrl of HTTP request.
 	 * @param method of HTTP request.
 	 * @param headers of HTTP request.
+	 * @param reference of HTTP request.
 	 * @param body of HTTP request.
+	 * 
 	 * @see Header
 	 */
-	public BatchRequest(Long requestId, String relativeUrl, String method, Set<Header> headers, String body) {
+	public BatchRequest(Long requestId, String relativeUrl, String method, Set<Header> headers,
+			Integer reference, String body) {
+		
 		this.requestId = requestId;
 		this.relativeUrl = relativeUrl;
 		this.method = method;
 		this.headers = headers;
+		this.reference = reference;
 		this.body = body;		
 	}
 	
@@ -121,10 +127,28 @@ public class BatchRequest {
 	}
 	
 	/**
+	 * returns the value of 'reference' of an object of this class
+	 * 
+	 * @return reference of the HTTP request
+	 */
+	public Integer getReference() {
+		return this.reference;
+	}
+	
+	/**
+	 * sets the value of 'reference' of an object of this class.
+	 * 
+	 * @param reference
+	 */
+	public void setReference(Integer reference) {
+		this.reference = reference;
+	}
+	
+	/**
 	 * returns the value of 'body' of an object of this class.
 	 * 
 	 * @return body of the HTTP request.
-	 */
+	 */	
 	public String getBody() {
 		return this.body;
 	}
