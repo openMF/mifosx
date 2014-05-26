@@ -16,6 +16,13 @@ import org.mifosplatform.batch.domain.BatchResponse;
  */
 public interface BatchApiService {
 	
+	/**
+	 * returns a list of {@link org.mifosplatform.batch.domain.BatchResponse}s by getting
+	 * the appropriate CommandStrategy for every org.mifosplatform.batch.domain.BatchRequest}.
+	 * 
+	 * @param requestList
+	 * @return List<BatchResponse>
+	 */
 	List<BatchResponse> handleBatchRequests(List<BatchRequest> requestList);
 	
 }

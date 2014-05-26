@@ -4,8 +4,9 @@ import java.util.Set;
 
 /**
  * Provides an object for separate HTTP requests in the Batch Request for Batch API.
- * A requestId is also included as data field which takes care of dependency issues among various requests.
- * This class also provides getter and setter functions to access Batch Request data fields.
+ * A requestId is also included as data field which takes care of dependency issues
+ * among various requests. This class also provides getter and setter functions to
+ * access Batch Request data fields.
  * 
  * @author Rishabh Shukla 
  * @see org.mifosplatform.batch.api.BatchApiResource
@@ -13,14 +14,15 @@ import java.util.Set;
  */
 public class BatchRequest {
 	
-	private long requestId;
+	private Long requestId;
 	private String relativeUrl;
 	private String method;
 	private Set<Header> headers;
 	private String body;
 	
 	/**
-	 * Constructs a BatchRequest with requestId, relativeUrl, method, headers and body of the incoming request.
+	 * Constructs a 'BatchRequest' with requestId, relativeUrl, method, headers and
+	 * body of the incoming request.
 	 * 
 	 * @param requestId of HTTP request.
 	 * @param relativeUrl of HTTP request.
@@ -29,7 +31,7 @@ public class BatchRequest {
 	 * @param body of HTTP request.
 	 * @see Header
 	 */
-	public BatchRequest(long requestId, String relativeUrl, String method, Set<Header> headers, String body) {
+	public BatchRequest(Long requestId, String relativeUrl, String method, Set<Header> headers, String body) {
 		this.requestId = requestId;
 		this.relativeUrl = relativeUrl;
 		this.method = method;
@@ -38,11 +40,18 @@ public class BatchRequest {
 	}
 	
 	/**
+	 * Constructs a default constructor of 'BatchRequest' 
+	 */
+	public BatchRequest() {
+		
+	}
+	
+	/**
 	 * returns the value of 'requestId' of an object of this class.
 	 * 
 	 * @return requestId of the HTTP request.
 	 */
-	public long getRequestId() {
+	public Long getRequestId() {
 		return this.requestId;
 	}
 	
@@ -51,7 +60,7 @@ public class BatchRequest {
 	 * 
 	 * @param requestId
 	 */
-	public void setRequest(long requestId) {
+	public void setRequest(Long requestId) {
 		this.requestId = requestId;
 	}
 	
