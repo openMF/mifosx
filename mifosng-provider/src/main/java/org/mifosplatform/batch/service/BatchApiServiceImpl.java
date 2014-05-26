@@ -58,6 +58,7 @@ public class BatchApiServiceImpl implements BatchApiService{
 import org.mifosplatform.batch.domain.BatchRequest;
 import org.mifosplatform.batch.domain.BatchResponse;
 import org.mifosplatform.batch.domain.Header;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -80,10 +81,11 @@ public class BatchApiServiceImpl implements BatchApiService{
 	 * 
 	 * @param strategyFactory
 	 */
+	@Autowired
 	public BatchApiServiceImpl(final CommandStrategyFactory strategyFactory) {
 		this.strategyFactory = strategyFactory;
 	}
-		
+	
 	@Override
 	public List<BatchResponse> handleBatchRequests(List<BatchRequest> requestList) {
 		

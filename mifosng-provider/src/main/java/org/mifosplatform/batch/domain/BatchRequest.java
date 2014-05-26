@@ -35,7 +35,6 @@ public class BatchRequest {
 	 * 
 	 * @see Header
 	 */
-
 	public BatchRequest(Long requestId, String relativeUrl, String method, Set<Header> headers,
 			Long reference, String body) {
 		this.requestId = requestId;
@@ -144,7 +143,7 @@ public class BatchRequest {
 	public void setReference(Long reference) {
 		this.reference = reference;
 	}
-	
+		
 	/**
 	 * returns the value of 'body' of an object of this class.
 	 * 
