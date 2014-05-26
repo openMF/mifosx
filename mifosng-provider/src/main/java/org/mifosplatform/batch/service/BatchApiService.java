@@ -21,15 +21,24 @@ import org.mifosplatform.batch.domain.BatchResponse;
 public interface BatchApiService {
 	
 <<<<<<< HEAD
+<<<<<<< HEAD
 	/**
 	 * returns a list of {@link org.mifosplatform.batch.domain.BatchResponse}s by getting
 	 * the appropriate CommandStrategy for every {@link org.mifosplatform.batch.domain.BatchRequest}.
+=======
+	/**
+	 * returns a list of {@link org.mifosplatform.batch.domain.BatchResponse}s by getting
+	 * the appropriate CommandStrategy for every org.mifosplatform.batch.domain.BatchRequest}.
+>>>>>>> Resource and service classes implemented
 	 * 
 	 * @param requestList
 	 * @return List<BatchResponse>
 	 */
+<<<<<<< HEAD
 =======
 >>>>>>> added javadocs in domain and api classes
+=======
+>>>>>>> Resource and service classes implemented
 	List<BatchResponse> handleBatchRequests(List<BatchRequest> requestList);
 	
 }

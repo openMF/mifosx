@@ -24,7 +24,7 @@ public class Header {
 		this.name = name;
 		this.value = value;
 	}
-
+	
 	/**
 	 * Constructs a default constructor of 'Header' 
 	 */

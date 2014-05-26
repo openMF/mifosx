@@ -35,9 +35,9 @@ public class BatchRequest {
 	 * 
 	 * @see Header
 	 */
+
 	public BatchRequest(Long requestId, String relativeUrl, String method, Set<Header> headers,
 			Long reference, String body) {
-
 		this.requestId = requestId;
 		this.relativeUrl = relativeUrl;
 		this.method = method;

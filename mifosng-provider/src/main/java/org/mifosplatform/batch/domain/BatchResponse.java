@@ -30,7 +30,6 @@ public class BatchResponse {
 	 * @see Header
 	 */
 	public BatchResponse(Long requestId, Integer statusCode, Set<Header> headers, String body) {
-
 		this.requestId = requestId;
 		this.statusCode = statusCode;
 		this.headers = headers;
@@ -49,7 +48,6 @@ public class BatchResponse {
 	 * 
 	 * @return requestId of the HTTP request.
 	 */
-
 	public Long getRequest() {
 		return this.requestId;
 	}
