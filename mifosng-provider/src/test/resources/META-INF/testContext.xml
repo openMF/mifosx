@@ -63,7 +63,8 @@
 										  org.mifosplatform.portfolio.*,
 										  org.mifosplatform.template.*,
 										  org.mifosplatform.template.service.*,
-										  org.mifosplatform.useradministration.*">
+										  org.mifosplatform.useradministration.*,
+										  org.mifosplatform.batch.*">
 		<context:exclude-filter expression="org.springframework.stereotype.Controller"
 			type="annotation" />
 	</context:component-scan>
@@ -75,6 +76,7 @@
 	<jpa:repositories base-package="org.mifosplatform.organisation.*.domain" />
 	<jpa:repositories base-package="org.mifosplatform.portfolio.*" />
 	<jpa:repositories base-package="org.mifosplatform.template.domain" />
+	<jpa:repositories base-package="org.mifosplatform.batch.domain" />
 
 	<jee:jndi-lookup jndi-name="java:comp/env/jdbc/mifosplatform-tenants"
 		id="tenantDataSourceJndi" />

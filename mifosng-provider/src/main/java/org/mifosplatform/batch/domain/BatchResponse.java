@@ -14,13 +14,14 @@ import java.util.Set;
  */
 public class BatchResponse {
 
-	private long requestId;
-	private int statusCode;
+	private Long requestId;
+	private Integer statusCode;
 	private Set<Header> headers;
 	private String body;
 	
 	/**
-	 * constructs a 'BatchResponse' with requestId, statusCode, headers and body of the HTTP requests.
+	 * constructs a 'BatchResponse' with requestId, statusCode, headers
+	 * and body of the HTTP requests.
 	 * 
 	 * @param requestId
 	 * @param statusCode
@@ -28,7 +29,7 @@ public class BatchResponse {
 	 * @param body
 	 * @see Header
 	 */
-	public BatchResponse(long requestId, int statusCode, Set<Header> headers, String body) {
+	public BatchResponse(Long requestId, Integer statusCode, Set<Header> headers, String body) {
 		this.requestId = requestId;
 		this.statusCode = statusCode;
 		this.headers = headers;
@@ -36,11 +37,18 @@ public class BatchResponse {
 	}
 	
 	/**
+	 * Constructs a default constructor of 'BatchResponse' 
+	 */
+	public BatchResponse() {		
+
+	}
+	
+	/**
 	 * returns the 'requestId' of an object of this class.
 	 * 
 	 * @return requestId of the HTTP request.
 	 */
-	public long getRequest() {
+	public Long getRequest() {
 		return this.requestId;
 	}
 	
@@ -49,7 +57,7 @@ public class BatchResponse {
 	 * 
 	 * @param requestId
 	 */
-	public void setRequest(long requestId) {
+	public void setRequest(Long requestId) {
 		this.requestId = requestId;
 	}
 	
@@ -58,7 +66,7 @@ public class BatchResponse {
 	 * 
 	 * @return statusCode of the HTTP request.
 	 */
-	public int getstatusCode() {
+	public Integer getstatusCode() {
 		return this.statusCode;
 	}
 	
@@ -67,7 +75,7 @@ public class BatchResponse {
 	 * 
 	 * @param statusCode
 	 */
-	public void setStatusCode(int statusCode) {
+	public void setStatusCode(Integer statusCode) {
 		this.statusCode = statusCode;
 	}
 	
