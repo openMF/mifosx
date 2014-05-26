@@ -15,7 +15,7 @@ public class Header {
 	private String value;
 	
 	/**
-	 * Constructs a Header with the name and value of HTTP headers.
+	 * Constructs a 'Header' with the name and value of HTTP headers.
 	 * 
 	 * @param name of the HTTP header.
 	 * @param value of the HTTP header.
@@ -23,6 +23,13 @@ public class Header {
 	public Header(String name, String value) {
 		this.name = name;
 		this.value = value;
+	}
+	
+	/**
+	 * Constructs a default constructor of 'Header' 
+	 */
+	public Header() {
+		
 	}
 	
 	/**
