@@ -18,7 +18,7 @@ public class BatchRequest {
 	private String relativeUrl;
 	private String method;
 	private Set<Header> headers;
-	private Integer reference;
+	private Long reference;
 	private String body;
 	
 	/**
@@ -35,7 +35,7 @@ public class BatchRequest {
 	 * @see Header
 	 */
 	public BatchRequest(Long requestId, String relativeUrl, String method, Set<Header> headers,
-			Integer reference, String body) {
+			Long reference, String body) {
 		
 		this.requestId = requestId;
 		this.relativeUrl = relativeUrl;
@@ -131,7 +131,7 @@ public class BatchRequest {
 	 * 
 	 * @return reference of the HTTP request
 	 */
-	public Integer getReference() {
+	public Long getReference() {
 		return this.reference;
 	}
 	
@@ -140,7 +140,7 @@ public class BatchRequest {
 	 * 
 	 * @param reference
 	 */
-	public void setReference(Integer reference) {
+	public void setReference(Long reference) {
 		this.reference = reference;
 	}
 	

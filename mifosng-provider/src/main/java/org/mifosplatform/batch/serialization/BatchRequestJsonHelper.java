@@ -1,9 +1,10 @@
-package org.mifosplatform.infrastructure.core.serialization;
+package org.mifosplatform.batch.serialization;
 
 import java.lang.reflect.Type;
 import java.util.List;
 
 import org.mifosplatform.batch.domain.BatchRequest;
+import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.springframework.stereotype.Component;
 
 import com.google.gson.reflect.TypeToken;

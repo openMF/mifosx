@@ -10,8 +10,8 @@ import javax.ws.rs.core.MediaType;
 
 import org.mifosplatform.batch.domain.BatchRequest;
 import org.mifosplatform.batch.domain.BatchResponse;
+import org.mifosplatform.batch.serialization.BatchRequestJsonHelper;
 import org.mifosplatform.batch.service.BatchApiService;
-import org.mifosplatform.infrastructure.core.serialization.BatchRequestJsonHelper;
 import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +64,7 @@ public class BatchApiResource {
 	/**
 	 * Provides a Rest assured POST method to get {@link BatchRequest} and returns back the 
 	 * consolidated {@link BatchResponse}
-	 * 
+	 *
 	 * @param jsonRequestString
 	 * @return serialized JSON
 	 */
