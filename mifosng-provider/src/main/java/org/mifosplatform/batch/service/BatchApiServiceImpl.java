@@ -13,27 +13,28 @@ import org.springframework.stereotype.Service;
 
 /**
  * Implementation for {@link BatchApiService} to iterate through all the incoming
- * requests and obtain the appropriate CommandStrategy from CommandStrategyFactory. 
+ * requests and obtain the appropriate CommandStrategy from CommandStrategyProvider. 
  * 
  * @author Rishabh Shukla
  *
  * @see org.mifosplatform.batch.domain.BatchRequest
  * @see org.mifosplatform.batch.domain.BatchResponse
- * @see CommandStrategyFactory
+ * @see org.mifosplatform.batch.command.CommandStrategyProvider
  */
 @Service
 public class BatchApiServiceImpl implements BatchApiService{
 	
-	private final CommandStrategyProvider strategyFactory;
+	private final CommandStrategyProvider strategyProvider;
 	
 	/**
-	 * Constructs a 'BatchApiServiceImpl' with an argument of {@link CommandStrategyFactory} type.
+	 * Constructs a 'BatchApiServiceImpl' with an argument of 
+	 * {@link org.mifosplatform.batch.command.CommandStrategyProvider} type.
 	 * 
-	 * @param strategyFactory
+	 * @param strategyProvider
 	 */
 	@Autowired
-	public BatchApiServiceImpl(final CommandStrategyProvider strategyFactory) {
-		this.strategyFactory = strategyFactory;
+	public BatchApiServiceImpl(final CommandStrategyProvider strategyProvider) {
+		this.strategyProvider = strategyProvider;
 	}
 	
 	@Override
@@ -43,7 +44,7 @@ public class BatchApiServiceImpl implements BatchApiService{
 		
 		for(BatchRequest br: requestList) {
 			
-			final CommandStrategy commandStrategy = this.strategyFactory.getCommandStrategy(CommandContext.
+			final CommandStrategy commandStrategy = this.strategyProvider.getCommandStrategy(CommandContext.
 					resource(br.getRelativeUrl()).method(br.getMethod()).build());
 			
 			final BatchResponse response = commandStrategy.execute(br);
