@@ -1,10 +1,9 @@
 package org.mifosplatform.batch.service;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 import org.mifosplatform.batch.command.CommandContext;
 import org.mifosplatform.batch.command.CommandStrategy;
@@ -55,9 +54,13 @@ public class BatchApiServiceImpl implements BatchApiService{
 			responseList.add(response);
 		}
 =======
+=======
+import org.mifosplatform.batch.command.CommandContext;
+import org.mifosplatform.batch.command.CommandStrategy;
+import org.mifosplatform.batch.command.CommandStrategyProvider;
+>>>>>>> added commandStrategy classes
 import org.mifosplatform.batch.domain.BatchRequest;
 import org.mifosplatform.batch.domain.BatchResponse;
-import org.mifosplatform.batch.domain.Header;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -74,7 +77,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class BatchApiServiceImpl implements BatchApiService{
 	
-	private final CommandStrategyFactory strategyFactory;
+	private final CommandStrategyProvider strategyFactory;
 	
 	/**
 	 * Constructs a 'BatchApiServiceImpl' with an argument of {@link CommandStrategyFactory} type.
@@ -82,28 +85,31 @@ public class BatchApiServiceImpl implements BatchApiService{
 	 * @param strategyFactory
 	 */
 	@Autowired
-	public BatchApiServiceImpl(final CommandStrategyFactory strategyFactory) {
+	public BatchApiServiceImpl(final CommandStrategyProvider strategyFactory) {
 		this.strategyFactory = strategyFactory;
 	}
 	
 	@Override
 	public List<BatchResponse> handleBatchRequests(List<BatchRequest> requestList) {
 		
+<<<<<<< HEAD
 		List<BatchResponse> responseList = new ArrayList<BatchResponse>();
 <<<<<<< HEAD
 		responseList.add(response);
 >>>>>>> added javadocs in domain and api classes
 =======
 		Iterator<BatchRequest> itr = requestList.iterator();
+=======
+		final  List<BatchResponse> responseList = new ArrayList<>(requestList.size());
+>>>>>>> added commandStrategy classes
 		
-		while(itr.hasNext()) {
-			BatchRequest request = itr.next();
-			final Long requestId = request.getRequestId();
-			final Integer statusCode = 200;
-			final Set<Header> headers = request.getHeaders(); 
-			final String body = request.getBody();
+		for(BatchRequest br: requestList) {
 			
-			BatchResponse response = new BatchResponse(requestId, statusCode, headers, body);
+			final CommandStrategy commandStrategy = this.strategyFactory.getCommandStrategy(CommandContext.
+					resource(br.getRelativeUrl()).method(br.getMethod()).build());
+			
+			final BatchResponse response = commandStrategy.execute(br);
+			
 			responseList.add(response);
 		}
 >>>>>>> Resource and service classes implemented

@@ -20,7 +20,7 @@ public class CommandStrategyProvider {
 	
 	private final ApplicationContext applicationContext;
 	private final ConcurrentHashMap<CommandContext, String> commandStrategies = new ConcurrentHashMap<>();
-	
+
 	/**
 	 * Constructs a CommandStrategyProvider with argument of ApplicationContext type.
 	 * It also initialize commandStrategies using init() function by filling it
@@ -47,14 +47,14 @@ public class CommandStrategyProvider {
 	 * @see org.mifosplatform.batch.command.internal.UnknownCommandStrategy 
 	 */
 	public CommandStrategy getCommandStrategy(final CommandContext commandContext) {
-		
+
 		if(this.commandStrategies.containsKey(commandContext)) {
 			return (CommandStrategy) this.applicationContext.getBean(this.commandStrategies.get(commandContext));
 		}
 		
 		return new UnknownCommandStrategy();		
 	}
-	
+
 	/**
 	 * Contains various available command strategies in {@link org.mifosplatform.batch.command.internal}.
 	 * Any new command Strategy will have to be added within this function in order to initiate it
