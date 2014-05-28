@@ -1,7 +1,21 @@
 package org.mifosplatform.batch.command;
 
+/**
+ * Provides an object to {@link org.mifosplatform.batch.service.BatchApiService} to
+ * get the proper commandStrategy for each request in BatchRequest. It uses Builder
+ * pattern to create object of this type.
+ * 
+ * @author Rishabh Shukla
+ * 
+ * @see org.mifosplatform.batch.service.BatchApiService
+ */
 public class CommandContext {
 
+	/**
+	 * Static Builder class to provide a Build method for CommandContext.
+	 * 
+	 * @author Rishabh Shukla
+	 */
 	public static class Builder{
 		
 		private String resource;
