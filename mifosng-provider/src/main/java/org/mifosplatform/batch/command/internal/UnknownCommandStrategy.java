@@ -19,7 +19,7 @@ public class UnknownCommandStrategy implements CommandStrategy {
 		// TODO Auto-generated method stub
 		final BatchResponse batchResponse = new BatchResponse();
 		
-		batchResponse.setRequest(batchRequest.getRequestId());
+		batchResponse.setRequestId(batchRequest.getRequestId());
 		batchResponse.setStatusCode(501);
 		
 		return batchResponse;
