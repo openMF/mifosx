@@ -48,7 +48,7 @@ public class BatchResponse {
 	 * 
 	 * @return requestId of the HTTP request.
 	 */
-	public Long getRequest() {
+	public Long getRequestId() {
 		return this.requestId;
 	}
 	
@@ -57,7 +57,7 @@ public class BatchResponse {
 	 * 
 	 * @param requestId
 	 */
-	public void setRequest(Long requestId) {
+	public void setRequestId(Long requestId) {
 		this.requestId = requestId;
 	}
 	

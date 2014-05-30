@@ -32,6 +32,7 @@
 				<value>org.mifosplatform.organisation.office.domain</value>
 				<value>org.mifosplatform.organisation.staff.domain</value>
 				<value>org.mifosplatform.infrastructure.core.serialization</value>
+				<value>org.mifosplatform.batch.domain</value>
 			</list>
 		</property>
 		<property name="jpaVendorAdapter">

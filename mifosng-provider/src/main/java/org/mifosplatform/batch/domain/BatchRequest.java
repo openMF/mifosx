@@ -66,7 +66,7 @@ public class BatchRequest {
 	 * 
 	 * @param requestId
 	 */
-	public void setRequest(Long requestId) {
+	public void setRequestId(Long requestId) {
 		this.requestId = requestId;
 	}
 	
