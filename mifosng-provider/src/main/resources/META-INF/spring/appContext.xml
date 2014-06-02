@@ -40,6 +40,8 @@
 			type="annotation" />
 	</context:component-scan>
 
+	<bean id="CreateClientCommandStrategy" class="org.mifosplatform.batch.command.internal.CreateClientCommandStrategy" />
+	
 	<bean id="auditorAware"
 		class="org.mifosplatform.infrastructure.core.domain.AuditorAwareImpl" />
 	<jpa:auditing auditor-aware-ref="auditorAware" />

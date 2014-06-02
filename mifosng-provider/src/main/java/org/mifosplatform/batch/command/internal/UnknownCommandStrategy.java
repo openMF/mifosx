@@ -16,7 +16,7 @@ public class UnknownCommandStrategy implements CommandStrategy {
 
 	@Override
 	public BatchResponse execute(BatchRequest batchRequest) {
-		// TODO Auto-generated method stub
+		
 		final BatchResponse batchResponse = new BatchResponse();
 		
 		batchResponse.setRequestId(batchRequest.getRequestId());
