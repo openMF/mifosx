@@ -66,7 +66,7 @@ public class BatchResponse {
 	 * 
 	 * @return statusCode of the HTTP request.
 	 */
-	public Integer getstatusCode() {
+	public Integer getStatusCode() {
 		return this.statusCode;
 	}
 	
