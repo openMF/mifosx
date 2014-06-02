@@ -61,7 +61,7 @@ public class CommandStrategyProvider {
 	 * within the constructor. 
 	 */
 	private void init() {
-		
+		this.commandStrategies.put(CommandContext.resource("clients").method("POST").build(), "CreateClientCommandStrategy");
 	}
 	
 }
