@@ -26,14 +26,16 @@ public class SmsData {
     private final String mobileNo;
     @SuppressWarnings("unused")
     private final String message;
+    @SuppressWarnings("unused")
+    private final Long gatewayId;
 
     public static SmsData instance(final Long id, final Long groupId, final Long clientId, final Long staffId, final EnumOptionData status,
-            final String mobileNo, final String message) {
-        return new SmsData(id, groupId, clientId, staffId, status, mobileNo, message);
+            final String mobileNo, final String message, final Long gatewayId) {
+        return new SmsData(id, groupId, clientId, staffId, status, mobileNo, message, gatewayId);
     }
 
     private SmsData(final Long id, final Long groupId, final Long clientId, final Long staffId, final EnumOptionData status,
-            final String mobileNo, final String message) {
+            final String mobileNo, final String message, final Long gatewayId) {
         this.id = id;
         this.groupId = groupId;
         this.clientId = clientId;
@@ -41,5 +43,6 @@ public class SmsData {
         this.status = status;
         this.mobileNo = mobileNo;
         this.message = message;
+        this.gatewayId = gatewayId;
     }
 }

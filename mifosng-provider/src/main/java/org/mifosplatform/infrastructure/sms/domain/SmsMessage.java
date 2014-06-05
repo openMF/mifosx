@@ -46,10 +46,13 @@ public class SmsMessage extends AbstractPersistable<Long> {
 
     @Column(name = "message", nullable = false)
     private String message;
+    
+    @Column(name = "gatewayId", nullable = false)
+    private Long gatewayId;
 
     public static SmsMessage pendingSms(final Group group, final Client client, final Staff staff, final String message,
-            final String mobileNo) {
-        return new SmsMessage(group, client, staff, SmsMessageStatusType.PENDING, message, mobileNo);
+            final String mobileNo, final Long gatewayId) {
+        return new SmsMessage(group, client, staff, SmsMessageStatusType.PENDING, message, mobileNo, gatewayId);
     }
 
     protected SmsMessage() {
@@ -57,13 +60,14 @@ public class SmsMessage extends AbstractPersistable<Long> {
     }
 
     private SmsMessage(final Group group, final Client client, final Staff staff, final SmsMessageStatusType statusType,
-            final String message, final String mobileNo) {
+            final String message, final String mobileNo, final Long gatewayId) {
         this.group = group;
         this.client = client;
         this.staff = staff;
         this.statusType = statusType.getValue();
         this.mobileNo = mobileNo;
         this.message = message;
+        this.gatewayId = gatewayId;
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -77,5 +81,17 @@ public class SmsMessage extends AbstractPersistable<Long> {
         }
 
         return actualChanges;
+    }
+    
+    public Long gatewayId() {
+        return this.gatewayId;
+    }
+    
+    public String message() {
+        return this.message;
+    }
+    
+    public String mobileNo() {
+        return this.mobileNo;
     }
 }

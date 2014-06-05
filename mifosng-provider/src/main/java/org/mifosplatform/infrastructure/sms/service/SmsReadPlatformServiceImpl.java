@@ -46,6 +46,7 @@ public class SmsReadPlatformServiceImpl implements SmsReadPlatformService {
             sql.append("smo.status_enum as statusId, ");
             sql.append("smo.mobile_no as mobileNo, ");
             sql.append("smo.message as message ");
+            sql.append("smo.gatewayId as gatewayId ");
             sql.append("from sms_messages_outbound smo");
 
             this.schema = sql.toString();
@@ -65,11 +66,13 @@ public class SmsReadPlatformServiceImpl implements SmsReadPlatformService {
 
             final String mobileNo = rs.getString("mobileNo");
             final String message = rs.getString("message");
-
+            
             final Integer statusId = JdbcSupport.getInteger(rs, "statusId");
             final EnumOptionData status = SmsMessageEnumerations.status(statusId);
 
-            return SmsData.instance(id, groupId, clientId, staffId, status, mobileNo, message);
+            final Long gatewayId = JdbcSupport.getLong(rs, "gatewayId");
+            
+            return SmsData.instance(id, groupId, clientId, staffId, status, mobileNo, message, gatewayId);
         }
     }
 
