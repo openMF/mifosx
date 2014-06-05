@@ -6,7 +6,9 @@
 package org.mifosplatform.scheduledjobs.service;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
@@ -211,6 +213,61 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + result);
     }
 
+    @Transactional
+    @Override
+    @CronTarget(jobName = JobName.IMPACT_PORTAL_DB_CACHE)
+    public void addImpactPortalDataToDB(){
+
+        Date date=new Date();
+        final StringBuilder updateSqlBuilder = new StringBuilder(900);
+        final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+        List<Map<String, Object>> impactPortalSqls;
+        List<Map<String, Object>> runreport;
+        String sql="";
+        String datapoint="";
+        impactPortalSqls=jdbcTemplate.queryForList("SELECT * FROM stretchy_report where report_category='Portal'");
+        for (Map<String, Object> impactPortalSql : impactPortalSqls) {
+            //row
+            for (Map.Entry<String, Object> entry : impactPortalSql.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if(key.equals("report_subtype")){
+                    datapoint=value.toString();
+                }
+                if(key.equals("report_sql")){
+                    sql=value.toString();
+
+                }
+            }
+            //adding values to cache table
+            runreport=jdbcTemplate.queryForList(sql);
+            StringBuilder values = new StringBuilder(900);
+            for (Map<String, Object> map : runreport) {
+                //row
+                for (Map.Entry<String, Object> entry : map.entrySet()) {
+                    String key = entry.getKey();
+                    Object value = entry.getValue();
+                    values.append(key);
+                    values.append("=");
+                    values.append(value);
+                    values.append("*");
+                }
+                values.append(",");
+            }
+            //data to be cached
+            updateSqlBuilder.append("INSERT INTO impact_portal_cache(date_captured, datapoint, datapoint_label,value) VALUES ( NOW(),'");
+            updateSqlBuilder.append(datapoint);
+            updateSqlBuilder.append("','");
+            updateSqlBuilder.append(datapoint);//datapoint lable
+            updateSqlBuilder.append("','");
+            updateSqlBuilder.append(values);
+            updateSqlBuilder.append("')");
+            int result = jdbcTemplate.update(updateSqlBuilder.toString());
+            updateSqlBuilder.delete(0,updateSqlBuilder.length());
+
+        }
+        logger.info("Updated impact portal cache table with new reports " );
+    }
     @Override
     @CronTarget(jobName = JobName.APPLY_ANNUAL_FEE_FOR_SAVINGS)
     public void applyAnnualFeeForSavings() {
