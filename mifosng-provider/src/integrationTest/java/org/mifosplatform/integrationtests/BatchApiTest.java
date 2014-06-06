@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mifosplatform.batch.domain.BatchRequest;
 import org.mifosplatform.batch.domain.BatchResponse;
-import org.mifosplatform.common.Utils;
+import org.mifosplatform.integrationtests.common.Utils;
 import org.mifosplatform.integrationtests.common.BatchHelper;
 
 import com.jayway.restassured.builder.RequestSpecBuilder;
@@ -72,7 +72,7 @@ public class BatchApiTest {
 		
 		//verify that only 501 is returned as the status code
 		for(BatchResponse resp : response) {
-			Assert.assertEquals("Verifying Status code 501",(long) 501,(long) resp.getstatusCode());
+			Assert.assertEquals("Verifying Status code 501",(long) 501,(long) resp.getStatusCode());
 		}
 	}
 }
