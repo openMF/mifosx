@@ -2,6 +2,7 @@ package org.mifosplatform.integrationtests.common;
 
 import java.util.List;
 
+import com.google.gson.reflect.TypeToken;
 import org.mifosplatform.batch.domain.BatchRequest;
 import org.mifosplatform.batch.domain.BatchResponse;
 
@@ -34,7 +35,11 @@ public class BatchHelper {
 	public static String toJsonString(final List<BatchRequest> batchRequests) {
 		return new Gson().toJson(batchRequests);
 	}
-	
+
+    private static List<BatchResponse> fromJsonString(final String json) {
+        return new Gson().fromJson(json, new TypeToken<List<BatchResponse>>(){}.getType());
+    }
+
 	/**
 	 * returns a list of BatchResponse by posting the jsonified
 	 * BatchRequest to the server
@@ -46,7 +51,7 @@ public class BatchHelper {
 	 */
 	public static List<BatchResponse> postBatchRequests(final RequestSpecification requestSpec,
 			final ResponseSpecification responseSpec, final String jsonifiedBatchRequests) {
-		
-		return Utils.performServerPost(requestSpec, responseSpec, BATCH_API_URL, jsonifiedBatchRequests, "");
+		final String response = Utils.performServerPost(requestSpec, responseSpec, BATCH_API_URL, jsonifiedBatchRequests, null);
+	    return BatchHelper.fromJsonString(response);
 	}
 }
