@@ -72,17 +72,17 @@ public class BatchApiResource {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	public String handleBatchRequests(final String jsonRequestString) {
-
+		
 		//handles user authentication
 		this.context.authenticatedUser();															
-
+		
 		//converts request array into BatchRequest List		
 		final List<BatchRequest> requestList = this.batchRequestJsonHelper.extractList(jsonRequestString);
-
+		
 		//gets back the consolidated BatchResponse from BatchApiservice 
 		final List<BatchResponse> result = service.handleBatchRequests(requestList);
-
+		
 		return this.toApiJsonSerializer.serialize(result);
-
+		
 	}
 }

@@ -16,7 +16,6 @@ import org.mifosplatform.batch.domain.BatchResponse;
  * @see BatchApiServiceImpl
  */
 public interface BatchApiService {
-	
 
 	/**
 	 * returns a list of {@link org.mifosplatform.batch.domain.BatchResponse}s by getting
@@ -25,7 +24,6 @@ public interface BatchApiService {
 	 * @param requestList
 	 * @return List<BatchResponse>
 	 */
-
 	List<BatchResponse> handleBatchRequests(List<BatchRequest> requestList);
 	
 }

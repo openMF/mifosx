@@ -106,7 +106,7 @@ public class BatchResponse {
 	 */
 	public String getBody() {
 		return this.body;
-	}	
+	}
 
 	/**
 	 * sets the value of 'body' of an object of this class.

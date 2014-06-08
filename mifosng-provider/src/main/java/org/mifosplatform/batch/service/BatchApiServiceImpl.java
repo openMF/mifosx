@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class BatchApiServiceImpl implements BatchApiService{
-
+	
 	private final CommandStrategyProvider strategyProvider;
 
 	/**
@@ -39,19 +39,19 @@ public class BatchApiServiceImpl implements BatchApiService{
 
 	@Override
 	public List<BatchResponse> handleBatchRequests(List<BatchRequest> requestList) {
-
+		
 		final  List<BatchResponse> responseList = new ArrayList<>(requestList.size());
-
+		
 		for(BatchRequest br: requestList) {
-
+			
 			final CommandStrategy commandStrategy = this.strategyProvider.getCommandStrategy(CommandContext.
 					resource(br.getRelativeUrl()).method(br.getMethod()).build());
-
+			
 			final BatchResponse response = commandStrategy.execute(br);
-
+			
 			responseList.add(response);
 		}
-
+		
 		return responseList;
 	}
 }
