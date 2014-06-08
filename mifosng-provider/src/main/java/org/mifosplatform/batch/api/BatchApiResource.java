@@ -36,12 +36,12 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope("singleton")
 public class BatchApiResource {
-
+	
 	private final PlatformSecurityContext context;
 	private final ToApiJsonSerializer toApiJsonSerializer; 
 	private final BatchApiService service;
 	private final BatchRequestJsonHelper batchRequestJsonHelper;	
-
+	
 	/**
 	 * Constructs a 'BatchApiService' with context, toApiJsonSerializer, service
 	 * and batchRequestJsonHelper. 
@@ -54,13 +54,13 @@ public class BatchApiResource {
 	@Autowired
 	public BatchApiResource(final PlatformSecurityContext context, final ToApiJsonSerializer toApiJsonSerializer,
 			final BatchApiService service, final BatchRequestJsonHelper batchRequestJsonHelper) {
-
+		
 		this.context = context;
 		this.toApiJsonSerializer = toApiJsonSerializer;
 		this.service = service;
 		this.batchRequestJsonHelper = batchRequestJsonHelper;
 	}
-
+	
 	/**
 	 * Provides a Rest assured POST method to get {@link BatchRequest} and returns back the 
 	 * consolidated {@link BatchResponse}

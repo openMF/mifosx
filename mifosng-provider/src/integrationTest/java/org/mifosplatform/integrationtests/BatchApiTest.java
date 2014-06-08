@@ -22,8 +22,8 @@ import com.jayway.restassured.specification.ResponseSpecification;
  * a {@code BatchRequest}.
  * 
  * @author RishabhShukla
- * @see BatchHelper
- * @see BatchRequest
+ * @see org.mifosplatform.integrationtests.common.BatchHelper
+ * @see org.mifosplatform.batch.domain.BatchRequest
  */
 public class BatchApiTest {
 

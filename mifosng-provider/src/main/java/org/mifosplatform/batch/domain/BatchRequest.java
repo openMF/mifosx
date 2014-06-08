@@ -9,10 +9,6 @@ import java.util.Set;
  * access Batch Request data fields.
  * 
  * @author Rishabh Shukla 
-<<<<<<< HEAD
- * 
-=======
->>>>>>> origin/Batch-API
  * @see org.mifosplatform.batch.api.BatchApiResource
  * @see Header
  */
@@ -40,7 +36,7 @@ public class BatchRequest {
 	 */
 	public BatchRequest(Long requestId, String relativeUrl, String method, Set<Header> headers,
 			Long reference, String body) {
-
+		
 		this.requestId = requestId;
 		this.relativeUrl = relativeUrl;
 		this.method = method;
@@ -109,7 +105,7 @@ public class BatchRequest {
 	public void setMethod(String method) {
 		this.method = method;
 	}
-
+	
 	/**
 	 * returns the values of 'headers' of {@link Header} type of an object of this class.
 	 * 
@@ -119,7 +115,7 @@ public class BatchRequest {
 	public Set<Header> getHeaders() {
 		return this.headers;
 	}
-
+	
 	/**
 	 * sets the values of 'headers' of {@link Header} type of an object of this class.
 	 * 
@@ -129,7 +125,7 @@ public class BatchRequest {
 	public void setHeaders(Set<Header> headers) {
 		this.headers = headers;
 	}
-
+	
 	/**
 	 * returns the value of 'reference' of an object of this class
 	 * 
@@ -147,7 +143,7 @@ public class BatchRequest {
 	public void setReference(Long reference) {
 		this.reference = reference;
 	}
-
+	
 	/**
 	 * returns the value of 'body' of an object of this class.
 	 * 
@@ -156,7 +152,7 @@ public class BatchRequest {
 	public String getBody() {
 		return this.body;
 	}
-
+	
 	/**
 	 * sets the value of 'body' of an object of this class.
 	 * 

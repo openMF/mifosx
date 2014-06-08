@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 public class BatchApiServiceImpl implements BatchApiService{
 	
 	private final CommandStrategyProvider strategyProvider;
-
+	
 	/**
 	 * Constructs a 'BatchApiServiceImpl' with an argument of 
 	 * {@link org.mifosplatform.batch.command.CommandStrategyProvider} type.
@@ -36,7 +36,7 @@ public class BatchApiServiceImpl implements BatchApiService{
 	public BatchApiServiceImpl(final CommandStrategyProvider strategyProvider) {
 		this.strategyProvider = strategyProvider;
 	}
-
+	
 	@Override
 	public List<BatchResponse> handleBatchRequests(List<BatchRequest> requestList) {
 		

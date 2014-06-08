@@ -230,11 +230,7 @@ tomcatRunWar {
 
 sourceSets {
     integrationTest {
-<<<<<<< HEAD
-    	compileClasspath += main.output + test.output
-=======
         compileClasspath += main.output + test.output
->>>>>>> origin/Batch-API
         runtimeClasspath += main.output + test.output
     }
 }

@@ -231,6 +231,7 @@ public class DepositAccountAssembler {
             minRequiredOpeningBalance = product.minRequiredOpeningBalance();
         }
 
+        @SuppressWarnings("unused")
         Integer lockinPeriodFrequency = null;
         if (command.parameterExists(lockinPeriodFrequencyParamName)) {
             lockinPeriodFrequency = command.integerValueOfParameterNamed(lockinPeriodFrequencyParamName);
@@ -239,9 +240,8 @@ public class DepositAccountAssembler {
         }
 
         SavingsPeriodFrequencyType lockinPeriodFrequencyType = null;
-
+        Integer lockinPeriodFrequencyTypeValue = null;
         if (command.parameterExists(lockinPeriodFrequencyTypeParamName)) {
-            Integer lockinPeriodFrequencyTypeValue = null;
             lockinPeriodFrequencyTypeValue = command.integerValueOfParameterNamed(lockinPeriodFrequencyTypeParamName);
             if (lockinPeriodFrequencyTypeValue != null) {
                 lockinPeriodFrequencyType = SavingsPeriodFrequencyType.fromInt(lockinPeriodFrequencyTypeValue);
@@ -280,7 +280,7 @@ public class DepositAccountAssembler {
             FixedDepositAccount fdAccount = FixedDepositAccount.createNewApplicationForSubmittal(client, group, product, fieldOfficer,
                     accountNo, externalId, accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
-                    lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, charges,
+                    lockinPeriodFrequencyTypeValue, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, charges,
                     accountTermAndPreClosure, accountChart);
             accountTermAndPreClosure.updateAccountReference(fdAccount);
             fdAccount.validateDomainRules();
@@ -298,8 +298,8 @@ public class DepositAccountAssembler {
             RecurringDepositAccount rdAccount = RecurringDepositAccount.createNewApplicationForSubmittal(client, group, product,
                     fieldOfficer, accountNo, externalId, accountType, submittedOnDate, submittedBy, interestRate,
                     interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
-                    minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer,
-                    charges, accountTermAndPreClosure, accountRecurringDetail, accountChart);
+                    minRequiredOpeningBalance, lockinPeriodFrequencyTypeValue, lockinPeriodFrequencyType,
+                    iswithdrawalFeeApplicableForTransfer, charges, accountTermAndPreClosure, accountRecurringDetail, accountChart);
 
             accountTermAndPreClosure.updateAccountReference(rdAccount);
             accountRecurringDetail.updateAccountReference(rdAccount);
@@ -401,8 +401,8 @@ public class DepositAccountAssembler {
                 depositRecurringDetail, null, isCalendarInherited);
         return depositAccountRecurringDetail;
     }
-
-    public Collection<SavingsAccountTransactionDTO> assembleBulkMandatorySavingsAccountTransactionDTOs(final JsonCommand command) {
+    
+    public Collection<SavingsAccountTransactionDTO> assembleBulkMandatorySavingsAccountTransactionDTOs(final JsonCommand command){
         final String json = command.json();
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
         final JsonElement element = this.fromApiJsonHelper.parse(json);
@@ -413,7 +413,7 @@ public class DepositAccountAssembler {
         final JsonObject topLevelJsonElement = element.getAsJsonObject();
         final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(topLevelJsonElement);
         final DateTimeFormatter formatter = DateTimeFormat.forPattern(dateFormat).withLocale(locale);
-
+        
         if (element.isJsonObject()) {
             if (topLevelJsonElement.has(bulkSavingsDueTransactionsParamName)
                     && topLevelJsonElement.get(bulkSavingsDueTransactionsParamName).isJsonArray()) {
@@ -424,13 +424,12 @@ public class DepositAccountAssembler {
                     final Long savingsId = this.fromApiJsonHelper.extractLongNamed(savingsIdParamName, savingsTransactionElement);
                     final BigDecimal dueAmount = this.fromApiJsonHelper.extractBigDecimalNamed(transactionAmountParamName,
                             savingsTransactionElement, locale);
-                    final SavingsAccountTransactionDTO savingsAccountTransactionDTO = new SavingsAccountTransactionDTO(formatter,
-                            transactionDate, dueAmount, paymentDetail, new Date(), savingsId);
+                    final SavingsAccountTransactionDTO savingsAccountTransactionDTO = new SavingsAccountTransactionDTO(formatter, transactionDate, dueAmount, paymentDetail, new Date(), savingsId);
                     savingsAccountTransactions.add(savingsAccountTransactionDTO);
                 }
             }
         }
-
+        
         return savingsAccountTransactions;
     }
 }

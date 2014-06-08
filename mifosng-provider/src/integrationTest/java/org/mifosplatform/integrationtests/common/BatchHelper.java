@@ -31,7 +31,7 @@ public class BatchHelper {
 	/**
 	 * returns a JSON String for a list of {@code BatchRequest}s
 	 * 
-	 * @param List<BatchRequest> batchRequests
+	 * @param batchRequests
 	 * @return JSON String of BatchRequest
 	 */
 	public static String toJsonString(final List<BatchRequest> batchRequests) {
@@ -39,9 +39,9 @@ public class BatchHelper {
 	}
 
 	/**
-	 * returns the string response as a list of {@code BatchResponse}s.
+	 * returns the converted string response into JSON.
 	 * 
-	 * @param String json
+	 * @param json
 	 * @return List<BatchResponse>
 	 */
     private static List<BatchResponse> fromJsonString(final String json) {
@@ -68,7 +68,7 @@ public class BatchHelper {
      * returns a BatchResponse based on the given BatchRequest, by posting the request
      * to the server.
      * 
-     * @param RequestSpecification, ResponseSpecification, BatchRequest
+     * @param BatchRequest
      * @return List<BatchResponse>
      */
     public static List<BatchResponse> createRequest(final RequestSpecification requestSpec,

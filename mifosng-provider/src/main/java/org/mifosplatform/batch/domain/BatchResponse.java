@@ -35,7 +35,7 @@ public class BatchResponse {
 		this.headers = headers;
 		this.body = body;		
 	}
-
+	
 	/**
 	 * Constructs a default constructor of 'BatchResponse' 
 	 */
@@ -98,7 +98,7 @@ public class BatchResponse {
 	public void setHeaders(Set<Header> headers) {
 		this.headers = headers;
 	}
-
+	
 	/**
 	 * returns the 'body' of an object of this class.
 	 * 
@@ -107,7 +107,7 @@ public class BatchResponse {
 	public String getBody() {
 		return this.body;
 	}
-
+	
 	/**
 	 * sets the value of 'body' of an object of this class.
 	 * 

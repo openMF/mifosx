@@ -83,7 +83,7 @@ public class LoanTransactionsApiResource {
         } else if (is(commandParam, "waiveinterest")) {
             transactionData = this.loanReadPlatformService.retrieveWaiveInterestDetails(loanId);
         } else if (is(commandParam, "writeoff")) {
-            transactionData = this.loanReadPlatformService.retrieveLoanWriteoffTemplate(loanId);
+            transactionData = this.loanReadPlatformService.retrieveNewClosureDetails();
         } else if (is(commandParam, "close-rescheduled")) {
             transactionData = this.loanReadPlatformService.retrieveNewClosureDetails();
         } else if (is(commandParam, "close")) {

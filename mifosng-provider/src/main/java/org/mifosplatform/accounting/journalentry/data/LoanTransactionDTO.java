@@ -36,12 +36,10 @@ public class LoanTransactionDTO {
     private final List<ChargePaymentDTO> penaltyPayments;
     private final List<ChargePaymentDTO> feePayments;
 
-    private final boolean isAccountTransfer;
-
     public LoanTransactionDTO(final Long officeId, final Long paymentTypeId, final String transactionId, final Date transactionDate,
             final LoanTransactionEnumData transactionType, final BigDecimal amount, final BigDecimal principal, final BigDecimal interest,
             final BigDecimal fees, final BigDecimal penalties, final BigDecimal overPayment, final boolean reversed,
-            final List<ChargePaymentDTO> feePayments, final List<ChargePaymentDTO> penaltyPayments, boolean isAccountTransfer) {
+            final List<ChargePaymentDTO> feePayments, final List<ChargePaymentDTO> penaltyPayments) {
         this.paymentTypeId = paymentTypeId;
         this.transactionId = transactionId;
         this.transactionDate = transactionDate;
@@ -56,7 +54,6 @@ public class LoanTransactionDTO {
         this.penaltyPayments = penaltyPayments;
         this.overPayment = overPayment;
         this.officeId = officeId;
-        this.isAccountTransfer = isAccountTransfer;
     }
 
     public Long getOfficeId() {
@@ -113,10 +110,6 @@ public class LoanTransactionDTO {
 
     public List<ChargePaymentDTO> getFeePayments() {
         return this.feePayments;
-    }
-
-    public boolean isAccountTransfer() {
-        return this.isAccountTransfer;
     }
 
 }

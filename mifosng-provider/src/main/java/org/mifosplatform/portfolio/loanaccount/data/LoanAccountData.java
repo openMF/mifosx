@@ -1145,9 +1145,5 @@ public class LoanAccountData {
     public Long loanProductId() {
         return this.loanProductId;
     }
-    
-    public BigDecimal getTotalOutstandingAmount(){
-        return this.summary.getTotalOutstanding();
-    }
 
 }

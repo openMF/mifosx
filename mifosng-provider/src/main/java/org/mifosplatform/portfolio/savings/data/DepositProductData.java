@@ -361,8 +361,4 @@ public class DepositProductData {
     public int accountingRuleTypeId() {
         return this.accountingRule.getId().intValue();
     }
-
-    public String getName() {
-        return this.name;
-    }
 }

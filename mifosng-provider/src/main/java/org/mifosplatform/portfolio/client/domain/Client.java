@@ -429,11 +429,6 @@ public final class Client extends AbstractPersistable<Long> {
             final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.staffIdParamName);
             actualChanges.put(ClientApiConstants.staffIdParamName, newValue);
         }
-        
-        if (command.isChangeInLongParameterNamed(ClientApiConstants.genderIdParamName, genderId())) {
-            final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.genderIdParamName);
-            actualChanges.put(ClientApiConstants.genderIdParamName, newValue);
-        }
 
         if (command.isChangeInLongParameterNamed(ClientApiConstants.savingsProductIdParamName, savingsProductId())) {
             final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.savingsProductIdParamName);
@@ -738,17 +733,5 @@ public final class Client extends AbstractPersistable<Long> {
 
     public CodeValue gender() {
         return this.gender;
-    }
-    
-    private Long genderId() {
-        Long genderId = null;
-        if (this.gender != null) {
-            genderId = this.gender.getId();
-        }
-        return genderId;
-    }
-
-    public void updateGender(final CodeValue gender) {
-        this.gender = gender;
     }
 }

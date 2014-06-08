@@ -290,10 +290,4 @@ public class LoanProductTestBuilder {
         return map;
     }
 
-    public LoanProductTestBuilder withAccounting(final String accountingRule, final Account[] account_list) {
-        this.accountingRule = accountingRule;
-        this.accountList = account_list;
-        return this;
-    }
-
 }

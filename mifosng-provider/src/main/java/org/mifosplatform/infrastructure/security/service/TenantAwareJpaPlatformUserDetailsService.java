@@ -29,11 +29,7 @@ public class TenantAwareJpaPlatformUserDetailsService implements PlatformUserDet
     @Cacheable(value = "usersByUsername", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat(#username+'ubu')")
     public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException, DataAccessException {
 
-        // Retrieve active users only
-        final boolean deleted = false;
-        final boolean enabled = true;
-
-        final PlatformUser appUser = this.platformUserRepository.findByUsernameAndDeletedAndEnabled(username, deleted, enabled);
+        final PlatformUser appUser = this.platformUserRepository.findByUsername(username);
 
         if (appUser == null) { throw new UsernameNotFoundException(username + ": not found"); }
 
