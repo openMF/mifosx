@@ -223,6 +223,7 @@ public class CentersApiResource {
 
     }
 
+    //API call which will be used to update center data
     @PUT
     @Path("{centerId}")
     @Consumes({ MediaType.APPLICATION_JSON })
@@ -230,10 +231,14 @@ public class CentersApiResource {
     public String update(@PathParam("centerId") final Long centerId, final String apiRequestBodyAsJson) {
 
         final CommandWrapper commandRequest = new CommandWrapperBuilder() //
-                .updateCenter(centerId) //
-                .withJson(apiRequestBodyAsJson) //
-                .build(); //
+                .updateCenter(centerId) //Update REST action, entity, entity id(center id) and API link for entity
+                .withJson(apiRequestBodyAsJson) //Update the JSON request data at String  CommandWrapperBuilder.json
+                .build(); //Creates a CommandWrapper Object with exist parameters in created CommandWrapper object
+        
+        //Execute the command and returns the results as a CommandProcessingResult object
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        
+        //Create the JSON response from result data from result (CommandProcessingResult) object
         return this.toApiJsonSerializer.serialize(result);
     }
 
