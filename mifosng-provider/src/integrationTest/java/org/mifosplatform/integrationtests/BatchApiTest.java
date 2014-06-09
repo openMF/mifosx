@@ -77,7 +77,7 @@ public class BatchApiTest {
 		
 		final String body = "{ \"officeId\": 1, \"firstname\": \"Petra\", \"lastname\": \"Yton\"," +  
 		"\"externalId\": " + extId + ",  \"dateFormat\": \"dd MMMM yyyy\", \"locale\": \"en\"," + 
-		"\"active\": true, \"activationDate\": \"04 March 2009\", \"submittedOnDate\": \"04 March 2009\", \"savingsProductId\" : 1 }";
+		"\"active\": false, \"activationDate\": \"04 March 2009\", \"submittedOnDate\": \"04 March 2009\", \"savingsProductId\" : 1 }";
 		
 		br.setBody(body);
 		

@@ -46,6 +46,9 @@ public class CreateClientCommandStrategy implements CommandStrategy{
 			//calls 'create' function from 'ClientsApiResource' to create a new client
 			responseBody = clientsApiResource.create(request.getBody());
 			
+			response.setRequestId(request.getRequestId());
+			response.setHeaders(request.getHeaders());
+			response.setStatusCode(200);
 			//sets the body of the response after the successful creation of the client
 			response.setBody(responseBody);
 			
@@ -74,13 +77,6 @@ public class CreateClientCommandStrategy implements CommandStrategy{
 			response.setStatusCode(500);
 			response.setBody("error : " + e.toString());			
 		}		
-		
-		response.setRequestId(request.getRequestId());
-		response.setHeaders(request.getHeaders());
-		
-		//if there were no exceptions then set the status code to 'OK'(200)
-		if(response.getStatusCode() == null)
-			response.setStatusCode(200);
 		
 		return response;		
 	}
