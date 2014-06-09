@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1022,7 +1021,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     }
 
     public Map<String, Object> deriveAccountingBridgeData(final CurrencyData currencyData, final Set<Long> existingTransactionIds,
-            final Set<Long> existingReversedTransactionIds, boolean isAccountTransfer) {
+            final Set<Long> existingReversedTransactionIds) {
 
         final Map<String, Object> accountingBridgeData = new LinkedHashMap<String, Object>();
         accountingBridgeData.put("savingsId", getId());
@@ -1031,7 +1030,6 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         accountingBridgeData.put("officeId", officeId());
         accountingBridgeData.put("cashBasedAccountingEnabled", isCashBasedAccountingEnabledOnSavingsProduct());
         accountingBridgeData.put("accrualBasedAccountingEnabled", isAccrualBasedAccountingEnabledOnSavingsProduct());
-        accountingBridgeData.put("isAccountTransfer", isAccountTransfer);
 
         final List<Map<String, Object>> newLoanTransactions = new ArrayList<Map<String, Object>>();
         for (final SavingsAccountTransaction transaction : this.transactions) {
@@ -2027,8 +2025,6 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             baseDataValidator.reset().parameter(SavingsApiConstants.overdraftLimitParamName).value(this.overdraftLimit)
                     .failWithCode("cannot.exceed.product.value");
         }
-        
-        validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
 
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
@@ -2053,42 +2049,5 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         if (getSubmittedOnLocalDate() == null || getActivationLocalDate() == null) { return false; }
         return getActivationLocalDate().isEqual(getSubmittedOnLocalDate());
 
-    }
-    
-    public void validateInterestPostingAndCompoundingPeriodTypes(final DataValidatorBuilder baseDataValidator) {
-        Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>>();
-        postingtoCompoundMap.put(
-                SavingsPostingInterestPeriodType.MONTHLY,
-                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY }));
-
-        postingtoCompoundMap.put(
-                SavingsPostingInterestPeriodType.QUATERLY,
-                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY }));
-
-        postingtoCompoundMap.put(
-                SavingsPostingInterestPeriodType.BIANNUAL,
-                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL }));
-
-        postingtoCompoundMap.put(
-                SavingsPostingInterestPeriodType.ANNUAL,
-                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
-
-        SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
-                .fromInt(interestPostingPeriodType);
-        SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
-                .fromInt(interestCompoundingPeriodType);
-
-        if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null
-                || !postingtoCompoundMap.get(savingsPostingInterestPeriodType).contains(savingsCompoundingInterestPeriodType)) {
-            baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
-                    savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
-
-        }
     }
 }

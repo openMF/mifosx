@@ -48,7 +48,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     @Override
     public SavingsAccountTransaction handleWithdrawal(final SavingsAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
-            final boolean applyWithdrawFee, boolean isInterestTransfer, final boolean isAccountTransfer) {
+            final boolean applyWithdrawFee, boolean isInterestTransfer) {
 
         final Set<Long> existingTransactionIds = new HashSet<Long>();
         final Set<Long> existingReversedTransactionIds = new HashSet<Long>();
@@ -69,7 +69,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         saveTransactionToGenerateTransactionId(withdrawal);
         this.savingsAccountRepository.save(account);
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
 
         return withdrawal;
     }
@@ -77,8 +77,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     @Transactional
     @Override
     public SavingsAccountTransaction handleDeposit(final SavingsAccount account, final DateTimeFormatter fmt,
-            final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
-            final boolean isAccountTransfer) {
+            final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail) {
 
         boolean isInterestTransfer = false;
         final Set<Long> existingTransactionIds = new HashSet<Long>();
@@ -101,7 +100,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
 
         this.savingsAccountRepository.save(account);
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
 
         return deposit;
     }
@@ -118,13 +117,13 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     }
 
     private void postJournalEntries(final SavingsAccount savingsAccount, final Set<Long> existingTransactionIds,
-            final Set<Long> existingReversedTransactionIds, boolean isAccountTransfer) {
+            final Set<Long> existingReversedTransactionIds) {
 
         final MonetaryCurrency currency = savingsAccount.getCurrency();
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
 
         final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
-                existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+                existingTransactionIds, existingReversedTransactionIds);
         this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData);
     }
 }

@@ -341,8 +341,4 @@ public class SavingsProductData {
     public int hashCode() {
         return this.id.hashCode();
     }
-
-    public String getName() {
-        return this.name;
-    }
 }

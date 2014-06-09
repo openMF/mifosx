@@ -98,8 +98,4 @@ public class LoanSummaryData {
         this.totalOverdue = totalOverdue;
         this.overdueSinceDate = overdueSinceDate;
     }
-
-    public BigDecimal getTotalOutstanding() {
-        return this.totalOutstanding;
-    }
 }

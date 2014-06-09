@@ -26,7 +26,8 @@ public class CommandWrapperBuilder {
 
     public CommandWrapper build() {
         return new CommandWrapper(this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId, this.actionName,
-                this.entityName, this.entityId, this.subentityId, this.href, this.json, this.transactionId, this.productId, this.templateId);
+                this.entityName, this.entityId, this.subentityId, this.href, this.json, this.transactionId, this.productId,
+                this.templateId);
     }
 
     public CommandWrapperBuilder withLoanId(final Long withLoanId) {
@@ -572,7 +573,7 @@ public class CommandWrapperBuilder {
         return this;
     }
 
-    public CommandWrapperBuilder loanRecoveryPaymentTransaction(final Long loanId) {
+    public CommandWrapperBuilder loanRecoveryPaymentTransaction(final Long loanId){
         this.actionName = "RECOVERYPAYMENT";
         this.entityName = "LOAN";
         this.entityId = null;
@@ -706,7 +707,7 @@ public class CommandWrapperBuilder {
         this.href = "/loans/" + loanId;
         return this;
     }
-
+    
     public CommandWrapperBuilder disburseLoanToSavingsApplication(final Long loanId) {
         this.actionName = "DISBURSETOSAVINGS";
         this.entityName = "LOAN";
@@ -1181,7 +1182,7 @@ public class CommandWrapperBuilder {
         this.actionName = "CREATE";
         this.entityName = "CHARTSLAB";
         this.entityId = null;
-        this.subentityId = chartId; // refer to chart id
+        this.subentityId = chartId; //refer to chart id 
         this.href = "/interestratechart/" + chartId + "/chartdetails/template";
         return this;
     }
@@ -1190,7 +1191,7 @@ public class CommandWrapperBuilder {
         this.actionName = "UPDATE";
         this.entityName = "CHARTSLAB";
         this.entityId = chartSlabId;
-        this.subentityId = chartId;// refers parent chart
+        this.subentityId = chartId;//refers parent chart
         this.href = "/interestratechart/" + chartId + "/chartdetails/" + chartSlabId;
         return this;
     }
@@ -1199,7 +1200,7 @@ public class CommandWrapperBuilder {
         this.actionName = "DELETE";
         this.entityName = "CHARTSLAB";
         this.entityId = chartSlabId;
-        this.subentityId = chartId;// refers parent chart
+        this.subentityId = chartId;//refers parent chart
         this.href = "/interestratechart/" + chartId + "/chartdetails/" + chartSlabId;
         return this;
     }
@@ -1794,7 +1795,7 @@ public class CommandWrapperBuilder {
         this.href = "/fixeddepositaccounts/" + accountId + "?command=postInterest";
         return this;
     }
-
+    
     public CommandWrapperBuilder fixedDepositAccountDeposit(final Long accountId) {
         this.actionName = "DEPOSIT";
         this.entityName = "FIXEDDEPOSITACCOUNT";
@@ -1803,7 +1804,7 @@ public class CommandWrapperBuilder {
         this.href = "/fixeddepositaccounts/" + accountId + "/transactions?command=deposit";
         return this;
     }
-
+    
     public CommandWrapperBuilder fixedDepositAccountWithdrawal(final Long accountId) {
         this.actionName = "WITHDRAWAL";
         this.entityName = "FIXEDDEPOSITACCOUNT";
@@ -1837,7 +1838,7 @@ public class CommandWrapperBuilder {
         this.href = "/recurringdepositaccounts/" + accountId + "/transactions?command=deposit";
         return this;
     }
-
+    
     public CommandWrapperBuilder recurringAccountWithdrawal(final Long accountId) {
         this.actionName = "WITHDRAWAL";
         this.entityName = "RECURRINGDEPOSITACCOUNT";
@@ -1857,7 +1858,7 @@ public class CommandWrapperBuilder {
         this.href = "/recurringdepositaccounts/" + accountId + "/transactions/" + transactionId + "?command=modify";
         return this;
     }
-
+    
     public CommandWrapperBuilder undoRecurringAccountTransaction(final Long accountId, final Long transactionId) {
         this.actionName = "UNDOTRANSACTION";
         this.entityName = "RECURRINGDEPOSITACCOUNT";
@@ -1868,7 +1869,7 @@ public class CommandWrapperBuilder {
         this.href = "/recurringdepositaccounts/" + accountId + "/transactions/" + transactionId + "?command=undo";
         return this;
     }
-
+    
     public CommandWrapperBuilder deleteRecurringDepositAccount(final Long accountId) {
         this.actionName = "DELETE";
         this.entityName = "RECURRINGDEPOSITACCOUNT";
@@ -1957,61 +1958,4 @@ public class CommandWrapperBuilder {
         this.href = "/recurringdepositaccounts/" + accountId + "?command=postInterest";
         return this;
     }
-
-    public CommandWrapperBuilder createOfficeToGLAccountMapping() {
-        this.actionName = "CREATE";
-        this.entityName = "OFFICEGLACCOUNT";
-        this.entityId = null;
-        this.href = "/organizationglaccounts/template";
-        return this;
-    }
-
-    public CommandWrapperBuilder updateOfficeToGLAccountMapping(final Long mappingId) {
-        this.actionName = "UPDATE";
-        this.entityName = "OFFICEGLACCOUNT";
-        this.entityId = mappingId;
-        this.href = "/organizationglaccounts/" + mappingId;
-        return this;
-    }
-
-    public CommandWrapperBuilder deleteOfficeToGLAccountMapping(final Long mappingId) {
-        this.actionName = "DELETE";
-        this.entityName = "OFFICEGLACCOUNT";
-        this.entityId = mappingId;
-        this.href = "/organizationglaccounts/" + mappingId;
-        return this;
-    }
-
-    public CommandWrapperBuilder registerDBDatatable(final String datatable, final String apptable) {
-        this.actionName = "REGISTER";
-        this.entityName = "DATATABLE";
-        this.entityId = null;
-        this.href = "/datatables/register/" + datatable + "/" + apptable;
-        return this;
-    }
-
-    public CommandWrapperBuilder registerSurvey(final String datatable, final String apptable) {
-        this.actionName = "REGISTER";
-        this.entityName = "SURVEY";
-        this.entityId = null;
-        this.href = "/survey/register/" + datatable + "/" + apptable;
-        return this;
-    }
-
-    public CommandWrapperBuilder fullFilSurvey(final String datatable, final Long apptableId) {
-        this.entityName = datatable;
-        this.entityId = apptableId;
-        this.actionName = "CREATE";
-        this.href = "/survey/" + datatable + "/" + apptableId;
-        return this;
-    }
-
-    public CommandWrapperBuilder updateLikelihood(final Long entityId) {
-        this.actionName = "UPDATE";
-        this.entityName = "LIKELIHOOD";
-        this.href = "/likelihood/" + entityId;
-        this.entityId = entityId;
-        return this;
-    }
-
 }

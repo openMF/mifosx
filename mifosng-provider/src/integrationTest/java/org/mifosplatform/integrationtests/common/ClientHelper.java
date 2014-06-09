@@ -18,19 +18,13 @@ public class ClientHelper {
 
     public static Integer createClient(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
             final String activationDate) {
-        return createClient(requestSpec, responseSpec, activationDate, "1");
-    }
-
-    public static Integer createClient(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
-            final String activationDate, final String officeId) {
         System.out.println("---------------------------------CREATING A CLIENT---------------------------------------------");
-        return Utils.performServerPost(requestSpec, responseSpec, CREATE_CLIENT_URL, getTestClientAsJSON(activationDate, officeId),
-                "clientId");
+        return Utils.performServerPost(requestSpec, responseSpec, CREATE_CLIENT_URL, getTestClientAsJSON(activationDate), "clientId");
     }
 
-    public static String getTestClientAsJSON(final String dateOfJoining, final String officeId) {
+    public static String getTestClientAsJSON(final String dateOfJoining) {
         final HashMap<String, String> map = new HashMap<String, String>();
-        map.put("officeId", officeId);
+        map.put("officeId", "1");
         map.put("firstname", Utils.randomNameGenerator("Client_FirstName_", 5));
         map.put("lastname", Utils.randomNameGenerator("Client_LastName_", 4));
         map.put("externalId", randomIDGenerator("ID_", 7));

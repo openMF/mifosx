@@ -17,8 +17,6 @@ import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnHeaderDa
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnValueData;
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetRowData;
 import org.mifosplatform.infrastructure.dataqueries.exception.DatatableNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -30,20 +28,17 @@ public class GenericDataServiceImpl implements GenericDataService {
 
     private final JdbcTemplate jdbcTemplate;
     private final DataSource dataSource;
-    private final static Logger logger = LoggerFactory.getLogger(GenericDataServiceImpl.class);
 
     @Autowired
     public GenericDataServiceImpl(final RoutingDataSource dataSource) {
         this.dataSource = dataSource;
         this.jdbcTemplate = new JdbcTemplate(this.dataSource);
-
     }
 
     @Override
     public GenericResultsetData fillGenericResultSet(final String sql) {
 
         final SqlRowSet rs = this.jdbcTemplate.queryForRowSet(sql);
-
 
         final List<ResultsetColumnHeaderData> columnHeaders = new ArrayList<ResultsetColumnHeaderData>();
         final List<ResultsetRowData> resultsetDataRows = new ArrayList<ResultsetRowData>();
@@ -176,8 +171,6 @@ public class GenericDataServiceImpl implements GenericDataService {
     @Override
     public List<ResultsetColumnHeaderData> fillResultsetColumnHeaders(final String datatable) {
 
-        logger.debug("::3 Was inside the fill ResultSetColumnHeader");
-
         final SqlRowSet columnDefinitions = getDatatableMetaData(datatable);
 
         final List<ResultsetColumnHeaderData> columnHeaders = new ArrayList<ResultsetColumnHeaderData>();
@@ -196,16 +189,13 @@ public class GenericDataServiceImpl implements GenericDataService {
             List<ResultsetColumnValueData> columnValues = new ArrayList<ResultsetColumnValueData>();
             String codeName = null;
             if ("varchar".equalsIgnoreCase(columnType)) {
-
                 final int codePosition = columnName.indexOf("_cv");
                 if (codePosition > 0) {
                     codeName = columnName.substring(0, codePosition);
-
                     columnValues = retreiveColumnValues(codeName);
                 }
 
             } else if ("int".equalsIgnoreCase(columnType)) {
-
                 final int codePosition = columnName.indexOf("_cd");
                 if (codePosition > 0) {
                     codeName = columnName.substring(0, codePosition);
@@ -238,10 +228,9 @@ public class GenericDataServiceImpl implements GenericDataService {
      */
     private List<ResultsetColumnValueData> retreiveColumnValues(final String codeName) {
 
-
         final List<ResultsetColumnValueData> columnValues = new ArrayList<ResultsetColumnValueData>();
 
-        final String sql = "select v.id, v.code_score, v.code_value from m_code m " + " join m_code_value v on v.code_id = m.id "
+        final String sql = "select v.id, v.code_value from m_code m " + " join m_code_value v on v.code_id = m.id "
                 + " where m.code_name = '" + codeName + "' order by v.order_position, v.id";
 
         final SqlRowSet rsValues = this.jdbcTemplate.queryForRowSet(sql);
@@ -250,16 +239,14 @@ public class GenericDataServiceImpl implements GenericDataService {
         while (rsValues.next()) {
             final Integer id = rsValues.getInt("id");
             final String codeValue = rsValues.getString("code_value");
-            final Integer score = rsValues.getInt("code_score");
 
-            columnValues.add(new ResultsetColumnValueData(id, codeValue, score));
+            columnValues.add(new ResultsetColumnValueData(id, codeValue));
         }
 
         return columnValues;
     }
 
     private List<ResultsetColumnValueData> retreiveColumnValues(final Integer codeId) {
-
 
         final List<ResultsetColumnValueData> columnValues = new ArrayList<ResultsetColumnValueData>();
         if (codeId != null) {

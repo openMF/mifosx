@@ -3,13 +3,11 @@ package org.mifosplatform.integrationtests;
 import static org.junit.Assert.assertEquals;
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 
-import org.joda.time.LocalDate;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -452,7 +450,7 @@ public class AccountingScenarioIntegrationTest {
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsActive(recurringDepositAccountStatusHashMap);
         
         HashMap recurringDepositAccountData = this.recurringDepositAccountHelper.getRecurringDepositAccountById(this.requestSpec, this.responseSpec, recurringDepositAccountId);
-        Float depositAmount = (Float) recurringDepositAccountData.get("mandatoryRecommendedDepositAmount");
+        Float depositAmount = (Float) recurringDepositAccountData.get("recurringDepositAmount");
         
         Integer depositTransactionId = this.recurringDepositAccountHelper.depositToRecurringDepositAccount(recurringDepositAccountId, depositAmount, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(depositTransactionId);
@@ -566,9 +564,7 @@ public class AccountingScenarioIntegrationTest {
         System.out.println("Repayment 1 ......");
         final float FIRST_INTEREST = 200.0f;
         final float FIRST_PRINCIPAL = 2000.0f;
-        final float FEE_PORTION = 0.0f;
-        final float PENALTY_PORTION = 0.0f;
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(getDateAsLocalDate(this.REPAYMENT_DATE[1]), FIRST_INTEREST, FEE_PORTION, PENALTY_PORTION, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(this.REPAYMENT_DATE[1], FIRST_INTEREST, loanID);
         this.loanTransactionHelper.makeRepayment(this.REPAYMENT_DATE[1], this.REPAYMENT_AMOUNT[1], loanID);
         float expected_value = this.LP_PRINCIPAL - PRINCIPAL_VALUE_FOR_EACH_PERIOD;
         this.loanTransactionHelper.verifyRepaymentScheduleEntryFor(1, expected_value, loanID);
@@ -584,8 +580,8 @@ public class AccountingScenarioIntegrationTest {
         final float SECOND_AND_THIRD_INTEREST = 400.0f;
         final float SECOND_PRINCIPAL = this.REPAYMENT_AMOUNT[2] - SECOND_AND_THIRD_INTEREST;
         expected_value = expected_value - PRINCIPAL_VALUE_FOR_EACH_PERIOD;
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(getDateAsLocalDate(this.REPAYMENT_DATE[2]), FIRST_INTEREST, FEE_PORTION, PENALTY_PORTION, loanID);
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(getDateAsLocalDate(this.REPAYMENT_DATE[3]), FIRST_INTEREST, FEE_PORTION, PENALTY_PORTION, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(this.REPAYMENT_DATE[2], FIRST_INTEREST, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(this.REPAYMENT_DATE[3], FIRST_INTEREST, loanID);
         this.loanTransactionHelper.verifyRepaymentScheduleEntryFor(2, expected_value, loanID);
         final JournalEntry[] assetAccountSecondEntry = { new JournalEntry(this.REPAYMENT_AMOUNT[2], JournalEntry.TransactionType.DEBIT),
                 new JournalEntry(SECOND_AND_THIRD_INTEREST, JournalEntry.TransactionType.CREDIT),
@@ -595,8 +591,8 @@ public class AccountingScenarioIntegrationTest {
         
         // WAIVE INTEREST
         System.out.println("Waive Interest  ......");
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(getDateAsLocalDate(this.REPAYMENT_DATE[4]), FIRST_INTEREST, FEE_PORTION, PENALTY_PORTION, loanID);
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(getDateAsLocalDate(this.REPAYMENT_DATE[5]), FIRST_INTEREST, FEE_PORTION, PENALTY_PORTION, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(this.REPAYMENT_DATE[4], FIRST_INTEREST, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(this.REPAYMENT_DATE[5], FIRST_INTEREST, loanID);
         this.loanTransactionHelper.waiveInterest(this.REPAYMENT_DATE[4], this.AMOUNT_TO_BE_WAIVE.toString(), loanID);
 
         final JournalEntry waivedEntry = new JournalEntry(this.AMOUNT_TO_BE_WAIVE, JournalEntry.TransactionType.CREDIT);
@@ -755,16 +751,5 @@ public class AccountingScenarioIntegrationTest {
                 .withAmortizationTypeAsEqualPrincipalPayment().withInterestTypeAsFlat().withAccountingRuleAsCashBased(accounts)
                 .build(null);
         return this.loanTransactionHelper.getLoanProductId(loanProductJSON);
-    }
-
-    private LocalDate getDateAsLocalDate(String dateAsString) {
-        LocalDate date = null;
-        try {
-            DateFormat df = new SimpleDateFormat("dd MMMM yyyy");
-            date = new LocalDate(df.parse(dateAsString));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return date;
     }
 }

@@ -545,9 +545,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                     this.noteRepository.save(note);
                 }
             }
-            boolean isAccountTransfer = false;
+
             final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(applicationCurrency.toData(),
-                    existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+                    existingTransactionIds, existingReversedTransactionIds);
             this.journalEntryWritePlatformService.createJournalEntriesForLoan(accountingBridgeData);
         }
 
@@ -588,10 +588,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
-        boolean isAccountTransfer = false;
         final CommandProcessingResultBuilder commandProcessingResultBuilder = new CommandProcessingResultBuilder();
         this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder, transactionDate, transactionAmount,
-                paymentDetail, noteText, txnExternalId, isRecoveryRepayment, isAccountTransfer);
+                paymentDetail, noteText, txnExternalId, isRecoveryRepayment);
 
         return commandProcessingResultBuilder.withCommandId(command.commandId()) //
                 .withLoanId(loanId) //
@@ -609,7 +608,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final boolean isRecoveryRepayment = false;
 
         if (repaymentCommand == null) { return changes; }
-        boolean isAccountTransfer = false;
+
         for (final SingleRepaymentCommand singleLoanRepaymentCommand : repaymentCommand) {
             /****
              * TODO Vishwas, have a re-look at this implementation, defaulting
@@ -620,7 +619,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final CommandProcessingResultBuilder commandProcessingResultBuilder = new CommandProcessingResultBuilder();
             this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder, bulkRepaymentCommand.getTransactionDate(),
                     singleLoanRepaymentCommand.getTransactionAmount(), paymentDetail, bulkRepaymentCommand.getNote(), null,
-                    isRecoveryRepayment, isAccountTransfer);
+                    isRecoveryRepayment);
 
             changes.put("bulkTransations", singleLoanRepaymentCommand);
         }
@@ -1544,9 +1543,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         final MonetaryCurrency currency = loan.getCurrency();
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
-        boolean isAccountTransfer = false;
+
         final Map<String, Object> accountingBridgeData = loan.deriveAccountingBridgeData(applicationCurrency.toData(),
-                existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+                existingTransactionIds, existingReversedTransactionIds);
         this.journalEntryWritePlatformService.createJournalEntriesForLoan(accountingBridgeData);
     }
 
