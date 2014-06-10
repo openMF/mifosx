@@ -61,7 +61,7 @@ public class ImageData {
 			float originalAspect = ((float) originalWidth)/((float) originalHeight);
 			int width;
 			int height;
-			if (maxWidth != null && maxHeight * originalAspect > maxWidth) {
+			if (maxWidth != null && (maxHeight == null || maxHeight * originalAspect > maxWidth)) {
 				// Width bounded
 				width = maxWidth;
 				height = (int) (width / originalAspect);
