@@ -59,7 +59,10 @@ public class ImageData {
       FileInputStream fis = null;
       try {
         fis = new FileInputStream(this.file);
-        byte[] out = resizeImage(fis, maxWidth, maxHeight);
+        byte[] out = resizeImage(
+            fis,
+            maxWidth != null ? maxWidth : Integer.MAX_VALUE,
+            maxHeight != null ? maxHeight : Integer.MAX_VALUE);
         return (out == null) ? getContent() : out;
       } catch (FileNotFoundException ex) {
         return getContent();
@@ -94,12 +97,21 @@ public class ImageData {
 
       try {
         BufferedImage src = ImageIO.read(in);
+        if (src.getWidth() < maxWidth && src.getHeight() < maxHeight) {
+          return;
+        }
         float widthRatio = (float)src.getWidth() / maxWidth;
         float heightRatio = (float)src.getHeight() / maxHeight;
-        float scaleRatio = widthRatio < heightRatio ? widthRatio : heightRatio;
+        if (widthRatio < 1.0f) {
+          widthRatio = 1.0f;
+        }
+        if (heightRatio < 1.0f) {
+          heightRatio = 1.0f;
+        }
+        float scaleRatio = widthRatio > heightRatio ? widthRatio : heightRatio;
 
-        int newWidth = (int)(src.getWidth() * scaleRatio);
-        int newHeight = (int)(src.getWidth() * scaleRatio);
+        int newWidth = (int)(src.getWidth() / scaleRatio);
+        int newHeight = (int)(src.getWidth() / scaleRatio);
         int colorModel = imageType.matches("jpe?g|JPE?G")
             ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
         BufferedImage target = new BufferedImage(newWidth, newHeight, colorModel);
