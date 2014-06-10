@@ -1,14 +1,16 @@
 package org.mifosplatform.infrastructure.documentmanagement.data;
 
 import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Image;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import javax.imageio.ImageIO;
 
@@ -54,33 +56,62 @@ public class ImageData {
     	if (maxWidth == null && maxHeight == null) {
     		return getContent();
     	}
-		try {
-			BufferedImage originalImage = ImageIO.read(this.file);
-			int originalWidth = originalImage.getWidth();
-			int originalHeight = originalImage.getHeight();
-			float originalAspect = ((float) originalWidth)/((float) originalHeight);
-			int width;
-			int height;
-			if (maxWidth != null && maxHeight * originalAspect > maxWidth) {
-				// Width bounded
-				width = maxWidth;
-				height = (int) (width / originalAspect);
-			} else {
-				// Height bounded
-				height = maxHeight;
-				width = (int) (height * originalAspect);
-			}
-  	    	Image scaledImage = originalImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-  	        BufferedImage imageBuff = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-  	        Graphics g = imageBuff.createGraphics();
-  	        g.drawImage(scaledImage, 0, 0, new Color(0,0,0), null);
-  	        g.dispose();
-  	        ByteArrayOutputStream out = new ByteArrayOutputStream();
-  	        ImageIO.write(imageBuff, "JPEG", out);
-  	        return out.toByteArray();
-		} catch (IOException e) {
-			return null;
-		}
+      FileInputStream fis = null;
+      try {
+        fis = new FileInputStream(this.file);
+        byte[] out = resizeImage(fis, maxWidth, maxHeight);
+        return (out == null) ? getContent() : out;
+      } catch (FileNotFoundException ex) {
+        return getContent();
+      } finally {
+        if (fis != null) {
+          try { fis.close(); } catch (IOException ex) {}
+        }
+      }
+    }
+    
+    public byte[] resizeImage(InputStream in, int maxWidth, int maxHeight) {
+      return resizeImage(in, maxWidth, maxHeight, "jpg");
+    }
+
+    public byte[] resizeImage(InputStream in, int maxWidth, int maxHeight, String imageType) {
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      resizeImage(in, out, maxWidth, maxHeight, imageType);
+      byte[] result = out.toByteArray();
+      if (result != null && result.length > 0) {
+        return result;
+      } else {
+        return null;
+      }
+    }
+
+    public void resizeImage(InputStream in, OutputStream out, int maxWidth, int maxHeight) {
+      resizeImage(in, out, maxWidth, maxHeight, "jpg");
+    }
+
+    public void resizeImage(
+        InputStream in, OutputStream out, int maxWidth, int maxHeight, String imageType) {
+
+      try {
+        BufferedImage src = ImageIO.read(in);
+        float widthRatio = (float)src.getWidth() / maxWidth;
+        float heightRatio = (float)src.getHeight() / maxHeight;
+        float scaleRatio = widthRatio < heightRatio ? widthRatio : heightRatio;
+
+        int newWidth = (int)(src.getWidth() * scaleRatio);
+        int newHeight = (int)(src.getWidth() * scaleRatio);
+        int colorModel = imageType.matches("jpe?g|JPE?G")
+            ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
+        BufferedImage target = new BufferedImage(newWidth, newHeight, colorModel);
+        Graphics2D g = target.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.drawImage(src, 0, 0, newWidth, newHeight, Color.BLACK, null);
+        g.dispose();
+        ImageIO.write(target, imageType, out);
+      } catch (IOException ex) {
+        // No image, sending null upstream
+      }
+
     }
 
     private String setImageContentType() {
