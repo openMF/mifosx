@@ -1377,4 +1377,26 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
     }
 
+    @Override
+    public LoanTransactionData retrieveRecoveryPaymentTemplate(Long loanId) {
+        final Loan loan = this.loanRepository.findOne(loanId);
+        if (loan == null) { throw new LoanNotFoundException(loanId); }
+        final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.RECOVERY_REPAYMENT);
+        final Collection<CodeValueData> paymentOptions = this.codeValueReadPlatformService
+                .retrieveCodeValuesByCode(PaymentDetailConstants.paymentTypeCodeName);
+        return new LoanTransactionData(null, null, null, transactionType, null, null, null, loan.getTotalWrittenOff(), null, null, null,
+                null, null, paymentOptions, null, null, null);
+
+    }
+
+    @Override
+    public LoanTransactionData retrieveLoanWriteoffTemplate(final Long loanId) {
+
+        final LoanAccountData loan = this.retrieveOne(loanId);
+
+        final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.WRITEOFF);
+        return new LoanTransactionData(null, null, null, transactionType, null, loan.currency(), DateUtils.getLocalDateOfTenant(),
+                loan.getTotalOutstandingAmount(), null, null, null, null, null, null, null, null);
+    }
+
 }

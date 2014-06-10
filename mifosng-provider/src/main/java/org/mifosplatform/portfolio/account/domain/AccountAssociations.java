@@ -43,6 +43,10 @@ public class AccountAssociations extends AbstractPersistable<Long> {
         return new AccountAssociations(loan, null, null, savingsAccount);
     }
 
+    public static AccountAssociations associateSavingsAccount(final SavingsAccount savingsAccount, final SavingsAccount linkedSavingsAccount) {
+        return new AccountAssociations(null, savingsAccount, null, linkedSavingsAccount);
+    }
+
     public SavingsAccount linkedSavingsAccount() {
         return this.linkedSavingsAccount;
     }

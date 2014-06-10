@@ -925,6 +925,14 @@
                                 <td></td>
                             </tr>
 							<tr>
+                                <td></td>
+                                <td>loans/{loanId}/transactions?command=recoverypayment</td>
+                                <td><a href="#loans_transaction_recovery_payment">Make a Recovery Payment</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+							<tr>
 								<td></td>
 								<td>loans/{loanId}/transactions/{transactionId}</td>
 								<td></td>
@@ -1109,6 +1117,70 @@
 								<td></td>
 							</tr>
                             <tr>
+                                <td></td>
+                                <td>groups/{groupId}?command=generateCollectionSheet</td>
+                                <td><a href="#groups_generate_collectionsheet">Generate Collection Sheet</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>groups/{groupId}?command=saveCollectionSheet</td>
+                                <td><a href="#groups_save_collectionsheet">Save Collection Sheet</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>groups/{groupId}?command=unassignStaff</td>
+                                <td><a href="#groups_unassignStaff">Unassign Staff</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>groups/{groupId}?command=assignStaff</td>
+                                <td><a href="#groups_assignStaff">Assign Staff</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>groups/{groupId}?command=close</td>
+                                <td><a href="#groups_close">Close Group</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>groups/{groupId}?command=assignRole</td>
+                                <td><a href="#groups_assignRole">Assign Role</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>groups/{groupId}?command=unassignRole</td>
+                                <td><a href="#groups_unassignRole">Unassign Role</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>groups/{groupId}?command=updateRole</td>
+                                <td><a href="#groups_updateRole">Update Role</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
                                 <td><a href="#centers">Center</a></td>
                                 <td>centers</td>
                                 <td><a href="#centers_create">Create a Center</a></td>
@@ -1136,6 +1208,38 @@
                                 <td></td>
                                 <td>centers/{centerId}?command=activate</td>
                                 <td><a href="#centers_activate">Activate a Center</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>centers/{centerId}?command=close</td>
+                                <td><a href="#centers_close">Close Center</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+															<td></td>
+															<td>centers/{centerId}/accounts</td>
+															<td></td>
+															<td><a href="#centers_accounts">Retrive Center accounts summary</a></td>
+															<td></td>
+															<td></td>
+														</tr>
+                            <tr>
+                                <td></td>
+                                <td>centers/{centerId}?command=generateCollectionSheet</td>
+                                <td><a href="#centers_generate_collectionsheet">Generate Collection Sheet</a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>centers/{centerId}?command=saveCollectionSheet</td>
+                                <td><a href="#centers_save_collectionsheet">Save Collection Sheet</a></td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
@@ -1265,6 +1369,24 @@
 								<td><a href="#accountingrules_update">Update a Accounting Rule</a></td>
 								<td><a href="#accountingrules_delete">Delete a Accounting Rule</a></td>
 							</tr>
+							<tr>
+								<td><a href="#officeglaccount">Office GL Account Mappings</a></td>
+								<td>officeglaccounts</td>
+								<td><a href="#officeglaccounts_create">Create Office GL Account Mapping</a><br> </td>
+								<td><a href="#officeglaccounts_list">List Journal Entries</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>officeglaccounts/{entryId}</td>
+								<td></td>
+								<td><a href="#officeglaccounts_retrieve">Retrieve a single Entry</a></td>
+								<td><a href="#officeglaccounts_update">Update Office GL Account Mapping</a></td>
+								<td><a href="#officeglaccounts_delete">Delete Office GL Account Mapping</a></td>
+
+							</tr>
+							
 						</table>
 					</div>
 				</div>
@@ -2027,6 +2149,30 @@
 								<td></td>
 								<td></td>
 							</tr>
+							<tr>
+                                 <td><a href="#survey_retrieve">Survey</a></td>
+                                 <td>survey/</td>
+                                 <td></td>
+                                 <td><a href="#survey_retrieve">List surveys</a></td>
+                                 <td></td>
+                                 <td></td>
+                             </tr>
+                             <tr>
+                                 <td></td>
+                                 <td>survey/{surveyName}</td>
+                                 <td></td>
+                                 <td><a href="#survey_details">Retrieve Survey details</a></td>
+                                 <td></td>
+                                 <td></td>
+                             </tr>
+                             <tr>
+                                 <td></td>
+                                 <td>survey/{surveyName}/{clientId}</td>
+                                 <td><a href="#survey_create">Create Entry in the survey table</a></td>
+                                 <td></td>
+                                 <td></td>
+                                 <td></td>
+                             </tr>
 						</table>
 					</div>
 				</div>
@@ -4160,6 +4306,248 @@ Request Body:
 	    </div>
 	</div>
 
+	<a id="centers_close" name="centers_close" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Close a Center</h2>
+	        <p>Centers can be closed if they don't have any non-closed groups/savings.</p>
+	        <p>If the group have any corresponding active groups/savingsAccount this API will result in an error.</p>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/centers/{centerId}?command=close</code>
+	        <code class="method-request">POST centers/1?command=close
+Content-Type: application/json
+Request Body:
+{
+ "closureReasonId": 32,
+ "closureDate": "05 May 2014",
+ "locale": "en",
+ "dateFormat": "dd MMMM yyyy"
+}
+			</code>
+	        <code class="method-response">
+{
+  "resourceId": 1
+}
+	        </code>
+	    </div>
+	</div>
+
+			<a id="centers_accounts" name="centers_accounts" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve Center accounts overview</h4>
+					<p>
+						An example of how a savings summary can be provided. This
+						is requested in a specific use case of the reference application.<br> It is quite reasonable to add resources like this to simplify User Interface development.
+					</p>
+					<p>Example Requests:</p>
+					<div class=apiClick>centers/9/accounts</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/centers/{centerId}/accounts
+					</code>
+					<code class="method-response">
+{
+ "savingsAccounts": [{
+  "id": 16,
+  "accountNo": "000000016",
+  "productId": 1,
+  "productName": "Voluntary savings",
+  "status": {
+   "id": 100,
+   "code": "savingsAccountStatusType.submitted.and.pending.approval",
+   "value": "Submitted and pending approval",
+   "submittedAndPendingApproval": true,
+   "approved": false,
+   "rejected": false,
+   "withdrawnByApplicant": false,
+   "active": false,
+   "closed": false,
+   "prematureClosed": false,
+   "transferInProgress": false,
+   "transferOnHold": false
+  },
+  "currency": {
+   "code": "USD",
+   "name": "US Dollar",
+   "decimalPlaces": 2,
+   "inMultiplesOf": 0,
+   "displaySymbol": "$",
+   "nameCode": "currency.USD",
+   "displayLabel": "US Dollar ($)"
+  },
+  "accountType": {
+   "id": 2,
+   "code": "accountType.group",
+   "value": "Group"
+  },
+  "timeline": {
+   "submittedOnDate": [2014,5,1],
+   "submittedByUsername": "mifos",
+   "submittedByFirstname": "App",
+   "submittedByLastname": "Administrator"
+  },
+  "depositType": {
+   "id": 100,
+   "code": "depositAccountType.savingsDeposit",
+   "value": "Savings"
+  }
+ }]
+}
+					</code>
+				</div>
+			</div>
+
+    <a id="centers_generate_collectionsheet" name="centers_generate_collectionsheet" class="old-syle-anchor">&nbsp;</a>
+        <div class="method-section">
+            <div class="method-description">
+              <h4>Generate Collection Sheet</h4>
+            <p>This api retrieves repayment details of all jlg loans under a center on a specified meeting date.</p>
+        </div>
+        <div class="method-example">
+            <code class="method-declaration">POST https://Domain Name/api/v1/centers/{centerId}?command=generateCollectionSheet</code>
+            <code class="method-request">POST centers/10?command=generateCollectionSheet
+Content-Type: application/json
+Request Body:
+{
+ "dateFormat":"dd MMMM yyyy",
+ "locale":"en",
+ "calendarId":6,
+ "transactionDate":"04 May 2014"
+}
+            </code>
+            <code class="method-response">
+{
+ "dueDate": [2014,5,4],
+ "loanProducts": [{
+  "id": 1,
+  "name": "IGL",
+  "includeInBorrowerCycle": false,
+  "useBorrowerCycle": false,
+  "currency": {
+   "code": "USD",
+   "name": "US Dollar",
+   "decimalPlaces": 2,
+   "inMultiplesOf": 0,
+   "displaySymbol": "$",
+   "nameCode": "currency.USD",
+   "displayLabel": "US Dollar ($)"
+  },
+  "principalVariationsForBorrowerCycle": [],
+  "interestRateVariationsForBorrowerCycle": [],
+  "numberOfRepaymentVariationsForBorrowerCycle": []
+ }],
+ "groups": [{
+  "groupId": 1,
+  "groupName": "Group 1",
+  "staffId": 1,
+  "staffName": "A, Aliya",
+  "levelId": 2,
+  "levelName": "Group",
+  "clients": [{
+   "clientId": 10,
+   "clientName": "saving acc",
+   "loans": [{
+    "loanId": 10,
+    "accountId": "000000010",
+    "accountStatusId": 300,
+    "productShortName": "IGL",
+    "productId": 1,
+    "currency": {
+     "code": "USD",
+     "name": "US Dollar",
+     "decimalPlaces": 2,
+     "inMultiplesOf": 0,
+     "displaySymbol": "$",
+     "nameCode": "currency.USD",
+     "displayLabel": "US Dollar ($)"
+    },
+    "principalDue": 1200.000000,
+    "principalPaid": 0.000000,
+    "interestDue": 21.360000,
+    "interestPaid": 0.000000,
+    "totalDue": 1221.360000
+   }],
+   "attendanceType": {
+    "id": 0,
+    "code": "attendanceType.invalid",
+    "value": "Invalid"
+   }
+  }]
+ }],
+ "attendanceTypeOptions": [{
+  "id": 1,
+  "code": "attendanceType.present",
+  "value": "Present"
+ },
+ {
+  "id": 2,
+  "code": "attendanceType.absent",
+  "value": "Absent"
+ },
+ {
+  "id": 3,
+  "code": "attendanceType.approved",
+  "value": "Approved"
+ },
+ {
+  "id": 4,
+  "code": "attendanceType.leave",
+  "value": "Leave"
+ },
+ {
+  "id": 5,
+  "code": "attendanceType.late",
+  "value": "Late"
+ }]
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="centers_save_collectionsheet" name="centers_save_collectionsheet" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Save Collection Sheet</h4>
+                    <p>This api allows the loan officer to perform bulk repayments of JLG loans for a center on its meeting date.</p>      
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">POST https://Domain Name/api/v1/centers/{centerId}?command=saveCollectionSheet</code>
+                    <code class="method-request">POST centers/10?command=saveCollectionSheet
+{
+ "dateFormat": "dd MMMM yyyy",
+ "locale": "en",
+ "calendarId": 6,
+ "transactionDate": "04 May 2014",
+ "actualDisbursementDate": "04 May 2014",
+ "clientsAttendance": [],
+ "bulkDisbursementTransactions": [],
+ "bulkRepaymentTransactions": [{
+  "loanId": 10,
+  "transactionAmount": 1221.36
+ }]
+}
+                    </code>
+                    <code class="method-response">
+{
+ "groupId": 10,
+ "resourceId": 10,
+ "changes": {
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "bulkTransations": {
+   "loanId": 10,
+   "transactionAmount": 1221.36,
+   "transactionDate": [2014,5,4]
+  }
+ }
+}
+                    </code>
+                </div>
+            </div>      
+
 			<a id="centers_update" name="centers_update" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
@@ -4835,7 +5223,340 @@ Request Body:
 			  		</code>
 			    </div>
 			</div>
-			<a id="groups_retrieve" name="groups_retrieve" class="old-syle-anchor">&nbsp;</a>
+
+            <a id="groups_generate_collectionsheet" name="groups_generate_collectionsheet" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Generate Collection Sheet</h4>
+                    <p>This api retrieves repayment details of all jlg loans of all members of a group on a specified meeting date.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">POST https://Domain Name/api/v1/groups/{groupId}?command=generateCollectionSheet</code>
+                    <code class="method-request">POST groups/1?command=generateCollectionSheet
+Content-Type: application/json
+Request Body:
+{
+ "dateFormat":"dd MMMM yyyy",
+ "locale":"en",
+ "calendarId":6,
+ "transactionDate":"04 May 2014"
+}
+                    </code>
+                    <code class="method-response">
+{
+ "dueDate": [2014,5,4],
+ "loanProducts": [{
+  "id": 1,
+  "name": "IGL",
+  "includeInBorrowerCycle": false,
+  "useBorrowerCycle": false,
+  "currency": {
+   "code": "USD",
+   "name": "US Dollar",
+   "decimalPlaces": 2,
+   "inMultiplesOf": 0,
+   "displaySymbol": "$",
+   "nameCode": "currency.USD",
+   "displayLabel": "US Dollar ($)"
+  },
+  "principalVariationsForBorrowerCycle": [],
+  "interestRateVariationsForBorrowerCycle": [],
+  "numberOfRepaymentVariationsForBorrowerCycle": []
+ }],
+ "groups": [{
+  "groupId": 1,
+  "groupName": "Group 1",
+  "staffId": 1,
+  "staffName": "A, Aliya",
+  "levelId": 2,
+  "levelName": "Group",
+  "clients": [{
+   "clientId": 10,
+   "clientName": "saving acc",
+   "loans": [{
+    "loanId": 10,
+    "accountId": "000000010",
+    "accountStatusId": 300,
+    "productShortName": "IGL",
+    "productId": 1,
+    "currency": {
+     "code": "USD",
+     "name": "US Dollar",
+     "decimalPlaces": 2,
+     "inMultiplesOf": 0,
+     "displaySymbol": "$",
+     "nameCode": "currency.USD",
+     "displayLabel": "US Dollar ($)"
+    },
+    "principalDue": 1200.000000,
+    "principalPaid": 0.000000,
+    "interestDue": 21.360000,
+    "interestPaid": 0.000000,
+    "totalDue": 1221.360000
+   }],
+   "attendanceType": {
+    "id": 0,
+    "code": "attendanceType.invalid",
+    "value": "Invalid"
+   }
+  }]
+ }],
+ "attendanceTypeOptions": [{
+  "id": 1,
+  "code": "attendanceType.present",
+  "value": "Present"
+ },
+ {
+  "id": 2,
+  "code": "attendanceType.absent",
+  "value": "Absent"
+ },
+ {
+  "id": 3,
+  "code": "attendanceType.approved",
+  "value": "Approved"
+ },
+ {
+  "id": 4,
+  "code": "attendanceType.leave",
+  "value": "Leave"
+ },
+ {
+  "id": 5,
+  "code": "attendanceType.late",
+  "value": "Late"
+ }]
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="groups_save_collectionsheet" name="groups_save_collectionsheet" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Save Collection Sheet</h4>
+                    <p>This api allows the loan officer to perform bulk repayments of JLG loans for a group on its meeting date.</p>
+
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">POST https://Domain Name/api/v1/groups/{groupId}?command=saveCollectionSheet</code>
+                    <code class="method-request">POST groups/1?command=saveCollectionSheet
+{
+ "dateFormat": "dd MMMM yyyy",
+ "locale": "en",
+ "calendarId": 6,
+ "transactionDate": "04 May 2014",
+ "actualDisbursementDate": "04 May 2014",
+ "clientsAttendance": [],
+ "bulkDisbursementTransactions": [],
+ "bulkRepaymentTransactions": [{
+  "loanId": 10,
+  "transactionAmount": 1221.36
+ }]
+}
+                    </code>
+                    <code class="method-response">
+{
+ "groupId": 1,
+ "resourceId": 1,
+ "changes": {
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "bulkTransations": {
+   "loanId": 10,
+   "transactionAmount": 1221.36,
+   "transactionDate": [2014,5,4]
+  }
+ }
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="groups_unassignStaff" name="groups_unassignStaff" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Unassign a Staff</h4>
+                    <p>Allows you to unassign the <i>Staff</i>.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">POST https://Domain Name/api/v1/groups/{groupId}?command=unassignStaff</code>
+                    <code class="method-request">POST groups/1?command=unassignStaff
+Content-Type: application/json
+Request Body:
+{
+ "staffId":"1"
+}
+                    </code>
+                    <code class="method-response">
+{
+ "officeId": 1,
+ "groupId": 1,
+ "resourceId": 1,
+ "changes": {}
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="groups_assignStaff" name="groups_assignStaff" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Assign a Staff</h4>
+                    <p>Allows you to assign <i>Staff</i> for existed Group.</p>
+                    <p>The selected Staff member should be belongs to the group's office.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">POST https://Domain Name/api/v1/groups/{groupId}?command=assignStaff</code>
+                    <code class="method-request">POST groups/1?command=assignStaff
+Content-Type: application/json
+Request Body:
+{
+ "staffId": "1"
+}
+                    </code>
+                    <code class="method-response">
+{
+ "officeId": 1,
+ "groupId": 1,
+ "resourceId": 1,
+ "changes": {"staffId":1}
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="groups_close" name="groups_close" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Close a Group</h4>
+                    <p>Groups can be closed if they don't have any non-closed clients/loans/savingsAccounts and  This API exists to close a group.</p>
+                    <p>If the group have any corresponding active clients/loans/savingsAccount this API will result in an error.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">POST https://Domain Name/api/v1/groups/{groupId}?command=close</code>
+                    <code class="method-request">POST groups/1?command=close
+Content-Type: application/json
+Request Body:
+{
+ "dateFormat":"dd MMMM yyyy",
+ "locale":"en",
+ "closureDate":"25 June 2013",
+ "closureReasonId":"30"
+}
+                    </code>
+                    <code class="method-response">
+{
+ "groupId": 1,
+ "resourceId": 1
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="groups_assignRole" name="groups_assignRole" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Assign a Role</h4>
+                    <p>Allows you to assign <i>Role</i> for existed member of group.</p>
+                    <p>We can define member roles by adding code values to <b>GROUPROLE</b> code. Example:Group leader etc.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">POST https://Domain Name/api/v1/groups/{groupId}?command=assignRole</code>
+                    <code class="method-request">POST groups/1?command=assignRole
+Content-Type: application/json
+Request Body:
+{
+ "clientId": "1",
+ "role":30
+}
+                    </code>
+                    <code class="method-response">
+{
+ "clientId": 1,
+ "groupId": 1,
+ "resourceId": 1
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="groups_unassignRole" name="groups_unassignRole" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Unassign a Role</h4>
+                    <p>Allows you to unassign the member <i>Role</i>.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">POST https://Domain Name/api/v1/groups/{groupId}?command=unassignRole&roleId=1</code>
+                    <code class="method-request">POST groups/1?command=unassignRole&roleId=1
+Content-Type: application/json
+Request Body:
+{}
+                    </code>
+                    <code class="method-response">
+{
+ "clientId": 1,
+ "groupId": 1,
+ "resourceId": 1
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="groups_updateRole" name="groups_updateRole" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Update a Role</h4>
+                    <p>Allows you to update the member <i>Role</i>.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">POST https://Domain Name/api/v1/groups/{groupId}?command=updateRole&roleId=2</code>
+                    <code class="method-request">POST groups/1?command=updateRole&roleId=2
+Content-Type: application/json
+Request Body:
+{
+ "role":"31"
+}
+                    </code>
+                    <code class="method-response">
+{
+ "groupId": 1,
+ "resourceId": 2,
+ "changes":{"role":31}
+}
+                    </code>
+                </div>
+            </div>
+
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Close a Client</h4>
+                    <p>Clients can be closed if they dont have any non-closed loans/savingsAccount. This API exists to close a client .</p>
+                    <p>If the client have any corresponding active loans/savingsAccount this API will result in an error.</p>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">POST https://Domain Name/api/v1/clients/{clientId}?command=close</code>
+                    <code class="method-request">POST clients/1?command=close
+                        Content-Type: application/json
+                        Request Body:
+                        {
+                        "dateFormat":"dd MMMM yyyy",
+                        "locale":"en",
+                        "closureDate":"25 June 2013",
+                        "closureReasonId":"11"
+                        }
+                    </code>
+                    <code class="method-response">
+                        {
+                        "clientId":15,
+                        "resourceId":15
+                        }
+                    </code>
+                </div>
+            </div>
+
+            <a id="groups_retrieve" name="groups_retrieve" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Retrieve a Group</h4>
@@ -7342,7 +8063,61 @@ Request Body:
                     </code>
                 </div>
             </div>
+        <!------recovery payment -->
+		        <a id="loans_transaction_recovery_payment" name="loans_transaction_recovery_payment" class="old-syle-anchor">&nbsp;</a>
+	    		<div class="method-section">
+				<div class="method-description">
+					<h4>Make Recovery Payment </h4>
+					<p>only applies to written-off loans</p>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+POST https://DomainName/api/v1/loans/{loanId}/transactions?command=recoverypayment
+					</code>
+					<code class="method-request">
+POST loans/5/transactions?command=recoverypayment
+Content-Type: application/json
+Request Body:
+{
+  "dateFormat": "dd MMMM yyyy",
+  "locale": "en",
+  "transactionDate": "14 May 2013",
+  "transactionAmount": "500.00",
+  "paymentTypeId": "12",
+  "note": "check payment",
+  "accountNumber": "acc123",
+  "checkNumber": "che123",
+  "routingCode": "rou123",
+  "receiptNumber": "rec123",
+  "bankNumber": "ban123"
+}
+					</code>
+					<code class="method-response">
+{
+  "officeId": 1,
+  "clientId": 1,
+  "loanId": 5,
+  "resourceId": 564,
+  "changes": {
+    "transactionDate": "14 May 2013",
+    "transactionAmount": "500.00",
+    "locale": "en",
+    "dateFormat": "dd MMMM yyyy",
+    "note": "check payment",
+    "accountNumber": "acc123",
+    "checkNumber": "che123",
+    "routingCode": "rou123",
+    "receiptNumber": "rec123",
+    "bankNumber": "ban123"
+  }
+}
+					</code>
+				</div>
+			</div>
 
+        
+		<!--- end of recovery payment -->
+		
             <a id="loans_transaction_undo_write-off_loan" name="loans_transaction_undo_write-off_loan" class="old-syle-anchor">&nbsp;</a>
             <div class="method-section">
                 <div class="method-description">
@@ -11154,6 +11929,39 @@ GET https://DomainName/api/v1/configurations/1
 				</div>
 			</div>
 
+			<a id="configs_globalconfig_retrieve_survey" name="configs_globalconfig_retrieve_survey" class="old-syle-anchor">&nbsp;</a>
+             <div class="method-section">
+                 <div class="method-description">
+                     <h4>Retrieve Global Configuration for surveys</h4>
+                     <p>Returns the list global enable/disable survey configurations.</p>
+                     <p>Example Requests:</p>
+                     <div class=apiClick>configurations/survey</div>
+                 </div>
+                 <div class="method-example">
+                     <code class="method-declaration">
+                         GET https://DomainName/api/v1/configurations/survey
+                     </code>
+                     <code class="method-response">
+                         {
+                         "ppi_kenya_2005": [
+                         {
+                         "name": "maker-checker",
+                         "enabled": true,
+                         "value": 0,
+                         "id": 1
+                         },
+                         {
+                         "name": "ppi_tanzania_20012",
+                         "enabled": false,
+                         "value": 0,
+                         "id": 2
+                         },
+                         ]
+                         }
+                     </code>
+                 </div>
+             </div>
+
 			<a id="configs_globalconfig_update" name="configs_globalconfig_update" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
@@ -12268,6 +13076,22 @@ POST https://DomainName/api/v1/makercheckers/{auditId}?command=approve
 					</code>
 					<code class="method-request">
 POST makercheckers/1?command=approve
+Content-Type: application/json
+					</code>
+					<code class="method-response">{ "auditId": 1 } </code>
+				</div>
+			</div>
+			<a id="makercheckers_reject" name="makercheckers_reject" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Reject Maker Checker Entry</h4>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+POST https://DomainName/api/v1/makercheckers/{auditId}?command=reject
+					</code>
+					<code class="method-request">
+POST makercheckers/1?command=reject
 Content-Type: application/json
 					</code>
 					<code class="method-response">{ "auditId": 1 } </code>
@@ -15675,7 +16499,7 @@ Content-Type: application/json
                 <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Mandatory Fields</div></td></tr>
                 <tr class=alt>
                 	<td>name, shortName, description, currencyCode, digitsAfterDecimal,inMultiplesOf, 
-                		interestCompoundingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minDepositTerm, minDepositTermTypeId, recurringDepositFrequency, recurringDepositFrequencyTypeId, accountingRule </td>
+                		interestCompoundingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minDepositTerm, minDepositTermTypeId, recurringDepositFrequency, recurringDepositFrequencyTypeId, accountingRule, depositAmount </td>
                 </tr>
             </table>
             <br/>
@@ -15688,7 +16512,7 @@ Content-Type: application/json
             <br/>
             <table class=matrixHeading>
                 <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Optional Fields</div></td></tr>
-                <tr class=alt><td>lockinPeriodFrequency, lockinPeriodFrequencyType, maxDepositTerm, maxDepositTermTypeId, inMultiplesOfDepositTerm, inMultiplesOfDepositTermTypeId, preClosurePenalApplicable, preClosurePenalInterest, preClosurePenalInterestOnTypeId, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, charges, charts</tr>
+                <tr class=alt><td>lockinPeriodFrequency, lockinPeriodFrequencyType, maxDepositTerm, maxDepositTermTypeId, inMultiplesOfDepositTerm, inMultiplesOfDepositTermTypeId, preClosurePenalApplicable, preClosurePenalInterest, preClosurePenalInterestOnTypeId, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, charges, charts, minDepositAmount, maxDepositAmount</tr>
             </table>
         </div>
         <div class="method-example">
@@ -15718,6 +16542,9 @@ Request Body:
   "minDepositTermTypeId":1,
   "maxDepositTerm":5,
   "maxDepositTermTypeId":3,
+  depositAmount: "10000",
+  minDepositAmount: "100",
+  maxDepositAmount: "1000000",
   "charts":[
       {
          "fromDate": "01 Jan 2014",
@@ -15860,6 +16687,9 @@ Request Body:
     "code": "recurring.deposit.savingsPeriodFrequencyType.months",
     "value": "Months"
   },
+   "minDepositAmount":100.00,
+   "depositAmount":10000.00,
+   "maxDepositAmount":1000000.00,
   "preClosurePenalApplicable":"true",
   "preClosurePenalInterest":"1.75",
   "preClosurePenalInterestOnType": {
@@ -18542,7 +19372,7 @@ No Request Body:
 	        <br/>
 	        <table class=matrixHeading>
 	            <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Optional Fields</div></td></tr>
-	            <tr class=alt><td>accountNo, externalId, fieldOfficerId</td></tr>
+	            <tr class=alt><td>accountNo, externalId, fieldOfficerId,linkAccountId(if provided initial deposit amount will be collected from this account),transferInterestToSavings(By enabling this flag all interest postings will be transferred to linked saving account )</td></tr>
 	        </table>
 	        <br/>
 	        <table class=matrixHeading>
@@ -20000,7 +20830,7 @@ No Request Body:
 	        <br/>
 	        <table class=matrixHeading>
 	            <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Mandatory Fields</div></td></tr>
-	            <tr class=alt><td>clientId or groupId, productId, submittedOnDate, recurringDepositAmount, depositPeriod, depositPeriodFrequencyId, recurringDepositFrequency, recurringDepositFrequencyTypeId</td></tr>
+	            <tr class=alt><td>clientId or groupId, productId, submittedOnDate, recurringDepositAmount, depositPeriod, depositPeriodFrequencyId, recurringDepositFrequency, recurringDepositFrequencyTypeId, expectedFirstDepositOnDate</td></tr>
 	        </table>
 	        <br/>
 	        <table class=matrixHeading>
@@ -20049,7 +20879,8 @@ Request Body:
   "depositPeriod":"6",
   "depositPeriodFrequencyId":"2",
   "accountNo": "RD000023",
-  "externalId": "RD-23"
+  "externalId": "RD-23",
+  expectedFirstDepositOnDate: "02 April 2014"
 }
 			</code>
 			<p>Full request: accountNo provided (must be unique), remaining details override details from recurring deposit product (except currency).</p>
@@ -20882,6 +21713,11 @@ Request Body:
   },
   "recurringDepositAmount": 100,
   "recurringDepositFrequency": 1,
+  "expectedFirstDepositOnDate": [
+  	2014, 
+  	4,
+   	2
+   ],
   "recurringDepositFrequencyType": {
       "id": 2,
       "code": "recurring.deposit.savingsPeriodFrequencyType.months",
@@ -23840,7 +24676,10 @@ No Request Body
 					<h4>Register Data Table</h4>
 					<p>Registers a data table with the Mifos X Core application
 						table. This allows the data table to be maintained through the
-						API.</p>
+						API.
+						In case the datatable is a PPI (survey table), a parameter category should be pass along with the request.
+                        The API currently support one category (200)
+                    </p>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
@@ -24205,6 +25044,261 @@ Request Body:
 				</div>
 			</div>
 			<!-- end of datatables api docs -->
+
+			<!-- start of survey api docs -->
+ 
+             <a id="survey_retrieve" name="survey_retrieve"
+                class="old-syle-anchor">&nbsp;</a>
+             <div class="method-section">
+                 <div class="method-description">
+                     <h4>Retreive surveys</h4>
+                     <p>Retrieve surveys. This allows to retrieve the list of survey tables registered .
+                     </p>
+                 </div>
+                 <div class="method-example">
+                     <code class="method-declaration">
+                         GET https://DomainName/api/v1/survey/
+                     </code>
+                     <code class="method-request">
+                         GET survey/
+ 
+                         Content-Type: application/json
+                         Request Body:
+                         {}
+                     </code>
+                     <code class="method-response">
+                     [
+                         {
+                         "datatableData": {
+                         "applicationTableName": "m_client",
+                         "registeredTableName": "ppi_kenya_2005",
+                         "columnHeaderData": [
+                             {
+                             "columnName": "id",
+                             "columnType": "bigint",
+                             "columnLength": 0,
+                             "columnDisplayType": "INTEGER",
+                             "isColumnNullable": false,
+                             "isColumnPrimaryKey": true,
+                             "columnValues": []
+                             },
+                             {
+                             "columnName": "client_id",
+                             "columnType": "int",
+                             "columnLength": 0,
+                             "columnDisplayType": "INTEGER",
+                             "isColumnNullable": false,
+                             "isColumnPrimaryKey": false,
+                             "columnValues": []
+                             },
+                             {
+                             "columnName": "ppi_household_members_cd_q1_householdmembers",
+                             "columnType": "int",
+                             "columnLength": 0,
+                             "columnDisplayType": "CODELOOKUP",
+                             "isColumnNullable": false,
+                             "isColumnPrimaryKey": false,
+                             "columnValues": [
+                             {
+                             "id": 167,
+                             "value": "Nine or More",
+                             "score": 0
+                             },
+                             {
+                             "id": 168,
+                             "value": "Seven or eight",
+                             "score": 5
+                             },
+                             {
+                             "id": 169,
+                             "value": "Six",
+                             "score": 8
+                             },
+ 
+                         ],
+                     "columnCode": "ppi_household_members"
+                     },
+                    {
+                     "columnName": "date",
+                     "columnType": "datetime",
+                     "columnLength": 0,
+                     "columnDisplayType": "DATETIME",
+                     "isColumnNullable": false,
+                     "isColumnPrimaryKey": false,
+                     "columnValues": []
+                     }
+                     ]
+                     },
+                     "enabled": false
+                     },
+                     {
+                     "datatableData": {
+                     "applicationTableName": "m_client",
+                     "registeredTableName": "ppi_tanzania_20012",
+                     "columnHeaderData": [
+                     {
+                     "columnName": "id",
+                     "columnType": "bigint",
+                     "columnLength": 0,
+                     "columnDisplayType": "INTEGER",
+                     "isColumnNullable": false,
+                     "isColumnPrimaryKey": true,
+                     "columnValues": []
+                     },
+                     {
+                     "columnName": "client_id",
+                     "columnType": "int",
+                     "columnLength": 0,
+                     "columnDisplayType": "INTEGER",
+                     "isColumnNullable": false,
+                     "isColumnPrimaryKey": false,
+                     "columnValues": []
+                     },
+                     {
+                     "columnName": "ppi_youngerthan17_cd_q1_youngerthan17",
+                     "columnType": "int",
+                     "columnLength": 0,
+                     "columnDisplayType": "CODELOOKUP",
+                     "isColumnNullable": false,
+                     "isColumnPrimaryKey": false,
+                     "columnValues": [
+                     {
+                     "id": 204,
+                     "value": "four or More",
+                     "score": 0
+                     },
+ 
+                     ],
+                     "columnCode": "ppi_youngerthan17"
+                     },
+                     ],
+                     "columnCode": "ppi_how_many_tables"
+                     },
+                      ]
+                     },
+                     "enabled": true
+                     }
+                     ]
+                     </code>
+                 </div>
+             </div>
+ 
+ 
+             <a id="survey_details" name="survey_details"
+                class="old-syle-anchor">&nbsp;</a>
+             <div class="method-section">
+                 <div class="method-description">
+                     <h4>Retreive survey</h4>
+                     <p>Lists a registered survey table details and the Mifos X Core application table they are registered to.
+                     </p>
+                 </div>
+                 <div class="method-example">
+                     <code class="method-declaration">
+                         GET https://DomainName/api/v1/survey/ppi_kenya_2005
+                     </code>
+                     <code class="method-request">
+                         GET survey/{surveyName}
+ 
+                         Content-Type: application/json
+                         Request Body:
+                         {}
+                     </code>
+                     <code class="method-response">
+                         {
+                         "applicationTableName": "m_client",
+                         "registeredTableName": "extra_client_details",
+                         "columnHeaderData": [
+                         {
+                         "columnName": "client_id",
+                         "columnType": "bigint",
+                         "columnLength": 0,
+                         "columnDisplayType": "INTEGER",
+                         "isColumnNullable": false,
+                         "isColumnPrimaryKey": true,
+                         "columnValues": []
+                         },
+                         {
+                         "columnName": "Gender_cd_Question",
+                         "columnType": "int",
+                         "columnLength": 0,
+                         "columnDisplayType": "INTEGER",
+                         "isColumnNullable": true,
+                         "isColumnPrimaryKey": false,
+                         "columnValues": []
+                         },
+                         {
+                         "columnName": "Some Decimal",
+                         "columnType": "decimal",
+                         "columnLength": 0,
+                         "columnDisplayType": "DECIMAL",
+                         "isColumnNullable": true,
+                         "isColumnPrimaryKey": false,
+                         "columnValues": []
+                         },
+                         {
+                         "columnName": "Birth Date",
+                         "columnType": "date",
+                         "columnLength": 0,
+                         "columnDisplayType": "DATE",
+                         "isColumnNullable": true,
+                         "isColumnPrimaryKey": false,
+                         "columnValues": []
+                         }
+                         enabled:false
+                         ]
+                         }
+                     </code>
+                 </div>
+             </div>
+ 
+             <a id="survey_create" name="survey_create"
+                class="old-syle-anchor">&nbsp;</a>
+             <div class="method-section">
+                 <div class="method-description">
+                     <h4>Create an entry in the survey table</h4>
+                     <p>Insert and entry in a survey table (full fill the survey).
+ 
+                     </p>
+                 </div>
+                 <div class="method-example">
+                     <code class="method-declaration">
+                         POST https://DomainName/api/v1/survey/ppi_kenya_2005/87
+                     </code>
+                     <code class="method-request">
+                         POST survey/{surveyName}/{clientId}
+ 
+                         Content-Type: application/json
+                         Request Body:
+                         {
+ 
+                                 ppi_household_members_cd_q1_householdmembers : 167,
+                                 ppi_highestschool_cd_q2_highestschool : 174 ,
+                                 ppi_businessoccupation_cd_q3_businessoccupation : 180,
+                                 ppi_habitablerooms_cd_q4_habitablerooms :184,
+                                 ppi_floortype_cd_q5_floortype : 188,
+                                 ppi_lightingsource_cd_q6_lightingsource :190,
+                                 ppi_irons_cd_q7_irons:193,
+                                 ppi_mosquitonets_cd_q8_mosquitonets:195,
+                                 ppi_towels_cd_q9_towels:198,
+                                 ppi_fryingpans_cd_q10_fryingpans:201,
+                                 date:"2014-12-02 20:30:00",
+                                 dateFormat:"Y-m-d H:i:s",
+                                 locale:"en_GB"
+ 
+                         }
+                     </code>
+                     <code class="method-response">
+                         {
+                         "officeId": 2,
+                         "clientId": 87,
+                         "resourceId": 87
+                         }
+                     </code>
+                 </div>
+             </div>
+ 
+ 
+             <!-- end of Survey api docs -->
 			
 			<!-- start of Notes api docs -->
 			<a id="notes" name="notes" class="old-syle-anchor">&nbsp;</a>
@@ -25393,6 +26487,17 @@ GET https://DomainName/api/v1/users
         "firstname": "App",
         "lastname": "Administrator",
         "email": "demomfi@mifos.org",
+        "staff": {
+		   "id": 1,
+		   "firstname": "Test",
+		   "lastname": "123",
+		   "displayName": "123, Test",
+		   "mobileNo": "12312312",
+		   "officeId": 1,
+		   "officeName": "Head Office",
+		   "isLoanOfficer": true,
+		   "isActive": true
+		}
 	"selectedRoles": [
             {
                 "id": 1,
@@ -25473,6 +26578,17 @@ GET https://DomainName/api/v1/users/{userId}
     "firstname": "App",
     "lastname": "Administrator",
     "email": "demomfi@mifos.org",
+    "staff": {
+	 "id": 1,
+	 "firstname": "Test",
+	 "lastname": "123",
+	 "displayName": "123, Test",
+	 "mobileNo": "12312312",
+	 "officeId": 1,
+	 "officeName": "Head Office",
+	 "isLoanOfficer": true,
+	 "isActive": true
+	}
     "availableRoles": [],
     "selectedRoles": [
         {
@@ -25501,8 +26617,17 @@ GET https://DomainName/api/v1/users/{userId}
 						<tr class="matrixHeadingBG">
 							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
 						</tr>
-						<tr class=alt>
+						<tr>
 							<td>username, firstname, lastname, email, officeId, roles, sendPasswordToEmail</td>
+						</tr>
+					</table>
+					<br>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Optional Fields</div></td>
+						</tr>
+						<tr>
+							<td>staffId</td>
 						</tr>
 					</table>
 				</div>
@@ -25520,6 +26645,7 @@ Request body:
     "lastname": "User",
     "email": "whatever@mifos.org",
     "officeId": 1,
+    "staffId": 1,
     "roles": [2,3],
     "sendPasswordToEmail": true
 }
@@ -25540,6 +26666,7 @@ Request body:
     "lastname": "User",
     "email": "whatever@mifos.org",
     "officeId": 1,
+    "staffId": 1,
     "roles": [2,3],
     "sendPasswordToEmail": false,
     "password": "123",
@@ -27447,6 +28574,232 @@ Content-Type: application/json
                 </div>
             </div>
 			
+<!-- start office gl accout mappings-->
+
+<a id="officeglaccount" name="officeglaccount" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h3>Office GL Accounting Mappings</h3>
+                    <p>
+                    	These are the Branch level intermediate accounts to move funds between banches
+                    </p>
+                    <table class=matrixHeading>
+                        <tr class="matrixHeadingBG">
+                            <td><div class="mifosXHeading2">Field Descriptions</div></td>
+                        </tr>
+                        <tr class=alt>
+                            <td>officeId</td>
+                        </tr>
+                        <tr>
+                            <td class=fielddesc>The identifier of the office (
+                            	cost center) at which the financial activity
+                            	occurs</td>
+                        </tr>
+                        <tr class=alt>
+                            <td>liabilityTransferInSuspenseAccountId</td>
+                        </tr>
+                        <tr>
+                            <td class=fielddesc>The identifier of the liability account (
+                            	Ledger Account) against which transfer journal entry
+                            	should made
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <a id="officeglaccounts_list" name="officeglaccounts_list" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>List Office Level GL Account Mappings</h4>
+                    <p>The <i>list</i> of Account Mapping entries through <b>pagination</b> and <b>sorting</b>.</p>
+					<h5>Optional Arguments</h5>
+					<dl class="argument-list">
+						<dt>offset</dt>
+						<dd>
+							Integer <span>optional</span>, defaults to 0
+						</dd>
+						<dd>Indicates from what result to start from.</dd>
+						
+						<dt>limit</dt>
+						<dd>
+							Integer <span>optional</span>, defaults to 200
+						</dd>
+						<dd>Restricts the size of results returned. To override the default and return all entries you must explicitly pass a non-positive integer value for limit e.g. limit=0, or limit=-1</dd>
+
+						<dt>orderBy</dt>
+						<dd>
+							String <span>optional</span>, one of <span>displayName, accountNo, officeId, officeName</span>
+						</dd>
+						<dd>Orders the results by the field indicated.</dd>
+
+						<dt>sortBy</dt>
+						<dd>
+							String <span>optional</span>, one of <span>ASC, DESC</span>
+						</dd>
+						<dd>Indicates what way to order results if <i>orderBy</i> is used.</dd>
+
+						<dt>officeId</dt>
+						<dd>
+							Integer <span>optional</span> 
+						</dd>
+						<dd>Provides ability to restrict list of centers returned based on the office there associated with.</dd>
+						
+						
+					</dl>
+					<p>Example Requests:</p>
+					<div class=apiClick>officeglaccounts</div>
+					<br>
+					<div class=apiClick>officeglaccounts?orderBy=id&sortOrder=DESC</div>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">
+GET https://DomainName/api/v1/officeglaccounts
+                    </code>
+                    <code class="method-response">
+
+{
+  "totalFilteredRecords": 1,
+  "pageItems": [
+    {
+      "id": 1,
+      "officeData": {
+        "id": 2,
+        "name": "Office_BX38"
+      },
+      "glAccountData": {
+        "id": 29,
+        "name": "ACCOUNT_NAME_P9UWO",
+        "glCode": "LIABILITY_7E1401198314394"
+      }
+    }]}
+                    </code>
+                </div>
+            </div>
+
+            <a id="officeglaccounts_create" name="officeglaccounts_create" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Create Office GL Account</h4>
+                    <table class=matrixHeading>
+                        <tr class="matrixHeadingBG">
+                            <td><div class="mifosXHeading2">Mandatory Fields</div></td>
+                        </tr>
+                        <tr class=alt>
+                            <td>officeId, liabilityTransferInSuspenseAccountId 
+                            </td>
+                        </tr>
+                       
+                    </table>
+                    <br />
+					
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">
+POST https://DomainName/api/v1/officeglaccounts
+                    </code>
+                    <code class="method-request">
+POST officeglaccounts
+Content-Type: application/json 
+Request Body:
+{
+"officeId": 1,
+"liabilityTransferInSuspenseAccountId" : 2
+}
+                    </code>
+                    <code class="method-response">
+{
+    "resourceId": 1
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="officeglaccounts_update" name="officeglaccounts_update" class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Update Office GL Account Mappings</h4>
+                    <p>
+                        the API Updates the mapping GL Accoiunt for office.
+                        <br>
+                    </p>
+                   
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">
+POST https://DomainName/api/v1/officeglaccounts/1
+                    </code>
+                    <code class="method-request">
+POST officeglaccounts
+Content-Type: application/json 
+Request Body:
+{
+"liabilityTransferInSuspenseAccountId": 2
+}
+                    </code>
+                    <code class="method-response">
+{
+    "liabilityTransferInSuspenseAccountId": 2
+}
+                    </code>
+                   
+                </div>
+            </div>
+
+			
+            <a id="officeglaccounts_retrieve" name="officeglaccounts_retrieve"
+                class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Retrieve a single Entry</h4>
+                    <p>Example Requests:</p>
+                    <div class=apiClick>officeglaccounts/1</div>
+                    <br>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">
+GET https://DomainName/api/v1/officeglaccounts/{entryId}
+                    </code>
+                    <code class="method-response">
+{
+  "id": 1,
+  "officeData": {
+    "id": 2,
+    "name": "Office_BX38"
+  },
+  "glAccountData": {
+    "id": 29,
+    "name": "ACCOUNT_NAME_P9UWO",
+    "glCode": "LIABILITY_7E1401198314394"
+  }
+}
+                    </code>
+                </div>
+            </div>
+
+            <a id="officeglaccounts_delete" name="officeglaccounts_delete"
+                class="old-syle-anchor">&nbsp;</a>
+            <div class="method-section">
+                <div class="method-description">
+                    <h4>Delete Office GL Mapping</h4>
+                </div>
+                <div class="method-example">
+                    <code class="method-declaration">
+GET https://DomainName/api/v1/officeglaccounts/{mappingId}
+                    </code>
+                    <code class="method-request">
+POST officeglaccounts/C1MAE935K0IAEYA?command=reverse
+Content-Type: application/json 
+</code>
+                    <code class="method-response">
+{
+    "resourceId": "2"
+}
+                    </code>
+                </div>
+            </div>
+
+
 			<!-- start of Search API doc -->
 		<a id="search" name="search" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
@@ -28939,38 +30292,142 @@ No Request Body:
 					<td></td>
 					<td></td>
 				</tr>
-                <tr>
-                    <td><a href="#centers">Center</a></td>
-                    <td>centers</td>
-                    <td><a href="#centers_create">Create a Center</a></td>
-                    <td><a href="#centers_list">List Centers</a></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>centers/template</td>
-                    <td></td>
-                    <td><a href="#centers_template">Retrieve Center Template</a></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>centers/{centerId}</td>
-                    <td></td>
-                    <td><a href="#centers_retrieve">Retrieve a Center</a></td>
-                    <td><a href="#centers_update">Update a Center</a></td>
-                    <td><a href="#centers_delete">Delete a Center</a></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>centers/{centerId}?command=activate</td>
-                    <td><a href="#centers_activate">Activate a Center</a></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
+				<tr>
+					<td></td>
+					<td>groups/{groupId}?command=transferClients</td>
+					<td><a href="#groups_transfer_clients">Bulk Transfer Clients across Groups</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+            <td></td>
+            <td>groups/{groupId}?command=generateCollectionSheet</td>
+            <td><a href="#groups_generate_collectionsheet">Generate Collection Sheet</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>groups/{groupId}?command=saveCollectionSheet</td>
+            <td><a href="#groups_save_collectionsheet">Save Collection Sheet</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>groups/{groupId}?command=unassignStaff</td>
+            <td><a href="#groups_unassignStaff">Unassign Staff</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>groups/{groupId}?command=assignStaff</td>
+            <td><a href="#groups_assignStaff">Assign Staff</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>groups/{groupId}?command=close</td>
+            <td><a href="#groups_close">Close Group</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>groups/{groupId}?command=assignRole</td>
+            <td><a href="#groups_assignRole">Assign Role</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>groups/{groupId}?command=unassignRole</td>
+            <td><a href="#groups_unassignRole">Unassign Role</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>groups/{groupId}?command=updateRole</td>
+            <td><a href="#groups_updateRole">Update Role</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+          <tr>
+              <td><a href="#centers">Center</a></td>
+              <td>centers</td>
+              <td><a href="#centers_create">Create a Center</a></td>
+              <td><a href="#centers_list">List Centers</a></td>
+              <td></td>
+              <td></td>
+          </tr>
+          <tr>
+              <td></td>
+              <td>centers/template</td>
+              <td></td>
+              <td><a href="#centers_template">Retrieve Center Template</a></td>
+              <td></td>
+              <td></td>
+          </tr>
+          <tr>
+              <td></td>
+              <td>centers/{centerId}</td>
+              <td></td>
+              <td><a href="#centers_retrieve">Retrieve a Center</a></td>
+              <td><a href="#centers_update">Update a Center</a></td>
+              <td><a href="#centers_delete">Delete a Center</a></td>
+          </tr>
+          <tr>
+              <td></td>
+              <td>centers/{centerId}?command=activate</td>
+              <td><a href="#centers_activate">Activate a Center</a></td>
+              <td></td>
+              <td></td>
+              <td></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>centers/{centerId}?command=close</td>
+            <td><a href="#centers_close">Close Center</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+					<td></td>
+					<td>centers/{centerId}/accounts</td>
+					<td></td>
+					<td><a href="#centers_accounts">Retrive Center accounts summary</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+            <td></td>
+            <td>centers/{centerId}?command=generateCollectionSheet</td>
+            <td><a href="#centers_generate_collectionsheet">Generate Collection Sheet</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>centers/{centerId}?command=saveCollectionSheet</td>
+            <td><a href="#centers_save_collectionsheet">Save Collection Sheet</a></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
 				<tr>
 					<td><a href="#loanproducts">Loan Product</a></td>
 					<td>loanproducts</td>
@@ -29134,6 +30591,14 @@ No Request Body:
 					<td></td>
 					<td>loans/{loanId}/transactions?command=writeoff</td>
 					<td><a href="#loans_transaction_write-off_loan">Write-off Loan</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				</tr><tr>
+					<td></td>
+					<td>loans/{loanId}/transactions?command=recoverypayment</td>
+					<td><a href="#loans_transaction_recovery_payment">Make Recovery Payment</a></td>
 					<td></td>
 					<td></td>
 					<td></td>
@@ -29589,6 +31054,14 @@ No Request Body:
 					<td><a href="#configs_globalconfig_update">Update Global Configuration</a></td>
 					<td></td>
 				</tr>
+				<tr class="alt">
+                     <td></td>
+                     <td></td>
+                     <td></td>
+                     <td><a href="#configs_globalconfig_retrieve_survey">Retrieve Surveys Global Configuration</a></td>
+                     <td></td>
+                     <td></td>
+                </tr>
 				<tr>
 					<td><a href="#configs_codes">Codes</a></td>
 					<td>codes</td>
@@ -29677,7 +31150,15 @@ No Request Body:
                     <td></td>
                     <td></td>
                 </tr>
-				<tr>
+    			<tr>
+                    <td></td>
+                    <td>makercheckers/{auditId}?command=reject</td>
+                    <td><a href="#makercheckers_reject">Reject Maker Checker Entry</a></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            <tr>
 				<td><a href="#scheduler_jobs">Scheduler jobs</a></td>
 				<td>jobs</td>
 				<td></td>

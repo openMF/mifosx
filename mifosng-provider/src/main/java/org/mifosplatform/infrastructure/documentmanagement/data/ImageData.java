@@ -1,9 +1,16 @@
 package org.mifosplatform.infrastructure.documentmanagement.data;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import javax.imageio.ImageIO;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.util.IOUtils;
@@ -41,6 +48,39 @@ public class ImageData {
         } catch (final IOException e) {
             return null;
         }
+    }
+    
+    public byte[] getContentOfSize(Integer maxWidth, Integer maxHeight) {
+    	if (maxWidth == null && maxHeight == null) {
+    		return getContent();
+    	}
+		try {
+			BufferedImage originalImage = ImageIO.read(this.file);
+			int originalWidth = originalImage.getWidth();
+			int originalHeight = originalImage.getHeight();
+			float originalAspect = ((float) originalWidth)/((float) originalHeight);
+			int width;
+			int height;
+			if (maxWidth != null && maxHeight * originalAspect > maxWidth) {
+				// Width bounded
+				width = maxWidth;
+				height = (int) (width / originalAspect);
+			} else {
+				// Height bounded
+				height = maxHeight;
+				width = (int) (height * originalAspect);
+			}
+  	    	Image scaledImage = originalImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+  	        BufferedImage imageBuff = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+  	        Graphics g = imageBuff.createGraphics();
+  	        g.drawImage(scaledImage, 0, 0, new Color(0,0,0), null);
+  	        g.dispose();
+  	        ByteArrayOutputStream out = new ByteArrayOutputStream();
+  	        ImageIO.write(imageBuff, "JPEG", out);
+  	        return out.toByteArray();
+		} catch (IOException e) {
+			return null;
+		}
     }
 
     private String setImageContentType() {

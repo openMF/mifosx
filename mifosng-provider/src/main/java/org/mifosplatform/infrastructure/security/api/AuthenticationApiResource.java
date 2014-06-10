@@ -67,9 +67,10 @@ public class AuthenticationApiResource {
             for (final GrantedAuthority grantedAuthority : authorities) {
                 permissions.add(grantedAuthority.getAuthority());
             }
-            final AppUser principal = (AppUser) authenticationCheck.getPrincipal();
+
             final byte[] base64EncodedAuthenticationKey = Base64.encode(username + ":" + password);
 
+            final AppUser principal = (AppUser) authenticationCheck.getPrincipal();
             final Collection<RoleData> roles = new ArrayList<RoleData>();
             final Set<Role> userRoles = principal.getRoles();
             for (final Role role : userRoles) {

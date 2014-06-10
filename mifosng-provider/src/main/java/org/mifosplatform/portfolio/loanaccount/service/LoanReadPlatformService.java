@@ -80,4 +80,8 @@ public interface LoanReadPlatformService {
     Collection<LoanTermVariationsData> retrieveLoanTermVariations(Long loanId, Integer termType);
 
     Collection<LoanScheduleAccrualData> retriveScheduleAccrualData();
+
+    LoanTransactionData retrieveRecoveryPaymentTemplate(Long loanId);
+
+    LoanTransactionData retrieveLoanWriteoffTemplate(Long loanId);
 }

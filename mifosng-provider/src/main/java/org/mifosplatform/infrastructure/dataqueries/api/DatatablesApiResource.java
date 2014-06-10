@@ -32,9 +32,12 @@ import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
 import org.mifosplatform.infrastructure.dataqueries.service.GenericDataService;
 import org.mifosplatform.infrastructure.dataqueries.service.ReadWriteNonCoreDataService;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+//import org.slf4j.Logger;
 
 @Path("/datatables")
 @Component
@@ -46,6 +49,7 @@ public class DatatablesApiResource {
     private final ReadWriteNonCoreDataService readWriteNonCoreDataService;
     private final ToApiJsonSerializer<GenericResultsetData> toApiJsonSerializer;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
+    private final static org.slf4j.Logger logger = LoggerFactory.getLogger(DatatablesApiResource.class);
 
     @Autowired
     public DatatablesApiResource(final PlatformSecurityContext context, final GenericDataService genericDataService,
@@ -109,11 +113,14 @@ public class DatatablesApiResource {
     @Path("register/{datatable}/{apptable}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String registerDatatable(@PathParam("datatable") final String datatable, @PathParam("apptable") final String apptable) {
+    public String registerDatatable(@PathParam("datatable") final String datatable, @PathParam("apptable") final String apptable,
+            final String apiRequestBodyAsJson) {
 
-        this.readWriteNonCoreDataService.registerDatatable(datatable, apptable);
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().registerDBDatatable(datatable, apptable)
+                .withJson(apiRequestBodyAsJson).build();
 
-        final CommandProcessingResult result = new CommandProcessingResultBuilder().withResourceIdAsString(datatable).build();
+        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
         return this.toApiJsonSerializer.serialize(result);
     }
 
@@ -172,6 +179,8 @@ public class DatatablesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String getDatatableManyEntry(@PathParam("datatable") final String datatable, @PathParam("apptableId") final Long apptableId,
             @PathParam("datatableId") final Long datatableId, @QueryParam("order") final String order, @Context final UriInfo uriInfo) {
+
+        logger.debug("::1 we came in the getDatatbleManyEntry apiRessource method");
 
         this.context.authenticatedUser().validateHasDatatableReadPermission(datatable);
 

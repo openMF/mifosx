@@ -8,16 +8,22 @@ package org.mifosplatform.portfolio.savings.service;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.jobs.exception.JobExecutionException;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.savings.DepositAccountType;
+import org.mifosplatform.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccountTransaction;
 
 public interface DepositAccountWritePlatformService {
 
-    CommandProcessingResult activate(Long savingsId, JsonCommand command, final DepositAccountType depositAccountType);
+    CommandProcessingResult activateFDAccount(Long savingsId, JsonCommand command);
+    
+    CommandProcessingResult activateRDAccount(Long savingsId, JsonCommand command);
 
-    CommandProcessingResult deposit(Long savingsId, JsonCommand command, final DepositAccountType depositAccountType);
+    CommandProcessingResult depositToFDAccount(Long savingsId, JsonCommand command);
+    
+    CommandProcessingResult depositToRDAccount(Long savingsId, JsonCommand command);
 
     CommandProcessingResult withdrawal(Long savingsId, JsonCommand command, final DepositAccountType depositAccountType);
 
@@ -25,13 +31,21 @@ public interface DepositAccountWritePlatformService {
 
     CommandProcessingResult postInterest(Long savingsId, final DepositAccountType depositAccountType);
 
-    CommandProcessingResult undoTransaction(Long savingsId, Long transactionId, boolean allowAccountTransferModification, final DepositAccountType depositAccountType);
-
-    CommandProcessingResult adjustDepositTransaction(Long savingsId, Long transactionId, JsonCommand command, final DepositAccountType depositAccountType);
-
-    CommandProcessingResult close(Long savingsId, JsonCommand command, final DepositAccountType depositAccountType);
+    CommandProcessingResult undoFDTransaction(Long savingsId, Long transactionId, boolean allowAccountTransferModification);
     
-    CommandProcessingResult prematureClose(Long savingsId, JsonCommand command, final DepositAccountType depositAccountType);
+    CommandProcessingResult undoRDTransaction(Long savingsId, Long transactionId, boolean allowAccountTransferModification);
+
+    CommandProcessingResult adjustFDTransaction(Long savingsId, Long transactionId, JsonCommand command);
+    
+    CommandProcessingResult adjustRDTransaction(Long savingsId, Long transactionId, JsonCommand command);
+
+    CommandProcessingResult closeFDAccount(Long savingsId, JsonCommand command);
+    
+    CommandProcessingResult closeRDAccount(Long savingsId, JsonCommand command);
+    
+    CommandProcessingResult prematureCloseFDAccount(Long savingsId, JsonCommand command);
+    
+    CommandProcessingResult prematureCloseRDAccount(Long savingsId, JsonCommand command);
 
     SavingsAccountTransaction initiateSavingsTransfer(Long accountId, LocalDate transferDate, final DepositAccountType depositAccountType);
 
@@ -54,4 +68,8 @@ public interface DepositAccountWritePlatformService {
     void applyChargeDue(final Long savingsAccountChargeId, final Long accountId, final DepositAccountType depositAccountType);
     
     void updateMaturityDetails(final Long depositAccountId, final DepositAccountType depositAccountType);
+
+    void transferInterestToSavings() throws JobExecutionException;
+    
+    SavingsAccountTransaction mandatorySavingsAccountDeposit(final SavingsAccountTransactionDTO accountTransactionDTO);
 }

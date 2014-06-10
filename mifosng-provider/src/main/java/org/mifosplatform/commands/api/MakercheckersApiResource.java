@@ -110,10 +110,12 @@ public class MakercheckersApiResource {
         CommandProcessingResult result = null;
         if (is(commandParam, "approve")) {
             result = this.writePlatformService.approveEntry(auditId);
+        } else if (is(commandParam, "reject")) {
+            final Long id = this.writePlatformService.rejectEntry(auditId);
+            result = CommandProcessingResult.commandOnlyResult(id);
         } else {
             throw new UnrecognizedQueryParamException("command", commandParam);
         }
-
         return this.toApiJsonSerializerAudit.serialize(result);
     }
 
