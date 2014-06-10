@@ -85,11 +85,12 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
 
             final String loanExactMatchSql = " (select 'LOAN' as entityType, l.id as entityId, pl.name as entityName, l.external_id as entityExternalId, l.account_no as entityAccountNo "
                     + " , c.id as parentId, c.display_name as parentName, l.loan_status_id as entityStatusEnum "
-                    + " from m_loan l join m_client c on l.client_id = c.id join m_office o on o.id = c.office_id join m_product_loan pl on pl.id=l.product_id where o.hierarchy like :hierarchy and l.account_no like :search) ";
+                    + " from m_loan l join m_client c on l.client_id = c.id join m_office o on o.id = c.office_id join m_product_loan pl on pl.id=l.product_id where o.hierarchy like :hierarchy and (l.account_no like :search or l.external_id like :search)) ";
 
             final String loanMatchSql = " (select 'LOAN' as entityType, l.id as entityId, pl.name as entityName, l.external_id as entityExternalId, l.account_no as entityAccountNo "
                     + " , c.id as parentId, c.display_name as parentName, l.loan_status_id as entityStatusEnum "
-                    + " from m_loan l join m_client c on l.client_id = c.id join m_office o on o.id = c.office_id join m_product_loan pl on pl.id=l.product_id where o.hierarchy like :hierarchy and l.account_no like :partialSearch and l.account_no not like :search) ";
+                    + " from m_loan l join m_client c on l.client_id = c.id join m_office o on o.id = c.office_id join m_product_loan pl on pl.id=l.product_id where o.hierarchy like :hierarchy and "
+					+ " ((l.account_no like :partialSearch and l.account_no not like :search) or (l.external_id like :partialSearch and l.external_id not like :search))) ";
 
             final String clientIdentifierExactMatchSql = " (select 'CLIENTIDENTIFIER' as entityType, ci.id as entityId, ci.document_key as entityName, "
                     + " null as entityExternalId, null as entityAccountNo, c.id as parentId, c.display_name as parentName, c.status_enum as entityStatusEnum "
