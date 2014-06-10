@@ -177,8 +177,15 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
     
     @Override
-    public String accountIdFormatSpecifier() {
-    	final String propertyName = "account_id_format_specifier";
+	public boolean hasAccountNumberFormatSpecifier() {
+    	final String propertyName = "account_number_format_specifier";
+        final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
+        return property.isEnabled();
+    }
+    
+    @Override
+	public String accountNumberFormatSpecifier() {
+    	final String propertyName = "account_number_format_specifier";
         final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
         return property.getValue();
     }

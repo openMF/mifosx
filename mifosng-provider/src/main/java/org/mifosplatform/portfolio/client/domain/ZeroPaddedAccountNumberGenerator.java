@@ -12,16 +12,14 @@ package org.mifosplatform.portfolio.client.domain;
  */
 public class ZeroPaddedAccountNumberGenerator implements AccountNumberGenerator {
 
-    private final Long id;
     private final int maxLength;
 
-    public ZeroPaddedAccountNumberGenerator(final Long id, final int maxLength) {
-        this.id = id;
+    public ZeroPaddedAccountNumberGenerator(final int maxLength) {
         this.maxLength = maxLength;
     }
 
     @Override
-    public String generate() {
-        return String.format("%0" + this.maxLength + "d", this.id);
+    public String generate(final Long id) {
+        return String.format("%0" + this.maxLength + "d", id);
     }
 }

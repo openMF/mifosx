@@ -223,8 +223,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
             if (newClient.isAccountNumberRequiresAutoGeneration()) {
                 final AccountNumberGenerator accountNoGenerator = this.accountIdentifierGeneratorFactory
-                        .determineClientAccountNoGenerator(newClient.getId());
-                newClient.updateAccountNo(accountNoGenerator.generate());
+                        .determineClientAccountNoGenerator();
+                newClient.updateAccountNo(accountNoGenerator.generate(newClient.getId()));
                 this.clientRepository.save(newClient);
             }
 

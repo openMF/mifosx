@@ -208,8 +208,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             if (newLoanApplication.isAccountNumberRequiresAutoGeneration()) {
                 final AccountNumberGenerator accountNoGenerator = this.accountIdentifierGeneratorFactory
-                        .determineLoanAccountNoGenerator(newLoanApplication.getId());
-                newLoanApplication.updateAccountNo(accountNoGenerator.generate());
+                        .determineLoanAccountNoGenerator();
+                newLoanApplication.updateAccountNo(accountNoGenerator.generate(newLoanApplication.getId()));
                 this.loanRepository.save(newLoanApplication);
             }
 

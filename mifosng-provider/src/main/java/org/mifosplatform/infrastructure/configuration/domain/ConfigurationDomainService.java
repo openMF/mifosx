@@ -24,6 +24,8 @@ public interface ConfigurationDomainService {
     boolean isConstraintApproachEnabledForDatatables();
 
     boolean isEhcacheEnabled();
+    
+    boolean hasAccountNumberFormatSpecifier();
 
     void updateCache(CacheType cacheType);
 
@@ -39,6 +41,6 @@ public interface ConfigurationDomainService {
     
     Long ageLimitForChildren();
     
-    String accountIdFormatSpecifier();
+    String accountNumberFormatSpecifier();
 
 }

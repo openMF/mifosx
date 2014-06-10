@@ -13,9 +13,8 @@ import java.util.regex.Pattern;
  * Responsible for generating unique account number based on some rules or
  * patterns.
  * 
- * @see ZeroPaddedAccountNumberGenerator
  */
-public abstract class CustomAccountNumberGenerator implements AccountNumberGenerator {
+public class CustomAccountNumberGenerator implements AccountNumberGenerator {
 	
 	private static final String digits = "0123456789";
 	
@@ -37,7 +36,7 @@ public abstract class CustomAccountNumberGenerator implements AccountNumberGener
 	
 	private static final Pattern formatPattern = Pattern.compile("%([0-9]*)(s|S|d|a|A)");
 	
-	private final Random random = new Random();
+	private Random random;
 	
 	private String generateRandomString(Integer fieldSize, String fieldType) {
 		StringBuilder builder = new StringBuilder();
@@ -68,7 +67,9 @@ public abstract class CustomAccountNumberGenerator implements AccountNumberGener
 	 *  Everything else is left as it is, including unknown % specifiers.
 	 * 
 	 */
-    public String generate() {
+    @Override
+	public String generate(final Long id) {
+    	random = new Random(id);
     	String generatedString = formatString;
     	Matcher formatMatcher = formatPattern.matcher(generatedString);
     	while (formatMatcher.find()) {
@@ -85,7 +86,7 @@ public abstract class CustomAccountNumberGenerator implements AccountNumberGener
 		return generatedString;
     }
     
-    public CustomAccountNumberGenerator(String formatString) {
+    public CustomAccountNumberGenerator(final String formatString) {
     	this.formatString = formatString;
     }
 }
