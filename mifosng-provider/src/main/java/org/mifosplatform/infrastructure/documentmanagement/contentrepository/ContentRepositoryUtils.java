@@ -108,7 +108,7 @@ public class ContentRepositoryUtils {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
         if (imageFileName == null) {
             final StringBuilder validationErrorCode = new StringBuilder("validation.msg.clientImage.cannot.be.blank");
-            final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter image cannot be blank.");
+            final StringBuilder defaultEnglishMessage = new StringBuilder("The image filename cannot be blank.");
             final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
                     defaultEnglishMessage.toString(), "image");
             dataValidationErrors.add(error);
