@@ -75,7 +75,7 @@ public class ConfigurationReadPlatformServiceImpl implements ConfigurationReadPl
 
             final String name = rs.getString("name");
             final boolean enabled = rs.getBoolean("enabled");
-            final Long value = rs.getLong("value");
+            final String value = rs.getString("value");
             final Long id = rs.getLong("id");
 
             return new GlobalConfigurationPropertyData(name, enabled, value, id);

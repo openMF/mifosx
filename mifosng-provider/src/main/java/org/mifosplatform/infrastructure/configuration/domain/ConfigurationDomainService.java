@@ -38,4 +38,7 @@ public interface ConfigurationDomainService {
     Long ageLimitForSeniorCitizen();
     
     Long ageLimitForChildren();
+    
+    String accountIdFormatSpecifier();
+
 }

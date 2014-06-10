@@ -50,8 +50,14 @@ public class GlobalConfigurationDataValidator {
         }
 
         if (this.fromApiJsonHelper.parameterExists(VALUE, element)) {
-            final Long valueStr = this.fromApiJsonHelper.extractLongNamed(VALUE, element);
-            baseDataValidator.reset().parameter(ENABLED).value(valueStr).zeroOrPositiveAmount();
+            final String valueStr = this.fromApiJsonHelper.extractStringNamed(VALUE, element);
+            // For longs, we allow only zero or positive amounts.
+            try {
+            	Long value = Long.parseLong(valueStr);
+            	baseDataValidator.reset().parameter(VALUE).value(value).zeroOrPositiveAmount();
+            } catch (NumberFormatException e) {
+            	baseDataValidator.reset().parameter(VALUE).value(valueStr).notBlank();
+            }
         }
 
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
