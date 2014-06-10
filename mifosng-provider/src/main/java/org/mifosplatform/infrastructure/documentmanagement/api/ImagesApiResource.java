@@ -9,6 +9,7 @@ import java.io.InputStream;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -16,6 +17,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -110,8 +112,13 @@ public class ImagesApiResource {
     @GET
     @Consumes({ MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON })
     @Produces({ MediaType.TEXT_PLAIN })
-    public String retrieveClientImage(@PathParam("clientId") final Long clientId,
-    		@PathParam("maxWidth") final Integer maxWidth, @PathParam("maxHeight") final Integer maxHeight) {
+    public Response retrieveClientImage(@PathParam("clientId") final Long clientId,
+    		@QueryParam("maxWidth") final Integer maxWidth, @QueryParam("maxHeight") final Integer maxHeight,
+    		@QueryParam("octet") final Boolean octet) {
+    	
+    	if (octet != null && octet) {
+    		return downloadClientImage(clientId, maxWidth, maxHeight);
+    	}
 
         this.context.authenticatedUser().validateHasReadPermission("CLIENTIMAGE");
 
@@ -126,14 +133,14 @@ public class ImagesApiResource {
         }
         
 		final String clientImageAsBase64Text = imageDataURISuffix + Base64.encodeBytes(imageData.getContentOfSize(maxWidth, maxHeight));
-        return clientImageAsBase64Text;
+        return Response.ok(clientImageAsBase64Text).build();
     }
 
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_OCTET_STREAM })
     public Response downloadClientImage(@PathParam("clientId") final Long clientId,
-    		@PathParam("maxWidth") final Integer maxWidth, @PathParam("maxHeight") final Integer maxHeight) {
+    		@QueryParam("maxWidth") final Integer maxWidth, @QueryParam("maxHeight") final Integer maxHeight) {
 
         this.context.authenticatedUser().validateHasReadPermission("CLIENTIMAGE");
         final ImageData imageData = this.imageReadPlatformService.retrieveClientImage(clientId);
