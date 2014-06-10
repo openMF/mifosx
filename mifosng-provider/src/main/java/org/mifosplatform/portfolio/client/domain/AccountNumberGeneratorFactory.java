@@ -6,6 +6,7 @@
 package org.mifosplatform.portfolio.client.domain;
 
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,6 +16,7 @@ public class AccountNumberGeneratorFactory {
 
     private final ConfigurationDomainService configurationDomainService;
     
+    @Autowired
     public AccountNumberGeneratorFactory(ConfigurationDomainService configurationDomainService) {
     	this.configurationDomainService = configurationDomainService;
     }
