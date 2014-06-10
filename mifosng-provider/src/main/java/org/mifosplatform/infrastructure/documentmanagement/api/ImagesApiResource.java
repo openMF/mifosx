@@ -72,6 +72,10 @@ public class ImagesApiResource {
     public String addNewClientImage(@PathParam("clientId") final Long clientId, @HeaderParam("Content-Length") final Long fileSize,
             @FormDataParam("file") final InputStream inputStream, @FormDataParam("file") final FormDataContentDisposition fileDetails,
             @FormDataParam("file") final FormDataBodyPart bodyPart) {
+    	
+    	if (fileDetails == null) {
+    		throw new IllegalArgumentException("\"file \"parameter not provided");
+    	}
 
         // TODO: vishwas might need more advances validation (like reading magic
         // number) for handling malicious clients
@@ -106,7 +110,8 @@ public class ImagesApiResource {
     @GET
     @Consumes({ MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON })
     @Produces({ MediaType.TEXT_PLAIN })
-    public String retrieveClientImage(@PathParam("clientId") final Long clientId) {
+    public String retrieveClientImage(@PathParam("clientId") final Long clientId,
+    		@PathParam("maxWidth") final Integer maxWidth, @PathParam("maxHeight") final Integer maxHeight) {
 
         this.context.authenticatedUser().validateHasReadPermission("CLIENTIMAGE");
 
@@ -119,20 +124,21 @@ public class ImagesApiResource {
         } else if (StringUtils.endsWith(imageData.location(), ContentRepositoryUtils.IMAGE_FILE_EXTENSION.PNG.getValue())) {
             imageDataURISuffix = ContentRepositoryUtils.IMAGE_DATA_URI_SUFFIX.PNG.getValue();
         }
-
-        final String clientImageAsBase64Text = imageDataURISuffix + Base64.encodeBytes(imageData.getContent());
+        
+		final String clientImageAsBase64Text = imageDataURISuffix + Base64.encodeBytes(imageData.getContentOfSize(maxWidth, maxHeight));
         return clientImageAsBase64Text;
     }
 
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_OCTET_STREAM })
-    public Response downloadClientImage(@PathParam("clientId") final Long clientId) {
+    public Response downloadClientImage(@PathParam("clientId") final Long clientId,
+    		@PathParam("maxWidth") final Integer maxWidth, @PathParam("maxHeight") final Integer maxHeight) {
 
         this.context.authenticatedUser().validateHasReadPermission("CLIENTIMAGE");
         final ImageData imageData = this.imageReadPlatformService.retrieveClientImage(clientId);
 
-        final ResponseBuilder response = Response.ok(imageData.getContent());
+        final ResponseBuilder response = Response.ok(imageData.getContentOfSize(maxWidth, maxHeight));
         response.header("Content-Disposition", "attachment; filename=\"" + imageData.getEntityDisplayName() + IMAGE_FILE_EXTENSION.JPEG
                 + "\"");
 
@@ -141,7 +147,7 @@ public class ImagesApiResource {
         response.header("Content-Type", imageData.contentType());
         return response.build();
     }
-
+    
     /**
      * This method is added only for consistency with other URL patterns and for
      * maintaining consistency of usage of the HTTP "verb" at the client side
