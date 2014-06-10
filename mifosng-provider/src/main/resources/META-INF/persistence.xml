@@ -9,7 +9,7 @@
 	<persistence-unit name="jpa-pu" transaction-type="RESOURCE_LOCAL">
 		<provider>org.hibernate.ejb.HibernatePersistence</provider>
 		<properties>
-			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLInnoDBDialect" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect" />
 			<property name="hibernate.jdbc.batch_size" value="100" />
 			<property name="hibernate.order_inserts" value="true" />
 		</properties>

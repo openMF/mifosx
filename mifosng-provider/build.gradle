@@ -24,9 +24,9 @@ apply plugin: 'tomcat'
 apply plugin: 'project-report'
 
 /* define the valid syntax level for source files */
-sourceCompatibility = JavaVersion.VERSION_1_6
+sourceCompatibility = JavaVersion.VERSION_1_7
 /* define binary compatiblity version */
-targetCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_7
 
 project.ext.springVersion = '3.2.5.RELEASE'
 project.ext.springSecurityVersion = '3.1.4.RELEASE'
@@ -36,6 +36,8 @@ project.ext.springDataJpaVersion = '1.4.1.RELEASE'
 
 project.ext.mysqlUser='root'
 project.ext.mysqlPassword='mysql'
+project.ext.postgresUser='mifos'
+project.ext.postgresPassword='mysql'
 
 
 group = 'org.mifosplatform'
@@ -106,6 +108,7 @@ dependencies {
 	            [group: 'ch.qos.logback', name: 'logback-classic', version: '1.0.13'],
 
 	            [group: 'mysql', name: 'mysql-connector-java', version: '5.1.27'],
+	            [group: 'postgresql', name: 'postgresql', version: '9.0-801.jdbc4'],
 	            [group: 'org.apache.tomcat', name: 'tomcat-jdbc', version: '7.0.47'],
 
 	            [group: 'pentaho-reporting-engine', name: 'pentaho-reporting-engine-classic-core', version: '3.9.1.1'],
@@ -261,7 +264,8 @@ configurations {
     driver
 }
 dependencies {
-    driver 'mysql:mysql-connector-java:5.1.16'
+    /* driver 'mysql:mysql-connector-java:5.1.16' */
+    driver 'postgresql:postgresql:9.0-801.jdbc4'
 }
 
 URLClassLoader loader = GroovyObject.class.classLoader
@@ -271,17 +275,17 @@ configurations.driver.each {File file ->
 
 task createDB<<{
     description= "Creates the Database. Needs database name to be passed (like: -PdbName=someDBname)"
-    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', mysqlUser, mysqlPassword, 'com.mysql.jdbc.Driver' )
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', postgresUser, postgresPassword, 'com.mysql.jdbc.Driver' )
     sql.execute( 'create database '+"`$dbName`" )
 }
 
 task dropDB<<{
     description= "Drops the specified database. The database name has to be passed (like: -PdbName=someDBname)"
-    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', mysqlUser, mysqlPassword, 'com.mysql.jdbc.Driver' )
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', postgresUser, postgresPassword, 'com.mysql.jdbc.Driver' )
     sql.execute( 'DROP DATABASE '+"`$dbName`")
 }
 task setBlankPassword<<{
-    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', mysqlUser, mysqlPassword, 'com.mysql.jdbc.Driver' )
+    sql = Sql.newInstance( 'jdbc:mysql://localhost:3306/', postgresUser, postgresPassword, 'com.mysql.jdbc.Driver' )
     sql.execute('USE `mifosplatform-tenants`')
     sql.execute('UPDATE mifosplatform-tenants.tenants SET schema_server = \'localhost\', schema_server_port = \'3306\', schema_username = \'mifos\', schema_password = \'mysql\' WHERE id=1;')
 }
@@ -295,15 +299,16 @@ buildscript {
 
     dependencies {
         classpath 'com.github.ben-manes:gradle-flyway-plugin:0.2'
-        classpath 'mysql:mysql-connector-java:5.1.22'
+        classpath 'postgresql:postgresql:9.0-801.jdbc4'
     }
 }
 
 
 flyway {
-    url = "jdbc:mysql://localhost:3306/mifostenant-default"
-    user = mysqlUser
-    password = mysqlPassword
+    /* url = "jdbc:mysql://localhost:3306/mifostenant-default" */
+    url = "jdbc:postgresql:///mifostenant-default"
+    user = postgresUser
+    password = postgresPassword
     
     def filePath = "filesystem:$projectDir" + System.properties['file.separator'] + '..' + System.properties['file.separator'] + 'mifosng-db' + System.properties['file.separator'] + 'migrations'
     locations = [filePath]
