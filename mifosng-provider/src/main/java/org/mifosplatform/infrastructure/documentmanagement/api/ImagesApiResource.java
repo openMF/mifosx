@@ -115,7 +115,7 @@ public class ImagesApiResource {
     		@QueryParam("maxWidth") final Integer maxWidth, @QueryParam("maxHeight") final Integer maxHeight,
     		@QueryParam("output") final String output) {
     	
-    	if (output != null && output.equals("octet") || output.equals("inline_octet")) {
+    	if (output != null && (output.equals("octet") || output.equals("inline_octet"))) {
     		return downloadClientImage(clientId, maxWidth, maxHeight, output);
     	}
 
