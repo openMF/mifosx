@@ -7,7 +7,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -53,77 +52,71 @@ public class ImageData {
     }
     
     public byte[] getContentOfSize(Integer maxWidth, Integer maxHeight) {
-    	if (maxWidth == null && maxHeight == null) {
-    		return getContent();
-    	}
-      FileInputStream fis = null;
-      try {
-        fis = new FileInputStream(this.file);
-        byte[] out = resizeImage(
-            fis,
-            maxWidth != null ? maxWidth : Integer.MAX_VALUE,
-            maxHeight != null ? maxHeight : Integer.MAX_VALUE);
-        return (out == null) ? getContent() : out;
-      } catch (FileNotFoundException ex) {
-        return getContent();
-      } finally {
-        if (fis != null) {
-          try { fis.close(); } catch (IOException ex) {}
+        if (maxWidth == null && maxHeight == null) {
+            return getContent();
         }
-      }
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(this.file);
+            byte[] out = resizeImage(
+                fis,
+                maxWidth != null ? maxWidth : Integer.MAX_VALUE,
+                maxHeight != null ? maxHeight : Integer.MAX_VALUE);
+            return (out == null) ? getContent() : out;
+        } catch (IOException ex) {
+            return getContent();
+        } finally {
+            if (fis != null) {
+              try { fis.close(); } catch (IOException ex) {}
+            }
+        }
     }
     
-    public byte[] resizeImage(InputStream in, int maxWidth, int maxHeight) {
-      return resizeImage(in, maxWidth, maxHeight, "jpg");
+    public byte[] resizeImage(InputStream in, int maxWidth, int maxHeight)
+    throws IOException {
+        return resizeImage(in, maxWidth, maxHeight, "jpg");
     }
 
-    public byte[] resizeImage(InputStream in, int maxWidth, int maxHeight, String imageType) {
+    public byte[] resizeImage(InputStream in, int maxWidth, int maxHeight, String imageType)
+    throws IOException {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       resizeImage(in, out, maxWidth, maxHeight, imageType);
       byte[] result = out.toByteArray();
       if (result != null && result.length > 0) {
-        return result;
+          return result;
       } else {
-        return null;
+          return null;
       }
     }
 
-    public void resizeImage(InputStream in, OutputStream out, int maxWidth, int maxHeight) {
-      resizeImage(in, out, maxWidth, maxHeight, "jpg");
+    public void resizeImage(InputStream in, OutputStream out, int maxWidth, int maxHeight)
+    throws IOException {
+        resizeImage(in, out, maxWidth, maxHeight, "jpg");
     }
 
     public void resizeImage(
-        InputStream in, OutputStream out, int maxWidth, int maxHeight, String imageType) {
+        InputStream in, OutputStream out, int maxWidth, int maxHeight, String imageType)
+    throws IOException {
 
-      try {
         BufferedImage src = ImageIO.read(in);
-        if (src.getWidth() < maxWidth && src.getHeight() < maxHeight) {
-          return;
+        if (src.getWidth() <= maxWidth && src.getHeight() <= maxHeight) {
+            return;
         }
         float widthRatio = (float)src.getWidth() / maxWidth;
         float heightRatio = (float)src.getHeight() / maxHeight;
-        if (widthRatio < 1.0f) {
-          widthRatio = 1.0f;
-        }
-        if (heightRatio < 1.0f) {
-          heightRatio = 1.0f;
-        }
         float scaleRatio = widthRatio > heightRatio ? widthRatio : heightRatio;
 
         int newWidth = (int)(src.getWidth() / scaleRatio);
-        int newHeight = (int)(src.getWidth() / scaleRatio);
+        int newHeight = (int)(src.getHeight() / scaleRatio);
         int colorModel = imageType.matches("jpe?g|JPE?G")
-            ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
+                ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
         BufferedImage target = new BufferedImage(newWidth, newHeight, colorModel);
         Graphics2D g = target.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(
+            RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g.drawImage(src, 0, 0, newWidth, newHeight, Color.BLACK, null);
         g.dispose();
         ImageIO.write(target, imageType, out);
-      } catch (IOException ex) {
-        // No image, sending null upstream
-      }
-
     }
 
     private String setImageContentType() {
