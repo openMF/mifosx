@@ -107,7 +107,7 @@ public class ImageData {
         float scaleRatio = widthRatio > heightRatio ? widthRatio : heightRatio;
 
         int newWidth = (int)(src.getWidth() / scaleRatio);
-        int newHeight = (int)(src.getWidth() / scaleRatio);
+        int newHeight = (int)(src.getHeight() / scaleRatio);
         int colorModel = imageType.matches("jpe?g|JPE?G")
                 ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
         BufferedImage target = new BufferedImage(newWidth, newHeight, colorModel);
