@@ -133,7 +133,7 @@ public class ImagesApiResource {
         
 		final String clientImageAsBase64Text = imageDataURISuffix + Base64.encodeBytes(
 				imageData.getContentOfSize(maxWidth, maxHeight));
-        return Response.ok(clientImageAsBase64Text).build();
+		return Response.ok(clientImageAsBase64Text).build();
     }
 
     @GET
