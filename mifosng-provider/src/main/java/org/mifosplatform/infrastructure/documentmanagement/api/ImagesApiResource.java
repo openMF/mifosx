@@ -9,7 +9,6 @@ import java.io.InputStream;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -114,10 +113,10 @@ public class ImagesApiResource {
     @Produces({ MediaType.TEXT_PLAIN })
     public Response retrieveClientImage(@PathParam("clientId") final Long clientId,
     		@QueryParam("maxWidth") final Integer maxWidth, @QueryParam("maxHeight") final Integer maxHeight,
-    		@QueryParam("octet") final Boolean octet) {
+    		@QueryParam("output") final String output) {
     	
-    	if (octet != null && octet) {
-    		return downloadClientImage(clientId, maxWidth, maxHeight);
+    	if (output != null && output.equals("octet") || output.equals("inline_octet")) {
+    		return downloadClientImage(clientId, maxWidth, maxHeight, output);
     	}
 
         this.context.authenticatedUser().validateHasReadPermission("CLIENTIMAGE");
@@ -132,7 +131,8 @@ public class ImagesApiResource {
             imageDataURISuffix = ContentRepositoryUtils.IMAGE_DATA_URI_SUFFIX.PNG.getValue();
         }
         
-		final String clientImageAsBase64Text = imageDataURISuffix + Base64.encodeBytes(imageData.getContentOfSize(maxWidth, maxHeight));
+		final String clientImageAsBase64Text = imageDataURISuffix + Base64.encodeBytes(
+				imageData.getContentOfSize(maxWidth, maxHeight));
         return Response.ok(clientImageAsBase64Text).build();
     }
 
@@ -140,13 +140,15 @@ public class ImagesApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_OCTET_STREAM })
     public Response downloadClientImage(@PathParam("clientId") final Long clientId,
-    		@QueryParam("maxWidth") final Integer maxWidth, @QueryParam("maxHeight") final Integer maxHeight) {
+    		@QueryParam("maxWidth") final Integer maxWidth, @QueryParam("maxHeight") final Integer maxHeight,
+    		@QueryParam("output") String output) {
 
         this.context.authenticatedUser().validateHasReadPermission("CLIENTIMAGE");
         final ImageData imageData = this.imageReadPlatformService.retrieveClientImage(clientId);
 
         final ResponseBuilder response = Response.ok(imageData.getContentOfSize(maxWidth, maxHeight));
-        response.header("Content-Disposition", "attachment; filename=\"" + imageData.getEntityDisplayName() + IMAGE_FILE_EXTENSION.JPEG
+        String dispositionType = "inline_octet".equals(output) ? "inline" : "attachment";
+        response.header("Content-Disposition", dispositionType + "; filename=\"" + imageData.getEntityDisplayName() + IMAGE_FILE_EXTENSION.JPEG
                 + "\"");
 
         // TODO: Need a better way of determining image type

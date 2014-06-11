@@ -20,147 +20,148 @@ import org.mifosplatform.infrastructure.documentmanagement.domain.StorageType;
 
 public class ImageData {
 
-    @SuppressWarnings("unused")
-    private final Long imageId;
-    private final String location;
-    private final Integer storageType;
-    private final String entityDisplayName;
+	@SuppressWarnings("unused")
+	private final Long imageId;
+	private final String location;
+	private final Integer storageType;
+	private final String entityDisplayName;
 
-    private File file;
-    private String contentType;
-    private InputStream inputStream;
+	private File file;
+	private String contentType;
+	private InputStream inputStream;
 
-    public ImageData(final Long imageId, final String location, final Integer storageType, final String entityDisplayName) {
-        this.imageId = imageId;
-        this.location = location;
-        this.storageType = storageType;
-        this.entityDisplayName = entityDisplayName;
-    }
+	public ImageData(final Long imageId, final String location,
+			final Integer storageType, final String entityDisplayName) {
+		this.imageId = imageId;
+		this.location = location;
+		this.storageType = storageType;
+		this.entityDisplayName = entityDisplayName;
+	}
 
-    public byte[] getContent() {
-        // TODO Vishwas Fix error handling
-        try {
-            if (this.inputStream == null) {
-                final FileInputStream fileInputStream = new FileInputStream(this.file);
-                return IOUtils.toByteArray(fileInputStream);
-            }
+	public byte[] getContent() {
+		// TODO Vishwas Fix error handling
+		try {
+			if (this.inputStream == null) {
+				final FileInputStream fileInputStream = new FileInputStream(
+						this.file);
+				return IOUtils.toByteArray(fileInputStream);
+			}
 
-            return IOUtils.toByteArray(this.inputStream);
-        } catch (final IOException e) {
-            return null;
-        }
-    }
-    
-    public byte[] getContentOfSize(Integer maxWidth, Integer maxHeight) {
-        if (maxWidth == null && maxHeight == null) {
-            return getContent();
-        }
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(this.file);
-            byte[] out = resizeImage(
-                fis,
-                maxWidth != null ? maxWidth : Integer.MAX_VALUE,
-                maxHeight != null ? maxHeight : Integer.MAX_VALUE);
-            return (out == null) ? getContent() : out;
-        } catch (IOException ex) {
-            return getContent();
-        } finally {
-            if (fis != null) {
-              try { fis.close(); } catch (IOException ex) {}
-            }
-        }
-    }
-    
-    public byte[] resizeImage(InputStream in, int maxWidth, int maxHeight)
-    throws IOException {
-        return resizeImage(in, maxWidth, maxHeight, "jpg");
-    }
+			return IOUtils.toByteArray(this.inputStream);
+		} catch (final IOException e) {
+			return null;
+		}
+	}
 
-    public byte[] resizeImage(InputStream in, int maxWidth, int maxHeight, String imageType)
-    throws IOException {
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      resizeImage(in, out, maxWidth, maxHeight, imageType);
-      byte[] result = out.toByteArray();
-      if (result != null && result.length > 0) {
-          return result;
-      } else {
-          return null;
-      }
-    }
+	public byte[] getContentOfSize(Integer maxWidth, Integer maxHeight) {
+		if (maxWidth == null && maxHeight == null) {
+			return getContent();
+		}
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(this.file);
+			byte[] out = resizeImage(fis, maxWidth != null ? maxWidth
+					: Integer.MAX_VALUE, maxHeight != null ? maxHeight
+					: Integer.MAX_VALUE, "jpg");
+			return (out == null) ? getContent() : out;
+		} catch (IOException ex) {
+			return getContent();
+		} finally {
+			if (fis != null) {
+				try {
+					fis.close();
+				} catch (IOException ex) {
+				}
+			}
+		}
+	}
 
-    public void resizeImage(InputStream in, OutputStream out, int maxWidth, int maxHeight)
-    throws IOException {
-        resizeImage(in, out, maxWidth, maxHeight, "jpg");
-    }
+	public byte[] resizeImage(InputStream in, int maxWidth, int maxHeight,
+			String imageType) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		resizeImage(in, out, maxWidth, maxHeight, imageType);
+		byte[] result = out.toByteArray();
+		if (result == null || result.length == 0) {
+			return null;
+		}
+		return result;
+	}
 
-    public void resizeImage(
-        InputStream in, OutputStream out, int maxWidth, int maxHeight, String imageType)
-    throws IOException {
+	public void resizeImage(InputStream in, OutputStream out, int maxWidth,
+			int maxHeight, String imageType)
+			throws IOException {
 
-        BufferedImage src = ImageIO.read(in);
-        if (src.getWidth() <= maxWidth && src.getHeight() <= maxHeight) {
-            return;
-        }
-        float widthRatio = (float)src.getWidth() / maxWidth;
-        float heightRatio = (float)src.getHeight() / maxHeight;
-        float scaleRatio = widthRatio > heightRatio ? widthRatio : heightRatio;
+		BufferedImage src = ImageIO.read(in);
+		if (src.getWidth() <= maxWidth && src.getHeight() <= maxHeight) {
+			return;
+		}
+		float widthRatio = (float) src.getWidth() / maxWidth;
+		float heightRatio = (float) src.getHeight() / maxHeight;
+		float scaleRatio = widthRatio > heightRatio ? widthRatio : heightRatio;
+		
+		// TODO(lindahl): Improve compression (perhaps quality ratio)
 
-        int newWidth = (int)(src.getWidth() / scaleRatio);
-        int newHeight = (int)(src.getHeight() / scaleRatio);
-        int colorModel = imageType.matches("jpe?g|JPE?G")
-                ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
-        BufferedImage target = new BufferedImage(newWidth, newHeight, colorModel);
-        Graphics2D g = target.createGraphics();
-        g.setRenderingHint(
-            RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.drawImage(src, 0, 0, newWidth, newHeight, Color.BLACK, null);
-        g.dispose();
-        ImageIO.write(target, imageType, out);
-    }
+		int newWidth = (int) (src.getWidth() / scaleRatio);
+		int newHeight = (int) (src.getHeight() / scaleRatio);
+		int colorModel = imageType.matches("jpe?g|JPE?G") ? BufferedImage.TYPE_INT_RGB
+				: BufferedImage.TYPE_INT_ARGB;
+		BufferedImage target = new BufferedImage(newWidth, newHeight,
+				colorModel);
+		Graphics2D g = target.createGraphics();
+				g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+						RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		g.drawImage(src, 0, 0, newWidth, newHeight, Color.BLACK, null);
+		g.dispose();
+		ImageIO.write(target, imageType, out);
+	}
 
-    private String setImageContentType() {
-        String contentType = ContentRepositoryUtils.IMAGE_MIME_TYPE.JPEG.getValue();
+	private String setImageContentType() {
+		String contentType = ContentRepositoryUtils.IMAGE_MIME_TYPE.JPEG
+				.getValue();
 
-        if (this.file != null) {
-            final String fileName = this.file.getName();
+		if (this.file != null) {
+			final String fileName = this.file.getName();
 
-            if (StringUtils.endsWith(fileName, ContentRepositoryUtils.IMAGE_FILE_EXTENSION.GIF.getValue())) {
-                contentType = ContentRepositoryUtils.IMAGE_MIME_TYPE.GIF.getValue();
-            } else if (StringUtils.endsWith(fileName, ContentRepositoryUtils.IMAGE_FILE_EXTENSION.PNG.getValue())) {
-                contentType = ContentRepositoryUtils.IMAGE_MIME_TYPE.PNG.getValue();
-            }
-        }
-        return contentType;
-    }
+			if (StringUtils.endsWith(fileName,
+					ContentRepositoryUtils.IMAGE_FILE_EXTENSION.GIF.getValue())) {
+				contentType = ContentRepositoryUtils.IMAGE_MIME_TYPE.GIF
+						.getValue();
+			} else if (StringUtils.endsWith(fileName,
+					ContentRepositoryUtils.IMAGE_FILE_EXTENSION.PNG.getValue())) {
+				contentType = ContentRepositoryUtils.IMAGE_MIME_TYPE.PNG
+						.getValue();
+			}
+		}
+		return contentType;
+	}
 
-    public String contentType() {
-        return this.contentType;
-    }
+	public String contentType() {
+		return this.contentType;
+	}
 
-    public StorageType storageType() {
-        return StorageType.fromInt(this.storageType);
-    }
+	public StorageType storageType() {
+		return StorageType.fromInt(this.storageType);
+	}
 
-    public String name() {
-        return this.file.getName();
-    }
+	public String name() {
+		return this.file.getName();
+	}
 
-    public String location() {
-        return this.location;
-    }
+	public String location() {
+		return this.location;
+	}
 
-    public void updateContent(final InputStream objectContent) {
-        this.inputStream = objectContent;
-    }
+	public void updateContent(final InputStream objectContent) {
+		this.inputStream = objectContent;
+	}
 
-    public void updateContent(final File file) {
-        this.file = file;
-        setImageContentType();
-    }
+	public void updateContent(final File file) {
+		this.file = file;
+		setImageContentType();
+	}
 
-    public String getEntityDisplayName() {
-        return this.entityDisplayName;
-    }
+	public String getEntityDisplayName() {
+		return this.entityDisplayName;
+	}
 
 }
