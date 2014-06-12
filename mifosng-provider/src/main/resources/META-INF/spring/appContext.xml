@@ -34,6 +34,7 @@
 										  org.mifosplatform.mix.*,
 										  org.mifosplatform.template.*,
 										  org.mifosplatform.template.service.*,
+										  org.mifosplatform.clientimpactportal.*,
 										  org.mifosplatform.useradministration.*">
 		<context:exclude-filter expression="org.springframework.stereotype.Controller"
 			type="annotation" />
@@ -49,6 +50,7 @@
 	<jpa:repositories base-package="org.mifosplatform.useradministration.domain" />
 	<jpa:repositories base-package="org.mifosplatform.organisation.*.domain" />
 	<jpa:repositories base-package="org.mifosplatform.portfolio.*" />
+    <jpa:repositories base-package="org.mifosplatform.clientimpactportal.domain" />
 	<jpa:repositories base-package="org.mifosplatform.mix.domain" />
 	<jpa:repositories base-package="org.mifosplatform.scheduledjobs.domain" />
 	<jpa:repositories base-package="org.mifosplatform.template.domain" />

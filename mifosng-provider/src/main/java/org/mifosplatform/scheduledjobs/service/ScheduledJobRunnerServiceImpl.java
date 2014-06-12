@@ -10,6 +10,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.mifosplatform.clientimpactportal.data.ImpactPortalSqlData;
+import org.mifosplatform.clientimpactportal.service.ImpactPortalReportReadService;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSourceServiceFactory;
@@ -41,18 +43,21 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService;
     private final DepositAccountReadPlatformService depositAccountReadPlatformService;
     private final DepositAccountWritePlatformService depositAccountWritePlatformService;
+    private final ImpactPortalReportReadService impactPortalReportReadService;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
             final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService,
             final DepositAccountReadPlatformService depositAccountReadPlatformService,
-            final DepositAccountWritePlatformService depositAccountWritePlatformService) {
+            final DepositAccountWritePlatformService depositAccountWritePlatformService,
+            final ImpactPortalReportReadService impactPortalReportReadService) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
         this.depositAccountReadPlatformService = depositAccountReadPlatformService;
         this.depositAccountWritePlatformService = depositAccountWritePlatformService;
+        this.impactPortalReportReadService=impactPortalReportReadService;
     }
 
     @Transactional
@@ -221,29 +226,18 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         Date date=new Date();
         final StringBuilder updateSqlBuilder = new StringBuilder(900);
         final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
-        List<Map<String, Object>> impactPortalSqls;
         List<Map<String, Object>> runreport;
-        String sql="";
-        String datapoint="";
-        impactPortalSqls=jdbcTemplate.queryForList("SELECT * FROM stretchy_report where report_category='Portal'");
-        for (Map<String, Object> impactPortalSql : impactPortalSqls) {
-            //row
-            for (Map.Entry<String, Object> entry : impactPortalSql.entrySet()) {
-                String key = entry.getKey();
-                Object value = entry.getValue();
-                if(key.equals("report_subtype")){
-                    datapoint=value.toString();
-                }
-                if(key.equals("report_sql")){
-                    sql=value.toString();
 
-                }
-            }
+        final Collection<ImpactPortalSqlData> impactPortalSqlData = this.impactPortalReportReadService.retrieveSqlForPortalReports();
+
+        for(final ImpactPortalSqlData impactPortalSqlDataReference:impactPortalSqlData) {
+
             //adding values to cache table
-            runreport=jdbcTemplate.queryForList(sql);
+            runreport=jdbcTemplate.queryForList(impactPortalSqlDataReference.getReportSql());
             StringBuilder values = new StringBuilder(900);
             for (Map<String, Object> map : runreport) {
                 //row
+
                 for (Map.Entry<String, Object> entry : map.entrySet()) {
                     String key = entry.getKey();
                     Object value = entry.getValue();
@@ -256,16 +250,17 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             }
             //data to be cached
             updateSqlBuilder.append("INSERT INTO impact_portal_cache(date_captured, datapoint, datapoint_label,value) VALUES ( NOW(),'");
-            updateSqlBuilder.append(datapoint);
+            updateSqlBuilder.append(impactPortalSqlDataReference.getReportName());
             updateSqlBuilder.append("','");
-            updateSqlBuilder.append(datapoint);//datapoint lable
+            updateSqlBuilder.append(impactPortalSqlDataReference.getReportName());//datapoint lable
             updateSqlBuilder.append("','");
             updateSqlBuilder.append(values);
             updateSqlBuilder.append("')");
             int result = jdbcTemplate.update(updateSqlBuilder.toString());
             updateSqlBuilder.delete(0,updateSqlBuilder.length());
-
+            logger.info("Updated impact portal cache table with new report: " + result);
         }
+
         logger.info("Updated impact portal cache table with new reports " );
     }
     @Override
