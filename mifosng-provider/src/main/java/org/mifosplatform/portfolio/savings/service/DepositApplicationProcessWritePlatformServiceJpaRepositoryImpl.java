@@ -179,8 +179,8 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
 
             if (account.isAccountNumberRequiresAutoGeneration()) {
                 final AccountNumberGenerator accountNoGenerator = this.accountIdentifierGeneratorFactory
-                        .determineSavingsAccountNoGenerator(account.getId());
-                account.updateAccountNo(accountNoGenerator.generate());
+                        .determineSavingsAccountNoGenerator();
+                account.updateAccountNo(accountNoGenerator.generate(account.getId()));
 
                 this.savingAccountRepository.save(account);
             }
@@ -225,8 +225,8 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
 
             if (account.isAccountNumberRequiresAutoGeneration()) {
                 final AccountNumberGenerator accountNoGenerator = this.accountIdentifierGeneratorFactory
-                        .determineSavingsAccountNoGenerator(account.getId());
-                account.updateAccountNo(accountNoGenerator.generate());
+                        .determineSavingsAccountNoGenerator();
+                account.updateAccountNo(accountNoGenerator.generate(account.getId()));
             }
 
             final Long savingsId = account.getId();

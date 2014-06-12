@@ -22,6 +22,12 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     private final PermissionRepository permissionRepository;
     private final GlobalConfigurationRepositoryWrapper globalConfigurationRepository;
     private final PlatformCacheRepository cacheTypeRepository;
+    
+    private final Long defaultPenaltyWaitPeriod = 60L;
+    private final Long defaultGraceOnPenaltyPosting = 60L;
+    private final Long defaultForcePasswordResetDays = 60L;
+    private final Long defaultAgeLimitForSeniorCitizens = 60L;
+    private final Long defaultAgeLimitForChildren = 10L;
 
     @Autowired
     public ConfigurationDomainServiceJpa(final PermissionRepository permissionRepository,
@@ -111,14 +117,22 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     public Long retrievePenaltyWaitPeriod() {
         final String propertyName = "penalty-wait-period";
         final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
-        return property.getValue();
+        try {
+        	return Long.parseLong(property.getValue());
+        } catch (NumberFormatException e) {
+        	return defaultPenaltyWaitPeriod;
+        }
     }
     
     @Override
     public Long retrieveGraceOnPenaltyPostingPeriod() {
         final String propertyName = "grace-on-penalty-posting";
         final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
-        return property.getValue();
+        try {
+        	return Long.parseLong(property.getValue());
+        } catch (NumberFormatException e) {
+        	return defaultGraceOnPenaltyPosting;
+        }
     }
 
 
@@ -133,19 +147,45 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     public Long retrievePasswordLiveTime() {
         final String propertyName = "force-password-reset-days";
         final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
-        return property.getValue();
+        try {
+        	return Long.parseLong(property.getValue());
+        } catch (NumberFormatException e) {
+        	return defaultForcePasswordResetDays;
+        }
     }
 
     @Override
     public Long ageLimitForSeniorCitizen() {
         final String propertyName = "age_limit_for_senior_citizen";
         final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
-        return property.getValue();
+        try {
+        	return Long.parseLong(property.getValue());
+        } catch (NumberFormatException e) {
+        	return defaultAgeLimitForSeniorCitizens;
+        }
     }
 
     @Override
     public Long ageLimitForChildren() {
         final String propertyName = "age_limit_for_children";
+        final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
+        try {
+        	return Long.parseLong(property.getValue());
+        } catch(NumberFormatException e) {
+        	return defaultAgeLimitForChildren;
+        }
+    }
+    
+    @Override
+	public boolean hasAccountNumberFormatSpecifier() {
+    	final String propertyName = "account_number_format_specifier";
+        final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
+        return property.isEnabled();
+    }
+    
+    @Override
+	public String accountNumberFormatSpecifier() {
+    	final String propertyName = "account_number_format_specifier";
         final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
         return property.getValue();
     }

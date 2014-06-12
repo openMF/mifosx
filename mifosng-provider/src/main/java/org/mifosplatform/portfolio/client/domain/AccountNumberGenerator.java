@@ -13,6 +13,6 @@ package org.mifosplatform.portfolio.client.domain;
  */
 public interface AccountNumberGenerator {
 
-    String generate();
+    String generate(final Long id);
 
 }

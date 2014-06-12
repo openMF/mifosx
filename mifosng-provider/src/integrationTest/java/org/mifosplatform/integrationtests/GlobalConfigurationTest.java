@@ -49,7 +49,7 @@ public class GlobalConfigurationTest {
                         configId.toString());
                 Assert.assertNotNull(configDataBefore);
 
-                Integer value = (Integer) configDataBefore.get("value") + 1;
+                Integer value = Integer.parseInt((String) configDataBefore.get("value")) + 1;
 
                 // Updating Value for penalty-wait-period Global Configuration
                 configId = this.globalConfigurationHelper.updateValueForGlobalConfiguration(this.requestSpec, this.responseSpec,
@@ -60,7 +60,8 @@ public class GlobalConfigurationTest {
                         configId.toString());
 
                 // Verifying Value for penalty-wait-period after Updation
-                Assert.assertEquals("Verifying Global Config Value after Updation", value, configDataAfter.get("value"));
+                Integer newValue = Integer.parseInt((String) configDataAfter.get("value"));
+                Assert.assertEquals("Verifying Global Config Value after Updation", value, newValue);
 
                 // Updating Enabled Flag for penalty-wait-period Global
                 // Configuration

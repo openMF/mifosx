@@ -148,8 +148,8 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
 
             if (account.isAccountNumberRequiresAutoGeneration()) {
                 final AccountNumberGenerator accountNoGenerator = this.accountIdentifierGeneratorFactory
-                        .determineSavingsAccountNoGenerator(account.getId());
-                account.updateAccountNo(accountNoGenerator.generate());
+                        .determineSavingsAccountNoGenerator();
+                account.updateAccountNo(accountNoGenerator.generate(account.getId()));
 
                 this.savingAccountRepository.save(account);
             }
@@ -466,8 +466,8 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
 
         if (account.isAccountNumberRequiresAutoGeneration()) {
             final AccountNumberGenerator accountNoGenerator = this.accountIdentifierGeneratorFactory
-                    .determineSavingsAccountNoGenerator(account.getId());
-            account.updateAccountNo(accountNoGenerator.generate());
+                    .determineSavingsAccountNoGenerator();
+            account.updateAccountNo(accountNoGenerator.generate(account.getId()));
             this.savingAccountRepository.save(account);
         }
         return new CommandProcessingResultBuilder() //

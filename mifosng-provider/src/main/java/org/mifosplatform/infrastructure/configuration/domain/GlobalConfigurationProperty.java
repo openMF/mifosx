@@ -26,7 +26,7 @@ public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
     private boolean enabled;
 
     @Column(name = "value", nullable = true)
-    private Long value;
+    private String value;
 
     protected GlobalConfigurationProperty() {
         this.name = null;
@@ -34,7 +34,7 @@ public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
         this.value = null;
     }
 
-    public GlobalConfigurationProperty(final String name, final boolean enabled, final Long value) {
+    public GlobalConfigurationProperty(final String name, final boolean enabled, final String value) {
         this.name = name;
         this.enabled = enabled;
         this.value = value;
@@ -44,7 +44,7 @@ public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
         return this.enabled;
     }
 
-    public Long getValue() {
+    public String getValue() {
         return this.value;
     }
 
@@ -66,8 +66,8 @@ public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
         }
 
         final String valueParamName = "value";
-        if (command.isChangeInLongParameterNamed(valueParamName, this.value)) {
-            final Long newValue = command.longValueOfParameterNamed(valueParamName);
+        if (command.isChangeInStringParameterNamed(valueParamName, this.value)) {
+            final String newValue = command.stringValueOfParameterNamed(valueParamName);
             actualChanges.put(valueParamName, newValue);
             this.value = newValue;
         }
