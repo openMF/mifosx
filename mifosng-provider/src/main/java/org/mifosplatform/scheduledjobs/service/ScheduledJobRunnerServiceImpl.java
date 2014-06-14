@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.mifosplatform.clientimpactportal.data.ImpactPortalSqlData;
+import org.mifosplatform.clientimpactportal.domain.ImpactPortalCacheData;
+import org.mifosplatform.clientimpactportal.domain.ImpactPortalCacheRepository;
 import org.mifosplatform.clientimpactportal.service.ImpactPortalReportReadService;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
@@ -44,6 +46,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final DepositAccountReadPlatformService depositAccountReadPlatformService;
     private final DepositAccountWritePlatformService depositAccountWritePlatformService;
     private final ImpactPortalReportReadService impactPortalReportReadService;
+    private final ImpactPortalCacheRepository impactPortalCacheRepository;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
@@ -51,13 +54,15 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService,
             final DepositAccountReadPlatformService depositAccountReadPlatformService,
             final DepositAccountWritePlatformService depositAccountWritePlatformService,
-            final ImpactPortalReportReadService impactPortalReportReadService) {
+            final ImpactPortalReportReadService impactPortalReportReadService,
+            final ImpactPortalCacheRepository impactPortalCacheRepository) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
         this.depositAccountReadPlatformService = depositAccountReadPlatformService;
         this.depositAccountWritePlatformService = depositAccountWritePlatformService;
         this.impactPortalReportReadService=impactPortalReportReadService;
+        this.impactPortalCacheRepository=impactPortalCacheRepository;
     }
 
     @Transactional
@@ -223,8 +228,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @CronTarget(jobName = JobName.IMPACT_PORTAL_DB_CACHE)
     public void addImpactPortalDataToDB(){
 
-        Date date=new Date();
-        final StringBuilder updateSqlBuilder = new StringBuilder(900);
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        java.util.Date utilDate = cal.getTime();
         final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
         List<Map<String, Object>> runreport;
 
@@ -248,17 +253,11 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                 }
                 values.append(",");
             }
-            //data to be cached
-            updateSqlBuilder.append("INSERT INTO impact_portal_cache(date_captured, datapoint, datapoint_label,value) VALUES ( NOW(),'");
-            updateSqlBuilder.append(impactPortalSqlDataReference.getReportName());
-            updateSqlBuilder.append("','");
-            updateSqlBuilder.append(impactPortalSqlDataReference.getReportName());//datapoint lable
-            updateSqlBuilder.append("','");
-            updateSqlBuilder.append(values);
-            updateSqlBuilder.append("')");
-            int result = jdbcTemplate.update(updateSqlBuilder.toString());
-            updateSqlBuilder.delete(0,updateSqlBuilder.length());
-            logger.info("Updated impact portal cache table with new report: " + result);
+
+            this.impactPortalCacheRepository.save(new ImpactPortalCacheData(new java.sql.Date(utilDate.getTime()), impactPortalSqlDataReference.getReportName(),
+                    impactPortalSqlDataReference.getReportName(), values.toString()));
+
+
         }
 
         logger.info("Updated impact portal cache table with new reports " );
