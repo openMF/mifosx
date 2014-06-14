@@ -33,7 +33,9 @@ import org.mifosplatform.portfolio.account.service.AccountTransfersWritePlatform
 import org.mifosplatform.portfolio.client.domain.AccountNumberGenerator;
 import org.mifosplatform.portfolio.client.domain.AccountNumberGeneratorFactory;
 import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetail;
+import org.mifosplatform.portfolio.savings.DepositAccountOnClosureType;
 import org.mifosplatform.portfolio.savings.DepositAccountType;
+import org.mifosplatform.portfolio.savings.DepositsApiConstants;
 import org.mifosplatform.portfolio.savings.SavingsApiConstants;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -115,12 +117,13 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     public SavingsAccountTransaction handleRDDeposit(final RecurringDepositAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail) {
         boolean isAccountTransfer = false;
+        final boolean isPreMatureClosure = false;
         final MathContext mc = MathContext.DECIMAL64;
         final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
                 transactionAmount, paymentDetail, isAccountTransfer);
 
         account.handleScheduleInstallments(deposit);
-        account.updateMaturityDateAndAmount(mc);
+        account.updateMaturityDateAndAmount(mc, isPreMatureClosure);
         account.updateOverduePayments(DateUtils.getLocalDateOfTenant());
         return deposit;
     }
@@ -130,6 +133,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     public Long handleFDAccountClosure(final FixedDepositAccount account, final PaymentDetail paymentDetail, final AppUser user,
             final JsonCommand command, final LocalDate tenantsTodayDate, final Map<String, Object> changes) {
         boolean isAccountTransfer = false;
+        final boolean isPreMatureClosure = false;
         final Set<Long> existingTransactionIds = new HashSet<Long>();
         final Set<Long> existingReversedTransactionIds = new HashSet<Long>();
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
@@ -155,7 +159,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         if (account.isReinvestOnClosure()) {
             FixedDepositAccount reinvestedDeposit = account.reInvest(account.getAccountBalance());
             this.depositAccountAssembler.assignSavingAccountHelpers(reinvestedDeposit);
-            reinvestedDeposit.updateMaturityDateAndAmountBeforeAccountActivation(mc);
+            reinvestedDeposit.updateMaturityDateAndAmountBeforeAccountActivation(mc,isPreMatureClosure);
             this.savingsAccountRepository.save(reinvestedDeposit);
             autoGenerateAccountNumber(reinvestedDeposit);
             final SavingsAccountTransaction withdrawal = this.handleWithdrawal(account, fmt, closedDate, account.getAccountBalance(),
@@ -190,6 +194,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     public Long handleRDAccountClosure(final RecurringDepositAccount account, final PaymentDetail paymentDetail, final AppUser user,
             final JsonCommand command, final LocalDate tenantsTodayDate, final Map<String, Object> changes) {
         boolean isAccountTransfer = false;
+        final boolean isPreMatureClosure = false;
         final Set<Long> existingTransactionIds = new HashSet<Long>();
         final Set<Long> existingReversedTransactionIds = new HashSet<Long>();
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
@@ -204,9 +209,9 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         if (account.isReinvestOnClosure()) {
             RecurringDepositAccount reinvestedDeposit = account.reInvest(transactionAmount);
             depositAccountAssembler.assignSavingAccountHelpers(reinvestedDeposit);
-            reinvestedDeposit.updateMaturityDateAndAmount(mc);
+            reinvestedDeposit.updateMaturityDateAndAmount(mc, isPreMatureClosure);
             reinvestedDeposit.processAccountUponActivation(fmt);
-            reinvestedDeposit.updateMaturityDateAndAmount(mc);
+            reinvestedDeposit.updateMaturityDateAndAmount(mc, isPreMatureClosure);
             this.savingsAccountRepository.save(reinvestedDeposit);
 
             Money amountForDeposit = reinvestedDeposit.activateWithBalance();
@@ -214,7 +219,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
                 handleRDDeposit(reinvestedDeposit, fmt, reinvestedDeposit.getActivationLocalDate(), amountForDeposit.getAmount(),
                         paymentDetail);
             }
-            reinvestedDeposit.updateMaturityDateAndAmount(mc);
+            reinvestedDeposit.updateMaturityDateAndAmount(mc, isPreMatureClosure);
             this.savingsAccountRepository.save(reinvestedDeposit);
             autoGenerateAccountNumber(reinvestedDeposit);
 
@@ -261,6 +266,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     public Long handleFDAccountPreMatureClosure(final FixedDepositAccount account, final PaymentDetail paymentDetail, final AppUser user,
             final JsonCommand command, final LocalDate tenantsTodayDate, final Map<String, Object> changes) {
         boolean isAccountTransfer = false;
+        final boolean isPreMatureClosure = true;
         final Set<Long> existingTransactionIds = new HashSet<Long>();
         final Set<Long> existingReversedTransactionIds = new HashSet<Long>();
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
@@ -270,9 +276,12 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
         Long savingsTransactionId = null;
         // post interest
-        account.postPreMaturityInterest(closedDate);
+        account.postPreMaturityInterest(closedDate, isPreMatureClosure);
 
-        if (account.isTransferToSavingsOnClosure()) {
+        final Integer closureTypeValue = command.integerValueOfParameterNamed(DepositsApiConstants.onAccountClosureIdParamName);
+        DepositAccountOnClosureType closureType = DepositAccountOnClosureType.fromInt(closureTypeValue);
+
+        if (closureType.isTransferToSavings()) {
 
             final Long toSavingsId = command.longValueOfParameterNamed(toSavingsAccountIdParamName);
             final String transferDescription = command.stringValueOfParameterNamed(transferDescriptionParamName);
@@ -301,6 +310,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     public Long handleRDAccountPreMatureClosure(final RecurringDepositAccount account, final PaymentDetail paymentDetail,
             final AppUser user, final JsonCommand command, final LocalDate tenantsTodayDate, final Map<String, Object> changes) {
         boolean isAccountTransfer = false;
+        final boolean isPreMatureClosure = true;
         final Set<Long> existingTransactionIds = new HashSet<Long>();
         final Set<Long> existingReversedTransactionIds = new HashSet<Long>();
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
@@ -310,9 +320,12 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
         Long savingsTransactionId = null;
         // post interest
-        account.postPreMaturityInterest(closedDate);
+        account.postPreMaturityInterest(closedDate, isPreMatureClosure);
 
-        if (account.isTransferToSavingsOnClosure()) {
+        final Integer closureTypeValue = command.integerValueOfParameterNamed(DepositsApiConstants.onAccountClosureIdParamName);
+        DepositAccountOnClosureType closureType = DepositAccountOnClosureType.fromInt(closureTypeValue);
+
+        if (closureType.isTransferToSavings()) {
             final Long toSavingsId = command.longValueOfParameterNamed(toSavingsAccountIdParamName);
             final String transferDescription = command.stringValueOfParameterNamed(transferDescriptionParamName);
             final SavingsAccount toSavingsAccount = this.depositAccountAssembler.assembleFrom(toSavingsId,

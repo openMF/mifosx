@@ -20,7 +20,13 @@ public interface ReadWriteNonCoreDataService {
     DatatableData retrieveDatatable(String datatable);
 
     @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'REGISTER_DATATABLE')")
-    void registerDatatable(String datatable, String appTable);
+    void registerDatatable(JsonCommand command);
+
+    @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'REGISTER_DATATABLE')")
+    void registerDatatable(String dataTableName, String applicationTableName);
+
+    @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'REGISTER_DATATABLE')")
+    void registerDatatable(JsonCommand command, String permissionTable);
 
     @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'DEREGISTER_DATATABLE')")
     void deregisterDatatable(String datatable);
@@ -35,6 +41,8 @@ public interface ReadWriteNonCoreDataService {
 
     CommandProcessingResult createNewDatatableEntry(String datatable, Long appTableId, JsonCommand command);
 
+    CommandProcessingResult createPPIEntry(String datatable, Long appTableId, JsonCommand command);
+
     CommandProcessingResult updateDatatableEntryOneToOne(String datatable, Long appTableId, JsonCommand command);
 
     CommandProcessingResult updateDatatableEntryOneToMany(String datatable, Long appTableId, Long datatableId, JsonCommand command);
@@ -42,5 +50,9 @@ public interface ReadWriteNonCoreDataService {
     CommandProcessingResult deleteDatatableEntries(String datatable, Long appTableId);
 
     CommandProcessingResult deleteDatatableEntry(String datatable, Long appTableId, Long datatableId);
+
+    String getTableName(String Url);
+
+    String getDataTableName(String Url);
 
 }

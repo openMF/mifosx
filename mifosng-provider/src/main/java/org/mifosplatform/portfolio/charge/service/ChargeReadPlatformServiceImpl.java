@@ -64,6 +64,18 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
     }
 
     @Override
+    public Collection<ChargeData> retrieveAllChargesForCurrency(String currencyCode) {
+        this.context.authenticatedUser();
+
+        final ChargeMapper rm = new ChargeMapper();
+
+        final String sql = "select " + rm.chargeSchema() + " where c.is_deleted=0 and c.currency_code='" + currencyCode
+                + "' order by c.name ";
+
+        return this.jdbcTemplate.query(sql, rm, new Object[] {});
+    }
+
+    @Override
     public ChargeData retrieveCharge(final Long chargeId) {
         try {
             this.context.authenticatedUser();

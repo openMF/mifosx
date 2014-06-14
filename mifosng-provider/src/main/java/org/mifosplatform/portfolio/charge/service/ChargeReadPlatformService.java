@@ -13,6 +13,8 @@ public interface ChargeReadPlatformService {
 
     Collection<ChargeData> retrieveAllCharges();
 
+    Collection<ChargeData> retrieveAllChargesForCurrency(String currencyCode);
+
     ChargeData retrieveCharge(Long chargeId);
 
     ChargeData retrieveNewChargeDetails();

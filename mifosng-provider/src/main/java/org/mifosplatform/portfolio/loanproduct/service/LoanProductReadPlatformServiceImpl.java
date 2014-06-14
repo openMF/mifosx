@@ -292,6 +292,17 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
     }
 
     @Override
+    public Collection<LoanProductData> retrieveAllLoanProductsForCurrency(String currencyCode) {
+        this.context.authenticatedUser();
+
+        final LoanProductMapper rm = new LoanProductMapper(null, null);
+
+        final String sql = "select " + rm.loanProductSchema() + " where lp.currency_code='" + currencyCode + "'";
+
+        return this.jdbcTemplate.query(sql, rm, new Object[] {});
+    }
+
+    @Override
     public Collection<LoanProductData> retrieveAvailableLoanProductsForMix() {
 
         this.context.authenticatedUser();

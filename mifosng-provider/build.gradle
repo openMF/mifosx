@@ -230,6 +230,8 @@ tomcatRunWar {
 
 sourceSets {
     integrationTest {
+    	compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
     }
 }
 

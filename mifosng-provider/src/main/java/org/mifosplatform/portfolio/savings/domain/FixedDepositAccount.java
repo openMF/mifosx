@@ -41,7 +41,6 @@ import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.group.domain.Group;
-import org.mifosplatform.portfolio.interestratechart.data.ClientIncentiveAttributes;
 import org.mifosplatform.portfolio.interestratechart.domain.InterestRateChart;
 import org.mifosplatform.portfolio.interestratechart.service.InterestRateChartAssembler;
 import org.mifosplatform.portfolio.savings.DepositAccountOnClosureType;
@@ -128,17 +127,17 @@ public class FixedDepositAccount extends SavingsAccount {
         final Map<String, Object> termAndPreClosureChanges = accountTermAndPreClosure.update(command, baseDataValidator);
         actualChanges.putAll(termAndPreClosureChanges);
         validateDomainRules(baseDataValidator);
+        super.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
-    @Override
-    protected BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate interestPostingUpToDate) {
+    protected BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate interestPostingUpToDate,
+            final boolean isPreMatureClosure) {
 
         // default it to nominalAnnualInterst rate. interest chart overrrides
         // this value.
         BigDecimal applicableInterestRate = this.nominalAnnualInterestRate;
         if (this.chart != null) {
-            final boolean isPreMatureClosure = SavingsAccountStatusType.fromInt(this.status).isPreMatureClosure();
             boolean applyPreMaturePenalty = false;
             BigDecimal penalInterest = BigDecimal.ZERO;
             LocalDate depositCloseDate = calculateMaturityDate();
@@ -157,9 +156,8 @@ public class FixedDepositAccount extends SavingsAccount {
             }
 
             final BigDecimal depositAmount = accountTermAndPreClosure.depositAmount();
-            final ClientIncentiveAttributes incentiveAttributes = (this.client == null) ? null : this.client.incentiveAttributes();
             applicableInterestRate = this.chart.getApplicableInterestRate(depositAmount, depositStartDate(), depositCloseDate,
-                    incentiveAttributes);
+                    this.client);
 
             if (applyPreMaturePenalty) {
                 applicableInterestRate = applicableInterestRate.subtract(penalInterest);
@@ -171,7 +169,7 @@ public class FixedDepositAccount extends SavingsAccount {
         return applicableInterestRate.divide(BigDecimal.valueOf(100l), mc);
     }
 
-    public void updateMaturityDateAndAmountBeforeAccountActivation(final MathContext mc) {
+    public void updateMaturityDateAndAmountBeforeAccountActivation(final MathContext mc, final boolean isPreMatureClosure) {
         List<SavingsAccountTransaction> allTransactions = new ArrayList<SavingsAccountTransaction>();
         final Money transactionAmountMoney = Money.of(getCurrency(), this.accountTermAndPreClosure.depositAmount());
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(null, office(), null,
@@ -179,14 +177,15 @@ public class FixedDepositAccount extends SavingsAccount {
         transaction.updateRunningBalance(transactionAmountMoney);
         transaction.updateCumulativeBalanceAndDates(this.getCurrency(), interestCalculatedUpto());
         allTransactions.add(transaction);
-        updateMaturityDateAndAmount(mc, allTransactions);
+        updateMaturityDateAndAmount(mc, allTransactions, isPreMatureClosure);
     }
 
-    public void updateMaturityDateAndAmount(final MathContext mc) {
-        updateMaturityDateAndAmount(mc, retreiveOrderedNonInterestPostingTransactions());
+    public void updateMaturityDateAndAmount(final MathContext mc, final boolean isPreMatureClosure) {
+        updateMaturityDateAndAmount(mc, retreiveOrderedNonInterestPostingTransactions(), isPreMatureClosure);
     }
 
-    public void updateMaturityDateAndAmount(final MathContext mc, final List<SavingsAccountTransaction> transactions) {
+    public void updateMaturityDateAndAmount(final MathContext mc, final List<SavingsAccountTransaction> transactions,
+            final boolean isPreMatureClosure) {
         final LocalDate maturityDate = calculateMaturityDate();
         final LocalDate interestCalculationUpto = maturityDate.minusDays(1);
 
@@ -194,7 +193,7 @@ public class FixedDepositAccount extends SavingsAccount {
         // calculation
         this.resetAccountTransactionsEndOfDayBalances(transactions, maturityDate);
 
-        final List<PostingPeriod> postingPeriods = calculateInterestPayable(mc, interestCalculationUpto, transactions);
+        final List<PostingPeriod> postingPeriods = calculateInterestPayable(mc, interestCalculationUpto, transactions, isPreMatureClosure);
 
         // reset end of day balance back to today's date
         this.resetAccountTransactionsEndOfDayBalances(transactions, DateUtils.getLocalDateOfTenant());
@@ -254,7 +253,7 @@ public class FixedDepositAccount extends SavingsAccount {
     }
 
     private List<PostingPeriod> calculateInterestPayable(final MathContext mc, final LocalDate maturityDate,
-            final List<SavingsAccountTransaction> transactions) {
+            final List<SavingsAccountTransaction> transactions, final boolean isPreMatureClosure) {
 
         final SavingsPostingInterestPeriodType postingPeriodType = SavingsPostingInterestPeriodType.fromInt(this.interestPostingPeriodType);
 
@@ -272,7 +271,7 @@ public class FixedDepositAccount extends SavingsAccount {
         Money periodStartingBalance = Money.zero(currency);
 
         final SavingsInterestCalculationType interestCalculationType = SavingsInterestCalculationType.fromInt(this.interestCalculationType);
-        final BigDecimal interestRateAsFraction = getEffectiveInterestRateAsFraction(mc, maturityDate);
+        final BigDecimal interestRateAsFraction = getEffectiveInterestRateAsFraction(mc, maturityDate, isPreMatureClosure);
         final Collection<Long> interestPostTransactions = this.savingsHelper.fetchPostInterestTransactionIds(getId());
         boolean isInterestTransfer = false;
         for (final LocalDateInterval periodInterval : postingPeriodIntervals) {
@@ -497,10 +496,12 @@ public class FixedDepositAccount extends SavingsAccount {
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 
-    public void postPreMaturityInterest(final LocalDate accountCloseDate) {
+    public void postPreMaturityInterest(final LocalDate accountCloseDate, final boolean isPreMatureClosure) {
 
         Money interestPostedToDate = totalInterestPosted();
-        final Money interestOnMaturity = calculatePreMatureInterest(accountCloseDate, retreiveOrderedNonInterestPostingTransactions());
+        // calculate interest before one day of closure date
+        final LocalDate interestCalculatedToDate = accountCloseDate.minusDays(1);
+        final Money interestOnMaturity = calculatePreMatureInterest(interestCalculatedToDate, retreiveOrderedNonInterestPostingTransactions(), isPreMatureClosure);
         boolean recalucateDailyBalance = false;
 
         // post remaining interest
@@ -522,11 +523,12 @@ public class FixedDepositAccount extends SavingsAccount {
 
     }
 
-    public BigDecimal calculatePreMatureAmount(final LocalDate preMatureDate) {
+    public BigDecimal calculatePreMatureAmount(final LocalDate preMatureDate, final boolean isPreMatureClosure) {
 
         final Money interestPostedToDate = totalInterestPosted().copy();
 
-        final Money interestEarnedTillDate = calculatePreMatureInterest(preMatureDate, retreiveOrderedNonInterestPostingTransactions());
+        final Money interestEarnedTillDate = calculatePreMatureInterest(preMatureDate, retreiveOrderedNonInterestPostingTransactions(),
+                isPreMatureClosure);
 
         final Money accountBalance = Money.of(getCurrency(), getAccountBalance());
         final Money maturityAmount = accountBalance.minus(interestPostedToDate).plus(interestEarnedTillDate);
@@ -534,9 +536,10 @@ public class FixedDepositAccount extends SavingsAccount {
         return maturityAmount.getAmount();
     }
 
-    private Money calculatePreMatureInterest(final LocalDate preMatureDate, final List<SavingsAccountTransaction> transactions) {
+    private Money calculatePreMatureInterest(final LocalDate preMatureDate, final List<SavingsAccountTransaction> transactions,
+            final boolean isPreMatureClosure) {
         final MathContext mc = MathContext.DECIMAL64;
-        final List<PostingPeriod> postingPeriods = calculateInterestPayable(mc, preMatureDate, transactions);
+        final List<PostingPeriod> postingPeriods = calculateInterestPayable(mc, preMatureDate, transactions, isPreMatureClosure);
 
         Money interestOnMaturity = Money.zero(this.currency);
 
@@ -627,6 +630,7 @@ public class FixedDepositAccount extends SavingsAccount {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);
         validateDomainRules(baseDataValidator);
+        super.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
@@ -671,9 +675,8 @@ public class FixedDepositAccount extends SavingsAccount {
             }
 
             final BigDecimal depositAmount = accountTermAndPreClosure.depositAmount();
-            final ClientIncentiveAttributes incentiveAttributes = (this.client == null) ? null : this.client.incentiveAttributes();
             BigDecimal applicableInterestRate = this.chart.getApplicableInterestRate(depositAmount, depositStartDate(),
-                    calculateMaturityDate(), incentiveAttributes);
+                    calculateMaturityDate(), this.client);
 
             if (applicableInterestRate.equals(BigDecimal.ZERO)) {
                 baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(

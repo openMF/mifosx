@@ -20,6 +20,8 @@ public interface LoanProductReadPlatformService {
 
     LoanProductData retrieveNewLoanProductDetails();
 
+    Collection<LoanProductData> retrieveAllLoanProductsForCurrency(String currencyCode);
+
     Collection<LoanProductData> retrieveAvailableLoanProductsForMix();
 
     Collection<LoanProductData> retrieveRestrictedProductsForMix(Long productId);
