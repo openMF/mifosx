@@ -255,7 +255,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             }
 
             this.impactPortalCacheRepository.save(new ImpactPortalCacheData(new java.sql.Date(utilDate.getTime()), impactPortalSqlDataReference.getReportName(),
-                    impactPortalSqlDataReference.getReportName(), values.toString()));
+                    impactPortalSqlDataReference.getReportSubType(), values.toString()));
 
 
         }
