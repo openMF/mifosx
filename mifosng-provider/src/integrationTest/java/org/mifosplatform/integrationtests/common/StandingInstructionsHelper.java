@@ -98,7 +98,7 @@ public class StandingInstructionsHelper {
     }
 
     public List<HashMap> getStandingInstructionHistory(Integer fromSavingsId, Integer fromAccountType, Integer fromClientId, Integer transferType) {
-        final String STANDING_INSTRUCTIONS_HISTORY_URL = STANDING_INSTRUCTIONS_URL + "/history?" + Utils.TENANT_IDENTIFIER
+        final String STANDING_INSTRUCTIONS_HISTORY_URL = STANDING_INSTRUCTIONS_URL + "/runhistory?" + Utils.TENANT_IDENTIFIER
                 + "&fromSavingsId=" + fromSavingsId + "&fromAccountType=" + fromAccountType + "&clientId=" + fromClientId
                 + "&transferType=" + transferType;
         System.out.println("STANDING_INSTRUCTIONS_HISTORY_URL="+STANDING_INSTRUCTIONS_HISTORY_URL);
