@@ -233,11 +233,12 @@ public final class LoanSummary {
 
         final Money totalPenaltyChargesCharged = summaryWrapper
                 .calculateTotalPenaltyChargesCharged(repaymentScheduleInstallments, currency);
-        this.totalPenaltyChargesCharged = totalPenaltyChargesCharged.getAmount();
+
         this.totalPenaltyChargesRepaid = summaryWrapper.calculateTotalPenaltyChargesRepaid(repaymentScheduleInstallments, currency)
                 .getAmount();
         this.totalPenaltyChargesWaived = summaryWrapper.calculateTotalPenaltyChargesWaived(repaymentScheduleInstallments, currency)
                 .getAmount();
+        this.totalPenaltyChargesCharged = totalPenaltyChargesCharged.minus(this.totalPenaltyChargesWaived).getAmount();
         this.totalPenaltyChargesWrittenOff = summaryWrapper.calculateTotalPenaltyChargesWrittenOff(repaymentScheduleInstallments, currency)
                 .getAmount();
 
