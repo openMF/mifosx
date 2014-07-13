@@ -54,11 +54,11 @@ public class ClientImpactPortalApiResource {
     @Path("latestReport")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveLatestReport(@Context final UriInfo uriInfo, @QueryParam("reportName") final String reportName) {
+    public String retrieveLatestReport(@Context final UriInfo uriInfo, @QueryParam("reportName") final String reportName,@QueryParam("tenantIdentifier") final String tenantIdentifier) {
 
 
         final ImpactPortalData impactPortalData= this.impactPortalReadService.getDataByNameForYesterday(reportName);
-        final ImpactPortalResponseData impactPortalResponseData= new ImpactPortalResponseData(impactPortalData.getResultValues(),impactPortalData.getDataPointLabel(),impactPortalData.getDateCaptured());//final ImpactPortalResponseData impactPortalResponseData= new ImpactPortalResponseData(impactPortalData.getValues(),impactPortalData.getDataPointLabel());
+        final ImpactPortalResponseData impactPortalResponseData= new ImpactPortalResponseData(impactPortalData.getResultValues(),impactPortalData.getDataPointLabel(),impactPortalData.getDateCaptured(),tenantIdentifier);//final ImpactPortalResponseData impactPortalResponseData= new ImpactPortalResponseData(impactPortalData.getValues(),impactPortalData.getDataPointLabel());
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, impactPortalResponseData);
 
@@ -69,10 +69,10 @@ public class ClientImpactPortalApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveReportsByDate(@Context final UriInfo uriInfo, @QueryParam("reportName") final String reportName,
-                                        @QueryParam("reportDate") final String reportDate) {
+                                        @QueryParam("reportDate") final String reportDate,@QueryParam("tenantIdentifier") final String tenantIdentifier) {
 
         final ImpactPortalData impactPortalData= this.impactPortalReadService.getDataByDate(reportName, reportDate);
-        final ImpactPortalResponseData impactPortalResponseData= new ImpactPortalResponseData(impactPortalData.getResultValues(),impactPortalData.getDataPointLabel(),impactPortalData.getDateCaptured());
+        final ImpactPortalResponseData impactPortalResponseData= new ImpactPortalResponseData(impactPortalData.getResultValues(),impactPortalData.getDataPointLabel(),impactPortalData.getDateCaptured(),tenantIdentifier);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, impactPortalResponseData);
     }
@@ -82,11 +82,11 @@ public class ClientImpactPortalApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveReportsByDateRange(@Context final UriInfo uriInfo, @QueryParam("reportName") final String reportName,@QueryParam("reportStartDate") final String reportStartDate,
-                                        @QueryParam("reportEndDate") final String reportEndDate) {
+                                        @QueryParam("reportEndDate") final String reportEndDate,@QueryParam("tenantIdentifier") final String tenantIdentifier) {
         final Collection<ImpactPortalData> impactPortalData= this.impactPortalReadService.getDataByDateRange(reportName, reportStartDate,reportEndDate);
         Collection<ImpactPortalResponseData> impactPortalResponseDataCollection=new ArrayList<ImpactPortalResponseData>();
             for(ImpactPortalData i: impactPortalData){
-                  impactPortalResponseDataCollection.add(new ImpactPortalResponseData(i.getResultValues(),i.getDataPointLabel(),i.getDateCaptured()));
+                  impactPortalResponseDataCollection.add(new ImpactPortalResponseData(i.getResultValues(),i.getDataPointLabel(),i.getDateCaptured(),tenantIdentifier));
             }
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, impactPortalResponseDataCollection);
