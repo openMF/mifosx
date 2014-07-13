@@ -8,9 +8,11 @@ package org.mifosplatform.portfolio.savings.domain;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.enforceMinRequiredBalanceParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.localeParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minRequiredBalanceParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
 
@@ -239,17 +241,23 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     @Column(name = "overdraft_limit", scale = 6, precision = 19, nullable = true)
     private BigDecimal overdraftLimit;
 
+    @Column(name = "enforce_min_required_balance")
+    private boolean enforceMinRequiredBalance;
+
+    @Column(name = "min_required_balance", scale = 6, precision = 19, nullable = true)
+    private BigDecimal minRequiredBalance;
+
     @Embedded
     protected SavingsAccountSummary summary;
 
     @OrderBy(value = "dateOf, createdDate, id")
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true)
-    protected final List<SavingsAccountTransaction> transactions = new ArrayList<SavingsAccountTransaction>();
+    protected final List<SavingsAccountTransaction> transactions = new ArrayList<>();
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true)
-    protected Set<SavingsAccountCharge> charges = new HashSet<SavingsAccountCharge>();
+    protected Set<SavingsAccountCharge> charges = new HashSet<>();
 
     @Transient
     protected boolean accountNumberRequiresAutoGeneration = false;
@@ -260,6 +268,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     @Column(name = "deposit_type_enum", insertable = false, updatable = false)
     private Integer depositType;
+
+    @Column(name = "min_balance_for_interest_calculation", scale = 6, precision = 19, nullable = true)
+    private BigDecimal minBalanceForInterestCalculation;
 
     protected SavingsAccount() {
         //
@@ -273,13 +284,15 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
-            final boolean allowOverdraft, final BigDecimal overdraftLimit) {
+            final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
+            final BigDecimal minRequiredBalance) {
 
         final SavingsAccountStatusType status = SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL;
         return new SavingsAccount(client, group, product, fieldOfficer, accountNo, externalId, status, accountType, submittedOnDate,
                 submittedBy, interestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
-                withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit);
+                withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, enforceMinRequiredBalance,
+                minRequiredBalance);
     }
 
     protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff fieldOfficer,
@@ -291,6 +304,22 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit) {
+        this(client, group, product, fieldOfficer, accountNo, externalId, status, accountType, submittedOnDate, submittedBy,
+                nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
+                interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
+                withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, false, null);
+    }
+
+    protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff fieldOfficer,
+            final String accountNo, final String externalId, final SavingsAccountStatusType status, final AccountType accountType,
+            final LocalDate submittedOnDate, final AppUser submittedBy, final BigDecimal nominalAnnualInterestRate,
+            final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
+            final SavingsPostingInterestPeriodType interestPostingPeriodType, final SavingsInterestCalculationType interestCalculationType,
+            final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
+            final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
+            final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
+            final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
+            final BigDecimal minRequiredBalance) {
         this.client = client;
         this.group = group;
         this.product = product;
@@ -327,6 +356,10 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         this.summary = new SavingsAccountSummary();
         this.allowOverdraft = allowOverdraft;
         this.overdraftLimit = overdraftLimit;
+
+        this.enforceMinRequiredBalance = enforceMinRequiredBalance;
+        this.minRequiredBalance = minRequiredBalance;
+        this.minBalanceForInterestCalculation = product.minBalanceForInterestCalculation();
     }
 
     /**
@@ -480,19 +513,21 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(getActivationLocalDate(),
                 upToInterestCalculationDate, postingPeriodType);
 
-        final List<PostingPeriod> allPostingPeriods = new ArrayList<PostingPeriod>();
+        final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
         Money periodStartingBalance = Money.zero(this.currency);
 
         final SavingsInterestCalculationType interestCalculationType = SavingsInterestCalculationType.fromInt(this.interestCalculationType);
         final BigDecimal interestRateAsFraction = getEffectiveInterestRateAsFraction(mc, upToInterestCalculationDate);
         final Collection<Long> interestPostTransactions = this.savingsHelper.fetchPostInterestTransactionIds(getId());
+        final Money minBalanceForInterestCalculation = Money.of(getCurrency(), minBalanceForInterestCalculation());
+
         for (final LocalDateInterval periodInterval : postingPeriodIntervals) {
 
             final PostingPeriod postingPeriod = PostingPeriod.createFrom(periodInterval, periodStartingBalance,
                     retreiveOrderedNonInterestPostingTransactions(), this.currency, compoundingPeriodType, interestCalculationType,
                     interestRateAsFraction, daysInYearType.getValue(), upToInterestCalculationDate, interestPostTransactions,
-                    isInterestTransfer);
+                    isInterestTransfer, minBalanceForInterestCalculation);
 
             periodStartingBalance = postingPeriod.closingBalance();
 
@@ -516,7 +551,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     protected List<SavingsAccountTransaction> retreiveOrderedNonInterestPostingTransactions() {
         final List<SavingsAccountTransaction> listOfTransactionsSorted = retreiveListOfTransactions();
 
-        final List<SavingsAccountTransaction> orderedNonInterestPostingTransactions = new ArrayList<SavingsAccountTransaction>();
+        final List<SavingsAccountTransaction> orderedNonInterestPostingTransactions = new ArrayList<>();
 
         for (final SavingsAccountTransaction transaction : listOfTransactionsSorted) {
             if (!transaction.isInterestPostingAndNotReversed() && transaction.isNotReversed()) {
@@ -528,7 +563,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     }
 
     protected List<SavingsAccountTransaction> retreiveListOfTransactions() {
-        final List<SavingsAccountTransaction> listOfTransactionsSorted = new ArrayList<SavingsAccountTransaction>();
+        final List<SavingsAccountTransaction> listOfTransactionsSorted = new ArrayList<>();
         listOfTransactionsSorted.addAll(this.transactions);
 
         final SavingsAccountTransactionComparator transactionComparator = new SavingsAccountTransactionComparator();
@@ -615,7 +650,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                     + ".transaction.account.is.not.active", defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate()
                     .toString(transactionDTO.getFormatter()));
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -627,7 +662,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                     "error.msg." + resourceTypeName + ".transaction.in.the.future", defaultUserMessage, "transactionDate", transactionDTO
                             .getTransactionDate().toString(transactionDTO.getFormatter()));
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -640,7 +675,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             final ApiParameterError error = ApiParameterError.parameterError("error.msg." + resourceTypeName
                     + ".transaction.before.activation.date", defaultUserMessage, "transactionDate", defaultUserArgs);
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -668,13 +703,13 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee) {
 
-        if (isNotActive()) {
+        if (!isTransactionsAllowed()) {
 
             final String defaultUserMessage = "Transaction is not allowed. Account is not active.";
             final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.account.is.not.active",
                     defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -685,7 +720,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.in.the.future",
                     defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -698,7 +733,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.before.activation.date",
                     defaultUserMessage, "transactionDate", defaultUserArgs);
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -712,7 +747,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                     transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()),
                     getLockedInUntilLocalDate().toString(transactionDTO.getFormatter()));
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -755,7 +790,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return transactionBeforeLastInterestPosting;
     }
 
-    public void validateAccountBalanceDoesNotBecomeNegative(final BigDecimal transactionAmount) {
+    public void validateAccountBalanceDoesNotBecomeNegative(final BigDecimal transactionAmount, final boolean isWithdrawBalance) {
         final List<SavingsAccountTransaction> transactionsSortedByDate = retreiveListOfTransactions();
         Money runningBalance = Money.zero(this.currency);
 
@@ -766,9 +801,15 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                 runningBalance = runningBalance.minus(transaction.getAmount(this.currency));
             }
 
+            final BigDecimal withdrawalFee = null;
+            // deal with potential minRequiredBalance and
+            // enforceMinRequiredBalance
+            if (!isWithdrawBalance && this.minRequiredBalance != null && this.enforceMinRequiredBalance) {
+                if (runningBalance.minus(this.minRequiredBalance).isLessThanZero()) { throw new InsufficientAccountBalanceException(
+                        "transactionAmount", getAccountBalance(), withdrawalFee, transactionAmount); }
+            }
+
             if (runningBalance.isLessThanZero()) {
-                //
-                final BigDecimal withdrawalFee = null;
                 Money limit = runningBalance.zero();
                 if (this.allowOverdraft) {
                     if (this.overdraftLimit != null) {
@@ -795,7 +836,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
             if (runningBalance.isLessThanZero()) {
                 //
-                final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
                 final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(depositAccountType()
                         .resourceName() + transactionAction);
 
@@ -841,7 +882,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     }
 
     public void modifyApplication(final JsonCommand command, final Map<String, Object> actualChanges) {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.modifyApplicationAction);
         this.modifyApplication(command, actualChanges, baseDataValidator);
@@ -999,6 +1040,19 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             this.overdraftLimit = null;
         }
 
+        if (command.isChangeInBooleanParameterNamed(enforceMinRequiredBalanceParamName, this.enforceMinRequiredBalance)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(enforceMinRequiredBalanceParamName);
+            actualChanges.put(enforceMinRequiredBalanceParamName, newValue);
+            this.enforceMinRequiredBalance = newValue;
+        }
+
+        if (command.isChangeInBigDecimalParameterNamedDefaultingZeroToNull(minRequiredBalanceParamName, this.minRequiredBalance)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamedDefaultToNullIfZero(minRequiredBalanceParamName);
+            actualChanges.put(minRequiredBalanceParamName, newValue);
+            actualChanges.put(localeParamName, localeAsInput);
+            this.minRequiredBalance = newValue;
+        }
+
         validateLockinDetails(baseDataValidator);
     }
 
@@ -1030,7 +1084,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     public Map<String, Object> deriveAccountingBridgeData(final CurrencyData currencyData, final Set<Long> existingTransactionIds,
             final Set<Long> existingReversedTransactionIds, boolean isAccountTransfer) {
 
-        final Map<String, Object> accountingBridgeData = new LinkedHashMap<String, Object>();
+        final Map<String, Object> accountingBridgeData = new LinkedHashMap<>();
         accountingBridgeData.put("savingsId", getId());
         accountingBridgeData.put("savingsProductId", productId());
         accountingBridgeData.put("currency", currencyData);
@@ -1039,7 +1093,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         accountingBridgeData.put("accrualBasedAccountingEnabled", isAccrualBasedAccountingEnabledOnSavingsProduct());
         accountingBridgeData.put("isAccountTransfer", isAccountTransfer);
 
-        final List<Map<String, Object>> newLoanTransactions = new ArrayList<Map<String, Object>>();
+        final List<Map<String, Object>> newLoanTransactions = new ArrayList<>();
         for (final SavingsAccountTransaction transaction : this.transactions) {
             if (transaction.isReversed() && !existingReversedTransactionIds.contains(transaction.getId())) {
                 newLoanTransactions.add(transaction.toMapData(currencyData));
@@ -1054,7 +1108,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public Collection<Long> findExistingTransactionIds() {
 
-        final Collection<Long> ids = new ArrayList<Long>();
+        final Collection<Long> ids = new ArrayList<>();
 
         for (final SavingsAccountTransaction transaction : this.transactions) {
             ids.add(transaction.getId());
@@ -1065,7 +1119,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public Collection<Long> findExistingReversedTransactionIds() {
 
-        final Collection<Long> ids = new ArrayList<Long>();
+        final Collection<Long> ids = new ArrayList<>();
 
         for (final SavingsAccountTransaction transaction : this.transactions) {
             if (transaction.isReversed()) {
@@ -1086,6 +1140,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public void update(final SavingsProduct product) {
         this.product = product;
+        this.minBalanceForInterestCalculation = product.minBalanceForInterestCalculation();
     }
 
     public void update(final Staff fieldOfficer) {
@@ -1168,7 +1223,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
         final LocalDate submittedOn = getSubmittedOnLocalDate();
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(resourceName
                 + SavingsApiConstants.summitalAction);
 
@@ -1218,9 +1273,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public Map<String, Object> approveApplication(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate) {
 
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>();
+        final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.approvalAction);
 
@@ -1278,9 +1333,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     }
 
     public Map<String, Object> undoApplicationApproval() {
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>();
+        final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.undoApprovalAction);
 
@@ -1364,9 +1419,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public Map<String, Object> rejectApplication(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate) {
 
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>();
+        final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.rejectAction);
 
@@ -1424,9 +1479,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public Map<String, Object> applicantWithdrawsFromApplication(final AppUser currentUser, final JsonCommand command,
             final LocalDate tenantsTodayDate) {
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>();
+        final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.withdrawnByApplicantAction);
 
@@ -1483,9 +1538,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public Map<String, Object> activate(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate) {
 
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>();
+        final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(depositAccountType()
                 .resourceName() + SavingsApiConstants.activateAction);
 
@@ -1617,9 +1672,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public Map<String, Object> close(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate) {
 
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>();
+        final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.closeAction);
 
@@ -1751,7 +1806,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         if (newSavingsAccountCharges == null) { return false; }
 
         if (this.charges == null) {
-            this.charges = new HashSet<SavingsAccountCharge>();
+            this.charges = new HashSet<>();
         }
         this.charges.clear();
         this.charges.addAll(associateChargesWithThisSavingsAccount(newSavingsAccountCharges));
@@ -1764,7 +1819,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     }
 
     public void removeCharge(final SavingsAccountCharge charge) {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
 
@@ -1783,7 +1838,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public void waiveCharge(final Long savingsAccountChargeId) {
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
 
@@ -1821,7 +1876,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public void addCharge(final DateTimeFormatter formatter, final SavingsAccountCharge savingsAccountCharge, final Charge chargeDefinition) {
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
 
@@ -1872,7 +1927,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
         }
 
-        if (savingsAccountCharge.isAnnualFee() || savingsAccountCharge.isMonthlyFee()) {
+        if (savingsAccountCharge.isAnnualFee() || savingsAccountCharge.isMonthlyFee() || savingsAccountCharge.isWeeklyFee()) {
             // update due date
             if (isActive()) {
                 savingsAccountCharge.updateToNextDueDateFrom(getActivationLocalDate());
@@ -1908,7 +1963,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     public void payCharge(final SavingsAccountCharge savingsAccountCharge, final BigDecimal amountPaid, final LocalDate transactionDate,
             final DateTimeFormatter formatter) {
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
 
@@ -2034,7 +2089,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public void validateAccountValuesWithProduct() {
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
 
@@ -2072,7 +2127,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     }
 
     public void validateInterestPostingAndCompoundingPeriodTypes(final DataValidatorBuilder baseDataValidator) {
-        Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>>();
+        Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
         postingtoCompoundMap.put(
                 SavingsPostingInterestPeriodType.MONTHLY,
                 Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
@@ -2106,5 +2161,25 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                     savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
 
         }
+    }
+
+    public boolean allowDeposit() {
+        return true;
+    }
+
+    public boolean allowWithdrawal() {
+        return true;
+    }
+
+    public boolean allowModify() {
+        return true;
+    }
+
+    public boolean isTransactionsAllowed() {
+        return isActive();
+    }
+
+    public BigDecimal minBalanceForInterestCalculation() {
+        return this.minBalanceForInterestCalculation;
     }
 }

@@ -1,6 +1,7 @@
 package org.mifosplatform.integrationtests.common;
 
 import java.util.HashMap;
+import java.util.List;
 
 import org.mifosplatform.integrationtests.common.Utils;
 
@@ -10,10 +11,11 @@ import com.google.gson.Gson;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.jayway.restassured.specification.ResponseSpecification;
 
-@SuppressWarnings({ "unused", "rawtypes" })
+@SuppressWarnings({ "unused", "rawtypes", "unchecked" })
 public class StandingInstructionsHelper {
 
     private static final String STANDING_INSTRUCTIONS_URL = "/mifosng-provider/api/v1/standinginstructions";
+    private static final String STANDING_INSTRUCTIONS_RUNHISTORY_URL = "/mifosng-provider/api/v1/standinginstructionrunhistory";
     private static final String LOCALE = "en_GB";
     private static final String OFFICE_ID = "1";
     private static final String INSTRUCTION_TYPE_FIXED = "1";
@@ -48,7 +50,7 @@ public class StandingInstructionsHelper {
     public String build(final String clientId, final String fromAccountId, final String toAccountId, final String fromAccountType,
             final String toAccountType, final String validFrom, final String validTo, final String monthDay) {
 
-        final HashMap<String, String> map = new HashMap<String, String>();
+        final HashMap<String, String> map = new HashMap<>();
         map.put("name", Utils.randomNameGenerator("STANDING_INSTRUCTION_", 5));
         map.put("dateFormat", "dd MMMM yyyy");
         map.put("monthDayFormat", "dd MMMM");
@@ -93,6 +95,16 @@ public class StandingInstructionsHelper {
         final String GET_STANDING_INSTRUCTION_BY_ID_URL = STANDING_INSTRUCTIONS_URL + "/" + standingInstructionId + "?"
                 + Utils.TENANT_IDENTIFIER;
         final HashMap response = Utils.performServerGet(this.requestSpec, this.responseSpec, GET_STANDING_INSTRUCTION_BY_ID_URL, "");
+        return response;
+    }
+
+    public List<HashMap> getStandingInstructionHistory(Integer fromSavingsId, Integer fromAccountType, Integer fromClientId, Integer transferType) {
+        final String STANDING_INSTRUCTIONS_HISTORY_URL = STANDING_INSTRUCTIONS_RUNHISTORY_URL + "?" + Utils.TENANT_IDENTIFIER
+                + "&fromSavingsId=" + fromSavingsId + "&fromAccountType=" + fromAccountType + "&clientId=" + fromClientId
+                + "&transferType=" + transferType;
+        System.out.println("STANDING_INSTRUCTIONS_HISTORY_URL="+STANDING_INSTRUCTIONS_HISTORY_URL);
+        final List<HashMap> response = (List<HashMap>) Utils.performServerGet(this.requestSpec, this.responseSpec,
+                STANDING_INSTRUCTIONS_HISTORY_URL, "pageItems");
         return response;
     }
 }

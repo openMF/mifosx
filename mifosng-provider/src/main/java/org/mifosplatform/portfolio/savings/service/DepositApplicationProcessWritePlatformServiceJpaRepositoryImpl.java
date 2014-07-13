@@ -240,7 +240,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             final PeriodFrequencyType frequencyType = CalendarFrequencyType.from(CalendarUtils.getFrequency(calendar.getRecurrence()));
             Integer frequency = CalendarUtils.getInterval(calendar.getRecurrence());
             frequency = frequency == -1 ? 1 : frequency;
-            account.generateSchedule(frequencyType, frequency);
+            account.generateSchedule(frequencyType, frequency, calendar);
             final boolean isPreMatureClosure = false;
             account.updateMaturityDateAndAmount(mc, isPreMatureClosure);
             account.validateApplicableInterestRate();
@@ -319,7 +319,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
         try {
             this.depositAccountDataValidator.validateFixedDepositForUpdate(command.json());
 
-            final Map<String, Object> changes = new LinkedHashMap<String, Object>(20);
+            final Map<String, Object> changes = new LinkedHashMap<>(20);
 
             final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(accountId,
                     DepositAccountType.FIXED_DEPOSIT);
@@ -356,7 +356,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
         try {
             this.depositAccountDataValidator.validateRecurringDepositForUpdate(command.json());
 
-            final Map<String, Object> changes = new LinkedHashMap<String, Object>(20);
+            final Map<String, Object> changes = new LinkedHashMap<>(20);
 
             final RecurringDepositAccount account = (RecurringDepositAccount) this.depositAccountAssembler.assembleFrom(accountId,
                     DepositAccountType.RECURRING_DEPOSIT);
@@ -373,7 +373,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                 final PeriodFrequencyType frequencyType = CalendarFrequencyType.from(CalendarUtils.getFrequency(calendar.getRecurrence()));
                 Integer frequency = CalendarUtils.getInterval(calendar.getRecurrence());
                 frequency = frequency == -1 ? 1 : frequency;
-                account.generateSchedule(frequencyType, frequency);
+                account.generateSchedule(frequencyType, frequency, calendar);
                 final boolean isPreMatureClosure = false;
                 account.updateMaturityDateAndAmount(mc, isPreMatureClosure);
                 account.validateApplicableInterestRate();
@@ -521,7 +521,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
         checkClientOrGroupActive(account);
 
         if (account.isNotSubmittedAndPendingApproval()) {
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(depositAccountType
                     .resourceName() + DepositsApiConstants.deleteApplicationAction);
 

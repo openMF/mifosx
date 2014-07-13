@@ -36,12 +36,13 @@ public class LoanApplicationTestBuilder {
     private String loanType = "individual";
     private String fixedEmiAmount = "10000";
     private String maxOutstandingLoanBalance = "36000";
+    private String graceOnPrincipalPayment = null;
     private List<HashMap> disbursementData = null;
     private List<HashMap> charges = new ArrayList<HashMap>();
 
     public String build(final String ID, final String loanProductId, final String savingsID) {
 
-        final HashMap<String, Object> map = new HashMap<String, Object>();
+        final HashMap<String, Object> map = new HashMap<>();
         map.put("dateFormat", "dd MMMM yyyy");
         map.put("locale", "en_GB");
         if (this.loanType == "group") {
@@ -69,6 +70,10 @@ public class LoanApplicationTestBuilder {
         }
         if (savingsID != null) {
             map.put("linkAccountId", savingsID);
+        }
+
+        if (graceOnPrincipalPayment != null) {
+            map.put("graceOnPrincipalPayment", graceOnPrincipalPayment);
         }
 
         if (disbursementData != null) {
@@ -188,6 +193,11 @@ public class LoanApplicationTestBuilder {
 
     public LoanApplicationTestBuilder withLoanType(final String loanType) {
         this.loanType = loanType;
+        return this;
+    }
+
+    public LoanApplicationTestBuilder withPrincipalGrace(final String graceOnPrincipalPayment) {
+        this.graceOnPrincipalPayment = graceOnPrincipalPayment;
         return this;
     }
 

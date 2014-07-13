@@ -28,6 +28,20 @@ public class ContentRepositoryUtils {
         public String getValue() {
             return this.value;
         }
+
+        public static IMAGE_MIME_TYPE fromFileExtension(IMAGE_FILE_EXTENSION fileExtension) {
+            switch (fileExtension) {
+                case GIF:
+                    return IMAGE_MIME_TYPE.GIF;
+                case JPG:
+                case JPEG:
+                    return IMAGE_MIME_TYPE.JPEG;
+                case PNG:
+                    return IMAGE_MIME_TYPE.PNG;
+                default:
+                    throw new IllegalArgumentException();
+            }
+        }
     }
 
     public static enum IMAGE_FILE_EXTENSION {
@@ -41,6 +55,23 @@ public class ContentRepositoryUtils {
 
         public String getValue() {
             return this.value;
+        }
+
+        public String getValueWithoutDot() {
+            return this.value.substring(1);
+        }
+
+        public IMAGE_FILE_EXTENSION getFileExtension() {
+            switch (this) {
+                case GIF:
+                    return IMAGE_FILE_EXTENSION.GIF;
+                case JPEG:
+                    return IMAGE_FILE_EXTENSION.JPEG;
+                case PNG:
+                    return IMAGE_FILE_EXTENSION.PNG;
+                default:
+                    throw new IllegalArgumentException();
+            }
         }
     }
 
@@ -105,7 +136,7 @@ public class ContentRepositoryUtils {
     }
 
     public static void validateClientImageNotEmpty(final String imageFileName) {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         if (imageFileName == null) {
             final StringBuilder validationErrorCode = new StringBuilder("validation.msg.clientImage.cannot.be.blank");
             final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter image cannot be blank.");

@@ -108,13 +108,19 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
     public static SavingsAccountCharge createNewFromJson(final SavingsAccount savingsAccount, final Charge chargeDefinition,
             final JsonCommand command) {
 
-        final BigDecimal amount = command.bigDecimalValueOfParameterNamed(amountParamName);
+        BigDecimal amount = command.bigDecimalValueOfParameterNamed(amountParamName);
         final LocalDate dueDate = command.localDateValueOfParameterNamed(dueAsOfDateParamName);
-        final MonthDay feeOnMonthDay = command.extractMonthDayNamed(feeOnMonthDayParamName);
-        final Integer feeInterval = command.integerValueOfParameterNamed(feeIntervalParamName);
+        MonthDay feeOnMonthDay = command.extractMonthDayNamed(feeOnMonthDayParamName);
+        Integer feeInterval = command.integerValueOfParameterNamed(feeIntervalParamName);
         final ChargeTimeType chargeTime = null;
         final ChargeCalculationType chargeCalculation = null;
         final boolean status = true;
+
+        // If these values is not sent as parameter, then derive from Charge
+        // definition
+        amount = (amount == null) ? chargeDefinition.getAmount() : amount;
+        feeOnMonthDay = (feeOnMonthDay == null) ? chargeDefinition.getFeeOnMonthDay() : feeOnMonthDay;
+        feeInterval = (feeInterval == null) ? chargeDefinition.getFeeInterval() : feeInterval;
 
         return new SavingsAccountCharge(savingsAccount, chargeDefinition, amount, chargeTime, chargeCalculation, dueDate, status,
                 feeOnMonthDay, feeInterval);
@@ -160,14 +166,25 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
             this.feeOnMonth = feeOnMonthDay.getMonthOfYear();
             this.feeOnDay = feeOnMonthDay.getDayOfMonth();
 
-            if (isMonthlyFee()) {
-                this.feeInterval = (feeInterval == null) ? chargeDefinition.feeInterval() : feeInterval;
+        } else if (isWeeklyFee()) {
+            if (dueDate == null) {
+                final String defaultUserMessage = "Savings Account charge is missing due date.";
+                throw new SavingsAccountChargeWithoutMandatoryFieldException("savingsaccount.charge", dueAsOfDateParamName,
+                        defaultUserMessage, chargeDefinition.getId(), chargeDefinition.getName());
             }
-
+            /**
+             * For Weekly fee feeOnDay is ISO standard day of the week.
+             * Monday=1, Tuesday=2
+             */
+            this.feeOnDay = dueDate.getDayOfWeek();
         } else {
             this.feeOnDay = null;
             this.feeOnMonth = null;
             this.feeInterval = null;
+        }
+
+        if (isMonthlyFee() || isWeeklyFee()) {
+            this.feeInterval = (feeInterval == null) ? chargeDefinition.feeInterval() : feeInterval;
         }
 
         this.dueDate = (dueDate == null) ? null : dueDate.toDate();
@@ -194,8 +211,8 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
         this.status = status;
     }
 
-    public void recalculateAmountOutstanding() {
-        if (isMonthlyFee() || isAnnualFee()) {
+    public void resetPropertiesForRecurringFees() {
+        if (isMonthlyFee() || isAnnualFee() || isWeeklyFee()) {
             // FIXME: AA: If charge is percentage of x amount then need to
             // update amount outstanding accordingly.
             // Right now annual and monthly charges supports charge calculation
@@ -282,20 +299,22 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
             this.amountOutstanding = BigDecimal.ZERO;
         }
         // to reset amount outstanding for annual and monthly fee
-        recalculateAmountOutstanding();
+        resetPropertiesForRecurringFees();
         updateToPreviousDueDate();// reset annual and monthly due date.
         this.paid = false;
     }
 
     public Money waive(final MonetaryCurrency currency) {
-        this.amountWaived = this.amountOutstanding;
+        Money amountWaivedToDate = Money.of(currency, this.amountWaived);
+        Money amountOutstanding = Money.of(currency, this.amountOutstanding);
+        this.amountWaived = amountWaivedToDate.plus(amountOutstanding).getAmount();
         this.amountOutstanding = BigDecimal.ZERO;
         this.waived = true;
 
-        recalculateAmountOutstanding();
-        updateToNextDueDate();
+        resetPropertiesForRecurringFees();
+        updateNextDueDateForRecurringFees();
 
-        return getAmountWaived(currency);
+        return amountOutstanding;
     }
 
     public void undoWaiver(final MonetaryCurrency currency, final Money transactionAmount) {
@@ -305,7 +324,7 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
         this.amountOutstanding = calculateAmountOutstanding(currency);
         this.waived = false;
 
-        recalculateAmountOutstanding();
+        resetPropertiesForRecurringFees();
         updateToPreviousDueDate();
     }
 
@@ -320,8 +339,8 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
 
         if (BigDecimal.ZERO.compareTo(this.amountOutstanding) == 0) {
             // full outstanding is paid, update to next due date
-            updateToNextDueDate();
-            recalculateAmountOutstanding();
+            updateNextDueDateForRecurringFees();
+            resetPropertiesForRecurringFees();
         }
 
         return Money.of(currency, this.amountOutstanding);
@@ -339,6 +358,9 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
         final BigDecimal transactionAmount = BigDecimal.ZERO;
         if (dueDate != null) {
             this.dueDate = dueDate.toDate();
+            if (isWeeklyFee()) {
+                this.feeOnDay = dueDate.getDayOfWeek();
+            }
         }
 
         if (feeOnMonthDay != null) {
@@ -381,7 +403,7 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
 
     public Map<String, Object> update(final JsonCommand command) {
 
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(7);
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(7);
 
         final String dateFormatAsInput = command.dateFormat();
         final String localeAsInput = command.locale();
@@ -394,6 +416,9 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
 
             final LocalDate newValue = command.localDateValueOfParameterNamed(dueAsOfDateParamName);
             this.dueDate = newValue.toDate();
+            if (this.isWeeklyFee()) {
+                this.feeOnDay = newValue.getDayOfWeek();
+            }
         }
 
         if (command.hasParameter(feeOnMonthDayParamName)) {
@@ -628,6 +653,10 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
         return ChargeTimeType.fromInt(this.chargeTime).isMonthlyFee();
     }
 
+    public boolean isWeeklyFee() {
+        return ChargeTimeType.fromInt(this.chargeTime).isWeeklyFee();
+    }
+
     public boolean hasCurrencyCodeOf(final String matchingCurrencyCode) {
         if (this.currencyCode() == null || matchingCurrencyCode == null) { return false; }
         return this.currencyCode().equalsIgnoreCase(matchingCurrencyCode);
@@ -668,54 +697,77 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
     }
 
     public void updateToNextDueDateFrom(final LocalDate startingDate) {
-        if (isAnnualFee() || isMonthlyFee()) {
-            LocalDate nextDueLocalDate = startingDate.withMonthOfYear(this.feeOnMonth);
-            int maxDayOfMonth = nextDueLocalDate.dayOfMonth().withMaximumValue().getDayOfMonth();
-            int newDayOfMonth = (this.feeOnDay.intValue() <= maxDayOfMonth) ? this.feeOnDay.intValue() : maxDayOfMonth;
-            nextDueLocalDate = nextDueLocalDate.withDayOfMonth(newDayOfMonth);
-
-            while (startingDate.isAfter(nextDueLocalDate)) {
-                if (isAnnualFee()) {
-                    nextDueLocalDate = nextDueLocalDate.plusYears(1);
-                } else if (isMonthlyFee()) {
-                    nextDueLocalDate = nextDueLocalDate.plusMonths(this.feeInterval);
+        if (isAnnualFee() || isMonthlyFee() || isWeeklyFee()) {
+            LocalDate nextDueLocalDate = null;
+            if (isAnnualFee() || isMonthlyFee()) {
+                nextDueLocalDate = startingDate.withMonthOfYear(this.feeOnMonth);
+                nextDueLocalDate = setDayOfMonth(nextDueLocalDate);
+                while (startingDate.isAfter(nextDueLocalDate)) {
+                    nextDueLocalDate = calculateNextDueDate(nextDueLocalDate);
                 }
+            } else if (isWeeklyFee()) {
+                nextDueLocalDate = getDueLocalDate();
+                while (startingDate.isAfter(nextDueLocalDate)) {
+                    nextDueLocalDate = calculateNextDueDate(nextDueLocalDate);
+                }
+            } else {
+                nextDueLocalDate = calculateNextDueDate(startingDate);
             }
 
             this.dueDate = nextDueLocalDate.toDate();
         }
+
     }
 
-    public void updateToNextDueDate() {
-        if (isAnnualFee() || isMonthlyFee()) {
+    private LocalDate calculateNextDueDate(final LocalDate date) {
+        LocalDate nextDueLocalDate = null;
+        if (isAnnualFee()) {
+            nextDueLocalDate = date.withMonthOfYear(this.feeOnMonth).plusYears(1);
+            nextDueLocalDate = setDayOfMonth(nextDueLocalDate);
+        } else if (isMonthlyFee()) {
+            nextDueLocalDate = date.plusMonths(this.feeInterval);
+            nextDueLocalDate = setDayOfMonth(nextDueLocalDate);
+        } else if (isWeeklyFee()) {
+            nextDueLocalDate = date.plusWeeks(this.feeInterval);
+            nextDueLocalDate = setDayOfWeek(nextDueLocalDate);
+        }
+        return nextDueLocalDate;
+    }
+
+    private LocalDate setDayOfMonth(LocalDate nextDueLocalDate) {
+        int maxDayOfMonth = nextDueLocalDate.dayOfMonth().withMaximumValue().getDayOfMonth();
+        int newDayOfMonth = (this.feeOnDay.intValue() < maxDayOfMonth) ? this.feeOnDay.intValue() : maxDayOfMonth;
+        nextDueLocalDate = nextDueLocalDate.withDayOfMonth(newDayOfMonth);
+        return nextDueLocalDate;
+    }
+
+    private LocalDate setDayOfWeek(LocalDate nextDueLocalDate) {
+        if (this.feeOnDay != nextDueLocalDate.getDayOfWeek()) {
+            nextDueLocalDate = nextDueLocalDate.withDayOfWeek(this.feeOnDay);
+        }
+        return nextDueLocalDate;
+    }
+
+    public void updateNextDueDateForRecurringFees() {
+        if (isAnnualFee() || isMonthlyFee() || isWeeklyFee()) {
             LocalDate nextDueLocalDate = new LocalDate(dueDate);
-            int maxDayOfMonth = nextDueLocalDate.dayOfMonth().withMaximumValue().getDayOfMonth();
-            int newDayOfMonth = (this.feeOnDay.intValue() < maxDayOfMonth) ? this.feeOnDay.intValue() : maxDayOfMonth;
-            nextDueLocalDate = nextDueLocalDate.withDayOfMonth(newDayOfMonth);
-
-            if (isAnnualFee()) {
-                nextDueLocalDate = nextDueLocalDate.withMonthOfYear(this.feeOnMonth).plusYears(1);
-            } else if (isMonthlyFee()) {
-                nextDueLocalDate = nextDueLocalDate.plusMonths(this.feeInterval);
-            }
-
+            nextDueLocalDate = calculateNextDueDate(nextDueLocalDate);
             this.dueDate = nextDueLocalDate.toDate();
         }
     }
 
     public void updateToPreviousDueDate() {
-        if (isAnnualFee() || isMonthlyFee()) {
+        if (isAnnualFee() || isMonthlyFee() || isWeeklyFee()) {
             LocalDate nextDueLocalDate = new LocalDate(dueDate);
             if (isAnnualFee()) {
                 nextDueLocalDate = nextDueLocalDate.withMonthOfYear(this.feeOnMonth).minusYears(1);
             } else if (isMonthlyFee()) {
                 nextDueLocalDate = nextDueLocalDate.minusMonths(this.feeInterval);
+            } else if (isWeeklyFee()) {
+                nextDueLocalDate = nextDueLocalDate.minusDays(7 * this.feeInterval);
             }
 
-            // set day of month
-            int maxDayOfMonth = nextDueLocalDate.dayOfMonth().withMaximumValue().getDayOfMonth();
-            int newDayOfMonth = (this.feeOnDay.intValue() < maxDayOfMonth) ? this.feeOnDay.intValue() : maxDayOfMonth;
-            nextDueLocalDate = nextDueLocalDate.withDayOfMonth(newDayOfMonth);
+            nextDueLocalDate = setDayOfMonth(nextDueLocalDate);
 
             this.dueDate = nextDueLocalDate.toDate();
         }

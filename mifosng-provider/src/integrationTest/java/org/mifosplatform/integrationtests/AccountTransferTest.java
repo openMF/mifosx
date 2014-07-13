@@ -2,12 +2,10 @@ package org.mifosplatform.integrationtests;
 
 import static org.junit.Assert.assertEquals;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,10 +15,10 @@ import org.mifosplatform.integrationtests.common.OfficeHelper;
 import org.mifosplatform.integrationtests.common.Utils;
 import org.mifosplatform.integrationtests.common.accounting.Account;
 import org.mifosplatform.integrationtests.common.accounting.AccountHelper;
+import org.mifosplatform.integrationtests.common.accounting.FinancialActivityAccountHelper;
 import org.mifosplatform.integrationtests.common.accounting.JournalEntry;
 import org.mifosplatform.integrationtests.common.accounting.JournalEntryHelper;
-import org.mifosplatform.integrationtests.common.accounting.OfficeAccountMappingHelper;
-import org.mifosplatform.integrationtests.common.charges.ChargesHelper;
+import org.mifosplatform.integrationtests.common.accounting.Account.AccountType;
 import org.mifosplatform.integrationtests.common.loans.LoanApplicationTestBuilder;
 import org.mifosplatform.integrationtests.common.loans.LoanProductTestBuilder;
 import org.mifosplatform.integrationtests.common.loans.LoanStatusChecker;
@@ -66,6 +64,10 @@ public class AccountTransferTest {
     Float TRANSFER_AMOUNT = new Float(ACCOUNT_TRANSFER_AMOUNT);
     Float TRANSFER_AMOUNT_ADJUST = new Float(ACCOUNT_TRANSFER_AMOUNT_ADJUST);
 
+    private FinancialActivityAccountHelper financialActivityAccountHelper;
+    private Integer financialActivityAccountId;
+    private Account liabilityTransferAccount;
+
     @Before
     public void setup() {
         Utils.initializeRESTAssured();
@@ -74,6 +76,42 @@ public class AccountTransferTest {
         this.responseSpec = new ResponseSpecBuilder().expectStatusCode(200).build();
         this.accountHelper = new AccountHelper(this.requestSpec, this.responseSpec);
         this.journalEntryHelper = new JournalEntryHelper(this.requestSpec, this.responseSpec);
+        this.financialActivityAccountHelper = new FinancialActivityAccountHelper(this.requestSpec);
+
+        List<HashMap> financialActivities = this.financialActivityAccountHelper.getAllFinancialActivityAccounts(this.responseSpec);
+        if (financialActivities.isEmpty()) {
+            /** Setup liability transfer account **/
+            /** Create a Liability and an Asset Transfer Account **/
+            liabilityTransferAccount = accountHelper.createLiabilityAccount();
+            Assert.assertNotNull(liabilityTransferAccount);
+
+            /*** Create A Financial Activity to Account Mapping **/
+            financialActivityAccountId = (Integer) financialActivityAccountHelper.createFinancialActivityAccount(
+                    FinancialActivityAccountsTest.liabilityTransferFinancialActivityId, liabilityTransferAccount.getAccountID(),
+                    responseSpec, CommonConstants.RESPONSE_RESOURCE_ID);
+            Assert.assertNotNull(financialActivityAccountId);
+        } else {
+            for (HashMap financialActivity : financialActivities) {
+                HashMap financialActivityData = (HashMap) financialActivity.get("financialActivityData");
+                if (financialActivityData.get("id").equals(FinancialActivityAccountsTest.liabilityTransferFinancialActivityId)) {
+                    HashMap glAccountData = (HashMap) financialActivity.get("glAccountData");
+                    liabilityTransferAccount = new Account((Integer) glAccountData.get("id"), AccountType.LIABILITY);
+                    financialActivityAccountId = (Integer) financialActivity.get("id");
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Delete the Liability transfer account
+     */
+    @After
+    public void tearDown() {
+        Integer deletedFinancialActivityAccountId = financialActivityAccountHelper.deleteFinancialActivityAccount(
+                financialActivityAccountId, responseSpec, CommonConstants.RESPONSE_RESOURCE_ID);
+        Assert.assertNotNull(deletedFinancialActivityAccountId);
+        Assert.assertEquals(financialActivityAccountId, deletedFinancialActivityAccountId);
     }
 
     @Test
@@ -94,15 +132,6 @@ public class AccountTransferTest {
         final Integer toClientID = ClientHelper.createClient(this.requestSpec, this.responseSpec, "01 January 2011",
                 String.valueOf(toOfficeId));
         Assert.assertNotNull(toClientID);
-
-        Account toTransferAccount = accountHelper.createLiabilityAccount();
-        Assert.assertNotNull(toTransferAccount);
-
-        OfficeAccountMappingHelper accountMappingHelper = new OfficeAccountMappingHelper(this.requestSpec,
-                new ResponseSpecBuilder().build());
-        Integer toTransferAccountMappingId = (Integer) accountMappingHelper.createOfficeAccountMapping(toOfficeId,
-                toTransferAccount.getAccountID(), CommonConstants.RESPONSE_RESOURCE_ID);
-        Assert.assertNotNull(toTransferAccountMappingId);
 
         final Integer toSavingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, MINIMUM_OPENING_BALANCE, assetAccount,
                 incomeAccount, expenseAccount, liabilityAccount);
@@ -130,13 +159,6 @@ public class AccountTransferTest {
         final Integer fromClientID = ClientHelper.createClient(this.requestSpec, this.responseSpec, "01 January 2011",
                 String.valueOf(fromOfficeId));
         Assert.assertNotNull(fromClientID);
-
-        Account fromTransferAccount = accountHelper.createLiabilityAccount();
-        Assert.assertNotNull(fromTransferAccount);
-
-        Integer fromTransferAccountMappingId = (Integer) accountMappingHelper.createOfficeAccountMapping(fromOfficeId,
-                fromTransferAccount.getAccountID(), CommonConstants.RESPONSE_RESOURCE_ID);
-        Assert.assertNotNull(fromTransferAccountMappingId);
 
         final Integer fromSavingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, MINIMUM_OPENING_BALANCE,
                 assetAccount, incomeAccount, expenseAccount, liabilityAccount);
@@ -178,10 +200,10 @@ public class AccountTransferTest {
         final JournalEntry[] office2LiabilityEntries = { new JournalEntry(new Float(ACCOUNT_TRANSFER_AMOUNT),
                 JournalEntry.TransactionType.DEBIT) };
 
-        this.journalEntryHelper.checkJournalEntryForAssetAccount(fromTransferAccount, AccountTransferHelper.ACCOUNT_TRANSFER_DATE,
-                office1LiabilityEntries);
-        this.journalEntryHelper.checkJournalEntryForAssetAccount(toTransferAccount, AccountTransferHelper.ACCOUNT_TRANSFER_DATE,
-                office2LiabilityEntries);
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(fromOfficeId, liabilityTransferAccount,
+                AccountTransferHelper.ACCOUNT_TRANSFER_DATE, office1LiabilityEntries);
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(toOfficeId, liabilityTransferAccount,
+                AccountTransferHelper.ACCOUNT_TRANSFER_DATE, office2LiabilityEntries);
 
     }
 
@@ -213,12 +235,6 @@ public class AccountTransferTest {
         Account toTransferAccount = accountHelper.createLiabilityAccount();
         Assert.assertNotNull(toTransferAccount);
 
-        OfficeAccountMappingHelper accountMappingHelper = new OfficeAccountMappingHelper(this.requestSpec,
-                new ResponseSpecBuilder().build());
-        Integer toTransferAccountMappingId = (Integer) accountMappingHelper.createOfficeAccountMapping(toOfficeId,
-                toTransferAccount.getAccountID(), CommonConstants.RESPONSE_RESOURCE_ID);
-        Assert.assertNotNull(toTransferAccountMappingId);
-
         final Integer toLoanProductID = createLoanProduct(loanAssetAccount, loanIncomeAccount, loanExpenseAccount, overpaymentAccount);
         Assert.assertNotNull(toLoanProductID);
 
@@ -241,13 +257,6 @@ public class AccountTransferTest {
         final Integer fromClientID = ClientHelper.createClient(this.requestSpec, this.responseSpec, "01 January 2011",
                 String.valueOf(fromOfficeId));
         Assert.assertNotNull(fromClientID);
-
-        Account fromTransferAccount = accountHelper.createLiabilityAccount();
-        Assert.assertNotNull(fromTransferAccount);
-
-        Integer fromTransferAccountMappingId = (Integer) accountMappingHelper.createOfficeAccountMapping(fromOfficeId,
-                fromTransferAccount.getAccountID(), CommonConstants.RESPONSE_RESOURCE_ID);
-        Assert.assertNotNull(fromTransferAccountMappingId);
 
         final Integer fromSavingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, MINIMUM_OPENING_BALANCE,
                 assetAccount, incomeAccount, expenseAccount, liabilityAccount);
@@ -288,10 +297,10 @@ public class AccountTransferTest {
         final JournalEntry[] office2LiabilityEntries = { new JournalEntry(new Float(ACCOUNT_TRANSFER_AMOUNT_ADJUST),
                 JournalEntry.TransactionType.DEBIT) };
 
-        this.journalEntryHelper.checkJournalEntryForAssetAccount(fromTransferAccount, AccountTransferHelper.ACCOUNT_TRANSFER_DATE,
-                office1LiabilityEntries);
-        this.journalEntryHelper.checkJournalEntryForAssetAccount(toTransferAccount, AccountTransferHelper.ACCOUNT_TRANSFER_DATE,
-                office2LiabilityEntries);
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(fromOfficeId, liabilityTransferAccount,
+                AccountTransferHelper.ACCOUNT_TRANSFER_DATE, office1LiabilityEntries);
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(toOfficeId, liabilityTransferAccount,
+                AccountTransferHelper.ACCOUNT_TRANSFER_DATE, office2LiabilityEntries);
     }
 
     @Test
@@ -319,15 +328,6 @@ public class AccountTransferTest {
                 String.valueOf(toOfficeId));
         Assert.assertNotNull(toClientID);
 
-        Account toTransferAccount = accountHelper.createLiabilityAccount();
-        Assert.assertNotNull(toTransferAccount);
-
-        OfficeAccountMappingHelper accountMappingHelper = new OfficeAccountMappingHelper(this.requestSpec,
-                new ResponseSpecBuilder().build());
-        Integer toTransferAccountMappingId = (Integer) accountMappingHelper.createOfficeAccountMapping(toOfficeId,
-                toTransferAccount.getAccountID(), CommonConstants.RESPONSE_RESOURCE_ID);
-        Assert.assertNotNull(toTransferAccountMappingId);
-
         final Integer toSavingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, MINIMUM_OPENING_BALANCE, assetAccount,
                 incomeAccount, expenseAccount, liabilityAccount);
         Assert.assertNotNull(toSavingsProductID);
@@ -353,13 +353,6 @@ public class AccountTransferTest {
                 String.valueOf(fromOfficeId));
         Assert.assertNotNull(fromClientID);
 
-        Account fromTransferAccount = accountHelper.createLiabilityAccount();
-        Assert.assertNotNull(fromTransferAccount);
-
-        Integer fromTransferAccountMappingId = (Integer) accountMappingHelper.createOfficeAccountMapping(fromOfficeId,
-                fromTransferAccount.getAccountID(), CommonConstants.RESPONSE_RESOURCE_ID);
-        Assert.assertNotNull(fromTransferAccountMappingId);
-
         final Integer loanProductID = createLoanProduct(loanAssetAccount, loanIncomeAccount, loanExpenseAccount, overpaymentAccount);
         Assert.assertNotNull(loanProductID);
 
@@ -374,7 +367,6 @@ public class AccountTransferTest {
 
         loanStatusHashMap = this.loanTransactionHelper.disburseLoan(LOAN_DISBURSAL_DATE, loanID);
         LoanStatusChecker.verifyLoanIsActive(loanStatusHashMap);
-
 
         final Integer fromSavingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, MINIMUM_OPENING_BALANCE,
                 assetAccount, incomeAccount, expenseAccount, liabilityAccount);
@@ -426,10 +418,10 @@ public class AccountTransferTest {
         final JournalEntry[] office2LiabilityEntries = { new JournalEntry(new Float(ACCOUNT_TRANSFER_AMOUNT_ADJUST),
                 JournalEntry.TransactionType.DEBIT) };
 
-        this.journalEntryHelper.checkJournalEntryForAssetAccount(fromTransferAccount, AccountTransferHelper.ACCOUNT_TRANSFER_DATE,
-                office1LiabilityEntries);
-        this.journalEntryHelper.checkJournalEntryForAssetAccount(toTransferAccount, AccountTransferHelper.ACCOUNT_TRANSFER_DATE,
-                office2LiabilityEntries);
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(fromOfficeId, liabilityTransferAccount,
+                AccountTransferHelper.ACCOUNT_TRANSFER_DATE, office1LiabilityEntries);
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(toOfficeId, liabilityTransferAccount,
+                AccountTransferHelper.ACCOUNT_TRANSFER_DATE, office2LiabilityEntries);
 
     }
 

@@ -32,7 +32,7 @@ The two ways to get up and running with mifos platform is:
 
 ## 1. Amazon Public AMI
 
-  Use AWS Wizard to launch instance by using this link: <a target="_blank" href="https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchAmi=ami-948b6be3" title="Mifos Platform Public AMI 1.13.0.RELEASE">Mifos Platform AMI (ami-948b6be3)</a>
+  Use AWS Wizard to launch instance by using this link: <a target="_blank" href="https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchAmi=ami-a6035af4" title="Latest Mifos Platform Public AMI">Mifos Platform AMI (ami-a6035af4)</a>
 
   *Note:* Read through the following as you step through the AWS Wizard
   
@@ -44,23 +44,21 @@ The two ways to get up and running with mifos platform is:
   - You will be asked to use a 'keypair' which you will need to SSH onto the new instance, if this is your first time create a new keypair, be srue to download it and store in place as you will need it later, otherwise use an existing keypair.
   - When the instance starts, the following should be available at:
     - Platform application should be available @ https://[public DNS]:8443/mifosng-provider/api/v1/offices?tenantIdentifier=default&pretty=true
-    - Reference application should be available @ https://[public DNS]:8443/IndividualLendingGeneralJavaScript/IndivLendHome.html?baseApiUrl=https://[server ip address]:8443/mifosng-provider/api/v1/
+    - Community app should be available @ https://[public DNS]:8443/community-app
     - API docs should be available @ https://[public DNS]:8443/api-docs/apiLive.htm
 
-  *Name:* Mifos Platform 1.13.0.RELEASE Public AMI
+  *Name:* Mifos Platform 1.24.0.RELEASE Public AMI
   
- - AMI ID: ami-948b6be3
- - Kernel ID: aki-71665e05
- - Name: Mifos Platform 1.13.0.RELEASE Public AMI
- - Owner: 476083131096
- - Source: 476083131096/Mifos Platform 1.13.0.RELEASE Public AMI
+ - AMI ID: ami-a6035af4
+ - Kernel ID: aki-503e7402
+ - Name: Mifos Platform 1.24.0.RELEASE Public AMI
+ - Owner: 540782944231
+ - Source: 540782944231/Mifos X-1.24.0 release
  - Architecture: Ubuntu12.04 LTS x86_64
  - Built starting from Ubuntu AMI ami-35acbb41
- - Java 1.6_45 32 bit JVM
+ - Java 1.7.0_51 64 bit JVM
  - Tomcat 7.0.39 (with SSL configured for self-signed certificate)
  - MySql 5.5.31
- - Mifos Platform 1.13.0.RELEASE
- - Mifos Reference App 1.13.0.RELEASE
 
 ## 2. Manual Installation
 
@@ -134,7 +132,7 @@ The two ways to get up and running with mifos platform is:
 #### 2.3.1 Environment Variables Check
 
   Check that the following environment variables exist:
-  - JAVA_HOME ... should point to directory where a 1.6 JDK or JRE is on machine
+  - JAVA_HOME ... should point to directory where a 1.7 JDK or JRE is on machine
   - CATALINA_HOME ... should point to a directory where a Tomcat 7 instance is installed
 
   Check that the following is on your path:

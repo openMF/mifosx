@@ -63,9 +63,14 @@ public class SavingsProductHelper {
     private final String currencyCode = USD;
     private final String interestCalculationDaysInYearType = DAYS_365;
     private Account[] accountList = null;
+    private String minBalanceForInterestCalculation = null;
+    private String allowOverdraft = "false";
+    private String overdraftLimit = null; 
+    private String minRequiredBalance = null;
+    private String enforceMinRequiredBalance = "false";
 
     public String build() {
-        final HashMap<String, String> map = new HashMap<String, String>();
+        final HashMap<String, String> map = new HashMap<>();
 
         map.put("name", this.nameOfSavingsProduct);
         map.put("shortName", this.shortName);
@@ -93,6 +98,11 @@ public class SavingsProductHelper {
         map.put("lockinPeriodFrequency", this.lockinPeriodFrequency);
         map.put("lockinPeriodFrequencyType", this.lockingPeriodFrequencyType);
         map.put("withdrawalFeeForTransfers", this.withdrawalFeeForTransfers);
+        map.put("minBalanceForInterestCalculation", minBalanceForInterestCalculation);
+        map.put("allowOverdraft", this.allowOverdraft);
+        map.put("overdraftLimit", this.overdraftLimit);
+        map.put("minRequiredBalance", this.minRequiredBalance);
+        map.put("enforceMinRequiredBalance", this.enforceMinRequiredBalance);
 
         if (this.accountingRule.equals(CASH_BASED)) {
             map.putAll(getAccountMappingForCashBased());
@@ -126,6 +136,11 @@ public class SavingsProductHelper {
         this.interestPostingPeriodType = MONTHLY;
         return this;
     }
+    
+    public SavingsProductHelper withMinBalanceForInterestCalculation(final String amount) {
+        this.minBalanceForInterestCalculation = amount;
+        return this;
+    }
 
     public SavingsProductHelper withInterestPostingPeriodTypeAsQuarterly() {
         this.interestPostingPeriodType = QUARTERLY;
@@ -157,9 +172,25 @@ public class SavingsProductHelper {
         this.accountList = account_list;
         return this;
     }
+    
+    public SavingsProductHelper withMinRequiredBalance(String minBalance) {
+        this.minRequiredBalance = minBalance;
+        return this;
+    }
+    
+    public SavingsProductHelper withEnforceMinRequiredBalance(String enforceMinRequiredBalance) {
+        this.enforceMinRequiredBalance = enforceMinRequiredBalance;
+        return this;
+    }
+
+    public SavingsProductHelper withOverDraft(final String overDraftLimit) {
+        this.allowOverdraft = "true";
+        this.overdraftLimit = overDraftLimit;
+        return this;
+    }
 
     private Map<String, String> getAccountMappingForCashBased() {
-        final Map<String, String> map = new HashMap<String, String>();
+        final Map<String, String> map = new HashMap<>();
         if (accountList != null) {
             for (int i = 0; i < this.accountList.length; i++) {
                 if (this.accountList[i].getAccountType().equals(Account.AccountType.ASSET)) {

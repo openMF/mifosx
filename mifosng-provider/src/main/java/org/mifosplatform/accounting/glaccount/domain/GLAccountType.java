@@ -10,7 +10,7 @@ import java.util.Map;
 
 public enum GLAccountType {
     ASSET(1, "accountType.asset"), LIABILITY(2, "accountType.liability"), EQUITY(3, "accountType.equity"), INCOME(4, "accountType.income"), EXPENSE(
-            5, "accountType.expense"), ;
+            5, "accountType.expense");
 
     private final Integer value;
     private final String code;
@@ -28,7 +28,7 @@ public enum GLAccountType {
         return this.code;
     }
 
-    private static final Map<Integer, GLAccountType> intToEnumMap = new HashMap<Integer, GLAccountType>();
+    private static final Map<Integer, GLAccountType> intToEnumMap = new HashMap<>();
     private static int minValue;
     private static int maxValue;
     static {

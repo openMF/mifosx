@@ -104,9 +104,9 @@ public class SavingsAccountHelper {
         return performSavingApplicationActions(createSavingsOperationURL(ACTIVATE_SAVINGS_COMMAND, savingsID), getActivatedSavingsAsJSON());
     }
 
-    public HashMap closeSavingsAccount(final Integer savingsID) {
+    public HashMap closeSavingsAccount(final Integer savingsID, String withdrawBalance) {
         System.out.println("---------------------------------- CLOSE SAVINGS APPLICATION ----------------------------------");
-        return performSavingApplicationActions(createSavingsOperationURL(CLOSE_SAVINGS_COMMAND, savingsID), getCloseAccountJSON());
+        return performSavingApplicationActions(createSavingsOperationURL(CLOSE_SAVINGS_COMMAND, savingsID), getCloseAccountJSON(withdrawBalance));
     }
 
     public Object deleteSavingsApplication(final Integer savingsId, final String jsonAttributeToGetBack) {
@@ -179,7 +179,7 @@ public class SavingsAccountHelper {
     }
 
     private String getApproveSavingsAsJSON() {
-        final HashMap<String, String> map = new HashMap<String, String>();
+        final HashMap<String, String> map = new HashMap<>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         map.put("approvedOnDate", CREATED_DATE_PLUS_ONE);
@@ -190,7 +190,7 @@ public class SavingsAccountHelper {
     }
 
     private String getRejectedSavingsAsJSON(final String rejectedOnDate) {
-        final HashMap<String, String> map = new HashMap<String, String>();
+        final HashMap<String, String> map = new HashMap<>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         map.put("rejectedOnDate", rejectedOnDate);
@@ -201,7 +201,7 @@ public class SavingsAccountHelper {
     }
 
     private String getWithdrawnSavingsAsJSON() {
-        final HashMap<String, String> map = new HashMap<String, String>();
+        final HashMap<String, String> map = new HashMap<>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         map.put("withdrawnOnDate", CREATED_DATE_PLUS_ONE);
@@ -212,7 +212,7 @@ public class SavingsAccountHelper {
     }
 
     private String getActivatedSavingsAsJSON() {
-        final HashMap<String, String> map = new HashMap<String, String>();
+        final HashMap<String, String> map = new HashMap<>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         map.put("activatedOnDate", TRANSACTION_DATE);
@@ -222,7 +222,7 @@ public class SavingsAccountHelper {
     }
 
     private String getSavingsTransactionJSON(final String amount, final String transactionDate) {
-        final HashMap<String, String> map = new HashMap<String, String>();
+        final HashMap<String, String> map = new HashMap<>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         map.put("transactionDate", transactionDate);
@@ -233,14 +233,14 @@ public class SavingsAccountHelper {
     }
 
     private String getCalculatedInterestForSavingsApplicationAsJSON() {
-        final HashMap<String, String> map = new HashMap<String, String>();
+        final HashMap<String, String> map = new HashMap<>();
         String savingsAccountCalculatedInterestJson = new Gson().toJson(map);
         System.out.println(savingsAccountCalculatedInterestJson);
         return savingsAccountCalculatedInterestJson;
     }
 
     private String getSavingsPayChargeJSON(final String amount, final String dueDate) {
-        final HashMap<String, Object> map = new HashMap<String, Object>();
+        final HashMap<String, Object> map = new HashMap<>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         map.put("amount", amount);
@@ -250,7 +250,7 @@ public class SavingsAccountHelper {
     }
 
     private String getSavingsWaiveChargeJSON() {
-        final HashMap<String, Object> map = new HashMap<String, Object>();
+        final HashMap<String, Object> map = new HashMap<>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         String josn = new Gson().toJson(map);
@@ -258,7 +258,7 @@ public class SavingsAccountHelper {
     }
 
     private String getModifyChargeJSON() {
-        final HashMap<String, Object> map = new HashMap<String, Object>();
+        final HashMap<String, Object> map = new HashMap<>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         map.put("amount", "50");
@@ -266,11 +266,12 @@ public class SavingsAccountHelper {
         return josn;
     }
 
-    private String getCloseAccountJSON() {
-        final HashMap<String, Object> map = new HashMap<String, Object>();
+    private String getCloseAccountJSON(String withdrawBalance) {
+        final HashMap<String, Object> map = new HashMap<>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         map.put("closedOnDate", LAST_TRANSACTION_DATE);
+        map.put("withdrawBalance", withdrawBalance);
         map.put("note", "Close Test");
         String josn = new Gson().toJson(map);
         return josn;
@@ -329,6 +330,12 @@ public class SavingsAccountHelper {
         final HashMap response = Utils.performServerGet(requestSpec, responseSpec, URL, "summary");
         return response;
     }
+    
+    public HashMap getSavingsDetails(final Integer savingsID) {
+        final String URL = SAVINGS_ACCOUNT_URL + "/" + savingsID + "?associations=all&" + Utils.TENANT_IDENTIFIER;
+        final HashMap response = Utils.performServerGet(requestSpec, responseSpec, URL, "");
+        return response;
+    }
 
     private HashMap performSavingApplicationActions(final String postURLForSavingsTransaction, final String jsonToBeSent) {
         HashMap status = null;
@@ -346,8 +353,15 @@ public class SavingsAccountHelper {
                 jsonAttributeToGetBack);
     }
 
+    public Object closeSavingsAccountAndGetBackRequiredField(final Integer savingsID, String withdrawBalance,
+            final String jsonAttributeToGetBack) {
+        System.out.println("---------------------------------- CLOSE SAVINGS APPLICATION ----------------------------------");
+        return performSavingActions(createSavingsOperationURL(CLOSE_SAVINGS_COMMAND, savingsID), getCloseAccountJSON(withdrawBalance),
+                jsonAttributeToGetBack);
+    }
+
     private String getPeriodChargeRequestJSON(Integer chargeId) {
-        final HashMap<String, Object> map = new HashMap<String, Object>();
+        final HashMap<String, Object> map = new HashMap<>();
         map.put("chargeId", chargeId);
         map.put("amount", 100);
         map.put("feeOnMonthDay", "15 January");
@@ -357,5 +371,18 @@ public class SavingsAccountHelper {
         map.put("dueDate", "10 January 2013");
         String json = new Gson().toJson(map);
         return json;
+    }
+
+    private String getAccountActivationJSON(final String activationDate) {
+        final HashMap<String, Object> map = new HashMap<>();
+        map.put("locale", CommonConstants.locale);
+        map.put("dateFormat", CommonConstants.dateFormat);
+        map.put("activatedOnDate", activationDate);
+        String savingsAccountActivateJson = new Gson().toJson(map);
+        return savingsAccountActivateJson;
+    }
+
+    public HashMap activateSavingsAccount(Integer savingsID, String activationDate) {
+        return performSavingApplicationActions(createSavingsOperationURL(ACTIVATE_SAVINGS_COMMAND, savingsID), getAccountActivationJSON(activationDate));
     }
 }

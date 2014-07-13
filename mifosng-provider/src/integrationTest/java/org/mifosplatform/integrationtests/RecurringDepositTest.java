@@ -8,19 +8,26 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 
 import net.sf.ehcache.transaction.xa.EhcacheXAException;
 
 import org.joda.time.DateTime;
 import org.joda.time.Months;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mifosplatform.accounting.common.AccountingConstants.FINANCIAL_ACTIVITY;
 import org.mifosplatform.integrationtests.common.ClientHelper;
 import org.mifosplatform.integrationtests.common.CommonConstants;
 import org.mifosplatform.integrationtests.common.Utils;
 import org.mifosplatform.integrationtests.common.accounting.Account;
+import org.mifosplatform.integrationtests.common.accounting.Account.AccountType;
 import org.mifosplatform.integrationtests.common.accounting.AccountHelper;
+import org.mifosplatform.integrationtests.common.accounting.FinancialActivityAccountHelper;
+import org.mifosplatform.integrationtests.common.accounting.JournalEntry;
+import org.mifosplatform.integrationtests.common.accounting.JournalEntryHelper;
 import org.mifosplatform.integrationtests.common.fixeddeposit.FixedDepositAccountHelper;
 import org.mifosplatform.integrationtests.common.fixeddeposit.FixedDepositAccountStatusChecker;
 import org.mifosplatform.integrationtests.common.fixeddeposit.FixedDepositProductHelper;
@@ -46,6 +53,8 @@ public class RecurringDepositTest {
     private SavingsAccountHelper savingsAccountHelper;
     private AccountHelper accountHelper;
     private RecurringDepositAccountHelper recurringDepositAccountHelper;
+    private JournalEntryHelper journalEntryHelper;
+    private FinancialActivityAccountHelper financialActivityAccountHelper;
 
     public static final String WHOLE_TERM = "1";
     private static final String TILL_PREMATURE_WITHDRAWAL = "2";
@@ -58,6 +67,8 @@ public class RecurringDepositTest {
     private static final String INTEREST_CALCULATION_USING_AVERAGE_DAILY_BALANCE = "2";
     private static final String DAYS_360 = "360";
     private static final String DAYS_365 = "365";
+    private static final String NONE = "1";
+    private static final String CASH_BASED = "2";
 
     public static final String MINIMUM_OPENING_BALANCE = "1000.0";
     public static final String ACCOUNT_TYPE_INDIVIDUAL = "INDIVIDUAL";
@@ -79,16 +90,31 @@ public class RecurringDepositTest {
         this.requestSpec.header("Authorization", "Basic " + Utils.loginIntoServerAndGetBase64EncodedAuthenticationKey());
         this.requestSpec.header("X-Mifos-Platform-TenantId", "default");
         this.responseSpec = new ResponseSpecBuilder().expectStatusCode(200).build();
+        this.journalEntryHelper = new JournalEntryHelper(this.requestSpec, this.responseSpec);
+        this.financialActivityAccountHelper = new FinancialActivityAccountHelper(this.requestSpec);
     }
 
+    /***
+     * Test case for Recurring Deposit Account premature closure with
+     * transaction type withdrawal and Cash Based accounting enabled
+     */
     @Test
     public void testRecurringDepositAccountWithPrematureClosureTypeWithdrawal() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
         this.accountHelper = new AccountHelper(this.requestSpec, this.responseSpec);
         this.recurringDepositAccountHelper = new RecurringDepositAccountHelper(this.requestSpec, this.responseSpec);
 
+        /***
+         * Create GL Accounts for product account mapping
+         */
+        final Account assetAccount = this.accountHelper.createAssetAccount();
+        final Account incomeAccount = this.accountHelper.createIncomeAccount();
+        final Account expenseAccount = this.accountHelper.createExpenseAccount();
+        final Account liabilityAccount = this.accountHelper.createLiabilityAccount();
+
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
         DateFormat monthDayFormat = new SimpleDateFormat("dd MMM");
+        DateFormat currentDateFormat = new SimpleDateFormat("dd");
 
         Calendar todaysDate = Calendar.getInstance();
         todaysDate.add(Calendar.MONTH, -3);
@@ -103,15 +129,31 @@ public class RecurringDepositTest {
         final String ACTIVATION_DATE = dateFormat.format(todaysDate.getTime());
         final String EXPECTED_FIRST_DEPOSIT_ON_DATE = dateFormat.format(todaysDate.getTime());
         final String MONTH_DAY = monthDayFormat.format(todaysDate.getTime());
-        todaysDate.add(Calendar.MONTH, 1);
-        final String CLOSED_ON_DATE = dateFormat.format(todaysDate.getTime());
 
+        Integer currentDate = new Integer(currentDateFormat.format(todaysDate.getTime()));
+        Integer daysInMonth = todaysDate.getActualMaximum(Calendar.DATE);
+        Integer numberOfDaysLeft = (daysInMonth - currentDate) + 1;
+        todaysDate.add(Calendar.DATE, numberOfDaysLeft);
+        final String INTEREST_POSTED_DATE = dateFormat.format(todaysDate.getTime());
+        final String CLOSED_ON_DATE = dateFormat.format(Calendar.getInstance().getTime());
+
+        /***
+         * Create client for applying Deposit account
+         */
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        /***
+         * Create RD product with CashBased accounting enabled
+         */
+        final String accountingRule = CASH_BASED;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule, assetAccount,
+                liabilityAccount, incomeAccount, expenseAccount);
         Assert.assertNotNull(recurringDepositProductId);
 
+        /***
+         * Apply for RD account with created product and verify status
+         */
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
                 VALID_FROM, VALID_TO, SUBMITTED_ON_DATE, WHOLE_TERM, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(recurringDepositAccountId);
@@ -120,28 +162,67 @@ public class RecurringDepositTest {
                 this.requestSpec, this.responseSpec, recurringDepositAccountId.toString());
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsPending(recurringDepositAccountStatusHashMap);
 
+        /***
+         * Approve the RD account and verify whether account is approved
+         */
         recurringDepositAccountStatusHashMap = this.recurringDepositAccountHelper.approveRecurringDeposit(recurringDepositAccountId,
                 APPROVED_ON_DATE);
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsApproved(recurringDepositAccountStatusHashMap);
 
+        /***
+         * Activate the RD Account and verify whether account is activated
+         */
         recurringDepositAccountStatusHashMap = this.recurringDepositAccountHelper.activateRecurringDeposit(recurringDepositAccountId,
                 ACTIVATION_DATE);
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsActive(recurringDepositAccountStatusHashMap);
 
+        HashMap recurringDepositAccountData = this.recurringDepositAccountHelper.getRecurringDepositAccountById(this.requestSpec,
+                this.responseSpec, recurringDepositAccountId);
+        Float depositAmount = (Float) recurringDepositAccountData.get("mandatoryRecommendedDepositAmount");
+
+        /***
+         * Perform Deposit transaction and verify journal entries are posted for
+         * the transaction
+         */
         Integer depositTransactionId = this.recurringDepositAccountHelper.depositToRecurringDepositAccount(recurringDepositAccountId,
-                DEPOSIT_AMOUNT, EXPECTED_FIRST_DEPOSIT_ON_DATE);
+                depositAmount, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(depositTransactionId);
 
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, EXPECTED_FIRST_DEPOSIT_ON_DATE, new JournalEntry(
+                depositAmount, JournalEntry.TransactionType.DEBIT));
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(liabilityAccount, EXPECTED_FIRST_DEPOSIT_ON_DATE, new JournalEntry(
+                depositAmount, JournalEntry.TransactionType.CREDIT));
+
+        /***
+         * Update interest earned field for RD account
+         */
         recurringDepositAccountId = this.recurringDepositAccountHelper.calculateInterestForRecurringDeposit(recurringDepositAccountId);
         Assert.assertNotNull(recurringDepositAccountId);
 
+        /***
+         * Post interest and verify journal entries
+         */
         Integer transactionIdForPostInterest = this.recurringDepositAccountHelper
                 .postInterestForRecurringDeposit(recurringDepositAccountId);
         Assert.assertNotNull(transactionIdForPostInterest);
 
+        HashMap accountSummary = this.recurringDepositAccountHelper.getRecurringDepositSummary(recurringDepositAccountId);
+        Float totalInterestPosted = (Float) accountSummary.get("totalInterestPosted");
+
+        final JournalEntry[] expenseAccountEntry = { new JournalEntry(totalInterestPosted, JournalEntry.TransactionType.DEBIT) };
+        final JournalEntry[] liablilityAccountEntry = { new JournalEntry(totalInterestPosted, JournalEntry.TransactionType.CREDIT) };
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(expenseAccount, INTEREST_POSTED_DATE, expenseAccountEntry);
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(liabilityAccount, INTEREST_POSTED_DATE, liablilityAccountEntry);
+
+        /***
+         * Calculate expected premature closure amount
+         */
         HashMap recurringDepositPrematureData = this.recurringDepositAccountHelper.calculatePrematureAmountForRecurringDeposit(
                 recurringDepositAccountId, CLOSED_ON_DATE);
 
+        /***
+         * Preclose the RD account verify whether account is preClosed
+         */
         Integer prematureClosureTransactionId = (Integer) this.recurringDepositAccountHelper.prematureCloseForRecurringDeposit(
                 recurringDepositAccountId, CLOSED_ON_DATE, CLOSURE_TYPE_WITHDRAW_DEPOSIT, null, CommonConstants.RESPONSE_RESOURCE_ID);
         Assert.assertNotNull(prematureClosureTransactionId);
@@ -150,8 +231,24 @@ public class RecurringDepositTest {
                 this.responseSpec, recurringDepositAccountId.toString());
         RecurringDepositAccountStatusChecker.verifyRecurringDepositAccountIsPrematureClosed(recurringDepositAccountStatusHashMap);
 
+        /***
+         * Verify journal entry transactions for preclosure transaction
+         */
+        recurringDepositAccountData = this.recurringDepositAccountHelper.getRecurringDepositAccountById(this.requestSpec,
+                this.responseSpec, recurringDepositAccountId);
+        Float maturityAmount = Float.valueOf(recurringDepositAccountData.get("maturityAmount").toString());
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, CLOSED_ON_DATE, new JournalEntry(maturityAmount,
+                JournalEntry.TransactionType.CREDIT));
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(liabilityAccount, CLOSED_ON_DATE, new JournalEntry(maturityAmount,
+                JournalEntry.TransactionType.DEBIT));
+
     }
 
+    /***
+     * Test case for Recurring Deposit Account premature closure with
+     * transaction transfers to savings account and Cash Based accounting
+     * enabled
+     */
     @Test
     public void testRecurringDepositAccountWithPrematureClosureTypeTransferToSavings() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -159,6 +256,9 @@ public class RecurringDepositTest {
         this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
         this.recurringDepositAccountHelper = new RecurringDepositAccountHelper(this.requestSpec, this.responseSpec);
 
+        /***
+         * Create GL Accounts for product account mapping
+         */
         final Account assetAccount = this.accountHelper.createAssetAccount();
         final Account incomeAccount = this.accountHelper.createIncomeAccount();
         final Account expenseAccount = this.accountHelper.createExpenseAccount();
@@ -166,6 +266,7 @@ public class RecurringDepositTest {
 
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
         DateFormat monthDayFormat = new SimpleDateFormat("dd MMM");
+        DateFormat currentDateFormat = new SimpleDateFormat("dd");
 
         Calendar todaysDate = Calendar.getInstance();
         todaysDate.add(Calendar.MONTH, -3);
@@ -180,30 +281,59 @@ public class RecurringDepositTest {
         final String ACTIVATION_DATE = dateFormat.format(todaysDate.getTime());
         final String EXPECTED_FIRST_DEPOSIT_ON_DATE = dateFormat.format(todaysDate.getTime());
         final String MONTH_DAY = monthDayFormat.format(todaysDate.getTime());
-        todaysDate.add(Calendar.MONTH, 1);
-        final String CLOSED_ON_DATE = dateFormat.format(todaysDate.getTime());
 
+        Integer currentDate = new Integer(currentDateFormat.format(todaysDate.getTime()));
+        Integer daysInMonth = todaysDate.getActualMaximum(Calendar.DATE);
+        Integer numberOfDaysLeft = (daysInMonth - currentDate) + 1;
+        todaysDate.add(Calendar.DATE, numberOfDaysLeft);
+        final String INTEREST_POSTED_DATE = dateFormat.format(todaysDate.getTime());
+        final String CLOSED_ON_DATE = dateFormat.format(Calendar.getInstance().getTime());
+
+        /***
+         * Create client for applying Deposit and Savings accounts
+         */
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        final Integer savingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, MINIMUM_OPENING_BALANCE);
+        /***
+         * Create Savings product with CashBased accounting enabled
+         */
+        final String accountingRule = CASH_BASED;
+        final Integer savingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, MINIMUM_OPENING_BALANCE, accountingRule,
+                assetAccount, liabilityAccount, incomeAccount, expenseAccount);
         Assert.assertNotNull(savingsProductID);
 
+        /***
+         * Create Savings account and verify status is pending
+         */
         final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientId, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
         SavingsStatusChecker.verifySavingsIsPending(savingsStatusHashMap);
 
+        /***
+         * Approve the savings account and verify account is approved
+         */
         savingsStatusHashMap = this.savingsAccountHelper.approveSavings(savingsId);
         SavingsStatusChecker.verifySavingsIsApproved(savingsStatusHashMap);
 
+        /***
+         * Activate the savings account and verify account is activated
+         */
         savingsStatusHashMap = this.savingsAccountHelper.activateSavings(savingsId);
         SavingsStatusChecker.verifySavingsIsActive(savingsStatusHashMap);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        /***
+         * Create RD product with CashBased accounting enabled
+         */
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule, assetAccount,
+                liabilityAccount, incomeAccount, expenseAccount);
         Assert.assertNotNull(recurringDepositProductId);
 
+        /***
+         * Apply for RD account with created product and verify status
+         */
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
                 VALID_FROM, VALID_TO, SUBMITTED_ON_DATE, WHOLE_TERM, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(recurringDepositAccountId);
@@ -212,32 +342,75 @@ public class RecurringDepositTest {
                 this.requestSpec, this.responseSpec, recurringDepositAccountId.toString());
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsPending(recurringDepositAccountStatusHashMap);
 
+        /***
+         * Approve the RD account and verify whether account is approved
+         */
         recurringDepositAccountStatusHashMap = this.recurringDepositAccountHelper.approveRecurringDeposit(recurringDepositAccountId,
                 APPROVED_ON_DATE);
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsApproved(recurringDepositAccountStatusHashMap);
 
+        /***
+         * Activate the RD Account and verify whether account is activated
+         */
         recurringDepositAccountStatusHashMap = this.recurringDepositAccountHelper.activateRecurringDeposit(recurringDepositAccountId,
                 ACTIVATION_DATE);
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsActive(recurringDepositAccountStatusHashMap);
 
+        HashMap recurringDepositAccountData = this.recurringDepositAccountHelper.getRecurringDepositAccountById(this.requestSpec,
+                this.responseSpec, recurringDepositAccountId);
+        Float depositAmount = (Float) recurringDepositAccountData.get("mandatoryRecommendedDepositAmount");
+
+        /***
+         * Perform Deposit transaction and verify journal entries are posted for
+         * the transaction
+         */
         Integer depositTransactionId = this.recurringDepositAccountHelper.depositToRecurringDepositAccount(recurringDepositAccountId,
-                DEPOSIT_AMOUNT, EXPECTED_FIRST_DEPOSIT_ON_DATE);
+                depositAmount, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(depositTransactionId);
 
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, EXPECTED_FIRST_DEPOSIT_ON_DATE, new JournalEntry(
+                depositAmount, JournalEntry.TransactionType.DEBIT));
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(liabilityAccount, EXPECTED_FIRST_DEPOSIT_ON_DATE, new JournalEntry(
+                depositAmount, JournalEntry.TransactionType.CREDIT));
+
+        /***
+         * Update interest earned field for RD account
+         */
         recurringDepositAccountId = this.recurringDepositAccountHelper.calculateInterestForRecurringDeposit(recurringDepositAccountId);
         Assert.assertNotNull(recurringDepositAccountId);
 
+        /***
+         * Post interest and verify journal entries
+         */
         Integer transactionIdForPostInterest = this.recurringDepositAccountHelper
                 .postInterestForRecurringDeposit(recurringDepositAccountId);
         Assert.assertNotNull(transactionIdForPostInterest);
 
-        HashMap savingsSummaryBefore = this.savingsAccountHelper.getSavingsSummary(savingsId);
+        HashMap accountSummary = this.recurringDepositAccountHelper.getRecurringDepositSummary(recurringDepositAccountId);
+        Float totalInterestPosted = (Float) accountSummary.get("totalInterestPosted");
 
+        final JournalEntry[] expenseAccountEntry = { new JournalEntry(totalInterestPosted, JournalEntry.TransactionType.DEBIT) };
+        final JournalEntry[] liablilityAccountEntry = { new JournalEntry(totalInterestPosted, JournalEntry.TransactionType.CREDIT) };
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(expenseAccount, INTEREST_POSTED_DATE, expenseAccountEntry);
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(liabilityAccount, INTEREST_POSTED_DATE, liablilityAccountEntry);
+
+        /***
+         * Get saving account balance before preClosing RD account
+         */
+        HashMap savingsSummaryBefore = this.savingsAccountHelper.getSavingsSummary(savingsId);
         Float balanceBefore = (Float) savingsSummaryBefore.get("accountBalance");
 
         HashMap recurringDepositPrematureData = this.recurringDepositAccountHelper.calculatePrematureAmountForRecurringDeposit(
                 recurringDepositAccountId, CLOSED_ON_DATE);
 
+        /***
+         * Retrieve mapped financial account for liability transfer
+         */
+        Account financialAccount = getMappedLiabilityFinancialAccount();
+
+        /***
+         * Preclose the RD account verify whether account is preClosed
+         */
         Integer prematureClosureTransactionId = (Integer) this.recurringDepositAccountHelper.prematureCloseForRecurringDeposit(
                 recurringDepositAccountId, CLOSED_ON_DATE, CLOSURE_TYPE_TRANSFER_TO_SAVINGS, savingsId,
                 CommonConstants.RESPONSE_RESOURCE_ID);
@@ -247,6 +420,22 @@ public class RecurringDepositTest {
                 this.responseSpec, recurringDepositAccountId.toString());
         RecurringDepositAccountStatusChecker.verifyRecurringDepositAccountIsPrematureClosed(recurringDepositAccountStatusHashMap);
 
+        recurringDepositAccountData = this.recurringDepositAccountHelper.getRecurringDepositAccountById(this.requestSpec,
+                this.responseSpec, recurringDepositAccountId);
+        Float maturityAmount = Float.valueOf(recurringDepositAccountData.get("maturityAmount").toString());
+        /***
+         * Verify journal entry transactions for preclosure transaction As this
+         * transaction is an account transfer you should get financial account
+         * mapping details and verify amounts
+         */
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(liabilityAccount, CLOSED_ON_DATE, new JournalEntry(maturityAmount,
+                JournalEntry.TransactionType.CREDIT), new JournalEntry(maturityAmount, JournalEntry.TransactionType.DEBIT));
+
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(financialAccount, CLOSED_ON_DATE, new JournalEntry(maturityAmount,
+                JournalEntry.TransactionType.DEBIT), new JournalEntry(maturityAmount, JournalEntry.TransactionType.CREDIT));
+        /***
+         * Verify rd account maturity amount and savings account balance
+         */
         HashMap recurringDepositData = this.recurringDepositAccountHelper.getRecurringDepositAccountById(this.requestSpec,
                 this.responseSpec, recurringDepositAccountId);
         Float prematurityAmount = (Float) recurringDepositData.get("maturityAmount");
@@ -263,6 +452,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for Recurring Deposit Account premature closure with
+     * transaction type ReInvest and Cash Based accounting enabled
+     */
     @Test
     public void testRecurringDepositAccountWithPrematureClosureTypeReinvest() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -273,8 +466,17 @@ public class RecurringDepositTest {
         RecurringDepositAccountHelper recurringDepositAccountHelperValidationError = new RecurringDepositAccountHelper(this.requestSpec,
                 new ResponseSpecBuilder().build());
 
+        /***
+         * Create GL Accounts for product account mapping
+         */
+        final Account assetAccount = this.accountHelper.createAssetAccount();
+        final Account incomeAccount = this.accountHelper.createIncomeAccount();
+        final Account expenseAccount = this.accountHelper.createExpenseAccount();
+        final Account liabilityAccount = this.accountHelper.createLiabilityAccount();
+
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
         DateFormat monthDayFormat = new SimpleDateFormat("dd MMM");
+        DateFormat currentDateFormat = new SimpleDateFormat("dd");
 
         Calendar todaysDate = Calendar.getInstance();
         todaysDate.add(Calendar.MONTH, -3);
@@ -289,13 +491,26 @@ public class RecurringDepositTest {
         final String ACTIVATION_DATE = dateFormat.format(todaysDate.getTime());
         final String EXPECTED_FIRST_DEPOSIT_ON_DATE = dateFormat.format(todaysDate.getTime());
         final String MONTH_DAY = monthDayFormat.format(todaysDate.getTime());
-        todaysDate.add(Calendar.MONTH, 1);
-        final String CLOSED_ON_DATE = dateFormat.format(todaysDate.getTime());
 
+        Integer currentDate = new Integer(currentDateFormat.format(todaysDate.getTime()));
+        Integer daysInMonth = todaysDate.getActualMaximum(Calendar.DATE);
+        Integer numberOfDaysLeft = (daysInMonth - currentDate) + 1;
+        todaysDate.add(Calendar.DATE, numberOfDaysLeft);
+        final String INTEREST_POSTED_DATE = dateFormat.format(todaysDate.getTime());
+        final String CLOSED_ON_DATE = dateFormat.format(Calendar.getInstance().getTime());
+
+        /***
+         * Create client for applying Deposit account
+         */
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        /***
+         * Create RD product with CashBased accounting enabled
+         */
+        final String accountingRule = CASH_BASED;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule, assetAccount,
+                liabilityAccount, incomeAccount, expenseAccount);
         Assert.assertNotNull(recurringDepositProductId);
 
         ArrayList<HashMap> allRecurringDepositProductsData = this.recurringDepositProductHelper.retrieveAllRecurringDepositProducts(
@@ -303,6 +518,9 @@ public class RecurringDepositTest {
         HashMap recurringDepositProductData = this.recurringDepositProductHelper.retrieveRecurringDepositProductById(this.requestSpec,
                 this.responseSpec, recurringDepositProductId.toString());
 
+        /***
+         * Apply for RD account with created product and verify status
+         */
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
                 VALID_FROM, VALID_TO, SUBMITTED_ON_DATE, WHOLE_TERM, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(recurringDepositAccountId);
@@ -311,28 +529,68 @@ public class RecurringDepositTest {
                 this.requestSpec, this.responseSpec, recurringDepositAccountId.toString());
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsPending(recurringDepositAccountStatusHashMap);
 
+        /***
+         * Approve the RD account and verify whether account is approved
+         */
         recurringDepositAccountStatusHashMap = this.recurringDepositAccountHelper.approveRecurringDeposit(recurringDepositAccountId,
                 APPROVED_ON_DATE);
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsApproved(recurringDepositAccountStatusHashMap);
 
+        /***
+         * Activate the RD Account and verify whether account is activated
+         */
         recurringDepositAccountStatusHashMap = this.recurringDepositAccountHelper.activateRecurringDeposit(recurringDepositAccountId,
                 ACTIVATION_DATE);
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsActive(recurringDepositAccountStatusHashMap);
 
+        HashMap recurringDepositAccountData = this.recurringDepositAccountHelper.getRecurringDepositAccountById(this.requestSpec,
+                this.responseSpec, recurringDepositAccountId);
+        Float depositAmount = (Float) recurringDepositAccountData.get("mandatoryRecommendedDepositAmount");
+
+        /***
+         * Perform Deposit transaction and verify journal entries are posted for
+         * the transaction
+         */
         Integer depositTransactionId = this.recurringDepositAccountHelper.depositToRecurringDepositAccount(recurringDepositAccountId,
                 DEPOSIT_AMOUNT, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(depositTransactionId);
 
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, EXPECTED_FIRST_DEPOSIT_ON_DATE, new JournalEntry(
+                depositAmount, JournalEntry.TransactionType.DEBIT));
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(liabilityAccount, EXPECTED_FIRST_DEPOSIT_ON_DATE, new JournalEntry(
+                depositAmount, JournalEntry.TransactionType.CREDIT));
+
+        /***
+         * Update interest earned field for RD account
+         */
         recurringDepositAccountId = this.recurringDepositAccountHelper.calculateInterestForRecurringDeposit(recurringDepositAccountId);
         Assert.assertNotNull(recurringDepositAccountId);
 
+        /***
+         * Post interest and verify journal entries
+         */
         Integer transactionIdForPostInterest = this.recurringDepositAccountHelper
                 .postInterestForRecurringDeposit(recurringDepositAccountId);
         Assert.assertNotNull(transactionIdForPostInterest);
 
+        HashMap accountSummary = this.recurringDepositAccountHelper.getRecurringDepositSummary(recurringDepositAccountId);
+        Float totalInterestPosted = (Float) accountSummary.get("totalInterestPosted");
+
+        final JournalEntry[] expenseAccountEntry = { new JournalEntry(totalInterestPosted, JournalEntry.TransactionType.DEBIT) };
+        final JournalEntry[] liablilityAccountEntry = { new JournalEntry(totalInterestPosted, JournalEntry.TransactionType.CREDIT) };
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(expenseAccount, INTEREST_POSTED_DATE, expenseAccountEntry);
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(liabilityAccount, INTEREST_POSTED_DATE, liablilityAccountEntry);
+
+        /***
+         * Calculate expected premature closure amount
+         */
         HashMap recurringDepositPrematureData = this.recurringDepositAccountHelper.calculatePrematureAmountForRecurringDeposit(
                 recurringDepositAccountId, CLOSED_ON_DATE);
 
+        /***
+         * Expected to get an error response from api because re-invest option
+         * is not supported for account preClosure
+         */
         ArrayList<HashMap> errorResponse = (ArrayList<HashMap>) recurringDepositAccountHelperValidationError
                 .prematureCloseForRecurringDeposit(recurringDepositAccountId, CLOSED_ON_DATE, CLOSURE_TYPE_REINVEST, null,
                         CommonConstants.RESPONSE_ERROR);
@@ -342,6 +600,9 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for Update Recurring Deposit Account details
+     */
     @Test
     public void testRecurringDepositAccountUpdation() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -365,7 +626,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -381,6 +643,9 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for Approve and Undo Approval of Recurring Deposit Account
+     */
     @Test
     public void testRecurringDepositAccountUndoApproval() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -405,7 +670,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -424,6 +690,9 @@ public class RecurringDepositTest {
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsPending(recurringDepositAccountStatusHashMap);
     }
 
+    /***
+     * Test case for Closure of Recurring Deposit Account(Reject Application)
+     */
     @Test
     public void testRecurringDepositAccountRejectedAndClosed() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -449,7 +718,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -466,6 +736,10 @@ public class RecurringDepositTest {
         RecurringDepositAccountStatusChecker.verifyRecurringDepositAccountIsClosed(recurringDepositAccountStatusHashMap);
     }
 
+    /***
+     * Test case for Closure of Recurring Deposit Account(Withdrawn by
+     * applicant)
+     */
     @Test
     public void testRecurringDepositAccountWithdrawnByClientAndClosed() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -491,7 +765,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -508,6 +783,9 @@ public class RecurringDepositTest {
         RecurringDepositAccountStatusChecker.verifyRecurringDepositAccountIsClosed(recurringDepositAccountStatusHashMap);
     }
 
+    /***
+     * Test case for Delete of Recurring Deposit Account.
+     */
     @Test
     public void testRecurringDepositAccountIsDeleted() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -531,7 +809,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -547,12 +826,18 @@ public class RecurringDepositTest {
         Assert.assertNotNull(recurringDepositAccountId);
     }
 
+    /***
+     * Test case for update Recurring deposit account transactions
+     */
     @Test
     public void testUpdateAndUndoTransactionForRecurringDepositAccount() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
         this.accountHelper = new AccountHelper(this.requestSpec, this.responseSpec);
         this.recurringDepositAccountHelper = new RecurringDepositAccountHelper(this.requestSpec, this.responseSpec);
 
+        /***
+         * Create GL Accounts for product account mapping
+         */
         final Account assetAccount = this.accountHelper.createAssetAccount();
         final Account incomeAccount = this.accountHelper.createIncomeAccount();
         final Account expenseAccount = this.accountHelper.createExpenseAccount();
@@ -577,12 +862,23 @@ public class RecurringDepositTest {
         todaysDate.add(Calendar.MONTH, 1);
         final String DEPOSIT_DATE = dateFormat.format(todaysDate.getTime());
 
+        /***
+         * Create client for applying Deposit account
+         */
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        /***
+         * Create RD product with CashBased accounting enabled
+         */
+        final String accountingRule = CASH_BASED;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule, assetAccount,
+                liabilityAccount, incomeAccount, expenseAccount);
         Assert.assertNotNull(recurringDepositProductId);
 
+        /***
+         * Apply for RD account with created product and verify status
+         */
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
                 VALID_FROM, VALID_TO, SUBMITTED_ON_DATE, WHOLE_TERM, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(recurringDepositAccountId);
@@ -591,10 +887,16 @@ public class RecurringDepositTest {
                 this.requestSpec, this.responseSpec, recurringDepositAccountId.toString());
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsPending(recurringDepositAccountStatusHashMap);
 
+        /***
+         * Approve the RD account and verify whether account is approved
+         */
         recurringDepositAccountStatusHashMap = this.recurringDepositAccountHelper.approveRecurringDeposit(recurringDepositAccountId,
                 APPROVED_ON_DATE);
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsApproved(recurringDepositAccountStatusHashMap);
 
+        /***
+         * Activate the RD Account and verify whether account is activated
+         */
         recurringDepositAccountStatusHashMap = this.recurringDepositAccountHelper.activateRecurringDeposit(recurringDepositAccountId,
                 ACTIVATION_DATE);
         RecurringDepositAccountStatusChecker.verifyRecurringDepositIsActive(recurringDepositAccountStatusHashMap);
@@ -602,21 +904,40 @@ public class RecurringDepositTest {
         HashMap recurringDepositSummaryBefore = this.recurringDepositAccountHelper.getRecurringDepositSummary(recurringDepositAccountId);
         Float balanceBefore = (Float) recurringDepositSummaryBefore.get("accountBalance");
 
+        /***
+         * Perform Deposit transaction and verify journal entries are posted for
+         * the transaction
+         */
         Integer transactionIdForDeposit = this.recurringDepositAccountHelper.depositToRecurringDepositAccount(recurringDepositAccountId,
                 DEPOSIT_AMOUNT, DEPOSIT_DATE);
         Assert.assertNotNull(transactionIdForDeposit);
 
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, DEPOSIT_DATE, new JournalEntry(DEPOSIT_AMOUNT,
+                JournalEntry.TransactionType.DEBIT));
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(liabilityAccount, DEPOSIT_DATE, new JournalEntry(DEPOSIT_AMOUNT,
+                JournalEntry.TransactionType.CREDIT));
+
+        /***
+         * verify account balances after transactions
+         */
         Float expectedBalanceAfter = balanceBefore + DEPOSIT_AMOUNT;
         HashMap recurringDepositSummaryAfter = this.recurringDepositAccountHelper.getRecurringDepositSummary(recurringDepositAccountId);
         Float balanceAfter = (Float) recurringDepositSummaryAfter.get("accountBalance");
 
         Assert.assertEquals("Verifying account balance after deposit", expectedBalanceAfter, balanceAfter);
 
+        /***
+         * Update transaction and verify account balance after transaction
+         */
         Float updatedTransactionAmount = DEPOSIT_AMOUNT - 1000.0f;
-
         Integer updateTransactionId = this.recurringDepositAccountHelper.updateTransactionForRecurringDeposit(recurringDepositAccountId,
                 transactionIdForDeposit, DEPOSIT_DATE, updatedTransactionAmount);
         Assert.assertNotNull(updateTransactionId);
+
+        this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, DEPOSIT_DATE, new JournalEntry(updatedTransactionAmount,
+                JournalEntry.TransactionType.DEBIT));
+        this.journalEntryHelper.checkJournalEntryForLiabilityAccount(liabilityAccount, DEPOSIT_DATE, new JournalEntry(
+                updatedTransactionAmount, JournalEntry.TransactionType.CREDIT));
 
         expectedBalanceAfter = DEPOSIT_AMOUNT - updatedTransactionAmount;
         recurringDepositSummaryAfter = this.recurringDepositAccountHelper.getRecurringDepositSummary(recurringDepositAccountId);
@@ -636,6 +957,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify maturity amount with monthly compounding and monthly
+     * posting with 365 days in year
+     */
     @Test
     public void testMaturityAmountForMonthlyCompoundingAndMonthlyPosting_With_365_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -664,7 +989,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -711,6 +1037,10 @@ public class RecurringDepositTest {
         Assert.assertEquals("Verifying Maturity amount for Recurring Deposit Account", principal, maturityAmount);
     }
 
+    /***
+     * Test case for verify maturity amount with monthly compounding and monthly
+     * posting with 360 days in year
+     */
     @Test
     public void testMaturityAmountForMonthlyCompoundingAndMonthlyPosting_With_360_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -739,7 +1069,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -791,6 +1122,9 @@ public class RecurringDepositTest {
         Assert.assertEquals("Verifying Maturity amount for Recurring Deposit Account", principal, maturityAmount);
     }
 
+    /***
+     * Test case for verify interest posting of RD account
+     */
     @Test
     public void testPostInterestForRecurringDeposit() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -817,7 +1151,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -882,6 +1217,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify premature closure amount with penal interest for
+     * whole term with closure transaction type withdrawal and 365 days in year
+     */
     @Test
     public void testPrematureClosureAmountWithPenalInterestForWholeTerm_With_365_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -917,7 +1256,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -975,6 +1315,7 @@ public class RecurringDepositTest {
                 DEPOSIT_AMOUNT, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(transactionIdForDeposit);
 
+        currentDate = currentDate - 1;
         interestPerMonth = (float) (interestPerDay * principal * currentDate);
         System.out.println("IPM = " + interestPerMonth);
         principal += interestPerMonth;
@@ -1003,6 +1344,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify premature closure amount with penal interest for
+     * whole term with closure transaction type withdrawal and 360 days in year
+     */
     @Test
     public void testPrematureClosureAmountWithPenalInterestForWholeTerm_With_360_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -1038,7 +1383,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -1101,6 +1447,7 @@ public class RecurringDepositTest {
                 DEPOSIT_AMOUNT, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(transactionIdForDeposit);
 
+        currentDate = currentDate - 1;
         interestPerMonth = (float) (interestPerDay * principal * currentDate);
         System.out.println("IPM = " + interestPerMonth);
         principal += interestPerMonth;
@@ -1129,6 +1476,11 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify premature closure amount with penal interest till
+     * maturity date with closure transaction type withdrawal and 365 days in
+     * year
+     */
     @Test
     public void testPrematureClosureAmountWithPenalInterestTillPrematureWithdrawal_With_365_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -1166,7 +1518,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -1234,6 +1587,7 @@ public class RecurringDepositTest {
                 DEPOSIT_AMOUNT, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(transactionIdForDeposit);
 
+        currentDate = currentDate - 1;
         interestPerMonth = (float) (interestPerDay * principal * currentDate);
         System.out.println("IPM = " + interestPerMonth);
         principal += interestPerMonth;
@@ -1262,6 +1616,11 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case verify premature closure amount with penal interest till
+     * maturity date with closure transaction type withdrawal and 360 days in
+     * year
+     */
     @Test
     public void testPrematureClosureAmountWithPenalInterestTillPrematureWithdrawal_With_360_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -1299,7 +1658,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -1372,6 +1732,7 @@ public class RecurringDepositTest {
                 DEPOSIT_AMOUNT, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(newTransactionIdForDeposit);
 
+        currentDate = currentDate - 1;
         interestPerMonth = (float) (interestPerDay * principal * currentDate);
         System.out.println("IPM = " + interestPerMonth);
         principal += interestPerMonth;
@@ -1400,6 +1761,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify maturity amount with daily compounding and monthly
+     * posting with 365 days in year
+     */
     @Test
     public void testMaturityAmountForDailyCompoundingAndMonthlyPosting_With_365_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -1428,9 +1793,9 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
-
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
                 VALID_FROM, VALID_TO, SUBMITTED_ON_DATE, WHOLE_TERM, EXPECTED_FIRST_DEPOSIT_ON_DATE);
         Assert.assertNotNull(recurringDepositAccountId);
@@ -1480,6 +1845,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify maturity amount with daily compounding and monthly
+     * posting with 360 days in year
+     */
     @Test
     public void testMaturityAmountForDailyCompoundingAndMonthlyPosting_With_360_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -1508,7 +1877,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -1560,6 +1930,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify premature closure amount with Bi-annual interest
+     * compounding and Bi-annual interest posting with 365 days in year
+     */
     @Test
     public void testRecurringDepositWithBi_AnnualCompoundingAndPosting_365_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -1595,7 +1969,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -1646,6 +2021,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify premature closure amount with Bi-annual interest
+     * compounding and Bi-annual interest posting with 360 days in year
+     */
     @Test
     public void testRecurringDepositWithBi_AnnualCompoundingAndPosting_360_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -1681,7 +2060,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -1732,6 +2112,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify maturity amount with Daily interest compounding and
+     * annual interest posting with 365 days in year
+     */
     @Test
     public void testMaturityAmountForDailyCompoundingAndAnnuallyPosting_With_365_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -1766,7 +2150,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -1818,6 +2203,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify maturity amount with Daily interest compounding and
+     * annual interest posting with 360 days in year
+     */
     @Test
     public void testMaturityAmountForDailyCompoundingAndAnnuallyPosting_With_360_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -1852,7 +2241,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -1904,6 +2294,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify premature closure amount with Quarterly interest
+     * compounding and Quarterly interest posting with 365 days in year
+     */
     @Test
     public void testRecurringDepositQuarterlyCompoundingAndQuarterlyPosting_365_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -1939,7 +2333,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -1990,6 +2385,10 @@ public class RecurringDepositTest {
 
     }
 
+    /***
+     * Test case for verify premature closure amount with Quarterly interest
+     * compounding and Quarterly interest posting with 360 days in year
+     */
     @Test
     public void testRecurringDepositQuarterlyCompoundingAndQuarterlyPosting_360_Days() {
         this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
@@ -2025,7 +2424,8 @@ public class RecurringDepositTest {
         Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientId);
 
-        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO);
+        final String accountingRule = NONE;
+        Integer recurringDepositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule);
         Assert.assertNotNull(recurringDepositProductId);
 
         Integer recurringDepositAccountId = applyForRecurringDepositApplication(clientId.toString(), recurringDepositProductId.toString(),
@@ -2076,11 +2476,16 @@ public class RecurringDepositTest {
 
     }
 
-    private Integer createRecurringDepositProduct(final String validFrom, final String validTo, Account... accounts) {
+    private Integer createRecurringDepositProduct(final String validFrom, final String validTo, final String accountingRule,
+            Account... accounts) {
         System.out.println("------------------------------CREATING NEW RECURRING DEPOSIT PRODUCT ---------------------------------------");
         RecurringDepositProductHelper recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
-        final String recurringDepositProductJSON = recurringDepositProductHelper //
-                .build(validFrom, validTo);
+        if (accountingRule.equals(CASH_BASED)) {
+            recurringDepositProductHelper = recurringDepositProductHelper.withAccountingRuleAsCashBased(accounts);
+        } else if (accountingRule.equals(NONE)) {
+            recurringDepositProductHelper = recurringDepositProductHelper.withAccountingRuleAsNone();
+        }
+        final String recurringDepositProductJSON = recurringDepositProductHelper.build(validFrom, validTo);
         return RecurringDepositProductHelper.createRecurringDepositProduct(recurringDepositProductJSON, requestSpec, responseSpec);
     }
 
@@ -2095,14 +2500,88 @@ public class RecurringDepositTest {
     }
 
     private Integer createSavingsProduct(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
-            final String minOpenningBalance) {
+            final String minOpenningBalance, final String accountingRule, Account... accounts) {
         System.out.println("------------------------------CREATING NEW SAVINGS PRODUCT ---------------------------------------");
         SavingsProductHelper savingsProductHelper = new SavingsProductHelper();
+        if (accountingRule.equals(CASH_BASED)) {
+            savingsProductHelper = savingsProductHelper.withAccountingRuleAsCashBased(accounts);
+        } else if (accountingRule.equals(NONE)) {
+            savingsProductHelper = savingsProductHelper.withAccountingRuleAsNone();
+        }
         final String savingsProductJSON = savingsProductHelper //
                 .withInterestCompoundingPeriodTypeAsDaily() //
                 .withInterestPostingPeriodTypeAsMonthly() //
                 .withInterestCalculationPeriodTypeAsDailyBalance() //
                 .withMinimumOpenningBalance(minOpenningBalance).build();
         return SavingsProductHelper.createSavingsProduct(savingsProductJSON, requestSpec, responseSpec);
+    }
+
+    private Account getMappedLiabilityFinancialAccount() {
+        final Integer liabilityTransferFinancialActivityId = FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue();
+        List<HashMap> financialActivities = this.financialActivityAccountHelper.getAllFinancialActivityAccounts(this.responseSpec);
+        final Account financialAccount;
+        /***
+         * if no financial activities are defined for account transfers, create
+         * liability financial accounting mappings
+         */
+        if (financialActivities.isEmpty()) {
+            financialAccount = createLiabilityFinancialAccountTransferType(liabilityTransferFinancialActivityId);
+        } else {
+            /***
+             * extract mapped liability financial account
+             */
+            Account mappedLiabilityAccount = null;
+            for (HashMap financialActivity : financialActivities) {
+                HashMap financialActivityData = (HashMap) financialActivity.get("financialActivityData");
+                if (financialActivityData.get("id").equals(liabilityTransferFinancialActivityId)) {
+                    HashMap glAccountData = (HashMap) financialActivity.get("glAccountData");
+                    mappedLiabilityAccount = new Account((Integer) glAccountData.get("id"), AccountType.LIABILITY);
+                    break;
+                }
+            }
+            /***
+             * If liability transfer is not defined create liability transfer
+             */
+            if (mappedLiabilityAccount == null) {
+                mappedLiabilityAccount = createLiabilityFinancialAccountTransferType(liabilityTransferFinancialActivityId);
+            }
+            financialAccount = mappedLiabilityAccount;
+        }
+        return financialAccount;
+    }
+
+    private Account createLiabilityFinancialAccountTransferType(final Integer liabilityTransferFinancialActivityId) {
+        /***
+         * Create and verify financial account transfer type is created
+         */
+        final Account liabilityAccountForMapping = this.accountHelper.createLiabilityAccount();
+        Integer financialActivityAccountId = (Integer) financialActivityAccountHelper.createFinancialActivityAccount(
+                liabilityTransferFinancialActivityId, liabilityAccountForMapping.getAccountID(), this.responseSpec,
+                CommonConstants.RESPONSE_RESOURCE_ID);
+        Assert.assertNotNull(financialActivityAccountId);
+        assertFinancialActivityAccountCreation(financialActivityAccountId, liabilityTransferFinancialActivityId, liabilityAccountForMapping);
+        return liabilityAccountForMapping;
+    }
+
+    private void assertFinancialActivityAccountCreation(Integer financialActivityAccountId, Integer financialActivityId, Account glAccount) {
+        HashMap mappingDetails = this.financialActivityAccountHelper.getFinancialActivityAccount(financialActivityAccountId,
+                this.responseSpec);
+        Assert.assertEquals(financialActivityId, ((HashMap) mappingDetails.get("financialActivityData")).get("id"));
+        Assert.assertEquals(glAccount.getAccountID(), ((HashMap) mappingDetails.get("glAccountData")).get("id"));
+    }
+
+    /**
+     * Delete the Liability transfer account
+     */
+    @After
+    public void tearDown() {
+        List<HashMap> financialActivities = this.financialActivityAccountHelper.getAllFinancialActivityAccounts(this.responseSpec);
+        for (HashMap financialActivity : financialActivities) {
+            Integer financialActivityAccountId = (Integer) financialActivity.get("id");
+            Integer deletedFinancialActivityAccountId = this.financialActivityAccountHelper.deleteFinancialActivityAccount(
+                    financialActivityAccountId, this.responseSpec, CommonConstants.RESPONSE_RESOURCE_ID);
+            Assert.assertNotNull(deletedFinancialActivityAccountId);
+            Assert.assertEquals(financialActivityAccountId, deletedFinancialActivityAccountId);
+        }
     }
 }

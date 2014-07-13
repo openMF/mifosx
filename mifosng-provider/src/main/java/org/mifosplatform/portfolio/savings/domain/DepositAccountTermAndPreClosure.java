@@ -110,7 +110,7 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistable<Long> {
     }
 
     public Map<String, Object> update(final JsonCommand command, final DataValidatorBuilder baseDataValidator) {
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(10);
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(10);
 
         if (command.isChangeInBigDecimalParameterNamed(depositAmountParamName, this.depositAmount)) {
             final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(depositAmountParamName);
@@ -272,7 +272,7 @@ public class DepositAccountTermAndPreClosure extends AbstractPersistable<Long> {
         final DepositPreClosureDetail preClosureDetail = this.preClosureDetail.copy();
         final DepositTermDetail depositTermDetail = this.depositTermDetail.copy();
         final LocalDate expectedFirstDepositOnDate = null;
-        final Boolean transferInterestToLinkedAccount = null;
+        final Boolean transferInterestToLinkedAccount = false;
 
         final DepositAccountOnClosureType accountOnClosureType = null;
         return DepositAccountTermAndPreClosure.createNew(preClosureDetail, depositTermDetail, account, actualDepositAmount, maturityAmount,

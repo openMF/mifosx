@@ -120,7 +120,7 @@ public class FixedDepositAccount extends SavingsAccount {
 
     @Override
     public void modifyApplication(final JsonCommand command, final Map<String, Object> actualChanges) {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.modifyApplicationAction);
         super.modifyApplication(command, actualChanges, baseDataValidator);
@@ -129,6 +129,12 @@ public class FixedDepositAccount extends SavingsAccount {
         validateDomainRules(baseDataValidator);
         super.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+    }
+
+    @Override
+    protected BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate interestPostingUpToDate) {
+        boolean isPreMatureClosure = false;
+        return getEffectiveInterestRateAsFraction(mc, interestPostingUpToDate, isPreMatureClosure);
     }
 
     protected BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate interestPostingUpToDate,
@@ -156,8 +162,7 @@ public class FixedDepositAccount extends SavingsAccount {
             }
 
             final BigDecimal depositAmount = accountTermAndPreClosure.depositAmount();
-            applicableInterestRate = this.chart.getApplicableInterestRate(depositAmount, depositStartDate(), depositCloseDate,
-                    this.client);
+            applicableInterestRate = this.chart.getApplicableInterestRate(depositAmount, depositStartDate(), depositCloseDate, this.client);
 
             if (applyPreMaturePenalty) {
                 applicableInterestRate = applicableInterestRate.subtract(penalInterest);
@@ -170,7 +175,7 @@ public class FixedDepositAccount extends SavingsAccount {
     }
 
     public void updateMaturityDateAndAmountBeforeAccountActivation(final MathContext mc, final boolean isPreMatureClosure) {
-        List<SavingsAccountTransaction> allTransactions = new ArrayList<SavingsAccountTransaction>();
+        List<SavingsAccountTransaction> allTransactions = new ArrayList<>();
         final Money transactionAmountMoney = Money.of(getCurrency(), this.accountTermAndPreClosure.depositAmount());
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(null, office(), null,
                 this.accountSubmittedOrActivationDate(), transactionAmountMoney, new Date());
@@ -209,7 +214,7 @@ public class FixedDepositAccount extends SavingsAccount {
     }
 
     public void updateMaturityStatus() {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.updateMaturityDetailsAction);
 
@@ -266,7 +271,7 @@ public class FixedDepositAccount extends SavingsAccount {
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
                 accountSubmittedOrActivationDate(), maturityDate, postingPeriodType);
 
-        final List<PostingPeriod> allPostingPeriods = new ArrayList<PostingPeriod>();
+        final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
         Money periodStartingBalance = Money.zero(currency);
 
@@ -274,11 +279,12 @@ public class FixedDepositAccount extends SavingsAccount {
         final BigDecimal interestRateAsFraction = getEffectiveInterestRateAsFraction(mc, maturityDate, isPreMatureClosure);
         final Collection<Long> interestPostTransactions = this.savingsHelper.fetchPostInterestTransactionIds(getId());
         boolean isInterestTransfer = false;
+        final Money minBalanceForInterestCalculation = Money.of(getCurrency(), minBalanceForInterestCalculation());
         for (final LocalDateInterval periodInterval : postingPeriodIntervals) {
 
             final PostingPeriod postingPeriod = PostingPeriod.createFrom(periodInterval, periodStartingBalance, transactions,
                     this.currency, compoundingPeriodType, interestCalculationType, interestRateAsFraction, daysInYearType.getValue(),
-                    maturityDate, interestPostTransactions, isInterestTransfer);
+                    maturityDate, interestPostTransactions, isInterestTransfer, minBalanceForInterestCalculation);
 
             periodStartingBalance = postingPeriod.closingBalance();
 
@@ -291,10 +297,10 @@ public class FixedDepositAccount extends SavingsAccount {
         return allPostingPeriods;
     }
 
-    public void prematureClosure(final AppUser currentUser, final JsonCommand command,
-            final LocalDate tenantsTodayDate, final Map<String, Object> actualChanges) {
+    public void prematureClosure(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate,
+            final Map<String, Object> actualChanges) {
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME + DepositsApiConstants.preMatureCloseAction);
 
@@ -347,14 +353,15 @@ public class FixedDepositAccount extends SavingsAccount {
         final Integer onAccountClosureId = command.integerValueOfParameterNamed(onAccountClosureIdParamName);
         final DepositAccountOnClosureType onClosureType = DepositAccountOnClosureType.fromInt(onAccountClosureId);
         this.accountTermAndPreClosure.updateOnAccountClosureStatus(onClosureType);
-        
 
-/*        // withdraw deposit amount before closing the account
-        final Money transactionAmountMoney = Money.of(this.currency, this.getAccountBalance());
-        final SavingsAccountTransaction withdraw = SavingsAccountTransaction.withdrawal(this, office(), paymentDetail, closedDate,
-                transactionAmountMoney, new Date());
-        this.transactions.add(withdraw);
-*/
+        /*
+         * // withdraw deposit amount before closing the account final Money
+         * transactionAmountMoney = Money.of(this.currency,
+         * this.getAccountBalance()); final SavingsAccountTransaction withdraw =
+         * SavingsAccountTransaction.withdrawal(this, office(), paymentDetail,
+         * closedDate, transactionAmountMoney, new Date());
+         * this.transactions.add(withdraw);
+         */
         actualChanges.put(SavingsApiConstants.statusParamName, SavingsEnumerations.status(this.status));
         actualChanges.put(SavingsApiConstants.localeParamName, command.locale());
         actualChanges.put(SavingsApiConstants.dateFormatParamName, command.dateFormat());
@@ -377,7 +384,7 @@ public class FixedDepositAccount extends SavingsAccount {
     public void close(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate,
             final Map<String, Object> actualChanges) {
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.closeAction);
 
@@ -501,7 +508,8 @@ public class FixedDepositAccount extends SavingsAccount {
         Money interestPostedToDate = totalInterestPosted();
         // calculate interest before one day of closure date
         final LocalDate interestCalculatedToDate = accountCloseDate.minusDays(1);
-        final Money interestOnMaturity = calculatePreMatureInterest(interestCalculatedToDate, retreiveOrderedNonInterestPostingTransactions(), isPreMatureClosure);
+        final Money interestOnMaturity = calculatePreMatureInterest(interestCalculatedToDate,
+                retreiveOrderedNonInterestPostingTransactions(), isPreMatureClosure);
         boolean recalucateDailyBalance = false;
 
         // post remaining interest
@@ -626,7 +634,7 @@ public class FixedDepositAccount extends SavingsAccount {
     }
 
     public void validateDomainRules() {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME);
         validateDomainRules(baseDataValidator);
@@ -735,5 +743,34 @@ public class FixedDepositAccount extends SavingsAccount {
     @Override
     protected boolean isTransferInterestToOtherAccount() {
         return this.accountTermAndPreClosure.isTransferInterestToLinkedAccount();
+    }
+
+    @Override
+    public boolean allowDeposit() {
+        return false;
+    }
+
+    @Override
+    public boolean allowWithdrawal() {
+        return false;
+    }
+
+    @Override
+    public boolean allowModify() {
+        return false;
+    }
+
+    @Override
+    public boolean isTransactionsAllowed() {
+        return isActive() || isAccountMatured();
+    }
+
+    private boolean isAccountMatured() {
+        return SavingsAccountStatusType.fromInt(status).isMatured();
+    }
+
+    @Override
+    public BigDecimal minBalanceForInterestCalculation() {
+        return null;
     }
 }

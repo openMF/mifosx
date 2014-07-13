@@ -16,9 +16,11 @@ public class DailyCompoundingPeriod implements CompoundingPeriod {
     private final LocalDateInterval periodInterval;
     private final List<EndOfDayBalance> endOfDayBalances;
 
-    public static DailyCompoundingPeriod create(final LocalDateInterval periodInterval, final List<EndOfDayBalance> allEndOfDayBalances, final LocalDate upToInterestCalculationDate) {
+    public static DailyCompoundingPeriod create(final LocalDateInterval periodInterval, final List<EndOfDayBalance> allEndOfDayBalances,
+            final LocalDate upToInterestCalculationDate) {
 
-        final List<EndOfDayBalance> endOfDayBalancesWithinPeriod = endOfDayBalancesWithinPeriodInterval(periodInterval, allEndOfDayBalances, upToInterestCalculationDate);
+        final List<EndOfDayBalance> endOfDayBalancesWithinPeriod = endOfDayBalancesWithinPeriodInterval(periodInterval,
+                allEndOfDayBalances, upToInterestCalculationDate);
 
         return new DailyCompoundingPeriod(periodInterval, endOfDayBalancesWithinPeriod);
     }
@@ -26,7 +28,7 @@ public class DailyCompoundingPeriod implements CompoundingPeriod {
     private static List<EndOfDayBalance> endOfDayBalancesWithinPeriodInterval(final LocalDateInterval compoundingPeriodInterval,
             final List<EndOfDayBalance> allEndOfDayBalances, final LocalDate upToInterestCalculationDate) {
 
-        final List<EndOfDayBalance> endOfDayBalancesForPeriodInterval = new ArrayList<EndOfDayBalance>();
+        final List<EndOfDayBalance> endOfDayBalancesForPeriodInterval = new ArrayList<>();
 
         EndOfDayBalance cappedToPeriodEndDate = null;
 
@@ -56,24 +58,11 @@ public class DailyCompoundingPeriod implements CompoundingPeriod {
     }
 
     @Override
-    public BigDecimal calculateInterest(final BigDecimal interestRateAsFraction, final long daysInYear) {
-
-        BigDecimal interestEarned = BigDecimal.ZERO;
-
-        for (final EndOfDayBalance balance : this.endOfDayBalances) {
-            final BigDecimal interestOnBalanceUnrounded = balance.calculateInterestOnBalance(BigDecimal.ZERO, interestRateAsFraction,
-                    daysInYear);
-            interestEarned = interestEarned.add(interestOnBalanceUnrounded);
-        }
-
-        return interestEarned;
-    }
-
-    @Override
     public BigDecimal calculateInterest(
             @SuppressWarnings("unused") final SavingsCompoundingInterestPeriodType compoundingInterestPeriodType,
             @SuppressWarnings("unused") final SavingsInterestCalculationType interestCalculationType,
-            final BigDecimal interestFromPreviousPostingPeriod, final BigDecimal interestRateAsFraction, final long daysInYear) {
+            final BigDecimal interestFromPreviousPostingPeriod, final BigDecimal interestRateAsFraction, final long daysInYear,
+            final BigDecimal minBalanceForInterestCalculation) {
         BigDecimal interestEarned = BigDecimal.ZERO;
 
         // for daily compounding - each interest calculated from previous daily
@@ -81,7 +70,7 @@ public class DailyCompoundingPeriod implements CompoundingPeriod {
         BigDecimal interestToCompound = interestFromPreviousPostingPeriod;
         for (final EndOfDayBalance balance : this.endOfDayBalances) {
             final BigDecimal interestOnBalanceUnrounded = balance.calculateInterestOnBalanceAndInterest(interestToCompound,
-                    interestRateAsFraction, daysInYear);
+                    interestRateAsFraction, daysInYear, minBalanceForInterestCalculation);
             interestToCompound = interestToCompound.add(interestOnBalanceUnrounded, MathContext.DECIMAL64).setScale(9);
             interestEarned = interestEarned.add(interestOnBalanceUnrounded);
         }

@@ -32,7 +32,6 @@ import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.joda.time.LocalDate;
-import org.joda.time.Years;
 import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
@@ -274,7 +273,7 @@ public final class Client extends AbstractPersistable<Long> {
         }
 
         if (clientParentGroup != null) {
-            this.groups = new HashSet<Group>();
+            this.groups = new HashSet<>();
             this.groups.add(clientParentGroup);
         }
 
@@ -296,7 +295,7 @@ public final class Client extends AbstractPersistable<Long> {
     }
 
     private void validate() {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         validateNameParts(dataValidationErrors);
         validateActivationDate(dataValidationErrors);
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
@@ -330,7 +329,7 @@ public final class Client extends AbstractPersistable<Long> {
             final ApiParameterError error = ApiParameterError.parameterError("error.msg.clients.already.active", defaultUserMessage,
                     ClientApiConstants.activationDateParamName, activationLocalDate.toString(formatter));
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -382,7 +381,7 @@ public final class Client extends AbstractPersistable<Long> {
 
     public Map<String, Object> update(final JsonCommand command) {
 
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(9);
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(9);
 
         if (command.isChangeInIntegerParameterNamed(ClientApiConstants.statusParamName, this.status)) {
             final Integer newValue = command.integerValueOfParameterNamed(ClientApiConstants.statusParamName);
@@ -475,7 +474,7 @@ public final class Client extends AbstractPersistable<Long> {
             this.activationDate = newValue.toDate();
             this.officeJoiningDate = this.activationDate;
         }
-        
+
         if (command.isChangeInLocalDateParameterNamed(ClientApiConstants.dateOfBirthParamName, dateOfBirthLocalDate())) {
             final String valueAsInput = command.stringValueOfParameterNamed(ClientApiConstants.dateOfBirthParamName);
             actualChanges.put(ClientApiConstants.dateOfBirthParamName, valueAsInput);
@@ -786,8 +785,8 @@ public final class Client extends AbstractPersistable<Long> {
     public Date dateOfBirth() {
         return this.dateOfBirth;
     }
-    
-    public LocalDate dateOfBirthLocalDate(){
+
+    public LocalDate dateOfBirthLocalDate() {
         LocalDate dateOfBirth = null;
         if (this.dateOfBirth != null) {
             dateOfBirth = LocalDate.fromDateFields(this.dateOfBirth);

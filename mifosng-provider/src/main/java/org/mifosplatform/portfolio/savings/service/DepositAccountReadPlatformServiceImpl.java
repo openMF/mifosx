@@ -89,7 +89,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
     private final DepositAccountLookupMapper depositAccountLookupsRowMapper = new DepositAccountLookupMapper();
     private final DepositAccountForMaturityMapper depositAccountForMaturityRowMapper = new DepositAccountForMaturityMapper();
     private final PaginationParametersDataValidator paginationParametersDataValidator;
-    private final PaginationHelper<DepositAccountData> paginationHelper = new PaginationHelper<DepositAccountData>();
+    private final PaginationHelper<DepositAccountData> paginationHelper = new PaginationHelper<>();
     private final SavingsAccountTransactionsMapper transactionsMapper;
     private final ClientReadPlatformService clientReadPlatformService;
     private final GroupReadPlatformService groupReadPlatformService;
@@ -363,7 +363,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                             .retrieveAllLoanOfficersInOfficeById(officeId);
 
                     if (!CollectionUtils.isEmpty(fieldOfficersInBranch)) {
-                        fieldOfficerOptions = new ArrayList<StaffData>(fieldOfficersInBranch);
+                        fieldOfficerOptions = new ArrayList<>(fieldOfficersInBranch);
                     }
                 } else {
                     // by default bring back all officers in selected
@@ -374,7 +374,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                             .retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(officeId, restrictToLoanOfficersOnly);
 
                     if (!CollectionUtils.isEmpty(loanOfficersInHierarchy)) {
-                        fieldOfficerOptions = new ArrayList<StaffData>(loanOfficersInHierarchy);
+                        fieldOfficerOptions = new ArrayList<>(loanOfficersInHierarchy);
                     }
                 }
             }
@@ -540,7 +540,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectFieldsSqlBuilder.append("sa.account_balance_derived as accountBalance, ");
             selectFieldsSqlBuilder.append("sa.total_fees_charge_derived as totalFeeCharge, ");
             selectFieldsSqlBuilder.append("sa.total_penalty_charge_derived as totalPenaltyCharge, ");
-            selectFieldsSqlBuilder.append("sa.deposit_type_enum as depositTypeId ");
+            selectFieldsSqlBuilder.append("sa.deposit_type_enum as depositTypeId, ");
+            selectFieldsSqlBuilder.append("sa.min_balance_for_interest_calculation as minBalanceForInterestCalculation ");
 
             this.selectFieldsSql = selectFieldsSqlBuilder.toString();
 
@@ -668,6 +669,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             }
 
             final boolean withdrawalFeeForTransfers = rs.getBoolean("withdrawalFeeForTransfers");
+            final BigDecimal minBalanceForInterestCalculation = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs,
+                    "minBalanceForInterestCalculation");
 
             final BigDecimal totalDeposits = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "totalDeposits");
             final BigDecimal totalWithdrawals = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "totalWithdrawals");
@@ -687,7 +690,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             return DepositAccountData.instance(id, accountNo, externalId, groupId, groupName, clientId, clientName, productId, productName,
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
-                    lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType);
+                    lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType,
+                    minBalanceForInterestCalculation);
         }
     }
 
@@ -1022,7 +1026,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectFieldsSqlBuilder.append("sa.lockin_period_frequency as lockinPeriodFrequency,");
             selectFieldsSqlBuilder.append("sa.lockin_period_frequency_enum as lockinPeriodFrequencyType, ");
             selectFieldsSqlBuilder.append("sa.withdrawal_fee_for_transfer as withdrawalFeeForTransfers, ");
-            selectFieldsSqlBuilder.append("sa.deposit_type_enum as depositTypeId ");
+            selectFieldsSqlBuilder.append("sa.deposit_type_enum as depositTypeId, ");
+            selectFieldsSqlBuilder.append("sa.min_balance_for_interest_calculation as minBalanceForInterestCalculation ");
 
             this.selectFieldsSql = selectFieldsSqlBuilder.toString();
 
@@ -1090,6 +1095,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             }
 
             final boolean withdrawalFeeForTransfers = rs.getBoolean("withdrawalFeeForTransfers");
+            final BigDecimal minBalanceForInterestCalculation = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs,
+                    "minBalanceForInterestCalculation");
 
             Long clientId = null;
             String clientName = null;
@@ -1114,7 +1121,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             return DepositAccountData.instance(null, null, null, groupId, groupName, clientId, clientName, productId, productName,
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualIterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
-                    lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType);
+                    lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType,
+                    minBalanceForInterestCalculation);
         }
     }
 
@@ -1276,7 +1284,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
     }
 
     private Collection<SavingsAccountChargeData> fromChargesToSavingsCharges(final Collection<ChargeData> productCharges) {
-        final Collection<SavingsAccountChargeData> savingsCharges = new ArrayList<SavingsAccountChargeData>();
+        final Collection<SavingsAccountChargeData> savingsCharges = new ArrayList<>();
         for (final ChargeData chargeData : productCharges) {
             final SavingsAccountChargeData savingsCharge = chargeData.toSavingsAccountChargeData();
             savingsCharges.add(savingsCharge);
@@ -1387,10 +1395,11 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Long fromAccountId = rs.getLong("fromAcc");
             final Long toAccountId = rs.getLong("toAcc");
             final BigDecimal transactionAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "amount");
+            final boolean isRegularTransaction = false;
             final LocalDate transactionDate = JdbcSupport.getLocalDate(rs, "transactionDate");
             return new AccountTransferDTO(transactionDate, transactionAmount, PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS,
                     fromAccountId, toAccountId, "trasfer interest to savings", null, null, null, null, null, null, null,
-                    AccountTransferType.INTEREST_TRANSFER.getValue(), null, null, null, null, null, null);
+                    AccountTransferType.INTEREST_TRANSFER.getValue(), null, null, null, null, null, null, isRegularTransaction);
         }
 
     }

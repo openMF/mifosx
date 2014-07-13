@@ -90,7 +90,7 @@
 <body>
 	<div id="page-wrapper">
 		<div id="flybar">
-			<div id="nav-logo">1.23.0.RELEASE</div>
+			<div id="nav-logo">1.24.0.RELEASE</div>
 			<div class="flybar-nav">
 				<h2 class="flybar-button">Overview</h2>
 				<div class="flybar-menu-overview">
@@ -304,47 +304,39 @@
 								<td><a href="#standinginstruction">Standing Instructions</a></td>
 								<td>standinginstructions</td>
 								<td><a href="#standinginstruction_create">Create Standing Instruction</a></td>
+                                <td><a href="#standinginstructions_list">List Standing Instructions</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>standinginstructions/{standingInstructionId}</td>
+                                <td></td>
 								<td><a href="#standinginstructions_retrieve">Retrive a Standing Instruction</a></td>
-								<td><a href="#standinginstruction_update">Update Standing Instruction</a></td>
-								<td></td>
-							</tr>
-							<tr>
-								<td></td>
-								<td></td>
-								<td></td>
-								<td><a href="#standinginstructions_list">List Standing Instructions</a></td>
+                                <td><a href="#standinginstruction_update">Update Standing Instruction</a></td>
 								<td><a href="#standinginstruction_delete">Delete Standing Instruction(status change)</a></td>
-								<td></td>
 							</tr>
-							<tr>
-								<td></td>
-								<td></td>
-								<td></td>
-								<td><a href="#standinginstruction_template">Retrive Standing Instruction Template</a></td>
-								<td></td>
-								<td></td>
-							</tr>
+                            <tr>
+                                <td></td>
+                                <td>standinginstructionrunhistory</td>
+                                <td></td>
+                                <td><a href="#standinginstructions_history">Standinginstructions History</a></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
 							<tr>
 								<td><a href="#accounttransfers">Account Transfer</a></td>
 								<td>accounttransfers</td>
 								<td><a href="#accounttransfers_create">Create Account Transfer</a></td>
-								<td><a href="#accounttransfers_retrieve">Retrive a Account Transfer</a></td>
+                                <td><a href="#accounttransfers_list">List Account Transfer</a></td>
 								<td></td>
 								<td></td>
 							</tr>
 							<tr>
 								<td></td>
+								<td>accounttransfers/{accountTransferId}</td>
 								<td></td>
-								<td></td>
-								<td><a href="#accounttransfers_list">List Account Transfer</a></td>
-								<td></td>
-								<td></td>
-							</tr>
-							<tr>
-								<td></td>
-								<td></td>
-								<td></td>
-								<td><a href="#accounttransfers_template">Retrive Account Transfer Template</a></td>
+                                <td><a href="#accounttransfers_retrieve">Retrive a Account Transfer</a></td>
 								<td></td>
 								<td></td>
 							</tr>
@@ -746,17 +738,57 @@
 							</tr>
 							<tr>
 								<td></td>
-								<td>recurringdepositaccounts/{accountId}?command=calculateInterest</td>
-								<td><a href="#rdaccounts_calculate_interest">Calculate interest on a recurring deposit account</a></td>
+								<td>recurringdepositaccounts/{accountId}?command=postInterest</td>
+								<td><a href="#rdaccounts_post_interest">Post interest on a recurring deposit account</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>							
+							<tr>
+								<td><a href="#recurringdepositaccounts_transactions">Recurring Deposit Transactions</a></td>
+								<td>recurringdepositaccounts/{accountId}/transactions?command=deposit</td>
+								<td><a href="#recurringdepositaccounts_deposit">Make a deposit</a></td>
 								<td></td>
 								<td></td>
 								<td></td>
 							</tr>
 							<tr>
 								<td></td>
-								<td>recurringdepositaccounts/{accountId}?command=postInterest</td>
-								<td><a href="#rdaccounts_post_interest">Post interest on a recurring deposit account</a></td>
+								<td>recurringdepositaccounts/{accountId}/transactions?command=withdrawal</td>
+								<td><a href="#recurringdepositaccounts_withdrawal">Make a withdrawal</a></td>
 								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>recurringdepositaccounts/{accountId}/transactions/{transactionId}?command=undo</td>
+								<td><a href="#recurringdepositaccounts_undotransaction">Undo transaction</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>recurringdepositaccounts/{accountId}/transactions/{transactionId}?command=modify</td>
+								<td><a href="#recurringdepositaccounts_adjusttransaction">Adjust transaction</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>recurringdepositaccounts/{accountId}/transactions/template</td>
+								<td></td>
+								<td><a href="#recurringdepositaccounts_transactions_template">Retrieve Deposit account transaction template</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>recurringdepositaccounts/{accountId}/transactions/{transactionId}</td>
+								<td></td>
+								<td><a href="#recurringdepositaccounts_transaction">Retrieve Deposit account transaction</a></td>
 								<td></td>
 								<td></td>
 							</tr>
@@ -1370,20 +1402,20 @@
 								<td><a href="#accountingrules_delete">Delete a Accounting Rule</a></td>
 							</tr>
 							<tr>
-								<td><a href="#officeglaccount">Office GL Account Mappings</a></td>
+								<td><a href="#officeglaccount">Mapping Financial Activities to Accounts</a></td>
 								<td>financialactivityaccounts</td>
-								<td><a href="#financialactivityaccounts_create">Create Office GL Account Mapping</a><br> </td>
-								<td><a href="#financialactivityaccounts_list">List Journal Entries</a></td>
+								<td><a href="#financialactivityaccounts_create">Create Financial Activity to Account Mapping</a><br> </td>
+								<td><a href="#financialactivityaccounts_list">List Financial Activities to Accounts Mappings</a></td>
 								<td></td>
 								<td></td>
 							</tr>
 							<tr>
 								<td></td>
-								<td>financialactivityaccounts/{entryId}</td>
+								<td>financialactivityaccounts/{financialActivityAccountId}</td>
 								<td></td>
-								<td><a href="#financialactivityaccounts_retrieve">Retrieve a single Entry</a></td>
-								<td><a href="#financialactivityaccounts_update">Update Office GL Account Mapping</a></td>
-								<td><a href="#financialactivityaccounts_delete">Delete Office GL Account Mapping</a></td>
+								<td><a href="#financialactivityaccounts_retrieve">Retrieve a Financial Activity to Account Mapping</a></td>
+								<td><a href="#financialactivityaccounts_update">Update a Financial Activity to Account Mapping</a></td>
+								<td><a href="#financialactivityaccounts_delete">Delete a Financial Activity to Account Mapping</a></td>
 
 							</tr>
 							
@@ -1978,7 +2010,7 @@
 							<tr>
 								<td></td>
 								<td>scheduler?command=stop</td>
-								<td><a href="#suspend_scheduler">Suspend a scheduler service</td>
+								<td><a href="#suspend_scheduler">Suspend a scheduler service</a></td>
 								<td></td>
 								<td></td>
 								<td></td>
@@ -2092,7 +2124,7 @@
 							<tr>
 								<td><a href="#notes">Notes</a></td>
 								<td>{resource}/{resourceId}/notes</td>
-								<td><a href="#resources_addnote">Add a Resource Note</td>
+								<td><a href="#resources_addnote">Add a Resource Note</a></td>
 								<td><a href="#resource_notelist">Retrieve a Resource's Notes</a></td>
 								<td></td>
 								<td></td>
@@ -2109,7 +2141,7 @@
 							<tr>
 								<td><a href="#documents">Documents</a></td>
 								<td>{entityType}/{entityId}/documents</td>
-								<td><a href="#documents_create">Create a Document</td>
+								<td><a href="#documents_create">Create a Document</a></td>
 								<td><a href="#documents_list">List All Document Details</a></td>
 								<td></td>
 								<td></td>
@@ -2137,14 +2169,14 @@
 								<td><a href="#search">Search</a></td>
 								<td>search</td>
 								<td></td>
-								<td><a href="#search_resource">Search Resources</td>
+								<td><a href="#search_resource">Search Resources</a></td>
 								<td></td>
 								<td></td>
 							</tr>
 							<tr>
 								<td><a href="#advance_search">AdHoc Search</a></td>
 								<td>search/advance</td>
-								<td><a href="#advance_search_resource">Advance Search</td>
+								<td><a href="#advance_search_resource">Advance Search</a></td>
 								<td></td>
 								<td></td>
 								<td></td>
@@ -2338,6 +2370,14 @@
 								<td>savingsaccounts/{accountId}/transactions/template</td>
 								<td><a href="#savingsaccounts_transactions_template">Retrieve savings account transaction template</a></td>
 							</tr>
+                            <tr>
+                                <td>standinginstructions/template</td>
+                                <td><a href="#standinginstruction_template">Retrive Standing Instruction Template</a></td>
+                            </tr>
+                            <tr>
+                                <td>accounttransfers/template</td>
+                                <td><a href="#accounttransfers_template">Retrive Account Transfer Template</a></td>
+                            </tr>
 						</table>
 					</div>
 				</div>
@@ -3854,6 +3894,7 @@ No Request Body:
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Get Client Image (DATA URI)</h4>
+					<p>Optional arguments are identical to those of <a href="#client_images_retrieve_binary">Get Client Image (Binary file)</a></p>
 					<p>Example Requests:</p>
 					<div class=apiClick>clients/1/images</div>
 					<br>
@@ -3861,6 +3902,8 @@ No Request Body:
 				<div class="method-example">
 					<code class="method-declaration">
 GET https://DomainName/api/v1/clients/{clientId}/images
+Accept: text/plain 
+
 					</code>
 					<code class="method-response">
 data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJ
@@ -3877,10 +3920,37 @@ gAEAOg13B6R/SAgAAAAASUVORK5CYII=
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Get Client Image (Binary file)</h4>
+					<h5>Optional Arguments</h5>
+					<dl class="argument-list">
+						<dt>output</dt>
+						<dd>
+							String <span>optional</span> one of <span>octet or inline_octet</span>
+						</dd>
+						<dd>The query parameter overrides the <span>"Accept" Header</span> and sets the Media Type to "application/octet-stream" <br/>
+						<span><b>octet :</b></span> Returns the image binary file as an attachment. The <span>Content-Disposition</span> header is set to <span>attachment;filename=somefile.ext</span> <br/>
+						<span><b>inline_octet :</b></span>The <span>Content-Disposition</span> header is set to <span>inline;filename=somefile.ext</span>
+						</dd>
+						<dt>maxWidth</dt>
+						<dd>
+							Integer <span>optional</span>
+						</dd>
+						<dd>Triggers resizing of the image to the defined width</dd>
+						
+						<dt>maxHeight</dt>
+						<dd>
+						<dd>
+							Integer <span>optional</span>
+						</dd>	
+						</dd>
+						<dd>Triggers resizing of the image to the defined height</dd>
+
+									
+					</dl>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
 GET https://DomainName/api/v1/clients/{clientId}/images
+Accept: application/octet-stream
 					</code>
 					<code class="method-request">
 POST clients/1/images
@@ -14270,8 +14340,29 @@ Request Body:
 {
 "resourceId": 7
 }
-			</code>										
-		</div>
+			</code>
+            <code class="method-request">
+POST charges
+Content-Type: application/json
+Request Body:
+{
+    "chargeAppliesTo": 2,
+    "name": "Weekly Fee",
+    "currencyCode": "USD",
+    "chargeTimeType": 11,
+    "chargeCalculationType": 1,
+    "feeInterval": "1",
+    "amount": "10",
+    "active": true,
+    "locale": "en"
+}
+            </code>
+            <code class="method-response">
+{
+    "resourceId": 8
+}
+            </code>
+        </div>
 	</div>
 
 			<a id="charges_list" name="charges_list" class="old-syle-anchor">&nbsp;</a>
@@ -14977,6 +15068,16 @@ Content-Type: application/json
 				<tr class=alt><td>overdraftLimit</td></tr>
 	            <tr><td class=fielddesc><b>Optional</b>: If provided, sets the maximum allowed overdraft amount for a  savings account e.g. <b>5,000</b> else set the limit as zero</td></tr>
 
+				<tr class=alt><td>minBalanceForInterestCalculation</td></tr>
+	            <tr><td class=fielddesc><b>Optional</b>: If provided, balance must be greater than provided value for calculation of interest  e.g. <b>5,000</b> </td></tr>
+
+	            <tr class=alt><td>enforceMinRequiredBalance</td></tr>
+	            <tr><td class=fielddesc><b>Optional</b>: If set to <span>true</span>, validates that the account balance does not 
+	            fall below <span>minRequiredBalance</span> </td></tr>
+
+				<tr class=alt><td>minRequiredBalance</td></tr>
+	            <tr><td class=fielddesc><b>Optional</b>: If provided, sets an indicator of the minimum required balance of the  savings account e.g. <b>5,000</b> else set the limit as zero. Note that <span>enforceMinRequiredBalance</span> determines if the minimum required balance is enforced</td></tr>
+
 	        </table>
 	    </div>
 	</div>
@@ -15548,7 +15649,7 @@ Content-Type: application/json
             <br/>
             <table class=matrixHeading>
                 <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Optional Fields</div></td></tr>
-                <tr class=alt><td>minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, paymentChannelToFundSourceMappings, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, charges, allowOverdraft, overdraftLimit</tr>
+                <tr class=alt><td>minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, paymentChannelToFundSourceMappings, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, charges, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation</tr>
             </table>
         </div>
         <div class="method-example">
@@ -15597,6 +15698,9 @@ Request Body:
   "minRequiredOpeningBalance": "50",
   "allowOverdraft":true,
   "overdraftLimit":5000,
+  "minBalanceForInterestCalculation":5000,
+  "minRequiredBalance":20,
+  "enforceMinRequiredBalance":true,
   "lockinPeriodFrequency": "4",
   "lockinPeriodFrequencyType": "1",
   "withdrawalFeeForTransfers":false,
@@ -17659,36 +17763,83 @@ Request Body:
 	        <code class="method-request">POST savingsaccount/5?command=close
 Content-Type: application/json
 Request Body:
-	{
-	"dateFormat":"dd MMMM yyyy",
-	"locale":"en",
-	"closedOnDate":"26 August 2013",
-	"note":"close note"
-	}
+{
+  "dateFormat":"dd MMMM yyyy",
+  "locale":"en",
+  "closedOnDate":"26 August 2013",
+  "note":"close note"
+}
 			</code>
 	        <code class="method-response">
 {
-"officeId":1,
-"clientId":1,
-"savingsId":5,
-"resourceId":5,
-"changes":{
-	"status":{
-		"id":600,
-		"code":"savingsAccountStatusType.closed",
-		"value":"Closed",
-		"submittedAndPendingApproval":false,
-		"approved":false,
-		"rejected":false,
-		"withdrawnByApplicant":false,
-		"active":false,
-		"closed":true
-		},
-	"locale":"en",
-	"dateFormat":"dd MMMM yyyy",
-	"closedOnDate":"26 August 2013",
-	"note":"close note"
-	}
+  "officeId":1,
+  "clientId":1,
+  "savingsId":5,
+  "resourceId":5,
+  "changes":{
+   "status":{
+    "id":600,
+    "code":"savingsAccountStatusType.closed",
+    "value":"Closed",
+    "submittedAndPendingApproval":false,
+    "approved":false,
+    "rejected":false,
+    "withdrawnByApplicant":false,
+    "active":false,
+    "closed":true
+    },
+  "locale":"en",
+  "dateFormat":"dd MMMM yyyy",
+  "closedOnDate":"26 August 2013",
+  "note":"close note"
+  }
+}
+	        </code>
+			<code class="method-request">POST savingsaccount/5?command=close
+Content-Type: application/json
+Request Body:
+{
+  "dateFormat":"dd MMMM yyyy",
+  "locale":"en",
+  "closedOnDate":"26 August 2013",
+  "note":"close note",
+  "withdrawBalance":true,
+  "paymentTypeId": "14",
+  "accountNumber": "acc123",
+  "checkNumber": "che123",
+  "routingCode": "rou123",
+  "receiptNumber": "rec123",
+  "bankNumber": "ban123"
+}
+			</code>
+	        <code class="method-response">
+{
+  "officeId":1,
+  "clientId":1,
+  "savingsId":5,
+  "resourceId":5,
+  "changes":{
+    "accountNumber": "acc123",
+    "checkNumber": "che123",
+    "routingCode": "rou123",
+    "receiptNumber": "rec123",
+    "bankNumber": "ban123",
+    "status":{
+     "id":600,
+     "code":"savingsAccountStatusType.closed",
+     "value":"Closed",
+     "submittedAndPendingApproval":false,
+     "approved":false,
+     "rejected":false,
+     "withdrawnByApplicant":false,
+     "active":false,
+     "closed":true
+    },
+   "locale":"en",
+   "dateFormat":"dd MMMM yyyy",
+   "closedOnDate":"26 August 2013",
+   "note":"close note"
+  }
 }
 	        </code>
 	    </div>
@@ -19710,7 +19861,7 @@ Request Body:
 	"locale":"en",
 	"closedOnDate":"19 April 2014",
 	"note":"Closing and transfering amount to savings",
-	"onAccountClosureId":"2",
+	"onAccountClosureId":"200",
 	"toSavingsAccountId":1,
 	"transferDescription":"Transfered matured amount to savings account"
 	}
@@ -19777,7 +19928,7 @@ Request Body:
 	"locale":"en",
 	"closedOnDate":"19 April 2014",
 	"note":"Close and transfer amount to savings",
-	"onAccountClosureId":"2",
+	"onAccountClosureId":"200",
 	"toSavingsAccountId":1,
 	"transferDescription":"Transfered matured amount to savings account"
 	}
@@ -20830,12 +20981,12 @@ No Request Body:
 	        <br/>
 	        <table class=matrixHeading>
 	            <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Mandatory Fields</div></td></tr>
-	            <tr class=alt><td>clientId or groupId, productId, submittedOnDate, recurringDepositAmount, depositPeriod, depositPeriodFrequencyId, recurringDepositFrequency, recurringDepositFrequencyTypeId, expectedFirstDepositOnDate</td></tr>
+	            <tr class=alt><td>clientId or groupId, productId, submittedOnDate, depositPeriod, depositPeriodFrequencyId, recurringFrequency, recurringFrequencyType, depositAmount,isCalendarInherited, mandatoryRecommendedDepositAmount</td></tr>
 	        </table>
 	        <br/>
 	        <table class=matrixHeading>
 	            <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Optional Fields</div></td></tr>
-	            <tr class=alt><td>accountNo, externalId, fieldOfficerId</td></tr>
+	            <tr class=alt><td>accountNo, externalId, fieldOfficerId, expectedFirstDepositOnDate, allowWithdrawal, adjustAdvanceTowardsFuturePayments, isMandatoryDeposit</td></tr>
 	        </table>
 	        <br/>
 	        <table class=matrixHeading>
@@ -20855,12 +21006,14 @@ Request Body:
   "productId": 1,
   "locale": "en", 
   "dateFormat": "dd MMMM yyyy", 
-  "submittedOnDate": "01 March 2014",
-  "recurringDepositAmount":"100",
-  "recurringDepositFrequency":"1",
-  "recurringDepositFrequencyTypeId":"2",
-  "depositPeriod":"1",
-  "depositPeriodFrequencyId":"3"
+  "submittedOnDate": "02 June 2014",
+  "depositPeriod":"20",
+  "depositPeriodFrequencyId":"1",
+  "depositAmount":10000,
+  "isCalendarInherited":false,
+  "recurringFrequency":"2",
+  "recurringFrequencyType":1,
+  "mandatoryRecommendedDepositAmount":"2000"
 }
 			</code>
 			<p>Minimal request: accountNo provided (must be unique), remaining details inherited from recurring deposit product.</p>
@@ -20872,15 +21025,21 @@ Request Body:
   "productId": 1,
   "locale": "en", 
   "dateFormat": "dd MMMM yyyy", 
-  "submittedOnDate": "01 March 2014",
-  "recurringDepositAmount":"100",
-  "recurringDepositFrequency":"1",
-  "recurringDepositFrequencyTypeId":"2",
-  "depositPeriod":"6",
-  "depositPeriodFrequencyId":"2",
+  "submittedOnDate": "02 June 2014",
+  "depositPeriod":"20",
+  "depositPeriodFrequencyId":"1",
+  "depositAmount":10000,
+  "isCalendarInherited":false,
+  "recurringFrequency":"2",
+  "recurringFrequencyType":1,
+  "mandatoryRecommendedDepositAmount":"2000",
   "accountNo": "RD000023",
   "externalId": "RD-23",
-  expectedFirstDepositOnDate: "02 April 2014"
+  "expectedFirstDepositOnDate": "02 June 2014",
+  "allowWithdrawal":false,
+  "adjustAdvanceTowardsFuturePayments":false,
+  "isMandatoryDeposit":false
+  
 }
 			</code>
 			<p>Full request: accountNo provided (must be unique), remaining details override details from recurring deposit product (except currency).</p>
@@ -20893,18 +21052,24 @@ Request Body:
   "fieldOfficerId": 1,
   "locale": "en", 
   "dateFormat": "dd MMMM yyyy", 
-  "submittedOnDate": "01 March 2014",
-  "accountNo": "RD000024",
-  "externalId": "RD-24",
+  "submittedOnDate": "02 June 2014",
+  "depositPeriod":"20",
+  "depositPeriodFrequencyId":"1",
+  "depositAmount":10000,
+  "isCalendarInherited":false,
+  "recurringFrequency":"2",
+  "recurringFrequencyType":1,
+  "mandatoryRecommendedDepositAmount":"2000",
+  "accountNo": "RD000023",
+  "externalId": "RD-23",
+  "expectedFirstDepositOnDate": "02 June 2014",
+  "allowWithdrawal":false,
+  "adjustAdvanceTowardsFuturePayments":false,
+  "isMandatoryDeposit":false,
   "interestCompoundingPeriodType": 1,
   "interestPostingPeriodType": 4,
   "interestCalculationType": 1,
   "interestCalculationDaysInYearType": 365,
-  "recurringDepositAmount":"100",
-  "recurringDepositFrequency":"1",
-  "recurringDepositFrequencyTypeId":"2",
-  "depositPeriod":"6",
-  "depositPeriodFrequencyId":"2",
   "lockinPeriodFrequency": 6,
   "lockinPeriodFrequencyType": 2,
   "charges":[{"id":"1"}]
@@ -21180,8 +21345,7 @@ Request Body:
 	"locale":"en",
 	"closedOnDate":"19 April 2014",
 	"note":"Closing and transfering amount to savings",
-	"onAccountClosureId":"2",
-	"toSavingsAccountId":1,
+	"onAccountClosureId":"100",
 	"transferDescription":"Transfered matured amount to savings account"
 	}
 			</code>
@@ -21247,7 +21411,7 @@ Request Body:
 	"locale":"en",
 	"closedOnDate":"19 April 2014",
 	"note":"Close and transfer amount to savings",
-	"onAccountClosureId":"2",
+	"onAccountClosureId":"200",
 	"toSavingsAccountId":1,
 	"transferDescription":"Transfered matured amount to savings account"
 	}
@@ -21883,6 +22047,291 @@ No Request Body:
 {
   "officeId": 1,
   "clientId": 1,
+  "resourceId": 1
+}
+	        </code>
+	    </div>
+	</div>
+	<a id="recurringdepositaccounts_transactions" name="recurringdepositaccounts_transactions" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Recurring Deposit Account Transactions:</h2>
+	        <p>Transactions possible on a recurring deposit account.</p>
+	      	<table class=matrixHeading>
+	            <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Field Descriptions</div></td></tr>
+
+				<tr class=alt><td>transactionDate</td></tr>
+				<tr><td class=fielddesc>The date of the transaction.</td></tr>
+
+				<tr class=alt><td>transactionAmount</td></tr>
+				<tr><td class=fielddesc>The amount of the transaction.</td></tr>
+	        </table>
+	    </div>
+	</div>
+
+	<a id="recurringdepositaccounts_transactions_template" name="recurringdepositaccounts_transactions_template" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Retrieve Recurring Deposit Account Transaction Template:</h2>
+	            <p>This is a convenience resource. It can be useful when building maintenance user interface screens for client applications. The template data returned consists of any or all of:
+	                <ul>
+	                <li class=normalli>Field Defaults</li>   
+	                <li class=normalli>Allowed Value Lists</li>    
+	                </ul>
+	            </p>
+	        <p>Example Requests: </p>
+	        <div class=apiClick>recurringdepositaccounts/1/transactions/template?command=deposit</div>
+	        <br/>
+			<div class=apiClick>recurringdepositaccounts/1/transactions/template?command=withdrawal</div>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">GET https://Domain Name/api/v1/recurringdepositaccounts/{accountId}/transactions/template?command=deposit
+	        </code>
+			<code class="method-response">
+{
+  "id": 1,
+  "transactionType": {
+    "id": 1,
+    "code": "savingsAccountTransactionType.deposit",
+    "value": "Deposit",
+    "deposit": true,
+    "withdrawal": false,
+    "interestPosting": false,
+    "feeDeduction": false,
+    "initiateTransfer": false,
+    "approveTransfer": false,
+    "withdrawTransfer": false,
+    "rejectTransfer": false,
+    "overdraftInterest": false,
+    "writtenoff": false,
+    "overdraftFee": true
+  },
+  "accountId": 1,
+  "accountNo": "000000001",
+  "date": [
+    2014,
+    6,
+    25
+  ],
+  "currency": {
+    "code": "USD",
+    "name": "US Dollar",
+    "decimalPlaces": 4,
+    "inMultiplesOf": 100,
+    "displaySymbol": "$",
+    "nameCode": "currency.USD",
+    "displayLabel": "US Dollar ($)"
+  },
+  "amount": 100000.000000,
+  "reversed": false,
+  "paymentTypeOptions": []
+}
+			</code>
+	    </div>
+	</div>
+
+<a id="recurringdepositaccounts_transaction" name="recurringdepositaccounts_transaction" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Retrieve Recurring Deposit Account Transaction:</h2>
+	        <p>Example Requests: </p>
+	        <div class=apiClick>recurringdepositaccounts/1/transactions/1</div>
+	        <br/>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">GET https://Domain Name/api/v1/recurringdepositaccounts/{accountId}/transactions/{transactionId}
+	        </code>
+			<code class="method-response">
+{
+  "id": 1,
+  "transactionType": {
+    "id": 2,
+    "code": "savingsAccountTransactionType.withdrawal",
+    "value": "Withdrawal",
+    "deposit": false,
+    "withdrawal": true,
+    "interestPosting": false,
+    "feeDeduction": false
+  },
+  "accountId": 1,
+  "accountNo": "000000001",
+  "date": [
+    2013,
+    8,
+    7
+  ],
+  "currency": {
+    "code": "USD",
+    "name": "US Dollar",
+    "decimalPlaces": 2,
+    "inMultiplesOf": 0,
+    "displaySymbol": "$",
+    "nameCode": "currency.USD",
+    "displayLabel": "US Dollar ($)"
+  },
+  "paymentDetailData": {
+    "id": 62,
+    "paymentType": {
+      "id": 11,
+      "name": "cash"
+    },
+    "accountNumber": "",
+    "checkNumber": "",
+    "routingCode": "",
+    "receiptNumber": "",
+    "bankNumber": ""
+  },
+  "amount": 5000,
+  "runningBalance": 0,
+  "reversed": true
+}
+</code>
+	    </div>
+	</div>
+
+	<a id="recurringdepositaccounts_deposit" name="recurringdepositaccounts_deposit" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Deposit Transaction</h2>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/recurringdepositaccounts/{accountsId}/transactions?command=deposit</code>
+	        <code class="method-request">POST recurringdepositaccounts/1/transactions?command=deposit              
+Content-Type: application/json
+No Request Body:
+{
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "transactionDate": "27 May 2013",
+  "transactionAmount": "500",
+  "paymentTypeId": "14",
+  "accountNumber": "acc123",
+  "checkNumber": "che123",
+  "routingCode": "rou123",
+  "receiptNumber": "rec123",
+  "bankNumber": "ban123"
+}
+	        </code>
+	        <code class="method-response">
+{
+  "officeId": 1,
+  "clientId": 2,
+  "savingsId": 1,
+  "resourceId": 47,
+  "changes": {
+    "accountNumber": "acc123",
+    "checkNumber": "che123",
+    "routingCode": "rou123",
+    "receiptNumber": "rec123",
+    "bankNumber": "ban123"
+  }
+}
+	        </code>
+	    </div>
+	</div>
+
+	<a id="recurringdepositaccounts_withdrawal" name="recurringdepositaccounts_withdrawal" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Withdrawal Transaction</h2>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/recurringdepositaccounts/{accountsId}/transactions?command=withdrawal</code>
+	        <code class="method-request">POST recurringdepositaccounts/1/transactions?command=withdrawal
+Content-Type: application/json
+No Request Body:
+{
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "transactionDate": "27 May 2013",
+  "transactionAmount": "500",
+  "paymentTypeId": "14",
+  "accountNumber": "acc123",
+  "checkNumber": "che123",
+  "routingCode": "rou123",
+  "receiptNumber": "rec123",
+  "bankNumber": "ban123"
+}
+	        </code>
+	        <code class="method-response">
+{
+  "officeId": 1,
+  "clientId": 2,
+  "savingsId": 1,
+  "resourceId": 48,
+  "changes": {
+    "accountNumber": "acc123",
+    "checkNumber": "che123",
+    "routingCode": "rou123",
+    "receiptNumber": "rec123",
+    "bankNumber": "ban123"
+  }
+}
+	        </code>
+	    </div>
+	</div>
+
+	<a id="recurringdepositaccounts_adjusttransaction" name="recurringdepositaccounts_adjusttransaction" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Adjust Transaction</h2>
+	        <p>This command modifies the given transaction.</p>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/recurringdepositaccounts/{accountsId}/transactions/{transactionId}?command=modify</code>
+	        <code class="method-request">POST recurringdepositaccounts/1/transactions/1?command=modify             
+Content-Type: application/json
+No Request Body:
+{
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "transactionDate": "27 May 2013",
+  "transactionAmount": "500",
+  "paymentTypeId": "14",
+  "accountNumber": "acc123",
+  "checkNumber": "che123",
+  "routingCode": "rou123",
+  "receiptNumber": "rec123",
+  "bankNumber": "ban123"
+}
+	        </code>
+	        <code class="method-response">
+{
+  "officeId": 1,
+  "clientId": 2,
+  "savingsId": 1,
+  "resourceId": 48,
+  "changes": {
+    "accountNumber": "acc123",
+    "checkNumber": "che123",
+    "routingCode": "rou123",
+    "receiptNumber": "rec123",
+    "bankNumber": "ban123"
+  }
+}
+	        </code>
+	    </div>
+	</div>
+
+	<a id="recurringdepositaccounts_undotransaction" name="recurringdepositaccounts_undotransaction" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Undo transaction</h2>
+	        <p>This command reverses the given transaction.</p>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/recurringdepositaccounts/{accountsId}/transactions/{transactionId}?command=undo</code>
+	        <code class="method-request">POST recurringdepositaccounts/1/transactions/1?command=undo              
+Content-Type: application/json
+No Request Body:
+{
+}
+	        </code>
+	        <code class="method-response">
+{
+  "officeId": 1,
+  "clientId": 2,
+  "savingsId": 1,
   "resourceId": 1
 }
 	        </code>
@@ -24147,6 +24596,214 @@ No Request Body:
 	        </code>
 	    </div>
 	</div>
+        
+	<a id="standinginstructions_history" name="standinginstructions_history" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Standing Instructions Logged History:</h2>
+            <p>The <i>list</i> capability of history can support <b>pagination</b> and <b>sorting</b>.</p>
+            <h5>Optional Arguments</h5>
+            <dl class="argument-list">
+                <dt>offset</dt>
+                <dd>
+                    Integer <span>optional</span>, defaults to 0
+                </dd>
+                <dd>Indicates from what result to start from.</dd>
+
+                <dt>limit</dt>
+                <dd>
+                    Integer <span>optional</span>, defaults to 200
+                </dd>
+                <dd>Restricts the size of results returned. To override the default and return all entries you must explicitly pass a non-positive integer value for limit e.g. limit=0, or limit=-1</dd>
+
+                <dt>orderBy</dt>
+                <dd>
+                    String <span>optional</span>, one of <span>name,standingInstructionId</span>
+                </dd>
+                <dd>Orders the results by the field indicated.</dd>
+
+                <dt>sortBy</dt>
+                <dd>
+                    String <span>optional</span>, one of <span>ASC, DESC</span>
+                </dd>
+                <dd>Indicates what way to order results if <i>orderBy</i> is used.</dd>
+
+                <dt>clientId</dt>
+                <dd>
+                    Integer <span>optional</span>
+                </dd>
+                <dd>Use clientId of clients to restrict results.</dd>
+
+                <dt>clientName</dt>
+                <dd>
+                    String <span>optional</span>
+                </dd>
+                <dd>Use displayName of clients to restrict results.</dd>
+
+                <dt>fromAccountId</dt>
+                <dd>
+                    Integer <span>optional</span>
+                </dd>
+                <dd>Use fromAccountId of standing instruction transaction to restrict results. fromAccountId is id of <i>fromAccountType</i>.</dd>
+
+                <dt>fromAccountType</dt>
+                <dd>
+                    Integer <span>optional</span>
+                </dd>
+                <dd>Use fromAccountType of standing instruction transaction to restrict results. fromAccountType is enum value entity type Ex:Loan Account:1, Savings Account:2</dd>
+
+                <dt>transferType</dt>
+                <dd>
+                    Integer <span>optional</span>
+                </dd>
+                <dd>Use transferType of standing instruction transaction to restrict results. transferType is enum value transfer type Ex:Loan Repayment:2, Account Transfer:1</dd>
+
+                <dt>fromDate</dt>
+                <dd>
+                    Date<span>optional</span>
+                </dd>
+                <dd>Filters for transactions whose entry Date is greater than or equal to the passed in Date
+                </dd>
+                <dt>toDate</dt>
+                <dd>
+                    Date <span>optional</span>
+                </dd>
+                <dd>Filters for transactions whose entry Date is lesser than or equal to the passed in Date
+                </dd>
+
+                <dt>sqlSearch</dt>
+                <dd>
+                    String <span>optional</span>
+                </dd>
+                <dd>Use an sql fragment valid for the underlying standing instruction schema to filter results. e.g. name like %K%</dd>
+            </dl>
+	        <p>Example Requests : </p>
+	        <div class=apiClick>standinginstructionrunhistory</div>
+	        <br>
+            <div class=apiClick>standinginstructionrunhistory?orderBy=name&sortOrder=DESC</div>
+            <br>
+            <div class=apiClick>standinginstructionrunhistory?offset=10&limit=50</div>
+            <br>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">GET https://DomainName/api/v1/standinginstructionrunhistory</code>
+	        <code class="method-response">
+{
+  "totalFilteredRecords": 2,
+  "pageItems": [
+    {
+      "standingInstructionId": 1,
+      "name": "ACC Transfer",
+      "fromOffice": {
+        "id": 1,
+        "name": "Head Office"
+      },
+      "fromClient": {
+        "id": 1,
+        "displayName": "Test client",
+        "officeId": 1,
+        "officeName": "Head Office"
+      },
+      "fromAccountType": {
+        "id": 2,
+        "code": "accountType.savings",
+        "value": "Savings Account"
+      },
+      "fromAccount": {
+        "id": 2,
+        "accountNo": "000000002",
+        "productId": 1,
+        "productName": "General Savings"
+      },
+      "toAccountType": {
+        "id": 2,
+        "code": "accountType.savings",
+        "value": "Savings Account"
+      },
+      "toAccount": {
+        "id": 1,
+        "accountNo": "000000001",
+        "productId": 1,
+        "productName": "General Savings"
+      },
+      "toOffice": {
+        "id": 1,
+        "name": "Head Office"
+      },
+      "toClient": {
+        "id": 1,
+        "displayName": "Test client",
+        "officeId": 1,
+        "officeName": "Head Office"
+      },
+      "amount": 10,
+      "status": "success",
+      "executionTime": [
+        2014,
+        6,
+        30
+      ],
+      "errorLog": ""
+    },
+    {
+      "standingInstructionId": 2,
+      "name": "Pay overdues",
+      "fromOffice": {
+        "id": 1,
+        "name": "Head Office"
+      },
+      "fromClient": {
+        "id": 1,
+        "displayName": "Test client",
+        "officeId": 1,
+        "officeName": "Head Office"
+      },
+      "fromAccountType": {
+        "id": 2,
+        "code": "accountType.savings",
+        "value": "Savings Account"
+      },
+      "fromAccount": {
+        "id": 1,
+        "accountNo": "000000001",
+        "productId": 1,
+        "productName": "General Savings"
+      },
+      "toAccountType": {
+        "id": 1,
+        "code": "accountType.loan",
+        "value": "Loan Account"
+      },
+      "toAccount": {
+        "id": 1,
+        "accountNo": "000000001",
+        "productId": 1,
+        "productName": "Daily Loan"
+      },
+      "toOffice": {
+        "id": 1,
+        "name": "Head Office"
+      },
+      "toClient": {
+        "id": 1,
+        "displayName": "Test client",
+        "officeId": 1,
+        "officeName": "Head Office"
+      },
+      "amount": 7038.01,
+      "status": "success",
+      "executionTime": [
+        2014,
+        6,
+        30
+      ],
+      "errorLog": ""
+    }
+  ]
+}
+	        </code>
+	    </div>
+	</div>
 
 <!-- End Account Trasfer Standing Instrution-->
     
@@ -24215,6 +24872,14 @@ No Request Body:
 						<tr>
                             <td class=fielddesc>An array of columns in the new Data Table.</td>
 						</tr>
+                        <tr class=alt>
+                            <td><em>Optional - </em>multiRow</td>
+                        </tr>
+                        <tr>
+                            <td class=fielddesc>Allows to create multiple entries in the Data Table. Optional, defaults to <tt>false</tt>.
+                                If this property is not provided Data Table will allow only one entry.
+                            </td>
+                        </tr>
                     </table>
                     <table class=matrixHeading>
 						<tr class="matrixHeadingBG">
@@ -24303,6 +24968,36 @@ Request Body:
   "resourceIdentifier": "extra_client_details"
 } 
 				</code>
+                <code class="method-request">
+POST https://DomainName/api/v1/datatables
+
+Content-Type: application/json
+Request Body:
+{
+    "datatableName": "client_address",
+    "apptableName": "m_client",
+    "multiRow":"true",
+    "columns": [
+        {
+            "name": "Address1",
+            "type": "String",
+            "length": 100,
+            "mandatory": true
+        },
+        {
+            "name": "Address2",
+            "length": 100,
+            "type": "String"
+        }
+    ]
+}
+                </code>
+                <code class="method-response">
+{
+    "resourceIdentifier": "client_address"
+}
+                </code>
+
 				</div>
 			</div>
 
@@ -28579,29 +29274,27 @@ Content-Type: application/json
 <a id="officeglaccount" name="officeglaccount" class="old-syle-anchor">&nbsp;</a>
             <div class="method-section">
                 <div class="method-description">
-                    <h3>Office GL Accounting Mappings</h3>
+                    <h3>Mapping Financial Activities to Accounts</h3>
                     <p>
-                    	These are the Branch level intermediate accounts to move funds between banches
+                    	Organization Level Financial Activities like Asset and Liability Transfer can be mapped to GL Account. Integrated accounting takes these accounts into consideration when an Account transfer is made between a savings to loan/savings account and vice-versa
                     </p>
                     <table class=matrixHeading>
                         <tr class="matrixHeadingBG">
                             <td><div class="mifosXHeading2">Field Descriptions</div></td>
                         </tr>
                         <tr class=alt>
-                            <td>officeId</td>
+                            <td>financialActivityId</td>
                         </tr>
                         <tr>
-                            <td class=fielddesc>The identifier of the office (
-                            	cost center) at which the financial activity
-                            	occurs</td>
+                            <td class=fielddesc>The identifier of the Financial Activity
+                            	</td>
                         </tr>
                         <tr class=alt>
-                            <td>liabilityTransferInSuspenseAccountId</td>
+                            <td>glAccountId</td>
                         </tr>
                         <tr>
-                            <td class=fielddesc>The identifier of the liability account (
-                            	Ledger Account) against which transfer journal entry
-                            	should made
+                            <td class=fielddesc>The identifier of a GL Account (
+                            	Ledger Account) which shall be used as the default account for the selected Financial Activity
                             </td>
                         </tr>
                     </table>
@@ -28611,68 +29304,44 @@ Content-Type: application/json
             <a id="financialactivityaccounts_list" name="financialactivityaccounts_list" class="old-syle-anchor">&nbsp;</a>
             <div class="method-section">
                 <div class="method-description">
-                    <h4>List Office Level GL Account Mappings</h4>
-                    <p>The <i>list</i> of Account Mapping entries through <b>pagination</b> and <b>sorting</b>.</p>
-					<h5>Optional Arguments</h5>
-					<dl class="argument-list">
-						<dt>offset</dt>
-						<dd>
-							Integer <span>optional</span>, defaults to 0
-						</dd>
-						<dd>Indicates from what result to start from.</dd>
-						
-						<dt>limit</dt>
-						<dd>
-							Integer <span>optional</span>, defaults to 200
-						</dd>
-						<dd>Restricts the size of results returned. To override the default and return all entries you must explicitly pass a non-positive integer value for limit e.g. limit=0, or limit=-1</dd>
-
-						<dt>orderBy</dt>
-						<dd>
-							String <span>optional</span>, one of <span>displayName, accountNo, officeId, officeName</span>
-						</dd>
-						<dd>Orders the results by the field indicated.</dd>
-
-						<dt>sortBy</dt>
-						<dd>
-							String <span>optional</span>, one of <span>ASC, DESC</span>
-						</dd>
-						<dd>Indicates what way to order results if <i>orderBy</i> is used.</dd>
-
-						<dt>officeId</dt>
-						<dd>
-							Integer <span>optional</span> 
-						</dd>
-						<dd>Provides ability to restrict list of centers returned based on the office there associated with.</dd>
-						
-						
-					</dl>
-					<p>Example Requests:</p>
+                    <h4>List Financial Activities to Accounts Mappings</h4>
+                   	<p>Example Requests:</p>
 					<div class=apiClick>financialactivityaccounts</div>
-					<br>
-					<div class=apiClick>financialactivityaccounts?orderBy=id&sortOrder=DESC</div>
-                </div>
+				</div>
                 <div class="method-example">
                     <code class="method-declaration">
 GET https://DomainName/api/v1/financialactivityaccounts
                     </code>
                     <code class="method-response">
 
-{
-  "totalFilteredRecords": 1,
-  "pageItems": [
-    {
-      "id": 1,
-      "officeData": {
-        "id": 2,
-        "name": "Office_BX38"
-      },
-      "glAccountData": {
-        "id": 29,
-        "name": "ACCOUNT_NAME_P9UWO",
-        "glCode": "LIABILITY_7E1401198314394"
-      }
-    }]}
+[
+  {
+    "id": 1,
+    "financialActivityData": {
+      "id": 200,
+      "name": "liabilityTransfer",
+      "mappedGLAccountType": "LIABILITY"
+    },
+    "glAccountData": {
+      "id": 55,
+      "name": "Liability Transfer (Temp)",
+      "glCode": "220004-Temp"
+    }
+  },
+  {
+    "id": 2,
+    "financialActivityData": {
+      "id": 100,
+      "name": "assetTransfer",
+      "mappedGLAccountType": "ASSET"
+    },
+    "glAccountData": {
+      "id": 33,
+      "name": "Petty Cash",
+      "glCode": "20302"
+    }
+  }
+]
                     </code>
                 </div>
             </div>
@@ -28680,13 +29349,13 @@ GET https://DomainName/api/v1/financialactivityaccounts
             <a id="financialactivityaccounts_create" name="financialactivityaccounts_create" class="old-syle-anchor">&nbsp;</a>
             <div class="method-section">
                 <div class="method-description">
-                    <h4>Create Office GL Account</h4>
+                    <h4>Create a new Financial Activity to Accounts Mapping</h4>
                     <table class=matrixHeading>
                         <tr class="matrixHeadingBG">
                             <td><div class="mifosXHeading2">Mandatory Fields</div></td>
                         </tr>
                         <tr class=alt>
-                            <td>officeId, liabilityTransferInSuspenseAccountId 
+                            <td>financialActivityId, glAccountId 
                             </td>
                         </tr>
                        
@@ -28703,8 +29372,8 @@ POST financialactivityaccounts
 Content-Type: application/json 
 Request Body:
 {
-"officeId": 1,
-"liabilityTransferInSuspenseAccountId" : 2
+"financialActivityId": 200,
+"glAccountId":2
 }
                     </code>
                     <code class="method-response">
@@ -28718,28 +29387,32 @@ Request Body:
             <a id="financialactivityaccounts_update" name="financialactivityaccounts_update" class="old-syle-anchor">&nbsp;</a>
             <div class="method-section">
                 <div class="method-description">
-                    <h4>Update Office GL Account Mappings</h4>
+                    <h4>Update a Financial Activity to Account Mapping</h4>
                     <p>
-                        the API Updates the mapping GL Accoiunt for office.
+                        the API updates the Ledger account linked to a Financial Activity
                         <br>
                     </p>
                    
                 </div>
                 <div class="method-example">
                     <code class="method-declaration">
-POST https://DomainName/api/v1/financialactivityaccounts/1
+PUT https://DomainName/api/v1/financialactivityaccounts/{financialactivityaccountId}
                     </code>
                     <code class="method-request">
-POST financialactivityaccounts
+PUT financialactivityaccounts
 Content-Type: application/json 
 Request Body:
 {
-"liabilityTransferInSuspenseAccountId": 2
+"financialActivityId": 200,
+"glAccountId":3
 }
                     </code>
                     <code class="method-response">
 {
-    "liabilityTransferInSuspenseAccountId": 2
+  "resourceId": 2,
+  "changes": {
+    "glAccountId": 3
+  }
 }
                     </code>
                    
@@ -28751,26 +29424,27 @@ Request Body:
                 class="old-syle-anchor">&nbsp;</a>
             <div class="method-section">
                 <div class="method-description">
-                    <h4>Retrieve a single Entry</h4>
+                    <h4>Retrieve a Financial Activity to Account Mapping</h4>
                     <p>Example Requests:</p>
                     <div class=apiClick>financialactivityaccounts/1</div>
                     <br>
                 </div>
                 <div class="method-example">
                     <code class="method-declaration">
-GET https://DomainName/api/v1/financialactivityaccounts/{entryId}
+GET https://DomainName/api/v1/financialactivityaccounts/{financialactivityaccountId}
                     </code>
                     <code class="method-response">
 {
   "id": 1,
-  "officeData": {
-    "id": 2,
-    "name": "Office_BX38"
+  "financialActivityData": {
+    "id": 200,
+    "name": "liabilityTransfer",
+    "mappedGLAccountType": "LIABILITY"
   },
   "glAccountData": {
-    "id": 29,
-    "name": "ACCOUNT_NAME_P9UWO",
-    "glCode": "LIABILITY_7E1401198314394"
+    "id": 55,
+    "name": "Liability Transfer (Temp)",
+    "glCode": "220004-Temp"
   }
 }
                     </code>
@@ -28781,14 +29455,14 @@ GET https://DomainName/api/v1/financialactivityaccounts/{entryId}
                 class="old-syle-anchor">&nbsp;</a>
             <div class="method-section">
                 <div class="method-description">
-                    <h4>Delete Office GL Mapping</h4>
+                    <h4>Delete a Financial Activity to Account Mapping</h4>
                 </div>
                 <div class="method-example">
                     <code class="method-declaration">
-GET https://DomainName/api/v1/financialactivityaccounts/{mappingId}
+DELETE https://DomainName/api/v1/financialactivityaccounts/{financialactivityaccountId}
                     </code>
                     <code class="method-request">
-POST financialactivityaccounts/C1MAE935K0IAEYA?command=reverse
+DELETE financialactivityaccounts/1?
 Content-Type: application/json 
 </code>
                     <code class="method-response">
@@ -30224,21 +30898,29 @@ No Request Body:
                     <td><a href="#standinginstruction">Standing Instructions</a></td>
                     <td>standinginstructions</td>
                     <td><a href="#standinginstruction_create">Create Standing Instruction</a></td>
+                    <td><a href="#standinginstructions_list">List Standing Instructions</a></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>standinginstructions/{standingInstructionId}</td>
+                    <td></td>
                     <td><a href="#standinginstructions_retrieve">Retrive a Standing Instruction</a></td>
                     <td><a href="#standinginstruction_update">Update Standing Instruction</a></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td><a href="#standinginstructions_list">List Standing Instructions</a></td>
                     <td><a href="#standinginstruction_delete">Delete Standing Instruction(status change)</a></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>standinginstructionrunhistory</td>
+                    <td></td>
+                    <td><a href="#standinginstructions_history">Standinginstructions History</a></td>
+                    <td></td>
                     <td></td>
                 </tr>
                 <tr>
                     <td></td>
-                    <td></td>
+                    <td>standinginstructions/template</td>
                     <td></td>
                     <td><a href="#standinginstruction_template">Retrive Standing Instruction Template</a></td>
                     <td></td>
@@ -31435,6 +32117,278 @@ No Request Body:
 					<td>savingsaccounts/{accountId}/charges/{savingsAccountChargeId}?command=waive</td>
 					<td><a href="#savings_charges_waive">Waive a Savings Account Charge</a></td>
 					<td></td>
+					<td></td>
+					<td></td>
+				</tr>				
+				<tr>
+					<td><a href="#fdproducts">Fixed Deposit Product</a></td>
+					<td>fixeddepositproducts</td>
+					<td><a href="#fdproducts_create">Create a Fixed Deposit product</a></td>
+					<td><a href="#fdproducts_list">List Fixed Deposit products</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositproducts/{productId}</td>
+					<td></td>
+					<td><a href="#fdproducts_retrieve">Retrieve a Fixed Deposit product</a></td>
+					<td><a href="#fdproducts_update">Update a Fixed Deposit product</a></td>
+					<td><a href="#fdproducts_delete">Delete a Fixed Deposit product</a></td>
+				</tr>
+				<tr>
+					<td><a href="#fdaccounts">Fixed Deposit Accounts</a></td>
+					<td>fixeddepositaccounts</td>
+					<td><a href="#fdaccounts_create">Submit new fixed deposit application</a></td>
+					<td><a href="#fdaccounts_list">List fixed deposit application/accounts</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}</td>
+					<td></td>
+					<td><a href="#fdaccounts_retrieve">Retrieve a fixed deposit application/account</a></td>
+					<td><a href="#fdaccounts_update">Modify a fixed deposit application</a></td>
+					<td><a href="#fdaccounts_delete">Delete a fixed deposit application</a></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}?command=approve</td>
+					<td><a href="#fdaccounts_approve">Approve a fixed deposit application</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}?command=undoApproval</td>
+					<td><a href="#fdaccounts_undoapproval">Undo fixed deposit application approval</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}?command=reject</td>
+					<td><a href="#fdaccounts_reject">Reject a fixed deposit application</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}?command=withdraw</td>
+					<td><a href="#fdaccounts_withdrawbyapplicant">Withdraw fixed deposit application</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}?command=activate</td>
+					<td><a href="#fdaccounts_activate">Activate a fixed deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}?command=close</td>
+					<td><a href="#fdaccounts_close">Close a fixed deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}?command=prematureClose</td>
+					<td><a href="#fdaccounts_prematureclose">Premature Close a fixed deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}?command=calculatePrematureAmount</td>
+					<td><a href="#fdaccounts_calculate_premature_amount">Calculate Premature amount on a fixed deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}?command=calculateInterest</td>
+					<td><a href="#fdaccounts_calculate_interest">Calculate interest on a fixed deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>fixeddepositaccounts/{accountId}?command=postInterest</td>
+					<td><a href="#fdaccounts_post_interest">Post interest on a fixed deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td><a href="#rdproducts">Recurring Deposit Product</a></td>
+					<td>recurringdepositproducts</td>
+					<td><a href="#rdproducts_create">Create a Recurring Deposit product</a></td>
+					<td><a href="#rdproducts_list">List Recurring Deposit products</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositproducts/{productId}</td>
+					<td></td>
+					<td><a href="#rdproducts_retrieve">Retrieve a Recurring Deposit product</a></td>
+					<td><a href="#rdproducts_update">Update a Recurring Deposit product</a></td>
+					<td><a href="#rdproducts_delete">Delete a Recurring Deposit product</a></td>
+				</tr>
+				<tr>
+					<td><a href="#rdaccounts">Recurring Deposit Accounts</a></td>
+					<td>recurringdepositaccounts</td>
+					<td><a href="#rdaccounts_create">Submit new recurring deposit application</a></td>
+					<td><a href="#rdaccounts_list">List recurring deposit application/accounts</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}</td>
+					<td></td>
+					<td><a href="#rdaccounts_retrieve">Retrieve a recurring deposit application/account</a></td>
+					<td><a href="#rdaccounts_update">Modify a recurring deposit application</a></td>
+					<td><a href="#rdaccounts_delete">Delete a recurring deposit application</a></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}?command=approve</td>
+					<td><a href="#rdaccounts_approve">Approve a recurring deposit application</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}?command=undoApproval</td>
+					<td><a href="#rdaccounts_undoapproval">Undo recurring deposit application approval</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}?command=reject</td>
+					<td><a href="#rdaccounts_reject">Reject a recurring deposit application</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}?command=withdraw</td>
+					<td><a href="#rdaccounts_withdrawbyapplicant">Withdraw recurring deposit application</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}?command=activate</td>
+					<td><a href="#rdaccounts_activate">Activate a recurring deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}?command=close</td>
+					<td><a href="#rdaccounts_close">Close a recurring deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}?command=prematureClose</td>
+					<td><a href="#rdaccounts_prematureclose">Premature Close a recurring deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}?command=calculatePrematureAmount</td>
+					<td><a href="#rdaccounts_calculate_premature_amount">Calculate Premature amount on a recurring deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}?command=calculateInterest</td>
+					<td><a href="#rdaccounts_calculate_interest">Calculate interest on a recurring deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}?command=postInterest</td>
+					<td><a href="#rdaccounts_post_interest">Post interest on a recurring deposit account</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>							
+				<tr>
+					<td><a href="#recurringdepositaccounts_transactions">Recurring Deposit Transactions</a></td>
+					<td>recurringdepositaccounts/{accountId}/transactions?command=deposit</td>
+					<td><a href="#recurringdepositaccounts_deposit">Make a deposit</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}/transactions?command=withdrawal</td>
+					<td><a href="#recurringdepositaccounts_withdrawal">Make a withdrawal</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}/transactions/{transactionId}?command=undo</td>
+					<td><a href="#recurringdepositaccounts_undotransaction">Undo transaction</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}/transactions/{transactionId}?command=modify</td>
+					<td><a href="#recurringdepositaccounts_adjusttransaction">Adjust transaction</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}/transactions/template</td>
+					<td></td>
+					<td><a href="#recurringdepositaccounts_transactions_template">Retrieve Deposit account transaction template</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>recurringdepositaccounts/{accountId}/transactions/{transactionId}</td>
+					<td></td>
+					<td><a href="#recurringdepositaccounts_transaction">Retrieve Deposit account transaction</a></td>
 					<td></td>
 					<td></td>
 				</tr>

@@ -53,7 +53,8 @@ public class RecurringDepositProduct extends FixedDepositProduct {
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final Integer lockinPeriodFrequency,
             final SavingsPeriodFrequencyType lockinPeriodFrequencyType, final AccountingRuleType accountingRuleType,
             final Set<Charge> charges, final DepositProductTermAndPreClosure productTermAndPreClosure,
-            final DepositProductRecurringDetail recurringDetail, final Set<InterestRateChart> charts) {
+            final DepositProductRecurringDetail recurringDetail, final Set<InterestRateChart> charts,
+            BigDecimal minBalanceForInterestCalculation) {
 
         final BigDecimal minRequiredOpeningBalance = null;
         final boolean withdrawalFeeApplicableForTransfer = false;
@@ -63,7 +64,7 @@ public class RecurringDepositProduct extends FixedDepositProduct {
         return new RecurringDepositProduct(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges,
-                productTermAndPreClosure, recurringDetail, charts, allowOverdraft, overdraftLimit);
+                productTermAndPreClosure, recurringDetail, charts, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation);
     }
 
     protected RecurringDepositProduct(final String name, final String shortName, final String description, final MonetaryCurrency currency,
@@ -73,21 +74,22 @@ public class RecurringDepositProduct extends FixedDepositProduct {
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
             final DepositProductTermAndPreClosure productTermAndPreClosure, final DepositProductRecurringDetail recurringDetail,
-            final Set<InterestRateChart> charts, final boolean allowOverdraft, final BigDecimal overdraftLimit) {
+            final Set<InterestRateChart> charts, final boolean allowOverdraft, final BigDecimal overdraftLimit,
+            final BigDecimal minBalanceForInterestCalculation) {
 
         super(name, shortName, description, currency, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, productTermAndPreClosure,
-                charts, allowOverdraft, overdraftLimit);
+                charts, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation);
 
         this.recurringDetail = recurringDetail;
     }
 
     @Override
     public Map<String, Object> update(final JsonCommand command) {
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(10);
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(10);
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_PRODUCT_RESOURCE_NAME);
 
@@ -102,7 +104,7 @@ public class RecurringDepositProduct extends FixedDepositProduct {
 
     @Override
     protected Map<String, Object> update(final JsonCommand command, final DataValidatorBuilder baseDataValidator) {
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(10);
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(10);
 
         actualChanges.putAll(super.update(command, baseDataValidator));
 
@@ -123,7 +125,7 @@ public class RecurringDepositProduct extends FixedDepositProduct {
 
     @Override
     public void validateDomainRules() {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_PRODUCT_RESOURCE_NAME);
 
@@ -147,7 +149,7 @@ public class RecurringDepositProduct extends FixedDepositProduct {
             baseDataValidator.reset().parameter(DepositsApiConstants.nominalAnnualInterestRateParamName).value(nominalAnnualInterestRate)
                     .failWithCodeNoParameterAddedToErrorCode("interest.chart.or.nominal.interest.rate.required");
         }
-        
+
         this.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
     }
 }

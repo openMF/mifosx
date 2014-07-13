@@ -38,7 +38,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
     @Embedded
     private MonetaryCurrency currency;
 
-    @Column(name = "principal_amount", scale = 6, precision = 19, nullable = false)
+    @Column(name = "principal_amount", scale = 6, precision = 19, nullable = true)
     private BigDecimal principal;
 
     @Column(name = "nominal_interest_rate_per_period", scale = 6, precision = 19, nullable = false)
@@ -222,7 +222,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
     public Map<String, Object> update(final JsonCommand command, final AprCalculator aprCalculator) {
 
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(20);
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(20);
 
         final String localeAsInput = command.locale();
 
@@ -263,7 +263,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
     }
 
     public Map<String, Object> updateLoanApplicationAttributes(final JsonCommand command, final AprCalculator aprCalculator) {
-        final Map<String, Object> actualChanges = new LinkedHashMap<String, Object>(20);
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(20);
 
         final String localeAsInput = command.locale();
 
@@ -387,7 +387,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
     }
 
     public void validateRepaymentPeriodWithGraceSettings() {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loanproduct");
 
         if (this.numberOfRepayments <= defaultToZeroIfNull(this.graceOnPrincipalPayment)) {

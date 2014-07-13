@@ -42,6 +42,8 @@ import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
+import org.mifosplatform.portfolio.calendar.domain.Calendar;
+import org.mifosplatform.portfolio.calendar.service.CalendarUtils;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 import org.mifosplatform.portfolio.group.domain.Group;
@@ -75,7 +77,7 @@ public class RecurringDepositAccount extends SavingsAccount {
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "account", orphanRemoval = true)
-    private List<RecurringDepositScheduleInstallment> depositScheduleInstallments = new ArrayList<RecurringDepositScheduleInstallment>();
+    private List<RecurringDepositScheduleInstallment> depositScheduleInstallments = new ArrayList<>();
 
     protected RecurringDepositAccount() {
         //
@@ -151,7 +153,7 @@ public class RecurringDepositAccount extends SavingsAccount {
 
     @Override
     public void modifyApplication(final JsonCommand command, final Map<String, Object> actualChanges) {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.modifyApplicationAction);
         super.modifyApplication(command, actualChanges, baseDataValidator);
@@ -162,6 +164,12 @@ public class RecurringDepositAccount extends SavingsAccount {
         validateDomainRules(baseDataValidator);
         super.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+    }
+
+    @Override
+    protected BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate interestPostingUpToDate) {
+        boolean isPreMatureClosure = false;
+        return getEffectiveInterestRateAsFraction(mc, interestPostingUpToDate, isPreMatureClosure);
     }
 
     protected BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate interestPostingUpToDate,
@@ -216,7 +224,7 @@ public class RecurringDepositAccount extends SavingsAccount {
     }
 
     public void updateMaturityStatus() {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.updateMaturityDetailsAction);
 
@@ -278,7 +286,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(depositStartDate(),
                 maturityDate, postingPeriodType);
 
-        final List<PostingPeriod> allPostingPeriods = new ArrayList<PostingPeriod>();
+        final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
         Money periodStartingBalance = Money.zero(currency);
 
@@ -286,10 +294,11 @@ public class RecurringDepositAccount extends SavingsAccount {
         final BigDecimal interestRateAsFraction = getEffectiveInterestRateAsFraction(mc, maturityDate, isPreMatureClosure);
         final Collection<Long> interestPostTransactions = this.savingsHelper.fetchPostInterestTransactionIds(getId());
         boolean isInterestTransfer = false;
+        final Money minBalanceForInterestCalculation = Money.of(getCurrency(), minBalanceForInterestCalculation());
         for (final LocalDateInterval periodInterval : postingPeriodIntervals) {
             final PostingPeriod postingPeriod = PostingPeriod.createFrom(periodInterval, periodStartingBalance, transactions,
                     this.currency, compoundingPeriodType, interestCalculationType, interestRateAsFraction, daysInYearType.getValue(),
-                    maturityDate, interestPostTransactions, isInterestTransfer);
+                    maturityDate, interestPostTransactions, isInterestTransfer, minBalanceForInterestCalculation);
 
             periodStartingBalance = postingPeriod.closingBalance();
 
@@ -304,7 +313,7 @@ public class RecurringDepositAccount extends SavingsAccount {
     }
 
     private List<SavingsAccountTransaction> generateIncludingFutureTransactions(final LocalDate depositEndDate) {
-        List<SavingsAccountTransaction> allTransactions = new ArrayList<SavingsAccountTransaction>();
+        List<SavingsAccountTransaction> allTransactions = new ArrayList<>();
         // add existing transactions
         allTransactions.addAll(retreiveOrderedNonInterestPostingTransactions());
         for (RecurringDepositScheduleInstallment installment : depositScheduleInstallments()) {
@@ -377,7 +386,7 @@ public class RecurringDepositAccount extends SavingsAccount {
     public void prematureClosure(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate,
             final Map<String, Object> actualChanges) {
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME + DepositsApiConstants.preMatureCloseAction);
 
@@ -482,7 +491,7 @@ public class RecurringDepositAccount extends SavingsAccount {
     public void close(final AppUser currentUser, final JsonCommand command, final LocalDate tenantsTodayDate,
             final Map<String, Object> actualChanges) {
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.closeAction);
 
@@ -602,7 +611,8 @@ public class RecurringDepositAccount extends SavingsAccount {
         final Money interestPostedToDate = totalInterestPosted();
         // calculate interest before one day of closure date
         final LocalDate interestCalculatedToDate = accountCloseDate.minusDays(1);
-        final Money interestOnMaturity = calculatePreMatureInterest(interestCalculatedToDate, retreiveOrderedNonInterestPostingTransactions(), isPreMatureClosure);
+        final Money interestOnMaturity = calculatePreMatureInterest(interestCalculatedToDate,
+                retreiveOrderedNonInterestPostingTransactions(), isPreMatureClosure);
 
         boolean recalucateDailyBalance = false;
 
@@ -708,7 +718,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         final Map<String, Object> actualChanges = super.activate(currentUser, command, tenantsTodayDate);
 
         if (accountTermAndPreClosure.isAfterExpectedFirstDepositDate(getActivationLocalDate())) {
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                     .resource(RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME);
             final DateTimeFormatter formatter = DateTimeFormat.forPattern(command.dateFormat()).withLocale(command.extractLocale());
@@ -722,7 +732,7 @@ public class RecurringDepositAccount extends SavingsAccount {
     }
 
     protected List<SavingsAccountTransaction> sortTransactions(final List<SavingsAccountTransaction> transactions) {
-        final List<SavingsAccountTransaction> listOfTransactionsSorted = new ArrayList<SavingsAccountTransaction>();
+        final List<SavingsAccountTransaction> listOfTransactionsSorted = new ArrayList<>();
         listOfTransactionsSorted.addAll(transactions);
 
         final SavingsAccountTransactionComparator transactionComparator = new SavingsAccountTransactionComparator();
@@ -739,7 +749,7 @@ public class RecurringDepositAccount extends SavingsAccount {
                     "error.msg.recurring.deposit.account.transaction.account.is.matured", defaultUserMessage, "transactionDate",
                     transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -751,7 +761,7 @@ public class RecurringDepositAccount extends SavingsAccount {
                     "error.msg.recurring.deposit.account.transaction.date.is.after.account.maturity.date", defaultUserMessage,
                     "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -763,7 +773,7 @@ public class RecurringDepositAccount extends SavingsAccount {
                     "error.msg.recurring.deposit.account.transaction.date.is.before.account.activation.or.deposit.date",
                     defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().toString(transactionDTO.getFormatter()));
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
 
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -807,7 +817,7 @@ public class RecurringDepositAccount extends SavingsAccount {
     private List<SavingsAccountTransaction> retreiveOrderedDepositTransactions() {
         final List<SavingsAccountTransaction> listOfTransactionsSorted = retreiveListOfTransactions();
 
-        final List<SavingsAccountTransaction> orderedDepositTransactions = new ArrayList<SavingsAccountTransaction>();
+        final List<SavingsAccountTransaction> orderedDepositTransactions = new ArrayList<>();
 
         for (final SavingsAccountTransaction transaction : listOfTransactionsSorted) {
             if (transaction.isDepositAndNotReversed()) {
@@ -860,7 +870,7 @@ public class RecurringDepositAccount extends SavingsAccount {
     }
 
     public void validateDomainRules() {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME);
         validateDomainRules(baseDataValidator);
@@ -923,7 +933,7 @@ public class RecurringDepositAccount extends SavingsAccount {
     }
 
     public void validateApplicableInterestRate() {
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME);
 
@@ -1035,10 +1045,16 @@ public class RecurringDepositAccount extends SavingsAccount {
         return this.accountTermAndPreClosure.isTransferInterestToLinkedAccount();
     }
 
-    public void generateSchedule(final PeriodFrequencyType frequency, final Integer recurringEvery) {
+    public void generateSchedule(final PeriodFrequencyType frequency, final Integer recurringEvery, final Calendar calendar) {
         final List<RecurringDepositScheduleInstallment> depositScheduleInstallments = depositScheduleInstallments();
         depositScheduleInstallments.clear();
-        LocalDate installmentDate = depositStartDate();
+        LocalDate installmentDate = null;
+        if (this.isCalendarInherited()) {
+            installmentDate = CalendarUtils.getNextScheduleDate(calendar, accountSubmittedOrActivationDate());
+        } else {
+            installmentDate = depositStartDate();
+        }
+
         final LocalDate maturityDate = calculateMaturityDate();
         int installmentNumber = 1;
         final BigDecimal depositAmount = this.recurringDetail.mandatoryRecommendedDepositAmount();
@@ -1053,7 +1069,7 @@ public class RecurringDepositAccount extends SavingsAccount {
 
     private List<RecurringDepositScheduleInstallment> depositScheduleInstallments() {
         if (this.depositScheduleInstallments == null) {
-            this.depositScheduleInstallments = new ArrayList<RecurringDepositScheduleInstallment>();
+            this.depositScheduleInstallments = new ArrayList<>();
         }
         return this.depositScheduleInstallments;
     }
@@ -1080,11 +1096,17 @@ public class RecurringDepositAccount extends SavingsAccount {
         this.recurringDetail.updateOverdueDetails(noOfOverdueInstallments, totalOverdueAmount);
     }
 
+    @Override
     public boolean allowWithdrawal() {
         return this.recurringDetail.allowWithdrawal();
     }
 
     public boolean adjustAdvanceTowardsFuturePayments() {
         return this.recurringDetail.adjustAdvanceTowardsFuturePayments();
+    }
+
+    @Override
+    public boolean isTransactionsAllowed() {
+        return isActive() || isAccountMatured();
     }
 }
