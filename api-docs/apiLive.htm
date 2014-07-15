@@ -12208,17 +12208,23 @@ GET https://DomainName/api/v1/codes
     {
         "id": 1,
         "name": "Customer Identifier",
-        "systemDefined": true
+        "systemDefined": true,
+	 "defaultValue" : 1
+		
     },
     {
         "id": 2,
         "name": "Gender",
-        "systemDefined": true
+        "systemDefined": true,
+	 "defaultValue" : 2
+		
     },
     {
         "id": 3,
         "name": "Education",
-        "systemDefined": true
+        "systemDefined": true,
+	 "defaultValue" : 3
+		
     }
 ]
 					</code>
@@ -12242,7 +12248,8 @@ GET https://DomainName/api/v1/codes/{codeId}
 {
     "id": 1,
     "name": "Customer Identifier",
-    "systemDefined": true
+    "systemDefined": true,
+ "defaultValue": 
 }
 					</code>
 				</div>
@@ -12253,7 +12260,7 @@ GET https://DomainName/api/v1/codes/{codeId}
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Update a Code</h4>
-					<p>Updates the details of a code if it is not system defined.</p>
+					<p>Updates the details of a code, system defined codes can also be update with codeValue as defaultValue.</p>
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
@@ -12264,14 +12271,16 @@ PUT codes/4
 Content-Type: application/json 
 Request Body: 
 { 
-	"name": "MyNewCode(changed)"
+	"name": "MyNewCode(changed)",
+ "defaultValue: 3
 }
 					</code>
 					<code class="method-response">
 {
     "resourceId": 4,
     "changes": {
-        "name": "MyNewCode(changed)"
+        "name": "MyNewCode(changed)",
+ "defaultValue": 2
     }
 }
 					</code>
