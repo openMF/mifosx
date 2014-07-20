@@ -9,5 +9,4 @@ import org.springframework.context.annotation.ImportResource;
 // we do NOT want the testContext.xml here, but the real one!
 @ImportResource("classpath*:META-INF/spring/appContext.xml")
 public class TestSpringConfiguration {
-
 }
