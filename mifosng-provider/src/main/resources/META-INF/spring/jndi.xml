@@ -9,7 +9,7 @@
     	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
     	http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.0.xsd">
 
-    <!-- name here must match TestDataSourceConfiguration -->
+	<!-- name here must match TestDataSourceConfiguration -->
 	<jee:jndi-lookup jndi-name="java:comp/env/jdbc/mifosplatform-tenants"
 		id="tenantDataSourceJndi" />
 </beans>
