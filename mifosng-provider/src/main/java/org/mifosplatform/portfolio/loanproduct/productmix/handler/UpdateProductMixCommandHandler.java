@@ -5,28 +5,30 @@
  */
 package org.mifosplatform.portfolio.loanproduct.productmix.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.loanproduct.productmix.service.ProductMixWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UpdateProductMixCommandHandler implements NewCommandSourceHandler {
+public class UpdateProductMixCommandHandler extends CommandHandlerWithHooks {
 
     private final ProductMixWritePlatformService productMixWritePlatformService;
 
     @Autowired
     public UpdateProductMixCommandHandler(final ProductMixWritePlatformService productMixWritePlatformService) {
+        super(CommandHookType.UpdateProductMix);
 
         this.productMixWritePlatformService = productMixWritePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.productMixWritePlatformService.updateProductMix(command.getProductId(), command);
     }

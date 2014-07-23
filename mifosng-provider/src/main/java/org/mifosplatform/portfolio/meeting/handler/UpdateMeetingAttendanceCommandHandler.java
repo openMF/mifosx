@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.portfolio.meeting.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.meeting.service.MeetingWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UpdateMeetingAttendanceCommandHandler implements NewCommandSourceHandler {
+public class UpdateMeetingAttendanceCommandHandler extends CommandHandlerWithHooks {
 
     private final MeetingWritePlatformService writePlatformService;
 
     @Autowired
     public UpdateMeetingAttendanceCommandHandler(final MeetingWritePlatformService writePlatformService) {
+        super(CommandHookType.UpdateMeetingAttendance);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.writePlatformService.saveOrUpdateAttendance(command);
     }

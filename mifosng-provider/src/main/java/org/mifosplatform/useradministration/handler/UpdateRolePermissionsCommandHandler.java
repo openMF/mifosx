@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.useradministration.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.useradministration.service.RoleWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UpdateRolePermissionsCommandHandler implements NewCommandSourceHandler {
+public class UpdateRolePermissionsCommandHandler extends CommandHandlerWithHooks {
 
     private final RoleWritePlatformService writePlatformService;
 
     @Autowired
     public UpdateRolePermissionsCommandHandler(final RoleWritePlatformService writePlatformService) {
+        super(CommandHookType.UpdateRolePermissions);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.writePlatformService.updateRolePermissions(command.entityId(), command);
     }

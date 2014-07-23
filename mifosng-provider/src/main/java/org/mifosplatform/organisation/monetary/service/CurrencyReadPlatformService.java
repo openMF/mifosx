@@ -5,9 +5,9 @@
  */
 package org.mifosplatform.organisation.monetary.service;
 
-import java.util.Collection;
-
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
+
+import java.util.Collection;
 
 public interface CurrencyReadPlatformService {
 

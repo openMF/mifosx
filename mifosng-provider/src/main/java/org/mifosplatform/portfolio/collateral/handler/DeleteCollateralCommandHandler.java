@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.portfolio.collateral.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.collateral.service.CollateralWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class DeleteCollateralCommandHandler implements NewCommandSourceHandler {
+public class DeleteCollateralCommandHandler extends CommandHandlerWithHooks {
 
     private final CollateralWritePlatformService collateralWritePlatformService;
 
     @Autowired
     public DeleteCollateralCommandHandler(final CollateralWritePlatformService guarantorWritePlatformService) {
+        super(CommandHookType.DeleteCollateral);
         this.collateralWritePlatformService = guarantorWritePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         return this.collateralWritePlatformService.deleteCollateral(command.getLoanId(), command.entityId(), command.commandId());
     }
 }

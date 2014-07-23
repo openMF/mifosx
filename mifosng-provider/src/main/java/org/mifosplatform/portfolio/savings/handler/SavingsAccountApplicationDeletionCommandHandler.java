@@ -5,28 +5,30 @@
  */
 package org.mifosplatform.portfolio.savings.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.savings.service.SavingsApplicationProcessWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class SavingsAccountApplicationDeletionCommandHandler implements NewCommandSourceHandler {
+public class SavingsAccountApplicationDeletionCommandHandler extends CommandHandlerWithHooks {
 
     private final SavingsApplicationProcessWritePlatformService savingAccountWritePlatformService;
 
     @Autowired
     public SavingsAccountApplicationDeletionCommandHandler(
             final SavingsApplicationProcessWritePlatformService savingAccountWritePlatformService) {
+        super(CommandHookType.SavingsAccountApplicationDeletion);
         this.savingAccountWritePlatformService = savingAccountWritePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         return this.savingAccountWritePlatformService.deleteApplication(command.entityId());
     }
 

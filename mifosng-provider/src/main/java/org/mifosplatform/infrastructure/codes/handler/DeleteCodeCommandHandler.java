@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.infrastructure.codes.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.codes.service.CodeWritePlatformService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class DeleteCodeCommandHandler implements NewCommandSourceHandler {
+public class DeleteCodeCommandHandler extends CommandHandlerWithHooks {
 
     private final CodeWritePlatformService writePlatformService;
 
     @Autowired
     public DeleteCodeCommandHandler(final CodeWritePlatformService writePlatformService) {
+        super(CommandHookType.DeleteCode);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.writePlatformService.deleteCode(command.entityId());
     }

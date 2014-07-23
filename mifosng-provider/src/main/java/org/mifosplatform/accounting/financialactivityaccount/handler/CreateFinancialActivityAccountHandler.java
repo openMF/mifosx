@@ -6,26 +6,28 @@
 package org.mifosplatform.accounting.financialactivityaccount.handler;
 
 import org.mifosplatform.accounting.financialactivityaccount.service.FinancialActivityAccountWritePlatformService;
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class CreateFinancialActivityAccountHandler implements NewCommandSourceHandler {
+public class CreateFinancialActivityAccountHandler extends CommandHandlerWithHooks {
 
     private final FinancialActivityAccountWritePlatformService writePlatformService;
 
     @Autowired
     public CreateFinancialActivityAccountHandler(final FinancialActivityAccountWritePlatformService writePlatformService) {
+        super(CommandHookType.CreateFinancialActivityAccount);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.writePlatformService.createFinancialActivityAccountMapping(command);
     }

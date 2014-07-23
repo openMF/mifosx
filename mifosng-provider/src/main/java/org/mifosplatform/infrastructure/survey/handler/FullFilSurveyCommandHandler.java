@@ -5,9 +5,10 @@
  */
 package org.mifosplatform.infrastructure.survey.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.infrastructure.survey.service.WriteSurveyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,20 +19,21 @@ import org.springframework.transaction.annotation.Transactional;
  */
 
 @Service
-public class FullFilSurveyCommandHandler implements NewCommandSourceHandler {
+public class FullFilSurveyCommandHandler extends CommandHandlerWithHooks {
 
 
     private final WriteSurveyService writePlatformService;
 
     @Autowired
     public FullFilSurveyCommandHandler(final WriteSurveyService writePlatformService) {
+        super(CommandHookType.FullFilSurvey);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
-        return this.writePlatformService.fullFillSurvey (command.entityName(),command.entityId(),command);
+        return this.writePlatformService.fullFillSurvey(command.entityName(), command.entityId(), command);
     }
 }

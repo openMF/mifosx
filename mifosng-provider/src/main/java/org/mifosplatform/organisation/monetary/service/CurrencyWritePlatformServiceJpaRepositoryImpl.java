@@ -5,13 +5,6 @@
  */
 package org.mifosplatform.organisation.monetary.service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -29,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.*;
+
 @Service
 public class CurrencyWritePlatformServiceJpaRepositoryImpl implements CurrencyWritePlatformService {
 
@@ -42,10 +37,10 @@ public class CurrencyWritePlatformServiceJpaRepositoryImpl implements CurrencyWr
 
     @Autowired
     public CurrencyWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final CurrencyCommandFromApiJsonDeserializer fromApiJsonDeserializer,
-            final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository,
-            final OrganisationCurrencyRepository organisationCurrencyRepository, final LoanProductReadPlatformService loanProductService,
-            final SavingsProductReadPlatformService savingsProductService, final ChargeReadPlatformService chargeService) {
+                                                         final CurrencyCommandFromApiJsonDeserializer fromApiJsonDeserializer,
+                                                         final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository,
+                                                         final OrganisationCurrencyRepository organisationCurrencyRepository, final LoanProductReadPlatformService loanProductService,
+                                                         final SavingsProductReadPlatformService savingsProductService, final ChargeReadPlatformService chargeService) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.applicationCurrencyRepository = applicationCurrencyRepository;
@@ -83,8 +78,10 @@ public class CurrencyWritePlatformServiceJpaRepositoryImpl implements CurrencyWr
                 // Check if it's safe to remove this currency.
                 if (!loanProductService.retrieveAllLoanProductsForCurrency(priorCurrency.getCode()).isEmpty()
                         || !savingsProductService.retrieveAllForCurrency(priorCurrency.getCode()).isEmpty()
-                        || !chargeService.retrieveAllChargesForCurrency(priorCurrency.getCode()).isEmpty()) { throw new CurrencyInUseException(
-                        priorCurrency.getCode()); }
+                        || !chargeService.retrieveAllChargesForCurrency(priorCurrency.getCode()).isEmpty()) {
+                    throw new CurrencyInUseException(
+                            priorCurrency.getCode());
+                }
             }
         }
 

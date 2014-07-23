@@ -5,28 +5,30 @@
  */
 package org.mifosplatform.infrastructure.dataqueries.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.dataqueries.service.ReadWriteNonCoreDataService;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class RegisterDatatableCommandHandler implements NewCommandSourceHandler {
+public class RegisterDatatableCommandHandler extends CommandHandlerWithHooks {
 
     private final ReadWriteNonCoreDataService writePlatformService;
 
     @Autowired
     public RegisterDatatableCommandHandler(final ReadWriteNonCoreDataService writePlatformService) {
+        super(CommandHookType.RegisterDatatable);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         this.writePlatformService.registerDatatable(command);
 

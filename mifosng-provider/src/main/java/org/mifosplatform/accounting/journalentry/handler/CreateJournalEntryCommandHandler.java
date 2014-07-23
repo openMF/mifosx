@@ -6,26 +6,28 @@
 package org.mifosplatform.accounting.journalentry.handler;
 
 import org.mifosplatform.accounting.journalentry.service.JournalEntryWritePlatformService;
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class CreateJournalEntryCommandHandler implements NewCommandSourceHandler {
+public class CreateJournalEntryCommandHandler extends CommandHandlerWithHooks {
 
     private final JournalEntryWritePlatformService writePlatformService;
 
     @Autowired
     public CreateJournalEntryCommandHandler(final JournalEntryWritePlatformService writePlatformService) {
+        super(CommandHookType.CreateJournalEntry);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.writePlatformService.createJournalEntry(command);
     }

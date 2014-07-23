@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.portfolio.client.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.client.service.ClientIdentifierWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UpdateClientIdentifierCommandHandler implements NewCommandSourceHandler {
+public class UpdateClientIdentifierCommandHandler extends CommandHandlerWithHooks {
 
     private final ClientIdentifierWritePlatformService clientIdentifierWritePlatformService;
 
     @Autowired
     public UpdateClientIdentifierCommandHandler(final ClientIdentifierWritePlatformService clientIdentifierWritePlatformService) {
+        super(CommandHookType.UpdateClientIdentifier);
         this.clientIdentifierWritePlatformService = clientIdentifierWritePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         return this.clientIdentifierWritePlatformService.updateClientIdentifier(command.getClientId(), command.entityId(), command);
     }
 }

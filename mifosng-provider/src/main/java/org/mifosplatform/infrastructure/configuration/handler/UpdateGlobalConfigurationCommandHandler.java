@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.infrastructure.configuration.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.configuration.service.GlobalConfigurationWritePlatformService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UpdateGlobalConfigurationCommandHandler implements NewCommandSourceHandler {
+public class UpdateGlobalConfigurationCommandHandler extends CommandHandlerWithHooks {
 
     private final GlobalConfigurationWritePlatformService writePlatformService;
 
     @Autowired
     public UpdateGlobalConfigurationCommandHandler(final GlobalConfigurationWritePlatformService writePlatformService) {
+        super(CommandHookType.UpdateGlobalConfiguration);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.writePlatformService.update(command.entityId(), command);
     }

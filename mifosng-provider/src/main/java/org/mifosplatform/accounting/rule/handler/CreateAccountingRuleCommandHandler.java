@@ -6,26 +6,28 @@
 package org.mifosplatform.accounting.rule.handler;
 
 import org.mifosplatform.accounting.rule.service.AccountingRuleWritePlatformService;
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class CreateAccountingRuleCommandHandler implements NewCommandSourceHandler {
+public class CreateAccountingRuleCommandHandler extends CommandHandlerWithHooks {
 
     private final AccountingRuleWritePlatformService writePlatformService;
 
     @Autowired
     public CreateAccountingRuleCommandHandler(final AccountingRuleWritePlatformService writePlatformService) {
+        super(CommandHookType.CreateAccountingRule);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         return this.writePlatformService.createAccountingRule(command);
     }
 }

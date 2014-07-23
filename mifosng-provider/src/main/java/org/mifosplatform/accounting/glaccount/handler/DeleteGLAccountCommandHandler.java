@@ -6,26 +6,28 @@
 package org.mifosplatform.accounting.glaccount.handler;
 
 import org.mifosplatform.accounting.glaccount.service.GLAccountWritePlatformService;
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class DeleteGLAccountCommandHandler implements NewCommandSourceHandler {
+public class DeleteGLAccountCommandHandler extends CommandHandlerWithHooks {
 
     private final GLAccountWritePlatformService writePlatformService;
 
     @Autowired
     public DeleteGLAccountCommandHandler(final GLAccountWritePlatformService writePlatformService) {
+        super(CommandHookType.DeleteGLAccount);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         return this.writePlatformService.deleteGLAccount(command.entityId());
     }
 }

@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.portfolio.calendar.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.calendar.service.CalendarWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UpdateCalendarCommandHandler implements NewCommandSourceHandler {
+public class UpdateCalendarCommandHandler extends CommandHandlerWithHooks {
 
     private final CalendarWritePlatformService calendarWritePlatformService;
 
     @Autowired
     public UpdateCalendarCommandHandler(final CalendarWritePlatformService calendarWritePlatformService) {
+        super(CommandHookType.UpdateCalendar);
         this.calendarWritePlatformService = calendarWritePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.calendarWritePlatformService.updateCalendar(command);
     }

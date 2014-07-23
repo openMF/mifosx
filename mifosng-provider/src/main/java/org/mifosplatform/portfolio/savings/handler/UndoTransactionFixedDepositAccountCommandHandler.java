@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.portfolio.savings.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UndoTransactionFixedDepositAccountCommandHandler implements NewCommandSourceHandler {
+public class UndoTransactionFixedDepositAccountCommandHandler extends CommandHandlerWithHooks {
 
     private final DepositAccountWritePlatformService depositAccountWritePlatformService;
 
     @Autowired
     public UndoTransactionFixedDepositAccountCommandHandler(final DepositAccountWritePlatformService depositAccountWritePlatformService) {
+        super(CommandHookType.UndoTransactionFixedDepositAccount);
         this.depositAccountWritePlatformService = depositAccountWritePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         final Long transactionId = Long.valueOf(command.getTransactionId());
         return this.depositAccountWritePlatformService.undoFDTransaction(command.entityId(), transactionId, false);
     }

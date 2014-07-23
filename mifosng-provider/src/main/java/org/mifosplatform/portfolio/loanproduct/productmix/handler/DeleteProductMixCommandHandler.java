@@ -5,28 +5,30 @@
  */
 package org.mifosplatform.portfolio.loanproduct.productmix.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.loanproduct.productmix.service.ProductMixWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class DeleteProductMixCommandHandler implements NewCommandSourceHandler {
+public class DeleteProductMixCommandHandler extends CommandHandlerWithHooks {
 
     private final ProductMixWritePlatformService productMixWritePlatformService;
 
     @Autowired
     public DeleteProductMixCommandHandler(final ProductMixWritePlatformService productMixWritePlatformService) {
+        super(CommandHookType.DeleteProductMix);
 
         this.productMixWritePlatformService = productMixWritePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.productMixWritePlatformService.deleteProductMix(command.getProductId());
     }

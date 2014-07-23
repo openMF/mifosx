@@ -5,25 +5,27 @@
  */
 package org.mifosplatform.portfolio.account.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.account.service.StandingInstructionWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UpdateStandingInstructionCommandHandler implements NewCommandSourceHandler {
+public class UpdateStandingInstructionCommandHandler extends CommandHandlerWithHooks {
 
     private StandingInstructionWritePlatformService standingInstructionWritePlatformService;
 
     @Autowired
     public UpdateStandingInstructionCommandHandler(StandingInstructionWritePlatformService standingInstructionWritePlatformService) {
+        super(CommandHookType.UpdateStandingInstruction);
         this.standingInstructionWritePlatformService = standingInstructionWritePlatformService;
     }
 
     @Override
-    public CommandProcessingResult processCommand(JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(JsonCommand command) {
         return this.standingInstructionWritePlatformService.update(command.entityId(), command);
     }
 

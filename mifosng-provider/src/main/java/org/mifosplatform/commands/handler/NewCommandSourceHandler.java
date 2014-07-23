@@ -12,3 +12,5 @@ public interface NewCommandSourceHandler {
 
     CommandProcessingResult processCommand(JsonCommand command);
 }
+
+

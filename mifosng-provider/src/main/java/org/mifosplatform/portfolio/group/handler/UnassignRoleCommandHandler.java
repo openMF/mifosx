@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.portfolio.group.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.group.service.GroupRolesWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UnassignRoleCommandHandler implements NewCommandSourceHandler {
+public class UnassignRoleCommandHandler extends CommandHandlerWithHooks {
 
     private final GroupRolesWritePlatformService groupRolesWritePlatformService;
 
     @Autowired
     public UnassignRoleCommandHandler(final GroupRolesWritePlatformService groupRolesWritePlatformService) {
+        super(CommandHookType.UnassignRole);
         this.groupRolesWritePlatformService = groupRolesWritePlatformService;
     }
 
     @Override
     @Transactional
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         return this.groupRolesWritePlatformService.deleteRole(command.entityId());
     }
 

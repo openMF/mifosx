@@ -5,28 +5,30 @@
  */
 package org.mifosplatform.infrastructure.dataqueries.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.dataqueries.service.ReadWriteNonCoreDataService;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class DeleteOneToManyDatatableEntryCommandHandler implements NewCommandSourceHandler {
+public class DeleteOneToManyDatatableEntryCommandHandler extends CommandHandlerWithHooks {
 
     private final ReadWriteNonCoreDataService writePlatformService;
 
     @Autowired
     public DeleteOneToManyDatatableEntryCommandHandler(final ReadWriteNonCoreDataService writePlatformService) {
+        super(CommandHookType.DeleteOneToManyDatatableEntry);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         final CommandProcessingResult commandProcessingResult = this.writePlatformService.deleteDatatableEntry(command.entityName(),
                 command.entityId(), command.subentityId());

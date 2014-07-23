@@ -5,25 +5,27 @@
  */
 package org.mifosplatform.portfolio.savings.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.savings.service.FixedDepositProductWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class DeleteFixedDepositProductCommandHandler implements NewCommandSourceHandler {
+public class DeleteFixedDepositProductCommandHandler extends CommandHandlerWithHooks {
 
     private final FixedDepositProductWritePlatformService writePlatformService;
 
     @Autowired
     public DeleteFixedDepositProductCommandHandler(final FixedDepositProductWritePlatformService writePlatformService) {
+        super(CommandHookType.DeleteFixedDepositProduct);
         this.writePlatformService = writePlatformService;
     }
 
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         return this.writePlatformService.delete(command.entityId());
     }
 }

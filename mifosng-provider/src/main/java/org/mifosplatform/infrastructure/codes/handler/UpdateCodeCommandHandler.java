@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.infrastructure.codes.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.codes.service.CodeWritePlatformService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UpdateCodeCommandHandler implements NewCommandSourceHandler {
+public class UpdateCodeCommandHandler extends CommandHandlerWithHooks {
 
     private final CodeWritePlatformService writePlatformService;
 
     @Autowired
     public UpdateCodeCommandHandler(final CodeWritePlatformService writePlatformService) {
+        super(CommandHookType.UpdateCode);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.writePlatformService.updateCode(command.entityId(), command);
     }

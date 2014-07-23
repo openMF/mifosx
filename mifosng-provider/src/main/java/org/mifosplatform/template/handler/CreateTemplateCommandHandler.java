@@ -5,28 +5,30 @@
  */
 package org.mifosplatform.template.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.template.service.TemplateDomainService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class CreateTemplateCommandHandler implements NewCommandSourceHandler {
+public class CreateTemplateCommandHandler extends CommandHandlerWithHooks {
 
     private final TemplateDomainService templateService;
 
     @Autowired
     public CreateTemplateCommandHandler(final TemplateDomainService templateService) {
 
+        super(CommandHookType.CreateTemplate);
         this.templateService = templateService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.templateService.createTemplate(command);
     }

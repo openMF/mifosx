@@ -5,25 +5,27 @@
  */
 package org.mifosplatform.portfolio.interestratechart.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.interestratechart.service.InterestRateChartWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CreateInterestRateChartCommandHandler implements NewCommandSourceHandler {
+public class CreateInterestRateChartCommandHandler extends CommandHandlerWithHooks {
 
     private final InterestRateChartWritePlatformService writePlatformService;
 
     @Autowired
     public CreateInterestRateChartCommandHandler(final InterestRateChartWritePlatformService writePlatformService) {
+        super(CommandHookType.CreateInterestRateChart);
         this.writePlatformService = writePlatformService;
     }
 
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         return this.writePlatformService.create(command);
     }
 }

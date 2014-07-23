@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.useradministration.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.useradministration.service.PermissionWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UpdateMakerCheckerPermissionsCommandHandler implements NewCommandSourceHandler {
+public class UpdateMakerCheckerPermissionsCommandHandler extends CommandHandlerWithHooks {
 
     private final PermissionWritePlatformService writePlatformService;
 
     @Autowired
     public UpdateMakerCheckerPermissionsCommandHandler(final PermissionWritePlatformService writePlatformService) {
+        super(CommandHookType.UpdateMakerCheckerPermissions);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.writePlatformService.updateMakerCheckerPermissions(command);
     }

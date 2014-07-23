@@ -5,25 +5,27 @@
  */
 package org.mifosplatform.infrastructure.jobs.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.infrastructure.jobs.service.SchedularWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UpdateJobDetailCommandhandler implements NewCommandSourceHandler {
+public class UpdateJobDetailCommandhandler extends CommandHandlerWithHooks {
 
     private final SchedularWritePlatformService schedularWritePlatformService;
 
     @Autowired
     public UpdateJobDetailCommandhandler(final SchedularWritePlatformService schedularWritePlatformService) {
+        super(CommandHookType.UpdateJobDetail);
         this.schedularWritePlatformService = schedularWritePlatformService;
     }
 
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         return this.schedularWritePlatformService.updateJobDetail(command.entityId(), command);
     }
 

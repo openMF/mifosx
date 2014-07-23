@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.portfolio.group.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.collectionsheet.service.CollectionSheetWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class SaveGroupCollectionSheetCommandHandler implements NewCommandSourceHandler {
+public class SaveGroupCollectionSheetCommandHandler extends CommandHandlerWithHooks {
 
     private final CollectionSheetWritePlatformService writePlatformService;
 
     @Autowired
     public SaveGroupCollectionSheetCommandHandler(final CollectionSheetWritePlatformService collectionSheetWritePlatformService) {
+        super(CommandHookType.SaveGroupCollectionSheet);
         this.writePlatformService = collectionSheetWritePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.writePlatformService.updateCollectionSheet(command);
     }

@@ -6,26 +6,28 @@
 package org.mifosplatform.accounting.closure.handler;
 
 import org.mifosplatform.accounting.closure.service.GLClosureWritePlatformService;
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UpdateGLClosureCommandHandler implements NewCommandSourceHandler {
+public class UpdateGLClosureCommandHandler extends CommandHandlerWithHooks {
 
     private final GLClosureWritePlatformService writePlatformService;
 
     @Autowired
     public UpdateGLClosureCommandHandler(final GLClosureWritePlatformService writePlatformService) {
+        super(CommandHookType.UpdateGLClosure);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
         return this.writePlatformService.updateGLClosure(command.entityId(), command);
     }
 }

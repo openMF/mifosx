@@ -5,27 +5,29 @@
  */
 package org.mifosplatform.portfolio.account.handler;
 
-import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+import org.mifosplatform.commands.handler.CommandHandlerWithHooks;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.hooks.CommandHookType;
 import org.mifosplatform.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class CreateAccountTransferCommandHandler implements NewCommandSourceHandler {
+public class CreateAccountTransferCommandHandler extends CommandHandlerWithHooks {
 
     private final AccountTransfersWritePlatformService writePlatformService;
 
     @Autowired
     public CreateAccountTransferCommandHandler(final AccountTransfersWritePlatformService writePlatformService) {
+        super(CommandHookType.CreateAccountTransfer);
         this.writePlatformService = writePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
+    public CommandProcessingResult actualProcessCommand(final JsonCommand command) {
 
         return this.writePlatformService.create(command);
     }

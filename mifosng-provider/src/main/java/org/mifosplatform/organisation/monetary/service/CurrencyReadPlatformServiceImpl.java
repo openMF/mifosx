@@ -5,10 +5,6 @@
  */
 package org.mifosplatform.organisation.monetary.service;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
@@ -17,6 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
 
 @Service
 public class CurrencyReadPlatformServiceImpl implements CurrencyReadPlatformService {
@@ -39,7 +39,7 @@ public class CurrencyReadPlatformServiceImpl implements CurrencyReadPlatformServ
 
         final String sql = "select " + this.currencyRowMapper.schema() + " from m_organisation_currency c order by c.name";
 
-        return this.jdbcTemplate.query(sql, this.currencyRowMapper, new Object[] {});
+        return this.jdbcTemplate.query(sql, this.currencyRowMapper, new Object[]{});
     }
 
     @Override
@@ -47,7 +47,7 @@ public class CurrencyReadPlatformServiceImpl implements CurrencyReadPlatformServ
 
         final String sql = "select " + this.currencyRowMapper.schema() + " from m_currency c order by c.name";
 
-        return this.jdbcTemplate.query(sql, this.currencyRowMapper, new Object[] {});
+        return this.jdbcTemplate.query(sql, this.currencyRowMapper, new Object[]{});
     }
 
     private static final class CurrencyMapper implements RowMapper<CurrencyData> {
