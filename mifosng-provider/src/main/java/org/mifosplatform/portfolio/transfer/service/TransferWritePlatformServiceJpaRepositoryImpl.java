@@ -8,7 +8,9 @@ package org.mifosplatform.portfolio.transfer.service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
+import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -494,4 +496,60 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
      * ClientNotAwaitingTransferApprovalException(group.getId()); } }
      **/
 
+    @Override
+    public CommandProcessingResult transferLoanOfficerToGroup(Long sourceGroupId, JsonCommand jsonCommand) {
+        this.transfersDataValidator.validateTransferLoanOfficerToGroup(jsonCommand.json());
+
+        final Group sourceGroup = this.groupRepository.findOneWithNotFoundDetection(sourceGroupId);
+        final Office office = this.officeRepository.findOneWithNotFoundDetection(sourceGroup.getOffice().getId());
+
+        final Long staffId = jsonCommand.longValueOfParameterNamed(TransferApiConstants.newStaffIdParamName);
+        Staff staff = null;
+        if (staffId != null) {
+            staff = this.staffRepositoryWrapper.findByOfficeHierarchyWithNotFoundDetection(staffId, office.getHierarchy());
+        }
+
+        //validate  staff id of the group cannot be the same as the previous
+        if(staff !=null) {
+            if(sourceGroup.getStaff().getId().equals(staff.getId())){
+                throw new TransferNotSupportedException(
+                        TRANSFER_NOT_SUPPORTED_REASON.SOURCE_AND_DESTINATION_STAFF_CANNOT_BE_THE_SAME, sourceGroup.getStaff().getId());
+            }
+        }
+
+        /*
+         loan officer reassignment date default to today to avoid validation problems
+         */
+        LocalDate loanOfficerReassignmentDate = LocalDate.now();
+
+        //update loan officer of the group
+        sourceGroup.updateStaff(staff);
+        /*
+        update loan officer for client and  update officer for clients loans and savings
+         */
+        Set<Client> clients = sourceGroup.getClientMembers();
+        for(Client client : clients){
+            client.updateStaff(staff);
+            if(this.loanRepository.doNonClosedLoanAccountsExistForClient(client.getId())){
+                for(final Loan loan :this.loanRepository.findLoanByClientId(client.getId())){
+                    if (loan.isDisbursed() && !loan.isClosed()){
+                        loan.reassignLoanOfficer(staff,loanOfficerReassignmentDate);
+                    }
+                }
+            }
+            if(this.savingsAccountRepository.doNonClosedSavingAccountsExistForClient(client.getId())){
+                for (final SavingsAccount savingsAccount : this.savingsAccountRepository.findSavingAccountByClientId(client.getId())){
+                    if (!savingsAccount.isClosed()){
+                        savingsAccount.update(staff);
+                    }
+                }
+            }
+        }
+
+        return new CommandProcessingResultBuilder() //
+                .withOfficeId(office.getId())
+                .withGroupId(sourceGroupId)
+                .withEntityId(sourceGroupId) //
+                .build();
+    }
 }

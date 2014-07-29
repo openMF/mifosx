@@ -125,6 +125,31 @@ public final class TransfersDataValidator {
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
+    public void validateTransferLoanOfficerToGroup(final String json){
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+                TransferApiConstants.TRANSFER_LOAN_OFFICER_OF_GROUP);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(GroupingTypesApiConstants.GROUP_RESOURCE_NAME);
+
+        if (this.fromApiJsonHelper.parameterExists(TransferApiConstants.newStaffIdParamName, element)) {
+            final Long newStaffId = this.fromApiJsonHelper.extractLongNamed(TransferApiConstants.newStaffIdParamName, element);
+            baseDataValidator.reset().parameter(TransferApiConstants.newStaffIdParamName).value(newStaffId).notNull()
+                    .integerGreaterThanZero();
+        }
+
+        validateNote(baseDataValidator, element);
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
     public void validateForProposeAndAcceptClientTransfer(final String json) {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 

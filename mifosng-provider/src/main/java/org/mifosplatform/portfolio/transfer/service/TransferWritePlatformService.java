@@ -22,4 +22,7 @@ public interface TransferWritePlatformService {
 
     CommandProcessingResult proposeAndAcceptClientTransfer(final Long clientId, final JsonCommand jsonCommand);
 
+    CommandProcessingResult transferLoanOfficerToGroup(final Long sourceGroupId,final JsonCommand jsonCommand);
+
+
 }

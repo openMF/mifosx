@@ -3582,7 +3582,34 @@ Request Body:
 
 	        </code>
 	    </div>
-	</div>			
+	</div>	
+<a id="clients_propose_and_accept_transfer" name="clients_propose_and_accept_transfer" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h4>Transfer Staff</h4>
+	        <p>Allows a new loan Officer to be transferred to a group in a case the old loan officer leaves an organization.This will reflect changes in the 
+client table and the clients savings and loans table</p>
+	    </div>
+		<div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/groups/{groupId}?command=transferStaff</code>
+	        <code class="method-request">POST groups/1?command=transferStaff
+Content-Type: application/json
+Request Body:
+{
+  "staffId":"1",
+  "note":"Client Relocating to Bangalore"
+}				
+			</code>
+	        <code class="method-response">
+{
+   "groupId": 2,
+   "resourceId": 2
+}
+
+
+	        </code>
+	    </div>
+	</div>				
 
 
 			<a id="clients_retrieve" name="clients_retrieve" class="old-syle-anchor">&nbsp;</a>
