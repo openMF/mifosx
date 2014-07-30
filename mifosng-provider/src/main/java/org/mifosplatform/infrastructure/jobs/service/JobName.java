@@ -17,7 +17,9 @@ public enum JobName {
     UPDATE_NPA("Update Non Performing Assets"),
     UPDATE_DEPOSITS_ACCOUNT_MATURITY_DETAILS("Update Deposit Accounts Maturity details"),
     TRANSFER_INTEREST_TO_SAVINGS("Transfer Interest To Savings"),
-    IMPACT_PORTAL_DB_CACHE("Update impact portal cache");
+	ADD_PERIODIC_ACCRUAL_ENTRIES("Add Periodic Accrual Transactions"),
+	IMPACT_PORTAL_DB_CACHE("Update impact portal cache");
+
 
     private final String name;
 

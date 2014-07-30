@@ -418,6 +418,10 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
+        } else if (wrapper.isPeriodicAccrualResource()) {
+            if (wrapper.isExecute()) {
+                handler = this.applicationContext.getBean("executePeriodicAccrualCommandHandler", NewCommandSourceHandler.class);
+            }
         } else if (wrapper.isSavingsProductResource()) {
             if (wrapper.isCreate()) {
                 handler = this.applicationContext.getBean("createSavingsProductCommandHandler", NewCommandSourceHandler.class);
@@ -502,6 +506,8 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 handler = this.applicationContext.getBean("waiveSavingsAccountChargeCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isPaySavingsAccountCharge()) {
                 handler = this.applicationContext.getBean("paySavingsAccountChargeCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isInactivateSavingsAccountCharge()) {
+                handler = this.applicationContext.getBean("inactivateSavingsAccountChargeCommandHandler", NewCommandSourceHandler.class);
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }

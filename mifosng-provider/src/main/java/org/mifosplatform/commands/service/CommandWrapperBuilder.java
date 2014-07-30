@@ -808,6 +808,14 @@ public class CommandWrapperBuilder {
         this.href = "/glclosures/" + glClosureId;
         return this;
     }
+    
+    public CommandWrapperBuilder excuteAccrualAccounting() {
+        this.actionName = "EXECUTE";
+        this.entityName = "PERIODICACCRUALACCOUNTING";
+        this.entityId = null;
+        this.href = "/accrualaccounting";
+        return this;
+    }
 
     public CommandWrapperBuilder createGLAccount() {
         this.actionName = "CREATE";
@@ -1088,6 +1096,16 @@ public class CommandWrapperBuilder {
 
     public CommandWrapperBuilder paySavingsAccountCharge(final Long savingsAccountId, final Long savingsAccountChargeId) {
         this.actionName = "PAY";
+        this.entityName = "SAVINGSACCOUNTCHARGE";
+        this.entityId = savingsAccountChargeId;
+        this.savingsId = savingsAccountId;
+        this.href = "/savingsaccounts/" + savingsAccountId + "/charges/" + savingsAccountChargeId;
+        return this;
+
+    }
+
+    public CommandWrapperBuilder inactivateSavingsAccountCharge(final Long savingsAccountId, final Long savingsAccountChargeId) {
+        this.actionName = "INACTIVATE";
         this.entityName = "SAVINGSACCOUNTCHARGE";
         this.entityId = savingsAccountChargeId;
         this.savingsId = savingsAccountId;

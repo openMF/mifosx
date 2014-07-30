@@ -170,9 +170,12 @@ public class ClientSavingsIntegrationTest {
         savingsStatusHashMap = this.savingsAccountHelper.activateSavings(savingsId);
         SavingsStatusChecker.verifySavingsIsActive(savingsStatusHashMap);
 
+        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
+        Calendar todaysDate = Calendar.getInstance();
+        final String CLOSEDON_DATE = dateFormat.format(todaysDate.getTime());
         String withdrawBalance = "false";
         ArrayList<HashMap> savingsAccountErrorData = (ArrayList<HashMap>) validationErrorHelper.closeSavingsAccountAndGetBackRequiredField(
-                savingsId, withdrawBalance, CommonConstants.RESPONSE_ERROR);
+                savingsId, withdrawBalance, CommonConstants.RESPONSE_ERROR, CLOSEDON_DATE);
         assertEquals("validation.msg.savingsaccount.close.results.in.balance.not.zero",
                 savingsAccountErrorData.get(0).get(CommonConstants.RESPONSE_ERROR_MESSAGE_CODE));
 
@@ -401,7 +404,10 @@ public class ClientSavingsIntegrationTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testSavingsAccountCharges() {
+
+        final ResponseSpecification erroResponseSpec = new ResponseSpecBuilder().build();
         this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+        final SavingsAccountHelper validationErrorHelper = new SavingsAccountHelper(this.requestSpec, erroResponseSpec);
 
         final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientID);
@@ -413,8 +419,8 @@ public class ClientSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, allowOverdraft);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
         SavingsStatusChecker.verifySavingsIsPending(savingsStatusHashMap);
@@ -454,6 +460,13 @@ public class ClientSavingsIntegrationTest {
         Assert.assertEquals(1, charges.size());
 
         HashMap savingsChargeForPay = charges.get(0);
+        Integer annualSavingsChargeId = (Integer) savingsChargeForPay.get("id");
+
+        ArrayList<HashMap> savingsAccountErrorData = (ArrayList<HashMap>) validationErrorHelper.inactivateCharge(annualSavingsChargeId,
+                savingsId, CommonConstants.RESPONSE_ERROR);
+        assertEquals("validation.msg.savingsaccountcharge.inactivation.of.charge.not.allowed.when.charge.is.due", savingsAccountErrorData
+                .get(0).get(CommonConstants.RESPONSE_ERROR_MESSAGE_CODE));
+
         SimpleDateFormat sdf = new SimpleDateFormat(CommonConstants.dateFormat);
         Calendar cal = Calendar.getInstance();
         List dates = (List) savingsChargeForPay.get("dueDate");
@@ -466,6 +479,10 @@ public class ClientSavingsIntegrationTest {
         HashMap paidCharge = this.savingsAccountHelper.getSavingsCharge(savingsId, (Integer) savingsChargeForPay.get("id"));
         assertEquals(savingsChargeForPay.get("amount"), paidCharge.get("amountPaid"));
 
+        Integer inactivatedChargeId = (Integer) this.savingsAccountHelper.inactivateCharge(annualSavingsChargeId, savingsId,
+                CommonConstants.RESPONSE_RESOURCE_ID);
+        assertEquals("Inactivated Savings Charges Id", annualSavingsChargeId, inactivatedChargeId);
+
         final Integer monthlyFeechargeId = ChargesHelper.createCharges(this.requestSpec, this.responseSpec,
                 ChargesHelper.getSavingsMonthlyFeeJSON());
         Assert.assertNotNull(monthlyFeechargeId);
@@ -475,6 +492,13 @@ public class ClientSavingsIntegrationTest {
         Assert.assertEquals(2, charges.size());
 
         HashMap savingsChargeForWaive = charges.get(1);
+        final Integer monthlySavingsCharge = (Integer) savingsChargeForWaive.get("id");
+
+        savingsAccountErrorData = (ArrayList<HashMap>) validationErrorHelper.inactivateCharge(monthlySavingsCharge, savingsId,
+                CommonConstants.RESPONSE_ERROR);
+        assertEquals("validation.msg.savingsaccountcharge.inactivation.of.charge.not.allowed.when.charge.is.due", savingsAccountErrorData
+                .get(0).get(CommonConstants.RESPONSE_ERROR_MESSAGE_CODE));
+
         this.savingsAccountHelper.waiveCharge((Integer) savingsChargeForWaive.get("id"), savingsId);
         HashMap waiveCharge = this.savingsAccountHelper.getSavingsCharge(savingsId, (Integer) savingsChargeForWaive.get("id"));
         assertEquals(savingsChargeForWaive.get("amount"), waiveCharge.get("amountWaived"));
@@ -492,8 +516,15 @@ public class ClientSavingsIntegrationTest {
         this.savingsAccountHelper.addChargesForSavings(savingsId, weeklyFeeId);
         charges = this.savingsAccountHelper.getSavingsCharges(savingsId);
         Assert.assertEquals(3, charges.size());
-
+        
         savingsChargeForPay = charges.get(2);
+        final Integer weeklySavingsFeeId = (Integer) savingsChargeForPay.get("id");
+
+        savingsAccountErrorData = (ArrayList<HashMap>) validationErrorHelper.inactivateCharge(weeklySavingsFeeId, savingsId,
+                CommonConstants.RESPONSE_ERROR);
+        assertEquals("validation.msg.savingsaccountcharge.inactivation.of.charge.not.allowed.when.charge.is.due", savingsAccountErrorData
+                .get(0).get(CommonConstants.RESPONSE_ERROR_MESSAGE_CODE));
+        
         cal = Calendar.getInstance();
         dates = (List) savingsChargeForPay.get("dueDate");
         cal.set(Calendar.YEAR, (Integer) dates.get(0));
@@ -521,9 +552,12 @@ public class ClientSavingsIntegrationTest {
      * balance, perform transactions then post interest and verify posted
      * interest
      */
+    @SuppressWarnings("unchecked")
     @Test
     public void testSavingsAccountWithOverdraft() {
         this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+        final ResponseSpecification errorResponse = new ResponseSpecBuilder().expectStatusCode(400).build();
+        final SavingsAccountHelper validationErrorHelper = new SavingsAccountHelper(this.requestSpec, errorResponse);
 
         /***
          * Create a client to apply for savings account (overdraft account).
@@ -647,6 +681,14 @@ public class ClientSavingsIntegrationTest {
         interestPosted = new Float(decimalFormat.format(interestPosted));
         actualInterestPosted = new Float(decimalFormat.format(actualInterestPosted));
         assertEquals("Verifying interest posted", interestPosted, actualInterestPosted);
+        
+        todaysDate = Calendar.getInstance();
+        final String CLOSEDON_DATE = dateFormat.format(todaysDate.getTime());
+        String withdrawBalance = "false";
+        ArrayList<HashMap> savingsAccountErrorData = (ArrayList<HashMap>) validationErrorHelper.closeSavingsAccountAndGetBackRequiredField(
+                savingsId, withdrawBalance, CommonConstants.RESPONSE_ERROR, CLOSEDON_DATE);
+        assertEquals("validation.msg.savingsaccount.close.results.in.balance.not.zero",
+                savingsAccountErrorData.get(0).get(CommonConstants.RESPONSE_ERROR_MESSAGE_CODE));
     }
 
     private HashMap activateSavingsAccount(final Integer savingsId, final String activationDate) {
