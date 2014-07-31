@@ -42,4 +42,7 @@ public class TransferApiConstants {
 
     public static final Set<String> WITHDRAW_CLIENT_TRANSFER_DATA_PARAMETERS = new HashSet<>(Arrays.asList(note));
 
+    public static final Set<String> TRANSFER_LOAN_OFFICER_OF_GROUP =  new HashSet<>(Arrays.asList(newStaffIdParamName, note));
+
+
 }
