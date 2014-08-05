@@ -39,6 +39,7 @@ public class CreateDatatableEntryCommandHandler implements NewCommandSourceHandl
                 .withClientId(commandProcessingResult.getClientId()) //
                 .withSavingsId(commandProcessingResult.getSavingsId()) //
                 .withLoanId(commandProcessingResult.getLoanId()) //
+                .withUserId(commandProcessingResult.getUserId()) //
                 .build();
     }
 }
