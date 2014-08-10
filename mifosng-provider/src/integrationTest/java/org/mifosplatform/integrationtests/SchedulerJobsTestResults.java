@@ -1,3 +1,8 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package org.mifosplatform.integrationtests;
 
 import static org.junit.Assert.assertEquals;
@@ -209,7 +214,7 @@ public class SchedulerJobsTestResults {
         Assert.assertNotNull(specifiedDueDateChargeId);
 
         this.loanTransactionHelper.addChargesForLoan(loanID,
-                LoanTransactionHelper.getSpecifiedDueDateChargesForLoanAsJSON(specifiedDueDateChargeId.toString()));
+                LoanTransactionHelper.getSpecifiedDueDateChargesForLoanAsJSON(specifiedDueDateChargeId.toString(), "12 March 2013", "100"));
         ArrayList<HashMap> chargesPendingState = this.loanTransactionHelper.getLoanCharges(loanID);
         Assert.assertEquals(1, chargesPendingState.size());
 

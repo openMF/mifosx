@@ -1,3 +1,8 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package org.mifosplatform.portfolio.loanaccount.service;
 
 import java.math.BigDecimal;
@@ -98,9 +103,9 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
             try {
                 if (!loansIds.contains(accrualData.getLoanId())) {
                     if (accrualData.getDueDateAsLocaldate().isAfter(tilldate)) {
-                        if (accruredTill == null) {
+                        //if (accruredTill == null) {
                             accruredTill = accrualData.getAccruedTill();
-                        }
+                        //}
                         addAccrualTillSpecificDate(tilldate, accrualData, accruredTill);
                     } else {
                         addAccrualAccounting(accrualData);

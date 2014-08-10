@@ -1,8 +1,15 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package org.mifosplatform.portfolio.loanaccount;
 
 import java.math.BigDecimal;
 
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
+import org.mifosplatform.portfolio.common.domain.DaysInMonthType;
+import org.mifosplatform.portfolio.common.domain.DaysInYearType;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
@@ -128,9 +135,13 @@ public class LoanProductRelatedDetailTestHelper {
         final Integer graceOnInterestCharged = Integer.valueOf(0);
         final Integer graceOnArrearsAgeing = Integer.valueOf(0);
 
+        final Integer daysInMonthType = DaysInMonthType.ACTUAL.getValue();
+        final Integer daysInYearType = DaysInYearType.ACTUAL.getValue();
+        final boolean isInterestRecalculationEnabled = false;
+
         return new LoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod, interestPeriodFrequencyType,
                 defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
                 defaultNumberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, amortizationMethod,
-                inArrearsTolerance, graceOnArrearsAgeing);
+                inArrearsTolerance, graceOnArrearsAgeing, daysInMonthType, daysInYearType, isInterestRecalculationEnabled);
     }
 }

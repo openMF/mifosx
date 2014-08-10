@@ -1,3 +1,8 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package org.mifosplatform.infrastructure.jobs.service;
 
 public enum JobName {
@@ -18,7 +23,10 @@ public enum JobName {
     UPDATE_DEPOSITS_ACCOUNT_MATURITY_DETAILS("Update Deposit Accounts Maturity details"),
     TRANSFER_INTEREST_TO_SAVINGS("Transfer Interest To Savings"),
 	ADD_PERIODIC_ACCRUAL_ENTRIES("Add Periodic Accrual Transactions"),
+	RECALCULATE_INTEREST_FOR_LOAN("Recalculate Interest For Loans"),
 	IMPACT_PORTAL_DB_CACHE("Update impact portal cache");
+
+    
 
 
     private final String name;
