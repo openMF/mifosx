@@ -30,7 +30,7 @@ public class ImpactPortalReadServiceImpl implements ImpactPortalReadService {
     public ImpactPortalData getDataByNameForYesterday(String name) {
         try{
         final ImpactPortalDataDetailMapper detailMapper = new ImpactPortalDataDetailMapper();
-        final String sql = detailMapper.schema() + " where date(date_captured)=curdate() and datapoint_label=?";
+        final String sql = detailMapper.schema() + " where date(date_captured) in (SELECT max(date(date_captured)) FROM impact_portal_cache) and datapoint_label=?";
         return this.jdbcTemplate.queryForObject(sql, detailMapper, new Object[] { name });
     } catch (final EmptyResultDataAccessException e) {
         throw new ImpactPortalDataNotFoundException(name);
