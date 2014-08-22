@@ -61,31 +61,6 @@ public class ImpactPortalData {
         this.value=value;
     }
 
-    public HashMap getValues(){
-
-        HashMap tempValues=new HashMap();
-        String key;
-        String values;
-
-
-        if(!value.isEmpty()){
-            StringTokenizer tokenizer = new StringTokenizer(value, ",");
-            while(tokenizer.hasMoreTokens()){
-                
-                StringTokenizer tokenizer2 = new StringTokenizer(tokenizer.nextToken(), "*");
-                while(tokenizer2.hasMoreTokens()){
-                    StringTokenizer tokenizer3 = new StringTokenizer(tokenizer2.nextToken(), "=");
-                    //savings amount,50
-                    tokenizer3.nextToken();//skinping the datapoint name
-                    values=tokenizer3.nextToken();
-                }
-            }
-        }
-        tempValues.put("Loan amount", 58);
-        tempValues.put("Loan amount1", 100);
-
-        return tempValues;
-    }
     
     public ArrayList<cachedDataResult> getResultValues(){
 
