@@ -22,7 +22,6 @@ import com.jayway.restassured.specification.ResponseSpecification;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Locale;
 import java.util.Random;
 
 @SuppressWarnings("unchecked")
@@ -73,7 +72,7 @@ public class Utils {
 
 
     public static String convertDateToURLFormat(String dateToBeConvert){
-        SimpleDateFormat oldFormat = new SimpleDateFormat("dd MMMMMM yyyy", Locale.US);
+        SimpleDateFormat oldFormat = new SimpleDateFormat("dd MMMMMM yyyy");
         SimpleDateFormat newFormat = new SimpleDateFormat("yyyy-MM-dd");
         String reformattedStr="";
         try {

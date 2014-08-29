@@ -9,12 +9,10 @@ import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 import org.joda.time.LocalDate;
 import org.junit.Assert;
@@ -831,7 +829,7 @@ public class ClientLoanIntegrationTest {
 
     private void validateChargeExcludePrecission(Integer amountPercentage, final List<HashMap> loanCharges, final String amount,
             final String outstanding, String amountPaid, String amountWaived) {
-        DecimalFormat twoDForm = new DecimalFormat("#", new DecimalFormatSymbols(Locale.US));
+        DecimalFormat twoDForm = new DecimalFormat("#");
         HashMap chargeDetail = getloanCharge(amountPercentage, loanCharges);
         Assert.assertTrue(new Float(twoDForm.format(new Float(amount))).compareTo(new Float(twoDForm.format(new Float(String
                 .valueOf(chargeDetail.get("amountOrPercentage")))))) == 0);
@@ -852,7 +850,7 @@ public class ClientLoanIntegrationTest {
     }
 
     public void validateNumberForEqualExcludePrecission(String val, String val2) {
-        DecimalFormat twoDForm = new DecimalFormat("#", new DecimalFormatSymbols(Locale.US));
+        DecimalFormat twoDForm = new DecimalFormat("#");
         Assert.assertTrue(new Float(twoDForm.format(new Float(val))).compareTo(new Float(twoDForm.format(new Float(val2)))) == 0);
     }
 

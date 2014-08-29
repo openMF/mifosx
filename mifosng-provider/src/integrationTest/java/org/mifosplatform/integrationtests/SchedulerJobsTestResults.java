@@ -9,13 +9,11 @@ import static org.junit.Assert.assertEquals;
 
 import java.text.DateFormat;
 import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -447,7 +445,7 @@ public class SchedulerJobsTestResults {
         this.schedulerJobHelper = new SchedulerJobHelper(this.requestSpec, this.responseSpec);
         this.loanTransactionHelper = new LoanTransactionHelper(this.requestSpec, this.responseSpec);
 
-        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
+        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
 
         Calendar todayDate = Calendar.getInstance();
         final String currentDate = dateFormat.format(todayDate.getTime());
@@ -508,7 +506,7 @@ public class SchedulerJobsTestResults {
         this.schedulerJobHelper = new SchedulerJobHelper(this.requestSpec, this.responseSpec);
         this.loanTransactionHelper = new LoanTransactionHelper(this.requestSpec, this.responseSpec);
 
-        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
+        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
 
         Calendar todaysDate = Calendar.getInstance();
         final String currentDate = dateFormat.format(todaysDate.getTime());
@@ -565,8 +563,8 @@ public class SchedulerJobsTestResults {
         this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
         this.standingInstructionsHelper = new StandingInstructionsHelper(this.requestSpec, this.responseSpec);
 
-        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
-        DateFormat monthDayFormat = new SimpleDateFormat("dd MMMM", Locale.US);
+        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
+        DateFormat monthDayFormat = new SimpleDateFormat("dd MMMM");
 
         Calendar todaysDate = Calendar.getInstance();
         todaysDate.add(Calendar.MONTH, -1);
@@ -741,8 +739,8 @@ public class SchedulerJobsTestResults {
         AccountHelper accountHelper = new AccountHelper(this.requestSpec, this.responseSpec);
         FixedDepositAccountHelper fixedDepositAccountHelper = new FixedDepositAccountHelper(this.requestSpec, this.responseSpec);
 
-        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
-        DateFormat monthDayFormat = new SimpleDateFormat("dd MMM", Locale.US);
+        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
+        DateFormat monthDayFormat = new SimpleDateFormat("dd MMM");
 
         Calendar todaysDate = Calendar.getInstance();
         todaysDate.add(Calendar.MONTH, -3);

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 import org.mifosplatform.integrationtests.common.CommonConstants;
 import org.mifosplatform.integrationtests.common.Utils;
@@ -52,7 +51,7 @@ public class SavingsAccountHelper {
     }
 
     public static String getFutureDate() {
-        SimpleDateFormat sdf = new SimpleDateFormat(CommonConstants.dateFormat, Locale.US);
+        SimpleDateFormat sdf = new SimpleDateFormat(CommonConstants.dateFormat);
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) + 1);
         return sdf.format(calendar.getTime());
