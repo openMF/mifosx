@@ -8,7 +8,7 @@
 -->
 <Context>
 	<Resource type="javax.sql.DataSource" name="jdbc/mifosplatform-tenants"
-		driverClassName="com.mysql.jdbc.Driver" url="jdbc:mysql://localhost:3306/mifosplatform-tenants"
-		username="root" password="mysql" validationQuery="select 1" maxActive="10"
+		driverClassName="com.mysql.jdbc.Driver" url="jdbc:mysql://localhost:3306/db_project07_test_mifosplatform-tenants"
+		username="root" password="mackpaul" validationQuery="select 1" maxActive="10"
 		maxIdle="4" />
 </Context>
