@@ -35,12 +35,10 @@ project.ext.jerseyVersion = '1.17'
 project.ext.springDataJpaVersion = '1.4.1.RELEASE'
 
 project.ext.mysqlUser='root'
-project.ext.mysqlPassword='mackpaul'
+project.ext.mysqlPassword='mysql'
 
 
 group = 'org.mifosplatform'
-
-
 
 repositories {
 	jcenter()
@@ -232,25 +230,9 @@ tomcatRunWar {
 
 
 sourceSets {
-
-   main {
-        //if you truly want to override the defaults:
-        output.resourcesDir = "$buildDir/classes"
-        output.classesDir   = "$buildDir/classes"
-   }
-   
-   test {
-        //if you truly want to override the defaults:
-        output.resourcesDir = "$buildDir/test-classes"
-        output.classesDir   = "$buildDir/test-classes"
-   }
-   
     integrationTest {
     	compileClasspath += main.output + test.output
         runtimeClasspath += main.output + test.output
-        
-        output.resourcesDir = "$buildDir/integrationTest-classes"
-        output.classesDir   = "$buildDir/integrationTest-classes"
     }
 }
 

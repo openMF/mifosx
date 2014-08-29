@@ -8,4 +8,3 @@ repos
 .gradle
 *.log
 !gradle/wrapper/gradle-wrapper.jar
-/target
