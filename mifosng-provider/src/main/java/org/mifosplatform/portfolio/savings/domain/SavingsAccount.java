@@ -69,12 +69,15 @@ import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
+import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
+import org.mifosplatform.organisation.staff.exception.StaffRoleException;
 import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.exception.SavingsAccountChargeNotFoundException;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 import org.mifosplatform.portfolio.group.domain.Group;
+import org.mifosplatform.portfolio.savings.domain.SavingsOfficerAssignmentHistory;
 import org.mifosplatform.portfolio.savings.DepositAccountType;
 import org.mifosplatform.portfolio.savings.SavingsApiConstants;
 import org.mifosplatform.portfolio.savings.SavingsCompoundingInterestPeriodType;
@@ -123,7 +126,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     @ManyToOne
     @JoinColumn(name = "field_officer_id", nullable = true)
-    protected Staff fieldOfficer;
+    protected Staff savingsOfficer;
 
     @Column(name = "status_enum", nullable = false)
     protected Integer status;
@@ -263,6 +266,10 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true)
     protected Set<SavingsAccountCharge> charges = new HashSet<>();
 
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true)
+    private Set<SavingsOfficerAssignmentHistory> savingsOfficerHistory;
+    
     @Transient
     protected boolean accountNumberRequiresAutoGeneration = false;
     @Transient
@@ -279,7 +286,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     protected SavingsAccount() {
         //
     }
-
+ 
     public static SavingsAccount createNewApplicationForSubmittal(final Client client, final Group group, final SavingsProduct product,
             final Staff fieldOfficer, final String accountNo, final String externalId, final AccountType accountType,
             final LocalDate submittedOnDate, final AppUser submittedBy, final BigDecimal interestRate,
@@ -314,7 +321,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                 withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, false, null);
     }
 
-    protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff fieldOfficer,
+    protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff savingsOfficer,
             final String accountNo, final String externalId, final SavingsAccountStatusType status, final AccountType accountType,
             final LocalDate submittedOnDate, final AppUser submittedBy, final BigDecimal nominalAnnualInterestRate,
             final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
@@ -327,7 +334,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         this.client = client;
         this.group = group;
         this.product = product;
-        this.fieldOfficer = fieldOfficer;
+        this.savingsOfficer = savingsOfficer;
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();
             this.accountNumberRequiresAutoGeneration = true;
@@ -364,6 +371,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         this.enforceMinRequiredBalance = enforceMinRequiredBalance;
         this.minRequiredBalance = minRequiredBalance;
         this.minBalanceForInterestCalculation = product.minBalanceForInterestCalculation();
+        this.savingsOfficerHistory = null;
     }
 
     /**
@@ -990,7 +998,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             actualChanges.put(SavingsApiConstants.productIdParamName, newValue);
         }
 
-        if (command.isChangeInLongParameterNamed(SavingsApiConstants.fieldOfficerIdParamName, fieldOfficerId())) {
+        if (command.isChangeInLongParameterNamed(SavingsApiConstants.fieldOfficerIdParamName, hasSavingsOfficerId())) {
             final Long newValue = command.longValueOfParameterNamed(SavingsApiConstants.fieldOfficerIdParamName);
             actualChanges.put(SavingsApiConstants.fieldOfficerIdParamName, newValue);
         }
@@ -1195,8 +1203,8 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         this.minBalanceForInterestCalculation = product.minBalanceForInterestCalculation();
     }
 
-    public void update(final Staff fieldOfficer) {
-        this.fieldOfficer = fieldOfficer;
+    public void update(final Staff savingsOfficer) {
+        this.savingsOfficer = savingsOfficer;
     }
 
     public void updateAccountNo(final String newAccountNo) {
@@ -1241,15 +1249,15 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     }
 
     public Staff getFieldOfficer() {
-        return this.fieldOfficer;
+        return this.savingsOfficer;
     }
 
     public void unassignFieldOfficer() {
-        this.fieldOfficer = null;
+        this.savingsOfficer = null;
     }
 
     public void assignFieldOfficer(final Staff fieldOfficer) {
-        this.fieldOfficer = fieldOfficer;
+        this.savingsOfficer = fieldOfficer;
     }
 
     public Long clientId() {
@@ -1268,14 +1276,41 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return id;
     }
 
-    public Long fieldOfficerId() {
+    public Long hasSavingsOfficerId() {
         Long id = null;
-        if (this.fieldOfficer != null) {
-            id = this.fieldOfficer.getId();
+        if (this.savingsOfficer != null) {
+            id = this.savingsOfficer.getId();
         }
         return id;
     }
+    
+        
+    public boolean hasSavingsOfficer(final Staff fromSavingsOfficer) {
 
+        boolean matchesCurrentSavingsOfficer = false;
+        if (this.savingsOfficer != null) {
+            matchesCurrentSavingsOfficer = this.savingsOfficer.identifiedBy(fromSavingsOfficer);
+        } else {
+            matchesCurrentSavingsOfficer = fromSavingsOfficer == null;
+        }
+        return matchesCurrentSavingsOfficer;
+    }
+  
+    public void reassignSavingsOfficer(final Staff newSavingsOfficer) {     
+            this.savingsOfficer = newSavingsOfficer;
+            if (isNotSubmittedAndPendingApproval()) {
+                final SavingsOfficerAssignmentHistory savingsOfficerAssignmentHistory = 
+                		SavingsOfficerAssignmentHistory.createNew(this,this.savingsOfficer);
+                this.savingsOfficerHistory.add(savingsOfficerAssignmentHistory);
+            }
+        }
+    
+    
+    public void removeSavingsOfficer() {
+        this.savingsOfficer = null;
+    }
+    
+    
     public MonetaryCurrency getCurrency() {
         return this.currency;
     }

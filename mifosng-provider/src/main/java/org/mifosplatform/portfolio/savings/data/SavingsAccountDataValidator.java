@@ -391,50 +391,43 @@ public class SavingsAccountDataValidator {
 
     }
 
-    public void validateForAssignFieldOfficer(final String json) {
+    public void validateForAssignSavingsOfficer(final String json) {
 
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+        
+        final Set<String> supportedParameters = new HashSet<>(Arrays.asList("fromSavingsOfficerId","toSavingsOfficerId"));
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-
-        final Set<String> supportedParametersUnassignStaff = new HashSet<>(Arrays.asList(SavingsApiConstants.staffIdParamName));
-
-        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, supportedParametersUnassignStaff);
-        final JsonElement element = this.fromApiJsonHelper.parse(json);
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, supportedParameters);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
-                .resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
 
-        final String staffIdParameterName = SavingsApiConstants.staffIdParamName;
-        final Long staffId = this.fromApiJsonHelper.extractLongNamed(staffIdParameterName, element);
-        baseDataValidator.reset().parameter(staffIdParameterName).value(staffId).notNull().longGreaterThanZero();
+        final Long toSavingsOfficerId = this.fromApiJsonHelper.extractLongNamed("toSavingsOfficerId", element);
+        baseDataValidator.reset().parameter("toSavingsOfficerId").value(toSavingsOfficerId).notNull().integerGreaterThanZero();
 
-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);       
 
     }
 
-    public void validateForUnAssignFieldOfficer(final String json) {
-        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+    public void validateForUnAssignSavingsOfficer(final String json) {
+if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+        
+        final Set<String> supportedParameters = new HashSet<>(Arrays.asList("fromSavingsOfficerId","toSavingsOfficerId"));
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-
-        final Set<String> supportedParametersUnassignStaff = new HashSet<>(Arrays.asList(SavingsApiConstants.staffIdParamName));
-
-        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, supportedParametersUnassignStaff);
-        final JsonElement element = this.fromApiJsonHelper.parse(json);
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, supportedParameters);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
 
-        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
-                .resource(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
 
-        final String staffIdParameterName = SavingsApiConstants.staffIdParamName;
-        final Long staffId = this.fromApiJsonHelper.extractLongNamed(staffIdParameterName, element);
-        baseDataValidator.reset().parameter(staffIdParameterName).value(staffId).notNull().longGreaterThanZero();
+        final Long fromSavingsOfficerId = this.fromApiJsonHelper.extractLongNamed("fromSavingsOfficerId", element);
+        baseDataValidator.reset().parameter("fromSavingsOfficerId").value(fromSavingsOfficerId).notNull().integerGreaterThanZero();
 
-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-
-    }
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);     
+}
 }
