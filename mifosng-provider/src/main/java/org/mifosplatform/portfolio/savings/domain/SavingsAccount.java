@@ -69,14 +69,13 @@ import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
-import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
-import org.mifosplatform.organisation.staff.exception.StaffRoleException;
 import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.exception.SavingsAccountChargeNotFoundException;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 import org.mifosplatform.portfolio.group.domain.Group;
+import org.mifosplatform.portfolio.savings.exception.SavingsOfficerAssignmentDateException;
 import org.mifosplatform.portfolio.savings.domain.SavingsOfficerAssignmentHistory;
 import org.mifosplatform.portfolio.savings.DepositAccountType;
 import org.mifosplatform.portfolio.savings.SavingsApiConstants;
@@ -90,6 +89,7 @@ import org.mifosplatform.portfolio.savings.domain.interest.PostingPeriod;
 import org.mifosplatform.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.mifosplatform.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
 import org.mifosplatform.portfolio.savings.exception.SavingsActivityPriorToClientTransferException;
+import org.mifosplatform.portfolio.savings.exception.SavingsOfficerUnassignmentDateException;
 import org.mifosplatform.portfolio.savings.exception.SavingsTransferTransactionsCannotBeUndoneException;
 import org.mifosplatform.portfolio.savings.service.SavingsEnumerations;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -1296,20 +1296,128 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return matchesCurrentSavingsOfficer;
     }
   
-    public void reassignSavingsOfficer(final Staff newSavingsOfficer) {     
+    public void reassignSavingsOfficer(final Staff newSavingsOfficer,final LocalDate assignmentDate) {     
+    	final SavingsOfficerAssignmentHistory latestHistoryRecord = findLatestIncompleteHistoryRecord();
+        final SavingsOfficerAssignmentHistory lastAssignmentRecord = findLastAssignmentHistoryRecord(newSavingsOfficer);
+
+        // assignment date should not be less than savings account submitted date
+        if (isSubmittedOnDateAfter(assignmentDate)) {
+
+            final String errorMessage = "The Savings Officer assignment date (" + assignmentDate.toString()
+                    + ") cannot be before savings submitted date (" + getSubmittedOnDate().toString() + ").";
+
+            throw new SavingsOfficerAssignmentDateException("cannot.be.before.savings.submitted.date", errorMessage, assignmentDate,
+                    getSubmittedOnDate());
+
+        } else if (lastAssignmentRecord != null && lastAssignmentRecord.isEndDateAfter(assignmentDate)) {
+
+            final String errorMessage = "The Savings Officer assignment date (" + assignmentDate
+                    + ") cannot be before previous Savings Officer unassigned date (" + lastAssignmentRecord.getEndDate() + ").";
+
+            throw new SavingsOfficerAssignmentDateException("cannot.be.before.previous.unassignement.date", errorMessage, assignmentDate,
+                    lastAssignmentRecord.getEndDate());
+
+        } else if (DateUtils.getLocalDateOfTenant().isBefore(assignmentDate)) {
+
+            final String errorMessage = "The Savings Officer assignment date (" + assignmentDate + ") cannot be in the future.";
+
+            throw new SavingsOfficerAssignmentDateException("cannot.be.a.future.date", errorMessage, assignmentDate);
+
+        } else if (latestHistoryRecord != null && this.savingsOfficer.identifiedBy(newSavingsOfficer)) {
+            latestHistoryRecord.updateStartDate(assignmentDate);
+        } else if (latestHistoryRecord != null && latestHistoryRecord.matchesStartDateOf(assignmentDate)) {
+            latestHistoryRecord.updateSavingsOfficer(newSavingsOfficer);
             this.savingsOfficer = newSavingsOfficer;
+        } else if (latestHistoryRecord != null && latestHistoryRecord.hasStartDateBefore(assignmentDate)) {
+            final String errorMessage = "Savings account with identifier " + getId() + " was already assigned before date " + assignmentDate;
+            throw new SavingsOfficerAssignmentDateException("is.before.last.assignment.date", errorMessage, getId(), assignmentDate);
+        } else {
+            if (latestHistoryRecord != null) {
+                // savings officer correctly changed from previous savings officer to
+                // new savings officer
+                latestHistoryRecord.updateEndDate(assignmentDate);
+            }
+    		this.savingsOfficer = newSavingsOfficer;
             if (isNotSubmittedAndPendingApproval()) {
                 final SavingsOfficerAssignmentHistory savingsOfficerAssignmentHistory = 
-                		SavingsOfficerAssignmentHistory.createNew(this,this.savingsOfficer);
+                		SavingsOfficerAssignmentHistory.createNew(this,this.savingsOfficer,assignmentDate);
                 this.savingsOfficerHistory.add(savingsOfficerAssignmentHistory);
             }
         }
+    }
     
     
-    public void removeSavingsOfficer() {
+    private SavingsOfficerAssignmentHistory findLastAssignmentHistoryRecord(final Staff newSavingsOfficer) {
+
+        SavingsOfficerAssignmentHistory lastAssignmentRecordLatestEndDate = null;
+        for (final SavingsOfficerAssignmentHistory historyRecord : this.savingsOfficerHistory) {
+
+            if (historyRecord.isCurrentRecord() && !historyRecord.isSameSavingsOfficer(newSavingsOfficer)) {
+                lastAssignmentRecordLatestEndDate = historyRecord;
+                break;
+            }
+
+            if (lastAssignmentRecordLatestEndDate == null) {
+                lastAssignmentRecordLatestEndDate = historyRecord;
+            } else if (historyRecord.isEndDateAfter(lastAssignmentRecordLatestEndDate.getEndDate())
+                    && !historyRecord.isSameSavingsOfficer(newSavingsOfficer)) {
+                lastAssignmentRecordLatestEndDate = historyRecord;
+            }
+        }
+        return lastAssignmentRecordLatestEndDate;
+    }
+    
+        public boolean isSubmittedOnDateAfter(final LocalDate compareDate) {
+            return this.submittedOnDate == null ? false : new LocalDate(this.submittedOnDate).isAfter(compareDate);
+        }
+
+        public LocalDate getSubmittedOnDate() {
+            return (LocalDate) ObjectUtils.defaultIfNull(new LocalDate(this.submittedOnDate), null);
+        }
+
+        
+    public void removeSavingsOfficer(final LocalDate unassignDate) {
+
+    	final SavingsOfficerAssignmentHistory latestHistoryRecord = findLatestIncompleteHistoryRecord();
+
+        if (latestHistoryRecord != null) {
+            validateUnassignDate(latestHistoryRecord, unassignDate);
+            latestHistoryRecord.updateEndDate(unassignDate);
+        }
         this.savingsOfficer = null;
     }
     
+    private SavingsOfficerAssignmentHistory findLatestIncompleteHistoryRecord() {
+
+        SavingsOfficerAssignmentHistory latestRecordWithNoEndDate = null;
+        for (final SavingsOfficerAssignmentHistory historyRecord : this.savingsOfficerHistory) {
+            if (historyRecord.isCurrentRecord()) {
+                latestRecordWithNoEndDate = historyRecord;
+                break;
+            }
+        }
+        return latestRecordWithNoEndDate;
+    }
+
+    private void validateUnassignDate(final SavingsOfficerAssignmentHistory latestHistoryRecord, final LocalDate unassignDate) {
+
+        final LocalDate today = DateUtils.getLocalDateOfTenant();
+
+        if (latestHistoryRecord.getStartDate().isAfter(unassignDate)) {
+
+            final String errorMessage = "The Savings officer Unassign date(" + unassignDate + ") cannot be before its assignment date ("
+                    + latestHistoryRecord.getStartDate() + ").";
+
+            throw new SavingsOfficerUnassignmentDateException("cannot.be.before.assignment.date", errorMessage, getId(), getFieldOfficer()
+                    .getId(), latestHistoryRecord.getStartDate(), unassignDate);
+
+        } else if (unassignDate.isAfter(today)) {
+
+            final String errorMessage = "The Savings Officer Unassign date (" + unassignDate + ") cannot be in the future.";
+
+            throw new SavingsOfficerUnassignmentDateException("cannot.be.a.future.date", errorMessage, unassignDate);
+        }
+    }
     
     public MonetaryCurrency getCurrency() {
         return this.currency;
