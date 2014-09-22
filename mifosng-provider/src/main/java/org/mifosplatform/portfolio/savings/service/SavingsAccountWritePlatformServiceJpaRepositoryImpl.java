@@ -1036,7 +1036,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final SavingsAccount savingsForUpdate = this.savingsRepository.findOneWithNotFoundDetection(savingsAccountId);
         final Long fromSavingsOfficerId = command.longValueOfParameterNamed("fromSavingsOfficerId");
         final Long toSavingsOfficerId = command.longValueOfParameterNamed("toSavingsOfficerId");
-
+        final LocalDate dateOfSavingsOfficerAssignment = command.localDateValueOfParameterNamed("assignmentDate");
+        
         if(fromSavingsOfficerId != null)
         {
         	fromSavingsOfficer = this.staffRepository.findByOfficeHierarchyWithNotFoundDetection(fromSavingsOfficerId, savingsForUpdate.office().getHierarchy());
@@ -1047,11 +1048,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         }
         if (!savingsForUpdate.hasSavingsOfficer(fromSavingsOfficer)) { throw new SavingsOfficerAssignmentException(savingsAccountId, fromSavingsOfficerId); }
 
-        savingsForUpdate.reassignSavingsOfficer(toSavingsOfficer);
+        savingsForUpdate.reassignSavingsOfficer(toSavingsOfficer,dateOfSavingsOfficerAssignment);
 
         this.savingsRepository.saveAndFlush(savingsForUpdate);
 
-        actualChanges.put(SavingsApiConstants.staffIdParamName, toSavingsOfficer);
+        actualChanges.put(SavingsApiConstants.staffIdParamName, toSavingsOfficer.getId());
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -1074,7 +1075,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     	final SavingsAccount savingsForUpdate = this.savingsRepository.findOneWithNotFoundDetection(savingsAccountId);
         if (savingsForUpdate.getFieldOfficer() == null) { throw new SavingsOfficerUnassignmentException(savingsAccountId); }
 
-        savingsForUpdate.removeSavingsOfficer();
+        final LocalDate dateOfSavingsOfficerUnassigned = command.localDateValueOfParameterNamed("unassignedDate");
+        
+        savingsForUpdate.removeSavingsOfficer(dateOfSavingsOfficerUnassigned);
 
         this.savingsRepository.saveAndFlush(savingsForUpdate);
 
