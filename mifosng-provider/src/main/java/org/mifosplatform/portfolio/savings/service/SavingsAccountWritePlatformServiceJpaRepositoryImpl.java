@@ -1052,7 +1052,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         this.savingsRepository.saveAndFlush(savingsForUpdate);
 
-        actualChanges.put(SavingsApiConstants.staffIdParamName, toSavingsOfficer.getId());
+        actualChanges.put("toSavingsOfficerId", toSavingsOfficer.getId());
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -1081,13 +1081,13 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         this.savingsRepository.saveAndFlush(savingsForUpdate);
 
-        actualChanges.put(SavingsApiConstants.staffIdParamName, savingsForUpdate.getFieldOfficer());
+        actualChanges.put("toSavingsOfficerId", null);
         
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withOfficeId(savingsForUpdate.officeId()) //
                 .withEntityId(savingsForUpdate.getId()) //
-                .withClientId(savingsAccountId) //
+                .withSavingsId(savingsAccountId) //
                 .with(actualChanges) //
                 .build();	    	
          }

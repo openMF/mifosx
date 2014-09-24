@@ -1252,11 +1252,11 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return this.savingsOfficer;
     }
 
-    public void unassignFieldOfficer() {
+    public void unassignSavingsOfficer() {
         this.savingsOfficer = null;
     }
 
-    public void assignFieldOfficer(final Staff fieldOfficer) {
+    public void assignSavingsOfficer(final Staff fieldOfficer) {
         this.savingsOfficer = fieldOfficer;
     }
 

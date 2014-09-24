@@ -2077,7 +2077,7 @@ public class CommandWrapperBuilder {
     	this.actionName = "UPDATESAVINGSOFFICER";
         this.entityName = "SAVINGSACCOUNT";
         this.entityId = accountId;
-        this.href = "/savingsaccounts/" + accountId ;
+        this.href = "/savingsaccounts/" + accountId + "?command=assignSavingsOfficer";
         return this;
     }
 
@@ -2085,7 +2085,7 @@ public class CommandWrapperBuilder {
         this.actionName = "REMOVESAVINGSOFFICER";
         this.entityName = "SAVINGSACCOUNT";
         this.entityId = accountId;
-        this.href = "/savingsaccounts/" + accountId ;
+        this.href = "/savingsaccounts/" + accountId + "?commad=unassignSavingsOfficer";
         return this;
     }
 
