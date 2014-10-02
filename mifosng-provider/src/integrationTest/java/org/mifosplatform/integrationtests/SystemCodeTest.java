@@ -9,7 +9,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,7 +53,10 @@ public class SystemCodeTest {
     @Test
     // scenario 57, 58, 59, 60
     public void testCreateCode() {
-        final String codeName = "Client Marital Status";
+        final String codeName = "officer Marital Status";
+
+        final String codeValue1 = "Divorced";
+        final int codeValue1Position = 1;
 
         final Integer createResponseId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, codeName,
                 CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
@@ -60,17 +65,21 @@ public class SystemCodeTest {
 
         final HashMap newCodeAttributes = (HashMap) CodeHelper.getCodeById(this.requestSpec, this.responseSpec, createResponseId, "");
 
+        final Integer createCodeValueResponseId1 = (Integer) CodeHelper.createCodeValue(this.requestSpec, this.responseSpec,
+                createResponseId, codeValue1, codeValue1Position, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
+
         Assert.assertNotNull(newCodeAttributes);
         assertEquals("Verify value of codeId", createResponseId, newCodeAttributes.get(CodeHelper.CODE_ID_ATTRIBUTE_NAME));
 
         assertEquals("Verify code name", codeName, newCodeAttributes.get(CodeHelper.CODE_NAME_ATTRIBUTE_NAME));
         assertEquals("Verify system defined is false", false, newCodeAttributes.get(CodeHelper.CODE_SYSTEM_DEFINED_ATTRIBUTE_NAME));
 
-        // update code
+        // update code  and set codeValue1 as default
         final HashMap updateChangeResponse = (HashMap) CodeHelper.updateCode(this.requestSpec, this.responseSpec, createResponseId,
-                codeName + "(CHANGE)", "changes");
+                codeName + "(CHANGE)",createCodeValueResponseId1, "changes");
 
         assertEquals("Verify code name updated", codeName + "(CHANGE)", updateChangeResponse.get(CodeHelper.CODE_NAME_ATTRIBUTE_NAME));
+        assertEquals("Verify default value updated", createCodeValueResponseId1 , updateChangeResponse.get(CodeHelper.CODE_DEFAULT_VALUE_ATTRIBUTE_NAME));
 
         // delete code
         final Integer deleteResponseId = (Integer) CodeHelper.deleteCodeById(this.requestSpec, this.responseSpec, createResponseId,
@@ -137,25 +146,39 @@ public class SystemCodeTest {
 
         // get any systemDefined code
         final HashMap systemDefinedCode = (HashMap) CodeHelper.getSystemDefinedCodes(this.requestSpec, this.responseSpec);
+        final String codeValue2 = "footballer";
+        final int codeValue2Position = 2;
 
         // delete system-defined code should fail
         final List<HashMap> error = (List) CodeHelper.deleteCodeById(this.requestSpec, this.generalResponseSpec,
                 (Integer) systemDefinedCode.get(CodeHelper.CODE_ID_ATTRIBUTE_NAME), CommonConstants.RESPONSE_ERROR);
 
+
+        final Integer createCodeValueResponseId2 = (Integer) CodeHelper.createCodeValue(this.requestSpec, this.responseSpec,
+                (Integer) systemDefinedCode.get(CodeHelper.CODE_ID_ATTRIBUTE_NAME), codeValue2, codeValue2Position, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
+
         assertEquals("Cannot delete system-defined code", "error.msg.code.systemdefined", error.get(0).get("userMessageGlobalisationCode"));
 
-        // update system-defined code should fail
+        // update system-defined code with different name fails
 
         final List<HashMap> updateError = (List) CodeHelper.updateCode(this.requestSpec, this.generalResponseSpec,
                 (Integer) systemDefinedCode.get(CodeHelper.CODE_ID_ATTRIBUTE_NAME),
-                systemDefinedCode.get(CodeHelper.CODE_NAME_ATTRIBUTE_NAME) + "CHANGE", CommonConstants.RESPONSE_ERROR);
-
+                systemDefinedCode.get(CodeHelper.CODE_NAME_ATTRIBUTE_NAME) + "CHANGE",createCodeValueResponseId2, CommonConstants.RESPONSE_ERROR);
         assertEquals("Cannot update system-defined code", "error.msg.code.systemdefined",
                 updateError.get(0).get("userMessageGlobalisationCode"));
 
+
+
+
+        //allow updating of systemDefined default value should pass
+        final HashMap updateDefaultValue = (HashMap) CodeHelper.updateSystemDefinedCodeWithDefaultValue(this.requestSpec, this.generalResponseSpec,
+                (Integer) systemDefinedCode.get(CodeHelper.CODE_ID_ATTRIBUTE_NAME),createCodeValueResponseId2,CommonConstants.RESPONSE_CHANGES);
+        assertEquals("verify default value",createCodeValueResponseId2,
+                (Integer)updateDefaultValue.get(CodeHelper.CODE_DEFAULT_VALUE_ATTRIBUTE_NAME));
+
     }
 
-    // @Ignore
+//    @Ignore
     @Test
     public void testCodeValuesNotAssignedToTable() {
 
@@ -219,15 +242,15 @@ public class SystemCodeTest {
 
         assertEquals("Verify changed code value name", codeValueChanges.get("name"), codeValue1 + "CHANGE");
 
+
         // delete code value
         final Integer deletedCodeValueResponseId1 = (Integer) CodeHelper.deleteCodeValueById(this.requestSpec, this.generalResponseSpec,
-                createCodeResponseId, createCodeValueResponseId1, CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
+                createCodeResponseId, createCodeValueResponseId1, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
 
         // Verify code value deleted
 
         final HashMap deletedCodeValueAttributes1 = (HashMap) CodeHelper.getCodeValueById(this.requestSpec, this.generalResponseSpec,
                 createCodeResponseId, deletedCodeValueResponseId1, "");
-
         // Assert.assertNotNull(deletedCodeValueAttributes1);
         assertNull("Verify value of codeValueId", deletedCodeValueAttributes1.get(CodeHelper.CODE_VALUE_ID_ATTRIBUTE_NAME));
 
