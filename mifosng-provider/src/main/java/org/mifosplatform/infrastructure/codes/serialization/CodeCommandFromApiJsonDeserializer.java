@@ -34,7 +34,8 @@ public final class CodeCommandFromApiJsonDeserializer {
     /**
      * The parameters supported for this command.
      */
-    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("name"));
+
+    private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("name","defaultValue"));
     private final FromJsonHelper fromApiJsonHelper;
 
     @Autowired
@@ -73,6 +74,12 @@ public final class CodeCommandFromApiJsonDeserializer {
             final String name = this.fromApiJsonHelper.extractStringNamed("name", element);
             baseDataValidator.reset().parameter("name").value(name).notBlank().notExceedingLengthOf(100);
         }
+
+        if (this.fromApiJsonHelper.parameterExists("defaultValue", element)) {
+            final Long defaultCode = this.fromApiJsonHelper.extractLongNamed("defaultValue", element);
+            baseDataValidator.reset().parameter("defaultValue").value(defaultCode).ignoreIfNull().longGreaterThanZero();
+        }
+
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
