@@ -14,6 +14,7 @@ import org.mifosplatform.accounting.common.AccountingConstants.CASH_ACCOUNTS_FOR
 import org.mifosplatform.accounting.common.AccountingConstants.FINANCIAL_ACTIVITY;
 import org.mifosplatform.accounting.journalentry.data.LoanDTO;
 import org.mifosplatform.accounting.journalentry.data.LoanTransactionDTO;
+import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,10 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
         for (final LoanTransactionDTO loanTransactionDTO : loanDTO.getNewLoanTransactions()) {
             final Date transactionDate = loanTransactionDTO.getTransactionDate();
             this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
+
+            if (loanTransactionDTO.getTransactionType().isWaiveCharges() || loanTransactionDTO.getTransactionType().isWaiveInterest()) { throw new PlatformDataIntegrityException(
+                    "Meltdown in advanced accounting...sum of all charges is not equal to the fee charge for a transaction",
+                    "Meltdown in advanced accounting...sum of all charges is not equal to the fee charge for a transaction"); }
 
             /** Handle Disbursements **/
             if (loanTransactionDTO.getTransactionType().isDisbursement()) {
