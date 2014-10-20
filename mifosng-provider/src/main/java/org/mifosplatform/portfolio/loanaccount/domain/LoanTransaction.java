@@ -106,6 +106,9 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
     @Column(name = "outstanding_loan_balance_derived", scale = 6, precision = 19, nullable = true)
     private BigDecimal outstandingLoanBalance;
 
+    @Column(name= "manually_adjusted_or_reversed", nullable = false)
+    private boolean manuallyAdjustedOrReversed;
+
     protected LoanTransaction() {
         this.loan = null;
         this.dateOf = null;
@@ -503,7 +506,8 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
         }
         return new LoanTransactionData(getId(), this.office.getId(), this.office.getName(), transactionType, paymentDetailData,
                 currencyData, getTransactionDate(), this.amount, this.principalPortion, this.interestPortion, this.feeChargesPortion,
-                this.penaltyChargesPortion, this.overPaymentPortion, this.externalId, transfer, null, outstandingLoanBalance, unrecognizedIncomePortion);
+                this.penaltyChargesPortion, this.overPaymentPortion, this.externalId, transfer, null, outstandingLoanBalance, unrecognizedIncomePortion,
+                this.manuallyAdjustedOrReversed);
     }
 
     public Map<String, Object> toMapData(final CurrencyData currencyData) {
@@ -577,4 +581,16 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
         this.outstandingLoanBalance = outstandingLoanBalance;
     }
 
+
+    public boolean isManuallyAdjustedOrReversed() {
+        return this.manuallyAdjustedOrReversed;
+    }
+
+    public boolean isNotManuallyAdjustedOrReversed(){
+        return !this.manuallyAdjustedOrReversed;
+    }
+
+    public void manuallyAdjustedOrReversed(){
+        this.manuallyAdjustedOrReversed = true;
+    }
 }
