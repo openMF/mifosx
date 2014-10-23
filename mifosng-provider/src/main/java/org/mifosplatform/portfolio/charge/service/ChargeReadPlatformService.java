@@ -19,13 +19,13 @@ public interface ChargeReadPlatformService {
 
     ChargeData retrieveNewChargeDetails();
 
-    Collection<ChargeData> retrieveLoanApplicableCharges(boolean feeChargesOnly, Integer[] excludeChargeTimes);
+    Collection<ChargeData> retrieveLoanApplicableCharges(long loanId, boolean feeChargesOnly, Integer[] excludeChargeTimes);
 
     Collection<ChargeData> retrieveLoanApplicablePenalties();
 
     Collection<ChargeData> retrieveLoanProductCharges(Long loanProductId);
 
-    Collection<ChargeData> retrieveSavingsAccountApplicableCharges(boolean feeChargesOnly);
+    Collection<ChargeData> retrieveSavingsAccountApplicableCharges(boolean feeChargesOnly, Long savingsAccountId);
 
     Collection<ChargeData> retrieveSavingsAccountApplicablePenalties();
 

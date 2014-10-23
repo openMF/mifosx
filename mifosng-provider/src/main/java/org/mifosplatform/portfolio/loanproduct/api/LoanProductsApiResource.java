@@ -235,7 +235,8 @@ public class LoanProductsApiResource {
     private LoanProductData handleTemplate(final LoanProductData productData) {
 
         final boolean feeChargesOnly = true;
-        Collection<ChargeData> chargeOptions = this.chargeReadPlatformService.retrieveLoanApplicableCharges(feeChargesOnly, null);
+        final long loanId = 0L;
+        Collection<ChargeData> chargeOptions = this.chargeReadPlatformService.retrieveLoanApplicableCharges(loanId, feeChargesOnly, null);
         if (chargeOptions.isEmpty()) {
             chargeOptions = null;
         }

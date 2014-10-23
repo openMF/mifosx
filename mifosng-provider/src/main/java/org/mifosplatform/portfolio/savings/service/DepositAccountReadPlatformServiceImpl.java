@@ -350,8 +350,10 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Collection<SavingsAccountChargeData> charges = fromChargesToSavingsCharges(productCharges);
 
             final boolean feeChargesOnly = false;
+
+            final Long savingsAccountId = Long.valueOf(template.accountNo());
             final Collection<ChargeData> chargeOptions = this.chargeReadPlatformService
-                    .retrieveSavingsAccountApplicableCharges(feeChargesOnly);
+                    .retrieveSavingsAccountApplicableCharges(feeChargesOnly,savingsAccountId);
 
             Collection<StaffData> fieldOfficerOptions = null;
 
@@ -427,8 +429,9 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Collection<SavingsAccountChargeData> charges = null;
 
             final boolean feeChargesOnly = true;
+            final Long savingsAccountId = 0L;
             final Collection<ChargeData> chargeOptions = this.chargeReadPlatformService
-                    .retrieveSavingsAccountApplicableCharges(feeChargesOnly);
+                    .retrieveSavingsAccountApplicableCharges(feeChargesOnly, savingsAccountId);
 
             if (depositAccountType.isFixedDeposit()) {
 

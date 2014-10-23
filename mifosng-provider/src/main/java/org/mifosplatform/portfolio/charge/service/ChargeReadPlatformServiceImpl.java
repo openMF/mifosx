@@ -140,7 +140,7 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
     }
 
     @Override
-    public Collection<ChargeData> retrieveLoanApplicableCharges(final boolean feeChargesOnly, Integer[] excludeChargeTimes) {
+    public Collection<ChargeData> retrieveLoanApplicableCharges(final long loanId,final boolean feeChargesOnly, Integer[] excludeChargeTimes) {
         this.context.authenticatedUser();
 
         final ChargeMapper rm = new ChargeMapper();
@@ -157,15 +157,24 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
             }
             params = new Object[] { ChargeAppliesTo.LOAN.getValue(), sb.toString() };
         }
-        String sql = "select " + rm.chargeSchema() + " where c.is_deleted=0 and c.is_active=1 and c.charge_applies_to_enum=?"
-                + excludeClause + " order by c.name ";
         if (feeChargesOnly) {
-            sql = "select " + rm.chargeSchema()
+         String sql = "select " + rm.chargeSchema()
+        		 	
                     + " where c.is_deleted=0 and c.is_active=1 and c.is_penalty=0 and c.charge_applies_to_enum=? " + excludeClause
                     + "order by c.name ";
-        }
+            return this.jdbcTemplate.query(sql, rm, params);
 
-        return this.jdbcTemplate.query(sql, rm, params);
+        }
+        else{
+        String sql = "select " + rm.chargeSchema() 
+        		+ " join m_loan la on la.currency_code = c.currency_code"
+        		+ " where la.account_no=?"
+        		+ " and c.is_deleted=0 and c.is_active=1 and c.charge_applies_to_enum=?"
+                +  excludeClause
+                + " order by c.name ";
+        return this.jdbcTemplate.query(sql, rm, new Object[] { loanId,ChargeAppliesTo.SAVINGS.getValue(), params});
+        
+        }
     }
 
     @Override
@@ -189,7 +198,7 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
                     + "c.is_active as active, oc.name as currencyName, oc.decimal_places as currencyDecimalPlaces, "
                     + "oc.currency_multiplesof as inMultiplesOf, oc.display_symbol as currencyDisplaySymbol, "
                     + "oc.internationalized_name_code as currencyNameCode, c.fee_on_day as feeOnDay, c.fee_on_month as feeOnMonth, "
-                    + "c.fee_interval as feeInterval, c.fee_frequency as feeFrequency,c.min_cap as minCap,c.max_cap as maxCap "
+                    + "c.fee_interval as feeInterval, c.fee_frequency as feeFrequency,c.min_cap as minCap,c.max_cap as maxCap "                  
                     + "from m_charge c " + "join m_organisation_currency oc on c.currency_code = oc.code";
         }
 
@@ -253,19 +262,24 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
     }
 
     @Override
-    public Collection<ChargeData> retrieveSavingsAccountApplicableCharges(final boolean feeChargesOnly) {
+    public Collection<ChargeData> retrieveSavingsAccountApplicableCharges(final boolean feeChargesOnly, Long savingsAccountId) {
         this.context.authenticatedUser();
 
         final ChargeMapper rm = new ChargeMapper();
 
-        String sql = "select " + rm.chargeSchema()
-                + " where c.is_deleted=0 and c.is_active=1 and c.charge_applies_to_enum=? order by c.name ";
         if (feeChargesOnly) {
-            sql = "select " + rm.chargeSchema()
-                    + " where c.is_deleted=0 and c.is_active=1 and c.is_penalty=0 and c.charge_applies_to_enum=? order by c.name ";
+            String sql = "select " + rm.chargeSchema()
+                    + " where c.is_deleted=0 and c.is_active=1 and c.is_penalty=0 and c.charge_applies_to_enum=? order by c.name";
+            return this.jdbcTemplate.query(sql, rm, new Object[] { ChargeAppliesTo.SAVINGS.getValue() });
         }
+        else{
+        String sql = "select " + rm.chargeSchema()
+        		+ " join m_savings_account sa on sa.currency_code = c.currency_code"
+                + " where c.is_deleted=0 and c.is_active=1 and c.charge_applies_to_enum=? "
+                + " and sa.account_no = ?";
+        return this.jdbcTemplate.query(sql, rm, new Object[] { ChargeAppliesTo.SAVINGS.getValue() ,savingsAccountId});
 
-        return this.jdbcTemplate.query(sql, rm, new Object[] { ChargeAppliesTo.SAVINGS.getValue() });
+        }       
     }
 
     @Override
