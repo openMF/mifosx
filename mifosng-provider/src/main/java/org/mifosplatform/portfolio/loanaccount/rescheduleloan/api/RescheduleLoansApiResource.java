@@ -110,14 +110,22 @@ public class RescheduleLoansApiResource {
             final String apiRequestBodyAsJson) {
         CommandWrapper commandWrapper = null;
 
+        String jsonApiRequest = apiRequestBodyAsJson;
+        if (StringUtils.isBlank(jsonApiRequest)) {
+        jsonApiRequest = "{}";
+        }
         if (compareIgnoreCase(command, "approve")) {
             commandWrapper = new CommandWrapperBuilder().approveLoanRescheduleRequest(RescheduleLoansApiConstants.ENTITY_NAME, requestId)
-                    .withJson(apiRequestBodyAsJson).build();
+                    .withJson(apiRequestBodyAsJson)
+                    .withJson(jsonApiRequest)
+                    .build();
         }
 
         else if (compareIgnoreCase(command, "reject")) {
             commandWrapper = new CommandWrapperBuilder().rejectLoanRescheduleRequest(RescheduleLoansApiConstants.ENTITY_NAME, requestId)
-                    .withJson(apiRequestBodyAsJson).build();
+                    .withJson(apiRequestBodyAsJson)
+                    .withJson(jsonApiRequest)
+                    .build();
         }
 
         else {
