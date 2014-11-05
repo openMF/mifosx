@@ -1,3 +1,4 @@
+
 /**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -109,6 +110,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     }
 
     @Override
+    
     public Page<ClientData> retrieveAll(final SearchParameters searchParameters) {
 
         final String userOfficeHierarchy = this.context.officeHierarchy();
@@ -150,6 +152,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                 underHierarchySearchString, underHierarchySearchString }, this.clientMapper);
     }
 
+    
     private String buildSqlStringFromClientCriteria(final SearchParameters searchParameters) {
 
         String sqlSearch = searchParameters.getSqlSearch();
@@ -273,9 +276,13 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
         public ClientMembersOfGroupMapper() {
             final StringBuilder sqlBuilder = new StringBuilder(200);
+           
+            sqlBuilder
+                    .append("c.id as id, c.account_no as accountNo, c.external_id as externalId, c.status_enum as statusEnum, c.sub_status as subStatus, ");
 
-            sqlBuilder.append("c.id as id, c.account_no as accountNo, c.external_id as externalId, c.status_enum as statusEnum, ");
-            sqlBuilder.append("c.office_id as officeId, o.name as officeName, ");
+            sqlBuilder
+                    .append("cvSubStatus.code_value as subStatusValue, cvSubStatus.code_description as subStatusDesc, c.office_id as officeId, o.name as officeName, ");
+
             sqlBuilder.append("c.transfer_to_office_id as transferToOfficeId, transferToOffice.name as transferToOfficeName, ");
             sqlBuilder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, ");
             sqlBuilder.append("c.fullname as fullname, c.display_name as displayName, ");
@@ -319,7 +326,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             sqlBuilder.append("left join m_code_value cv on cv.id = c.gender_cv_id ");
             sqlBuilder.append("left join m_code_value cvclienttype on cvclienttype.id = c.client_type_cv_id ");
             sqlBuilder.append("left join m_code_value cvclassification on cvclassification.id = c.client_classification_cv_id ");
-
+            sqlBuilder.append("left join m_code_value cvSubStatus on cvSubStatus.id = c.sub_status ");
             this.schema = sqlBuilder.toString();
         }
 
@@ -335,6 +342,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final EnumOptionData status = ClientEnumerations.status(statusEnum);
 
+            final Long subStat = rs.getLong("subStatus");
+            final String subStatusValue = rs.getString("subStatusValue");
+            final String subStatusDesc = rs.getString("subStatusDesc");
+            final CodeValueData subStatus = CodeValueData.instance(subStat, subStatusValue, subStatusDesc);
+            
             final Long officeId = JdbcSupport.getLong(rs, "officeId");
             final String officeName = rs.getString("officeName");
 
@@ -390,9 +402,10 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                     submittedByLastname, activationDate, activatedByUsername, activatedByFirstname, activatedByLastname, closedOnDate,
                     closedByUsername, closedByFirstname, closedByLastname);
 
-            return ClientData.instance(accountNo, status, officeId, officeName, transferToOfficeId, transferToOfficeName, id, firstname,
-                    middlename, lastname, fullname, displayName, externalId, mobileNo, dateOfBirth, gender, activationDate, imageId,
-                    staffId, staffName, timeline, savingsProductId, savingsProductName, savingsAccountId, clienttype, classification);
+            return ClientData.instance(accountNo, status, subStatus, officeId, officeName,
+                    transferToOfficeId, transferToOfficeName, id, firstname, middlename, lastname, fullname, displayName, externalId,
+                    mobileNo, dateOfBirth, gender, activationDate, imageId, staffId, staffName, timeline, savingsProductId,
+                    savingsProductName, savingsAccountId, clienttype, classification);
 
         }
     }
@@ -419,8 +432,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         public ClientMapper() {
             final StringBuilder builder = new StringBuilder(400);
 
-            builder.append("c.id as id, c.account_no as accountNo, c.external_id as externalId, c.status_enum as statusEnum, ");
-            builder.append("c.office_id as officeId, o.name as officeName, ");
+            builder.append("c.id as id, c.account_no as accountNo, c.external_id as externalId, c.status_enum as statusEnum,c.sub_status as subStatus, ");
+            builder.append("cvSubStatus.code_value as subStatusValue,cvSubStatus.code_description as subStatusDesc,c.office_id as officeId, o.name as officeName, ");
             builder.append("c.transfer_to_office_id as transferToOfficeId, transferToOffice.name as transferToOfficeName, ");
             builder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, ");
             builder.append("c.fullname as fullname, c.display_name as displayName, ");
@@ -463,7 +476,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("left join m_code_value cv on cv.id = c.gender_cv_id ");
             builder.append("left join m_code_value cvclienttype on cvclienttype.id = c.client_type_cv_id ");
             builder.append("left join m_code_value cvclassification on cvclassification.id = c.client_classification_cv_id ");
-
+            builder.append("left join m_code_value cvSubStatus on cvSubStatus.id = c.sub_status ");
             this.schema = builder.toString();
         }
 
@@ -478,7 +491,12 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final EnumOptionData status = ClientEnumerations.status(statusEnum);
-
+            
+            final Long subStat = JdbcSupport.getLong(rs, "subStatus");
+            final String subStatusValue = rs.getString("subStatusValue");
+            final String subStatusDesc = rs.getString("subStatusDesc");
+            final CodeValueData subStatus = CodeValueData.instance(subStat, subStatusValue, subStatusDesc);
+            
             final Long officeId = JdbcSupport.getLong(rs, "officeId");
             final String officeName = rs.getString("officeName");
 
@@ -533,9 +551,10 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                     submittedByLastname, activationDate, activatedByUsername, activatedByFirstname, activatedByLastname, closedOnDate,
                     closedByUsername, closedByFirstname, closedByLastname);
 
-            return ClientData.instance(accountNo, status, officeId, officeName, transferToOfficeId, transferToOfficeName, id, firstname,
-                    middlename, lastname, fullname, displayName, externalId, mobileNo, dateOfBirth, gender, activationDate, imageId,
-                    staffId, staffName, timeline, savingsProductId, savingsProductName, savingsAccountId, clienttype, classification);
+            return ClientData.instance(accountNo, status, subStatus, officeId, officeName,
+                    transferToOfficeId, transferToOfficeName, id, firstname, middlename, lastname, fullname, displayName, externalId,
+                    mobileNo, dateOfBirth, gender, activationDate, imageId, staffId, staffName, timeline, savingsProductId,
+                    savingsProductName, savingsAccountId, clienttype, classification);
 
         }
     }
@@ -568,7 +587,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("c.office_id as officeId, o.name as officeName ");
             builder.append("from m_client c ");
             builder.append("join m_office o on o.id = c.office_id ");
-
+          
             this.schema = builder.toString();
         }
 
@@ -604,12 +623,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private static final class ClientIdentifierMapper implements RowMapper<ClientData> {
 
         public String clientLookupByIdentifierSchema() {
-            return "c.id as id, c.account_no as accountNo, c.status_enum as statusEnum, c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, "
+            return "c.id as id, c.account_no as accountNo, c.status_enum as statusEnum,c.sub_status as subStatus, cvSubStatus.code_value as subStatusValue,cvSubStatus.code_value as subStatusDesc,c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, "
                     + "c.fullname as fullname, c.display_name as displayName,"
                     + "c.office_id as officeId, o.name as officeName "
-                    + " from m_client c, m_office o, m_client_identifier ci "
-                    + "where o.id = c.office_id and c.id=ci.client_id "
-                    + "and ci.document_type_id= ? and ci.document_key like ?";
+                    + " from m_client c, m_office o,m_code_value cv1, m_client_identifier ci "
+                    + "where o.id = c.office_id and c.id=ci.client_id " + "and ci.document_type_id= ? and ci.document_key like ?";
         }
 
         @Override
@@ -621,6 +639,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final EnumOptionData status = ClientEnumerations.status(statusEnum);
 
+            final Long subStat = JdbcSupport.getLong(rs, "subStatus");
+            final String subStatusValue = rs.getString("subStatusValue");
+            final String subStatusDesc = rs.getString("subStatusDesc");
+            final CodeValueData subStatus = CodeValueData.instance(subStat, subStatusValue, subStatusDesc);
+
             final String firstname = rs.getString("firstname");
             final String middlename = rs.getString("middlename");
             final String lastname = rs.getString("lastname");
@@ -630,8 +653,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final Long officeId = rs.getLong("officeId");
             final String officeName = rs.getString("officeName");
 
-            return ClientData.clientIdentifier(id, accountNo, status, firstname, middlename, lastname, fullname, displayName, officeId,
-                    officeName);
+            return ClientData.clientIdentifier(id, accountNo, status, subStatus, firstname, middlename,
+                    lastname, fullname, displayName, officeId, officeName);
         }
     }
 

@@ -75,6 +75,9 @@ public final class Client extends AbstractPersistable<Long> {
      */
     @Column(name = "status_enum", nullable = false)
     private Integer status;
+    //---------------------------------------------------subStatus-----------------------------------------
+    @Column(name = "sub_status", nullable = false)
+    private Integer subStatus;
 
     @Column(name = "activation_date", nullable = true)
     @Temporal(TemporalType.DATE)
@@ -184,6 +187,7 @@ public final class Client extends AbstractPersistable<Long> {
         boolean active = false;
         if (command.hasParameter("active")) {
             active = command.booleanPrimitiveValueOfParameterNamed(ClientApiConstants.activeParamName);
+            
         }
 
         LocalDate activationDate = null;
@@ -704,7 +708,11 @@ public final class Client extends AbstractPersistable<Long> {
     public void setStatus(final Integer status) {
         this.status = status;
     }
-
+    
+    //------------------getting subStatus----------------------------
+    public Integer getsubStatus() {
+        return this.status;
+    }
     public boolean isActivatedAfter(final LocalDate submittedOn) {
         return getActivationLocalDate().isAfter(submittedOn);
     }
