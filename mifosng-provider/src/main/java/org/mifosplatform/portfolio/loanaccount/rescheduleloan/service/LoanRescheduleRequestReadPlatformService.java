@@ -34,4 +34,7 @@ public interface LoanRescheduleRequestReadPlatformService {
 	 * @return list of LoanRescheduleRequestData objects
 	 **/
 	public List<LoanRescheduleRequestData> readLoanRescheduleRequests(Long loanId, Integer statusEnum);
+
+	public LoanRescheduleRequestData retrieveAllRescheduleReasons(
+			String loanRescheduleReason);
 }
