@@ -75,7 +75,7 @@ public final class Client extends AbstractPersistable<Long> {
      */
     @Column(name = "status_enum", nullable = false)
     private Integer status;
-    //---------------------------------------------------subStatus-----------------------------------------
+   
     @Column(name = "sub_status", nullable = false)
     private Integer subStatus;
 
@@ -708,8 +708,7 @@ public final class Client extends AbstractPersistable<Long> {
     public void setStatus(final Integer status) {
         this.status = status;
     }
-    
-    //------------------getting subStatus----------------------------
+   
     public Integer getsubStatus() {
         return this.status;
     }
