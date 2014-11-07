@@ -467,6 +467,7 @@ public class LoanScheduleAssembler {
         }
     }
 
+    @SuppressWarnings("null")
     private LocalDate deriveFirstRepaymentDate(final AccountType loanType, final Integer repaymentEvery,
             final LocalDate expectedDisbursementDate, final PeriodFrequencyType repaymentPeriodFrequencyType,
             final Integer minimumDaysBetweenDisbursalAndFirstRepayment, final Calendar calendar) {
