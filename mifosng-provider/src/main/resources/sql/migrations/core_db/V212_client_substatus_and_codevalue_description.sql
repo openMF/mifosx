@@ -1,7 +1,7 @@
 
 ALTER TABLE `m_client`
 	ADD COLUMN `sub_status` INT(11) NULL DEFAULT NULL AFTER `status_enum`,
-	ADD CONSTRAINT `FK_m_client_m_code_value` FOREIGN KEY (`sub_status`) REFERENCES `m_code_value` (`id`);
+	ADD CONSTRAINT `FK_m_client_substatus_m_code_value` FOREIGN KEY (`sub_status`) REFERENCES `m_code_value` (`id`);
 	
 	
 INSERT INTO `m_code` (`code_name`, `is_system_defined`) VALUES ('SubStatus', 1);
