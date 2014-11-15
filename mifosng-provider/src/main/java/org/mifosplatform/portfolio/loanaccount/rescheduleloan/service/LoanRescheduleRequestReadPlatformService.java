@@ -10,14 +10,13 @@ import java.util.List;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.data.LoanRescheduleRequestData;
 
 public interface LoanRescheduleRequestReadPlatformService {
-	
 	/** 
-	 * get all loan reschedule requests by loan ID
+	 * get loan reschedule request by loan ID
 	 * 
 	 * @param loanId the loan identifier
-	 * @return list of LoanRescheduleRequestData objects
+	 * @return LoanRescheduleRequestData object
 	 **/
-	public List<LoanRescheduleRequestData> readLoanRescheduleRequests(Long loanId);
+	public LoanRescheduleRequestData readRescheduleRequest(Long loanId);
 	
 	/** 
 	 * get a single loan reschedule request by ID (primary key) 
@@ -28,10 +27,19 @@ public interface LoanRescheduleRequestReadPlatformService {
 	public LoanRescheduleRequestData readLoanRescheduleRequest(Long requestId);
 	
 	/** 
-	 * get all loan reschedule requests filter by loan ID and status enum
+	 * get loan reschedule request, filter by loan ID and status enum array
 	 * 
 	 * @param loanId the loan identifier
 	 * @return list of LoanRescheduleRequestData objects
 	 **/
-	public List<LoanRescheduleRequestData> readLoanRescheduleRequests(Long loanId, Integer statusEnum);
+	public List<LoanRescheduleRequestData> readLoanRescheduleRequestForValidaton(Long loanId, Integer[] statusEnum);
+
+	/** 
+	 * get all loan reschedule reasons
+	 * 
+	 * @param loanRescheduleReason the loan reschedule reason
+	 * @return list of LoanRescheduleRequestData objects
+	 **/
+	public LoanRescheduleRequestData retrieveAllRescheduleReasons(
+			String loanRescheduleReason);
 }

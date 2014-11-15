@@ -966,6 +966,46 @@
 								<td></td>
 							</tr>
 							<tr>
+								<td></td>
+								<td>loans/{loanId}?command=reschedule</td>
+								<td><a href="#reschedule_loan">Create Loan Reschedule Request</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>loans/{loanId}?associations=rescheduleRequest</td>
+								<td></td>
+								<td><a href="#retrieve_loan_reschedule_request">View/Retrieve Loan Reschedule Request</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>loans/{loanId}?associations=rescheduledRepaymentSchedule</td>
+								<td></td>
+								<td><a href="#preview_loan_reschedule_request">Preview Rescheduled Repayment Schedule</a></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>loans/{loanId}?command=approveRescheduleRequest</td>
+								<td><a href="#approve_loan_reschedule_request">Approve Loan Reschedule Request</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>loans/{loanId}?command=rejectRescheduleRequest</td>
+								<td><a href="#reject_loan_reschedule_request">Reject Reschedule Loan Request</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
 								<td><a href="#loans_transactions">Loan Transactions</a></td>
 								<td>loans/{loanId}/transactions?command=repayment</td>
 								<td><a href="#loans_transaction_repayment">Enter a repayment</a></td>
@@ -8609,6 +8649,309 @@ GET https://DomainName/api/v1/loans/{loanId}/transactions/template"
 					</code>
 				</div>
 			</div>
+			
+						<a id="reschedule_loan" name="loan_reschedule_request_create" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Create a Loan Reschedule Request</h4>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>loanId, rescheduleFromDate, rescheduleReasonId, submittedOnDate,<br />
+							graceOnPrincipal OR graceOnInterest OR extraTerms OR newInterestRate OR adjustedDueDate
+							</td>
+						</tr>
+					</table>
+						<br />
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Optional Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>recalculateInterest, rescheduleReasonComment</td>
+						</tr>
+					</table>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+POST https://DomainName/api/v1/loan/{loanId}?command=reschedule
+					</code>
+					<code class="method-request">
+POST:
+Content-Type: application/json Request Body:
+{ 
+	"loanId": 1, 
+	"graceOnPrincipal": 2, 
+	"graceOnInterest": 3, 
+	"extraTerms": 2,
+	"rescheduleFromDate": "04 December 2014", 
+	"dateFormat": "dd MMMM yyyy", 
+	"locale": "en", 
+	"recalculateInterest": true,
+	"submittedOnDate": "04 September 2014",
+	"newInterestRate" : 28,
+	"rescheduleReasonId": 1
+} 
+					</code>
+					<code class="method-response">
+{
+    "loanId": 1,
+    "resourceId": 1
+}
+					</code>
+				</div>
+				<div class="method-example">
+					<code class="method-request">
+POST:
+Content-Type: application/json Request Body:
+{ 
+	"loanId": 1, 
+	"graceOnPrincipal": 2, 
+	"rescheduleFromDate": "04 December 2014", 
+	"adjustedDueDate": "20 December 2014",
+	"dateFormat": "dd MMMM yyyy", 
+	"locale": "en", 
+	"submittedOnDate": "04 September 2014",
+	"rescheduleReasonComment" : "Client has gone AWOL",
+	"rescheduleReasonId": 1
+} 
+					</code>
+					<code class="method-response">
+{
+    "loanId": 1,
+    "resourceId": 1
+}
+					</code>
+				</div>
+			</div>
+			<a id="retrieve_loan_reschedule_request" name="loan_reschedule_request_retrieve" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>View/Retrieve a Loan Reschedule Request</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>loans/1?associations=rescheduleRequest</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/loans/{loanId}?associations=rescheduleRequest
+					</code>
+					<code class="method-response">
+{
+  "id": 2,
+  "loanId": 17,
+  "clientId": 4,
+  "clientName": "Fernando Michael Torres",
+  "loanAccountNumber": "000000017",
+  "statusEnum": {
+    "id": 500,
+    "code": "loanStatusType.rejected",
+    "value": "Rejected",
+    "pendingApproval": false,
+    "approved": false,
+    "rejected": true
+  },
+  "rescheduleFromInstallment": 5,
+  "graceOnPrincipal": 3,
+  "rescheduleFromDate": [
+    2013,
+    12,
+    6
+  ],
+  "recalculateInterest": false,
+  "rescheduleReasonCodeValue": {
+    "id": 239,
+    "name": "client cannot pay on time"
+  },
+  "timeline": {
+    "submittedOnDate": [
+      2014,
+      8,
+      4
+    ],
+    "submittedByUsername": "mifos",
+    "submittedByFirstname": "App",
+    "submittedByLastname": "Administrator",
+    "rejectedOnDate": [
+      2014,
+      8,
+      5
+    ],
+    "rejectedByUsername": "mifos",
+    "rejectedByFirstname": "App",
+    "rejectedByLastname": "Administrator"
+  },
+  "rescheduleReasonComment": ""
+}
+					</code>
+				</div>
+			</div>
+			<a id="preview_loan_reschedule_request" name="loan_reschedule_preview_retrieve" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve a Preview of The New Loan Repayment Schedule</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>loans/1?associations=rescheduledRepaymentSchedule</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/loans/{loanId}?associations=rescheduledRepaymentSchedule
+					</code>
+					<code class="method-response">
+						
+  "currency": {
+    "code": "KES",
+    "name": "Kenyan Shilling",
+    "decimalPlaces": 0,
+    "inMultiplesOf": 10,
+    "displaySymbol": "KSh",
+    "nameCode": "currency.KES",
+    "displayLabel": "Kenyan Shilling (KSh)"
+  },
+  "loanTermInDays": 182,
+  "totalPrincipalDisbursed": 10000,
+  "totalPrincipalExpected": 10000,
+  "totalPrincipalPaid": 900.000000,
+  "totalInterestCharged": 960,
+  "totalFeeChargesCharged": 0.000000,
+  "totalPenaltyChargesCharged": 2500.000000,
+  "totalRepaymentExpected": 13460,
+  "totalOutstanding": 12060.000000,
+  "periods": [
+    {
+      "period": 1,
+      "fromDate": [
+        2013,
+        11,
+        8
+      ],
+      "dueDate": [
+        2013,
+        11,
+        8
+      ],
+      "daysInPeriod": 0,
+      "principalOriginalDue": 0,
+      "principalDue": 0,
+      "principalOutstanding": 0,
+      "principalLoanBalanceOutstanding": 10000,
+      "interestOriginalDue": 0,
+      "interestDue": 0,
+      "interestOutstanding": 0,
+      "feeChargesDue": 0,
+      "penaltyChargesDue": 0,
+      "totalOriginalDueForPeriod": 0,
+      "totalDueForPeriod": 0,
+      "totalPaidForPeriod": 0,
+      "totalOutstandingForPeriod": 0,
+      "totalOverdue": 0,
+      "totalActualCostOfLoanForPeriod": 0
+    },
+    ...
+    ...
+    {
+      "period": 30,
+      "fromDate": [
+        2014,
+        5,
+        23
+      ],
+      "dueDate": [
+        2014,
+        5,
+        30
+      ],
+      "daysInPeriod": 7,
+      "principalOriginalDue": 300,
+      "principalDue": 300,
+      "principalOutstanding": 300,
+      "principalLoanBalanceOutstanding": 0,
+      "interestOriginalDue": 130,
+      "interestDue": 130,
+      "interestOutstanding": 130,
+      "feeChargesDue": 0,
+      "penaltyChargesDue": 0,
+      "totalOriginalDueForPeriod": 430,
+      "totalDueForPeriod": 430,
+      "totalPaidForPeriod": 0,
+      "totalOutstandingForPeriod": 430,
+      "totalOverdue": 430,
+      "totalActualCostOfLoanForPeriod": 130
+    }
+  ]
+}
+					</code>
+				</div>
+			</div>
+			<a id="reject_loan_reschedule_request" name="loan_reschedule_request_reject" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Reject a Loan Reschedule Request</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>loans/1?command=rejectRescheduleRequest</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">POST https://DomainName/api/v1/loans/{loanId}?command=rejectRescheduleRequest</code>
+					<code class="method-request">POST loans/1?command=rejectRescheduleRequest
+Content-Type: application/json
+Request Body:
+{
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "rejectedOnDate": "11 September 2014"
+}
+			</code>
+			<code class="method-response">
+{
+  "loanId": 1,
+  "resourceId": 1,
+  "changes": {
+	"locale": "en",
+	"dateFormat": "dd MMMM yyyy",
+	"rejectedOnDate": "11 September 2014",
+	"rejectedByUserId": 1
+  }
+}
+					</code>
+				</div>
+			</div>
+			<a id="approve_loan_reschedule_request" name="loan_reschedule_request_approve" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Approve a Loan Reschedule Request</h4>
+					<p>Example Requests:</p>
+					<div class=apiClick>loans/1?command=approveRescheduleRequest</div>
+					<p>Rescheduling of a loan happens once a loan reschedule request is approved.</p>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">POST https://DomainName/api/v1/loans/{loanId}?command=approveRescheduleRequest</code>
+					<code class="method-request">POST loans/1?command=approveRescheduleRequest
+Content-Type: application/json
+Request Body:
+{
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "approvedOnDate": "11 September 2014"
+}
+			</code>
+			<code class="method-response">
+{
+  "loanId": 1,
+  "resourceId": 1,
+  "changes": {
+	"locale": "en",
+	"dateFormat": "dd MMMM yyyy",
+	"approvedOnDate": "11 September 2014",
+	"approvedByUserId": 1
+  }
+}
+					</code>
+				</div>
+			</div>
+			
+			
+			
 
 			<a id="loans_transaction_repayment" name="loans_transaction_repayment" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
@@ -32935,6 +33278,46 @@ No Request Body:
 					<td>loans/{loanId}/transactions/template</td>
 					<td></td>
 					<td><a href="#loans_repaymenttemplate_etc">Retrieve Loan Transaction Template</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>loans/{loanId}?command=reschedule</td>
+					<td><a href="#reschedule_loan">Create Loan Reschedule Request</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>loans/{loanId}?associations=rescheduleRequest</td>
+					<td></td>
+					<td><a href="#retrieve_loan_reschedule_request">View/Retrieve Loan Reschedule Request</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>loans/{loanId}?associations=rescheduledRepaymentSchedule</td>
+					<td></td>
+					<td><a href="#preview_loan_reschedule_request">Preview Rescheduled Repayment Schedule</a></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>loans/{loanId}?command=approveRescheduleRequest</td>
+					<td><a href="#approve_loan_reschedule_request">Approve Loan Reschedule Request</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>loans/{loanId}?command=rejectRescheduleRequest</td>
+					<td><a href="#reject_loan_reschedule_request">Reject Loan Reschedule Request</a></td>
+					<td></td>
 					<td></td>
 					<td></td>
 				</tr>

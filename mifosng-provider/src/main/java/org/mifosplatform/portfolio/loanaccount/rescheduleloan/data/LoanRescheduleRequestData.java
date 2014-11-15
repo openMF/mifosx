@@ -6,9 +6,11 @@
 package org.mifosplatform.portfolio.loanaccount.rescheduleloan.data;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.codes.data.CodeValueData;
+
 
 /** 
  * Immutable data object representing loan reschedule request data. 
@@ -32,6 +34,7 @@ public class LoanRescheduleRequestData {
 	private final LoanRescheduleRequestTimelineData timeline;
 	private final String rescheduleReasonComment;
 	private final LocalDate adjustedDueDate;
+	private final Collection<CodeValueData> rescheduleReasons;
 	
 	/** 
 	 * LoanRescheduleRequestData constructor
@@ -40,7 +43,8 @@ public class LoanRescheduleRequestData {
 			Integer rescheduleFromInstallment, Integer graceOnPrincipal, Integer graceOnInterest, 
 			LocalDate rescheduleFromDate, LocalDate adjustedDueDate, Integer extraTerms, BigDecimal interestRate, 
 			CodeValueData rescheduleReasonCodeValue, String rescheduleReasonComment, LoanRescheduleRequestTimelineData timeline, 
-			final String clientName, final String loanAccountNumber, final Long clientId, final Boolean recalculateInterest) {
+			final String clientName, final String loanAccountNumber, final Long clientId, final Boolean recalculateInterest,
+			Collection<CodeValueData> rescheduleReasons) {
 		
 		this.id = id;
 		this.loanId = loanId;
@@ -59,6 +63,7 @@ public class LoanRescheduleRequestData {
 		this.loanAccountNumber = loanAccountNumber;
 		this.clientId = clientId;
 		this.recalculateInterest = recalculateInterest;
+		this.rescheduleReasons = rescheduleReasons;
 	}
 	
 	/** 
@@ -66,14 +71,21 @@ public class LoanRescheduleRequestData {
 	 **/
 	public static LoanRescheduleRequestData instance(Long id, Long loanId, LoanRescheduleRequestStatusEnumData statusEnum, 
 			Integer rescheduleFromInstallment, Integer graceOnPrincipal, Integer graceOnInterest, 
-			LocalDate rescheduleFromDate, LocalDate adjustedDueDate, Integer extraTerms, BigDecimal interestRate, 
-			CodeValueData rescheduleReasonCodeValue, String rescheduleReasonComment, LoanRescheduleRequestTimelineData timeline, 
-			final String clientName, final String loanAccountNumber, final Long clientId, final Boolean recalculateInterest) {
+			LocalDate rescheduleFromDate, LocalDate adjustedDueDate, Integer extraTerms, BigDecimal interestRate,
+			CodeValueData rescheduleReasonCodeValue,String rescheduleReasonComment, LoanRescheduleRequestTimelineData timeline, 
+			final String clientName, final String loanAccountNumber, final Long clientId, final Boolean recalculateInterest,
+			Collection<CodeValueData> rescheduleReasons) {
 		
 		return new LoanRescheduleRequestData(id, loanId, statusEnum, rescheduleFromInstallment, graceOnPrincipal, graceOnInterest, 
-				rescheduleFromDate, adjustedDueDate, extraTerms, interestRate, rescheduleReasonCodeValue, rescheduleReasonComment, 
-				timeline, clientName, loanAccountNumber, clientId, recalculateInterest);
+				rescheduleFromDate, adjustedDueDate, extraTerms, interestRate,rescheduleReasonCodeValue, rescheduleReasonComment,
+				timeline, clientName, loanAccountNumber, clientId, recalculateInterest,rescheduleReasons);
 	}
+	
+	public static LoanRescheduleRequestData template(final Collection<CodeValueData> rescheduleReasons) {
+	return new LoanRescheduleRequestData(null, null, null, null, null, null, 
+					null, null, null, null, null, null, 
+					null, null, null, null, null,rescheduleReasons);
+    }
 
 	/**
 	 * @return the id

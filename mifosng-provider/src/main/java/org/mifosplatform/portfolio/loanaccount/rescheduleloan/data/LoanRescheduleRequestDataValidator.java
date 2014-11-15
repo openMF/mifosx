@@ -70,10 +70,22 @@ public class LoanRescheduleRequestDataValidator {
             dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode("loan.is.not.active", "Loan is not active");
         }
 
+        
         final Long loanId = this.fromJsonHelper.extractLongNamed(RescheduleLoansApiConstants.loanIdParamName, jsonElement);
         dataValidatorBuilder.reset().parameter(RescheduleLoansApiConstants.loanIdParamName).value(loanId).notNull()
                 .integerGreaterThanZero();
 
+        if (loanId != null) {
+        	Integer[] statusEnum = new Integer[] {LoanStatus.APPROVED.getValue() , LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue()};
+            List<LoanRescheduleRequestData> loanRescheduleRequestData = this.loanRescheduleRequestReadPlatformService
+                    .readLoanRescheduleRequestForValidaton(loanId, statusEnum);
+            
+            if (loanRescheduleRequestData.size() > 0) {
+                dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode("loan.reschedule.request.submitted.or.already.approved",
+                        "The loan is already rescheduled/submitted and pending for approval.");
+            }
+        }
+        
         final LocalDate submittedOnDate = this.fromJsonHelper.extractLocalDateNamed(RescheduleLoansApiConstants.submittedOnDateParamName,
                 jsonElement);
         dataValidatorBuilder.reset().parameter(RescheduleLoansApiConstants.submittedOnDateParamName).value(submittedOnDate).notNull();
@@ -167,15 +179,7 @@ public class LoanRescheduleRequestDataValidator {
             }
         }
 
-        if (loanId != null) {
-            List<LoanRescheduleRequestData> loanRescheduleRequestData = this.loanRescheduleRequestReadPlatformService
-                    .readLoanRescheduleRequests(loanId, LoanStatus.APPROVED.getValue());
-
-            if (loanRescheduleRequestData.size() > 0) {
-                dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode("loan.already.rescheduled",
-                        "The loan can only be rescheduled once.");
-            }
-        }
+        
 
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
@@ -261,8 +265,9 @@ public class LoanRescheduleRequestDataValidator {
             }
 
             if (loanId != null) {
+            	Integer[] statusEnum = new Integer[] {LoanStatus.APPROVED.getValue() , LoanStatus.APPROVED.getValue()};
                 List<LoanRescheduleRequestData> loanRescheduleRequestData = this.loanRescheduleRequestReadPlatformService
-                        .readLoanRescheduleRequests(loanId, LoanStatus.APPROVED.getValue());
+                        .readLoanRescheduleRequestForValidaton(loanId, statusEnum);
 
                 if (loanRescheduleRequestData.size() > 0) {
                     dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode("loan.already.rescheduled",

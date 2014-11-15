@@ -265,20 +265,33 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
                     chargePaymentMode, feeOnMonthDay, feeInterval, penalty, active, minCap, maxCap, feeFrequencyType);
         }
     }
-
+    
     @Override
-    public Collection<ChargeData> retrieveSavingsApplicableCharges(final boolean feeChargesOnly) {
+    public Collection<ChargeData> retrieveSavingsProductApplicableCharges(final boolean feeChargesOnly) {
+
         final ChargeMapper rm = new ChargeMapper();
 
         String sql = "select " + rm.chargeSchema()
                 + " where c.is_deleted=0 and c.is_active=1 and c.charge_applies_to_enum=? order by c.name ";
-        if (feeChargesOnly) {
-            sql = "select " + rm.chargeSchema()
-                    + " where c.is_deleted=0 and c.is_active=1 and c.is_penalty=0 and c.charge_applies_to_enum=? order by c.name ";
+        if(feeChargesOnly){
+         sql = "select " + rm.chargeSchema()
+                  + " where c.is_deleted=0 and c.is_active=1 and c.is_penalty=0 and c.charge_applies_to_enum=? order by c.name";
         }
-
-        return this.jdbcTemplate.query(sql, rm, new Object[] { ChargeAppliesTo.SAVINGS.getValue() });
+        return this.jdbcTemplate.query(sql, rm, new Object[] { ChargeAppliesTo.SAVINGS.getValue() });               
     }
+
+    @Override
+    public Collection<ChargeData> retrieveSavingsAccountApplicableCharges(Long savingsAccountId) {
+
+        final ChargeMapper rm = new ChargeMapper();
+
+        String sql = "select " + rm.chargeSchema()
+        		+ " join m_savings_account sa on sa.currency_code = c.currency_code"
+                + " where c.is_deleted=0 and c.is_active=1 and c.charge_applies_to_enum=? "
+                + " and sa.account_no = ?";
+        return this.jdbcTemplate.query(sql, rm, new Object[] { ChargeAppliesTo.SAVINGS.getValue() ,savingsAccountId});
+
+}  
 
     @Override
     public Collection<ChargeData> retrieveSavingsApplicablePenalties() {
