@@ -94,6 +94,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.mifosplatform.portfolio.loanaccount.rescheduleloan.data.LoanRescheduleRequestData;
+import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleModel;
+import org.mifosplatform.portfolio.loanaccount.rescheduleloan.service.LoanRescheduleRequestReadPlatformService;
+import org.mifosplatform.portfolio.loanaccount.rescheduleloan.service.LoanReschedulePreviewPlatformService;
+
+
 
 import com.google.gson.JsonElement;
 
@@ -112,12 +118,20 @@ public class LoansApiResource {
             "interestChargedFromDate", "timeline", "totalFeeChargesAtDisbursement", "summary", "repaymentSchedule", "transactions",
             "charges", "collateral", "guarantors", "meeting", "productOptions", "amortizationTypeOptions", "interestTypeOptions",
             "interestCalculationPeriodTypeOptions", "repaymentFrequencyTypeOptions", "repaymentFrequencyNthDayTypeOptions",
+<<<<<<< Upstream, based on upstream/develop
             "repaymentFrequencyDaysOfWeekTypeOptions", "termFrequencyTypeOptions", "interestRateFrequencyTypeOptions", "fundOptions",
             "repaymentStrategyOptions", "chargeOptions", "loanOfficerOptions", "loanPurposeOptions", "loanCollateralOptions",
             "chargeTemplate", "calendarOptions", "syncDisbursementWithMeeting", "loanCounter", "loanProductCounter", "notes",
             "accountLinkingOptions", "linkedAccount"));
 
     private final Set<String> LOAN_APPROVAL_DATA_PARAMETERS = new HashSet<>(Arrays.asList("approvalDate", "approvalAmount"));
+=======
+			"repaymentFrequencyDaysOfWeekTypeOptions", "termFrequencyTypeOptions","interestRateFrequencyTypeOptions", "fundOptions", 
+			"repaymentStrategyOptions", "chargeOptions", "loanOfficerOptions",            "loanPurposeOptions", "loanCollateralOptions", 
+			"chargeTemplate", "calendarOptions", "syncDisbursementWithMeeting",
+            "loanCounter", "loanProductCounter", "notes", "accountLinkingOptions", "linkedAccount","rescheduleRequest","rescheduledRepaymentSchedule"));
+private final Set<String> LOAN_APPROVAL_DATA_PARAMETERS = new HashSet<>(Arrays.asList("approvalDate", "approvalAmount"));
+>>>>>>> 47ce7ec MIFOSX-1523 Refactoring Loan Reschedule API changes
     private final String resourceNameForPermissions = "LOAN";
 
     private final PlatformSecurityContext context;
@@ -143,6 +157,9 @@ public class LoansApiResource {
     private final PortfolioAccountReadPlatformService portfolioAccountReadPlatformService;
     private final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService;
     private final LoanScheduleHistoryReadPlatformService loanScheduleHistoryReadPlatformService;
+    private final LoanRescheduleRequestReadPlatformService loanRescheduleRequestReadPlatformService;
+    private final LoanReschedulePreviewPlatformService loanReschedulePreviewPlatformService;
+
 
     @Autowired
     public LoansApiResource(final PlatformSecurityContext context, final LoanReadPlatformService loanReadPlatformService,
@@ -161,7 +178,10 @@ public class LoansApiResource {
             final CalendarReadPlatformService calendarReadPlatformService, final NoteReadPlatformServiceImpl noteReadPlatformService,
             final PortfolioAccountReadPlatformService portfolioAccountReadPlatformServiceImpl,
             final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
-            final LoanScheduleHistoryReadPlatformService loanScheduleHistoryReadPlatformService) {
+            final LoanScheduleHistoryReadPlatformService loanScheduleHistoryReadPlatformService,
+            final LoanRescheduleRequestReadPlatformService loanRescheduleRequestReadPlatformService,
+            final LoanReschedulePreviewPlatformService loanReschedulePreviewPlatformService
+) {
         this.context = context;
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanProductReadPlatformService = loanProductReadPlatformService;
@@ -185,8 +205,15 @@ public class LoansApiResource {
         this.portfolioAccountReadPlatformService = portfolioAccountReadPlatformServiceImpl;
         this.accountAssociationsReadPlatformService = accountAssociationsReadPlatformService;
         this.loanScheduleHistoryReadPlatformService = loanScheduleHistoryReadPlatformService;
+<<<<<<< Upstream, based on upstream/develop
     }
 
+=======
+        this.loanRescheduleRequestReadPlatformService = loanRescheduleRequestReadPlatformService;
+        this.loanReschedulePreviewPlatformService = loanReschedulePreviewPlatformService;
+    }
+    
+>>>>>>> 47ce7ec MIFOSX-1523 Refactoring Loan Reschedule API changes
     /*
      * This template API is used for loan approval, ideally this should be
      * invoked on loan that are pending for approval. But system does not
@@ -217,6 +244,7 @@ public class LoansApiResource {
 
     }
 
+    
     @GET
     @Path("template")
     @Consumes({ MediaType.APPLICATION_JSON })
@@ -352,6 +380,8 @@ public class LoansApiResource {
         PortfolioAccountData linkedAccount = null;
         Collection<DisbursementData> disbursementData = null;
         Collection<LoanTermVariationsData> emiAmountVariations = null;
+        LoanRescheduleRequestData rescheduleRequest = null;
+        LoanScheduleData rescheduledRepaymentSchedule = null;
 
         final Set<String> mandatoryResponseParameters = new HashSet<>();
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
@@ -359,7 +389,8 @@ public class LoansApiResource {
 
             if (associationParameters.contains("all")) {
                 associationParameters.addAll(Arrays.asList("repaymentSchedule", "futureSchedule", "originalSchedule", "transactions",
-                        "charges", "guarantors", "collateral", "notes", "linkedAccount", "multiDisburseDetails"));
+                        "charges", "guarantors", "collateral", "notes", "linkedAccount", "multiDisburseDetails",
+                        "rescheduleRequest","rescheduledRepaymentSchedule"));
             }
 
             if (associationParameters.contains("guarantors")) {
@@ -442,6 +473,23 @@ public class LoansApiResource {
             if (associationParameters.contains("linkedAccount")) {
                 mandatoryResponseParameters.add("linkedAccount");
                 linkedAccount = this.accountAssociationsReadPlatformService.retriveLoanLinkedAssociation(loanId);
+<<<<<<< Upstream, based on upstream/develop
+=======
+            }
+            
+            if(associationParameters.contains("rescheduleRequest")){
+                mandatoryResponseParameters.add("rescheduleRequest");
+                rescheduleRequest = this.loanRescheduleRequestReadPlatformService
+                        .readRescheduleRequest(loanId);
+            }
+            
+            if(associationParameters.contains("rescheduledRepaymentSchedule")){
+                mandatoryResponseParameters.add("rescheduledRepaymentSchedule");
+                LoanRescheduleModel loanRescheduleModel = this.loanReschedulePreviewPlatformService.previewRepaymentSchedule(loanId);
+                if(loanRescheduleModel != null){
+                    rescheduledRepaymentSchedule = loanRescheduleModel.toData();
+                }
+>>>>>>> 47ce7ec MIFOSX-1523 Refactoring Loan Reschedule API changes
             }
 
         }
@@ -509,14 +557,19 @@ public class LoansApiResource {
 
         final LoanAccountData loanAccount = LoanAccountData.associationsAndTemplate(loanBasicDetails, repaymentSchedule, loanRepayments,
                 charges, collateral, guarantors, meeting, productOptions, loanTermFrequencyTypeOptions, repaymentFrequencyTypeOptions,
+<<<<<<< Upstream, based on upstream/develop
                 null, null, repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
+=======
+                null,null,repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
+>>>>>>> 47ce7ec MIFOSX-1523 Refactoring Loan Reschedule API changes
                 interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, allowedLoanOfficers, loanPurposeOptions,
                 loanCollateralOptions, calendarOptions, notes, accountLinkingOptions, linkedAccount, disbursementData, emiAmountVariations,
-                overdueCharges);
+                overdueCharges,rescheduleRequest,rescheduledRepaymentSchedule);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);
         return this.toApiJsonSerializer.serialize(settings, loanAccount, this.LOAN_DATA_PARAMETERS);
+
     }
 
     @GET
@@ -634,6 +687,17 @@ public class LoansApiResource {
         } else if (is(commandParam, "unassignloanofficer")) {
             final CommandWrapper commandRequest = builder.unassignLoanOfficer(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }
+        
+        if(is(commandParam, "reschedule")) {
+        	final CommandWrapper commandWrapper = builder.createLoansRescheduleRequest(loanId).withJson(apiRequestBodyAsJson).build();
+        	result = this.commandsSourceWritePlatformService.logCommandSource(commandWrapper);
+        } else if(is(commandParam, "approveRescheduleRequest")) {
+        	final CommandWrapper commandWrapper = builder.approveLoansRescheduleRequest(loanId).withJson(apiRequestBodyAsJson).build();
+        	result = this.commandsSourceWritePlatformService.logCommandSource(commandWrapper);
+        } else if (is(commandParam,"rejectRescheduleRequest")) {
+        	final CommandWrapper commandWrapper = builder.rejectLoansRescheduleRequest(loanId).withJson(apiRequestBodyAsJson).build();
+        	result = this.commandsSourceWritePlatformService.logCommandSource(commandWrapper);
         }
 
         if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam); }

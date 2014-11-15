@@ -89,6 +89,25 @@ public class RescheduleLoansApiResource {
 
         return this.loanRescheduleRequestToApiJsonSerializer.serialize(settings, loanRescheduleRequestData);
     }
+    
+    @GET
+    @Path("template")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveTemplate(@Context final UriInfo uriInfo,
+            @QueryParam("commandParam") final String commandParam) {
+
+        this.platformSecurityContext.authenticatedUser().validateHasReadPermission(RescheduleLoansApiConstants.ENTITY_NAME);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+
+
+        LoanRescheduleRequestData loanRescheduleReasons = null;
+        if (compareIgnoreCase(commandParam, "rescheduleReason")) {
+        	loanRescheduleReasons = this.loanRescheduleRequestReadPlatformService.retrieveAllRescheduleReasons(RescheduleLoansApiConstants.LOAN_RESCHEDULE_REASON);
+        } 
+
+        return this.loanRescheduleRequestToApiJsonSerializer.serialize(settings, loanRescheduleReasons);
+    }
 
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
@@ -110,14 +129,22 @@ public class RescheduleLoansApiResource {
             final String apiRequestBodyAsJson) {
         CommandWrapper commandWrapper = null;
 
+        String jsonApiRequest = apiRequestBodyAsJson;
+        if (StringUtils.isBlank(jsonApiRequest)) {
+        jsonApiRequest = "{}";
+        }
         if (compareIgnoreCase(command, "approve")) {
             commandWrapper = new CommandWrapperBuilder().approveLoanRescheduleRequest(RescheduleLoansApiConstants.ENTITY_NAME, requestId)
-                    .withJson(apiRequestBodyAsJson).build();
+                    .withJson(apiRequestBodyAsJson)
+                    .withJson(jsonApiRequest)
+                    .build();
         }
 
         else if (compareIgnoreCase(command, "reject")) {
             commandWrapper = new CommandWrapperBuilder().rejectLoanRescheduleRequest(RescheduleLoansApiConstants.ENTITY_NAME, requestId)
-                    .withJson(apiRequestBodyAsJson).build();
+                    .withJson(apiRequestBodyAsJson)
+                    .withJson(jsonApiRequest)
+                    .build();
         }
 
         else {

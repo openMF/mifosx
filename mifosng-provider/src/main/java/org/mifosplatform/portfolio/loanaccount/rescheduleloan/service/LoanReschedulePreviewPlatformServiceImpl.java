@@ -20,6 +20,7 @@ import org.mifosplatform.organisation.workingdays.domain.WorkingDays;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
 import org.mifosplatform.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanRepaymentScheduleHistory;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryWritePlatformService;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.DefaultLoanReschedulerFactory;
@@ -64,7 +65,26 @@ public class LoanReschedulePreviewPlatformServiceImpl implements LoanRescheduleP
 
         Loan loan = loanRescheduleRequest.getLoan();
 
-        final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
+        return this.loadRepaymentDetails(loan, loanRescheduleRequest);
+
+    }
+    
+    @Override
+    public LoanRescheduleModel previewRepaymentSchedule(Long loanId) {
+    	
+        Integer statusEnum = LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue();
+
+        final LoanRescheduleRequest loanRescheduleRequest = this.loanRescheduleRequestRepository.findLoanRescheduleRequestByLoanId(loanId,statusEnum);
+
+        if (loanRescheduleRequest == null) { return null; }
+
+        Loan loan = loanRescheduleRequest.getLoan();
+        
+        return this.loadRepaymentDetails(loan, loanRescheduleRequest);
+    }
+
+    private LoanRescheduleModel loadRepaymentDetails(Loan loan,LoanRescheduleRequest loanRescheduleRequest){
+    	final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
         final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loan.getOfficeId(), loan
                 .getDisbursementDate().toDate(), HolidayStatusType.ACTIVE.getValue());
         final WorkingDays workingDays = this.workingDaysRepository.findOne();
@@ -84,5 +104,4 @@ public class LoanReschedulePreviewPlatformServiceImpl implements LoanRescheduleP
                 oldPeriods);
         return loanRescheduleModelWithOldPeriods;
     }
-
 }

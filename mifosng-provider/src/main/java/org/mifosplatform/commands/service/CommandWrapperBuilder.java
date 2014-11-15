@@ -2112,4 +2112,29 @@ public class CommandWrapperBuilder {
     	this.href = "/rescheduleloans/" + requestId + "?command=reject";
     	return this;
     }
+    
+    public CommandWrapperBuilder createLoansRescheduleRequest(final Long loanId) {
+        this.actionName = "RESCHEDULE";
+        this.entityName = "LOAN";
+        this.entityId = null;
+        this.href = "/loans" + loanId + "?command=reschedule";
+        return this;
+    }
+    
+    public CommandWrapperBuilder approveLoansRescheduleRequest(final Long loanId) {
+    	this.actionName = "APPROVERESCHEDULE";
+    	this.entityName = "LOAN";
+    	this.entityId = loanId;
+    	this.href = "/loans/" + loanId + "?command=approve";
+    	return this;
+    }
+    
+    public CommandWrapperBuilder rejectLoansRescheduleRequest(final Long loanId) {
+    	this.actionName = "REJECTRESCHEDULE";
+    	this.entityName = "LOAN";
+    	this.entityId = loanId;
+    	this.href = "/loans/" + loanId + "?command=reject";
+    	return this;
+    }
+    
 }
