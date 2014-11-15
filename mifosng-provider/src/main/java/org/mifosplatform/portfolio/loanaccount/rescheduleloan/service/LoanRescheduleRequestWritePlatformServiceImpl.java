@@ -245,107 +245,7 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
 
             if (loanRescheduleRequest == null) { throw new LoanRescheduleRequestNotFoundException(loanRescheduleRequestId); }
 
-            // validate the request in the JsonCommand object passed as
-            // parameter
-            this.loanRescheduleRequestDataValidator.validateForApproveAction(jsonCommand, loanRescheduleRequest);
-
-            final AppUser appUser = this.platformSecurityContext.authenticatedUser();
-            final Map<String, Object> changes = new LinkedHashMap<>();
-
-            LocalDate approvedOnDate = jsonCommand.localDateValueOfParameterNamed("approvedOnDate");
-            final DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(jsonCommand.dateFormat()).withLocale(
-                    jsonCommand.extractLocale());
-
-            changes.put("locale", jsonCommand.locale());
-            changes.put("dateFormat", jsonCommand.dateFormat());
-            changes.put("approvedOnDate", approvedOnDate.toString(dateTimeFormatter));
-            changes.put("approvedByUserId", appUser.getId());
-
-            if (!changes.isEmpty()) {
-                Loan loan = loanRescheduleRequest.getLoan();
-                final LoanSummary loanSummary = loan.getSummary();
-
-                final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
-                final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loan.getOfficeId(), loan
-                        .getDisbursementDate().toDate(), HolidayStatusType.ACTIVE.getValue());
-                final WorkingDays workingDays = this.workingDaysRepository.findOne();
-                final LoanProductMinimumRepaymentScheduleRelatedDetail loanProductRelatedDetail = loan.getLoanRepaymentScheduleDetail();
-                final MonetaryCurrency currency = loanProductRelatedDetail.getCurrency();
-                final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
-
-                final InterestMethod interestMethod = loan.getLoanRepaymentScheduleDetail().getInterestMethod();
-                final RoundingMode roundingMode = RoundingMode.HALF_EVEN;
-                final MathContext mathContext = new MathContext(8, roundingMode);
-
-                Collection<LoanRepaymentScheduleHistory> loanRepaymentScheduleHistoryList = this.loanScheduleHistoryWritePlatformService
-                        .createLoanScheduleArchive(loan.getRepaymentScheduleInstallments(), loan, loanRescheduleRequest);
-
-                HolidayDetailDTO holidayDetailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
-                LoanRescheduleModel loanRescheduleModel = new DefaultLoanReschedulerFactory().reschedule(mathContext, interestMethod,
-                        loanRescheduleRequest, applicationCurrency, holidayDetailDTO);
-
-                final Collection<LoanRescheduleModelRepaymentPeriod> periods = loanRescheduleModel.getPeriods();
-                List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments = loan.getRepaymentScheduleInstallments();
-
-                for (LoanRescheduleModelRepaymentPeriod period : periods) {
-
-                    if (period.isNew()) {
-                        LoanRepaymentScheduleInstallment repaymentScheduleInstallment = new LoanRepaymentScheduleInstallment(loan,
-                                period.periodNumber(), period.periodFromDate(), period.periodDueDate(), period.principalDue(),
-                                period.interestDue(), BigDecimal.ZERO, BigDecimal.ZERO, false);
-
-                        repaymentScheduleInstallments.add(repaymentScheduleInstallment);
-                    }
-
-                    else {
-                        for (LoanRepaymentScheduleInstallment repaymentScheduleInstallment : repaymentScheduleInstallments) {
-
-                            if (repaymentScheduleInstallment.getInstallmentNumber().equals(period.oldPeriodNumber())) {
-
-                                repaymentScheduleInstallment.updateInstallmentNumber(period.periodNumber());
-                                repaymentScheduleInstallment.updateFromDate(period.periodFromDate());
-                                repaymentScheduleInstallment.updateDueDate(period.periodDueDate());
-                                repaymentScheduleInstallment.updatePrincipal(period.principalDue());
-                                repaymentScheduleInstallment.updateInterestCharged(period.interestDue());
-
-                                if (Money.of(currency, period.principalDue()).isZero() && Money.of(currency, period.interestDue()).isZero()
-                                        && repaymentScheduleInstallment.getPenaltyChargesOutstanding(currency).isZero()
-                                        && repaymentScheduleInstallment.getFeeChargesOutstanding(currency).isZero()
-                                        && repaymentScheduleInstallment.isNotFullyPaidOff()) {
-
-                                    repaymentScheduleInstallment.updateObligationMet(true);
-                                    repaymentScheduleInstallment.updateObligationMetOnDate(new LocalDate());
-                                }
-
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                for (LoanRepaymentScheduleHistory loanRepaymentScheduleHistory : loanRepaymentScheduleHistoryList) {
-                    this.loanRepaymentScheduleHistoryRepository.save(loanRepaymentScheduleHistory);
-                }
-
-                loan.updateRescheduledByUser(appUser);
-                loan.updateRescheduledOnDate(new LocalDate());
-
-                // update the Loan summary
-                loanSummary.updateSummary(currency, loan.getPrincpal(), repaymentScheduleInstallments, new LoanSummaryWrapper(), true);
-
-                // update the total number of schedule repayments
-                loan.updateNumberOfRepayments(periods.size());
-
-                // update the loan term frequency (loan term frequency = number
-                // of repayments)
-                loan.updateTermFrequency(periods.size());
-
-                // update the status of the request
-                loanRescheduleRequest.approve(appUser, approvedOnDate);
-            }
-
-            return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(loanRescheduleRequestId)
-                    .withLoanId(loanRescheduleRequest.getLoan().getId()).with(changes).build();
+            return this.validateAndApproveRequest(jsonCommand,loanRescheduleRequest);
         }
 
         catch (final DataIntegrityViolationException dve) {
@@ -355,6 +255,138 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             // return an empty command processing result object
             return CommandProcessingResult.empty();
         }
+    }
+    
+    @Override
+    @Transactional
+    public CommandProcessingResult approveReschedule(JsonCommand jsonCommand) {
+
+        try {
+            final Long loanId = jsonCommand.entityId();
+
+            Integer statusEnum = LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue();
+
+            final LoanRescheduleRequest loanRescheduleRequest = this.loanRescheduleRequestRepository.findLoanRescheduleRequestByLoanId(loanId,statusEnum);
+
+            if (loanRescheduleRequest == null) { throw new LoanRescheduleRequestNotFoundException(loanId); }
+
+            return this.validateAndApproveRequest(jsonCommand,loanRescheduleRequest);
+            
+        }
+
+        catch (final DataIntegrityViolationException dve) {
+            // handle the data integrity violation
+            handleDataIntegrityViolation(jsonCommand, dve);
+
+            // return an empty command processing result object
+            return CommandProcessingResult.empty();
+        }
+		
+    }
+    
+    private CommandProcessingResult validateAndApproveRequest(JsonCommand jsonCommand, LoanRescheduleRequest loanRescheduleRequest){
+    	// validate the request in the JsonCommand object passed as
+        // parameter
+        this.loanRescheduleRequestDataValidator.validateForApproveAction(jsonCommand, loanRescheduleRequest);
+
+        final Long id = jsonCommand.entityId();
+        final AppUser appUser = this.platformSecurityContext.authenticatedUser();
+        final Map<String, Object> changes = new LinkedHashMap<>();
+
+        LocalDate approvedOnDate = jsonCommand.localDateValueOfParameterNamed("approvedOnDate");
+        final DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(jsonCommand.dateFormat()).withLocale(
+                jsonCommand.extractLocale());
+
+        changes.put("locale", jsonCommand.locale());
+        changes.put("dateFormat", jsonCommand.dateFormat());
+        changes.put("approvedOnDate", approvedOnDate.toString(dateTimeFormatter));
+        changes.put("approvedByUserId", appUser.getId());
+
+        if (!changes.isEmpty()) {
+            Loan loan = loanRescheduleRequest.getLoan();
+            final LoanSummary loanSummary = loan.getSummary();
+
+            final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
+            final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loan.getOfficeId(), loan
+                    .getDisbursementDate().toDate(), HolidayStatusType.ACTIVE.getValue());
+            final WorkingDays workingDays = this.workingDaysRepository.findOne();
+            final LoanProductMinimumRepaymentScheduleRelatedDetail loanProductRelatedDetail = loan.getLoanRepaymentScheduleDetail();
+            final MonetaryCurrency currency = loanProductRelatedDetail.getCurrency();
+            final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+
+            final InterestMethod interestMethod = loan.getLoanRepaymentScheduleDetail().getInterestMethod();
+            final RoundingMode roundingMode = RoundingMode.HALF_EVEN;
+            final MathContext mathContext = new MathContext(8, roundingMode);
+
+            Collection<LoanRepaymentScheduleHistory> loanRepaymentScheduleHistoryList = this.loanScheduleHistoryWritePlatformService
+                    .createLoanScheduleArchive(loan.getRepaymentScheduleInstallments(), loan, loanRescheduleRequest);
+
+            HolidayDetailDTO holidayDetailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
+            LoanRescheduleModel loanRescheduleModel = new DefaultLoanReschedulerFactory().reschedule(mathContext, interestMethod,
+                    loanRescheduleRequest, applicationCurrency, holidayDetailDTO);
+
+            final Collection<LoanRescheduleModelRepaymentPeriod> periods = loanRescheduleModel.getPeriods();
+            List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments = loan.getRepaymentScheduleInstallments();
+
+            for (LoanRescheduleModelRepaymentPeriod period : periods) {
+
+                if (period.isNew()) {
+                    LoanRepaymentScheduleInstallment repaymentScheduleInstallment = new LoanRepaymentScheduleInstallment(loan,
+                            period.periodNumber(), period.periodFromDate(), period.periodDueDate(), period.principalDue(),
+                            period.interestDue(), BigDecimal.ZERO, BigDecimal.ZERO, false);
+
+                    repaymentScheduleInstallments.add(repaymentScheduleInstallment);
+                }
+
+                else {
+                    for (LoanRepaymentScheduleInstallment repaymentScheduleInstallment : repaymentScheduleInstallments) {
+
+                        if (repaymentScheduleInstallment.getInstallmentNumber().equals(period.oldPeriodNumber())) {
+
+                            repaymentScheduleInstallment.updateInstallmentNumber(period.periodNumber());
+                            repaymentScheduleInstallment.updateFromDate(period.periodFromDate());
+                            repaymentScheduleInstallment.updateDueDate(period.periodDueDate());
+                            repaymentScheduleInstallment.updatePrincipal(period.principalDue());
+                            repaymentScheduleInstallment.updateInterestCharged(period.interestDue());
+
+                            if (Money.of(currency, period.principalDue()).isZero() && Money.of(currency, period.interestDue()).isZero()
+                                    && repaymentScheduleInstallment.getPenaltyChargesOutstanding(currency).isZero()
+                                    && repaymentScheduleInstallment.getFeeChargesOutstanding(currency).isZero()
+                                    && repaymentScheduleInstallment.isNotFullyPaidOff()) {
+
+                                repaymentScheduleInstallment.updateObligationMet(true);
+                                repaymentScheduleInstallment.updateObligationMetOnDate(new LocalDate());
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            for (LoanRepaymentScheduleHistory loanRepaymentScheduleHistory : loanRepaymentScheduleHistoryList) {
+                this.loanRepaymentScheduleHistoryRepository.save(loanRepaymentScheduleHistory);
+            }
+
+            loan.updateRescheduledByUser(appUser);
+            loan.updateRescheduledOnDate(new LocalDate());
+
+            // update the Loan summary
+            loanSummary.updateSummary(currency, loan.getPrincpal(), repaymentScheduleInstallments, new LoanSummaryWrapper(), true);
+
+            // update the total number of schedule repayments
+            loan.updateNumberOfRepayments(periods.size());
+
+            // update the loan term frequency (loan term frequency = number
+            // of repayments)
+            loan.updateTermFrequency(periods.size());
+
+            // update the status of the request
+            loanRescheduleRequest.approve(appUser, approvedOnDate);
+            
+        }
+        return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(id)
+                .withLoanId(loanRescheduleRequest.getLoan().getId()).with(changes).build();
     }
 
     @Override
@@ -368,28 +400,7 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
 
             if (loanRescheduleRequest == null) { throw new LoanRescheduleRequestNotFoundException(loanRescheduleRequestId); }
 
-            // validate the request in the JsonCommand object passed as
-            // parameter
-            this.loanRescheduleRequestDataValidator.validateForRejectAction(jsonCommand, loanRescheduleRequest);
-
-            final AppUser appUser = this.platformSecurityContext.authenticatedUser();
-            final Map<String, Object> changes = new LinkedHashMap<>();
-
-            LocalDate rejectedOnDate = jsonCommand.localDateValueOfParameterNamed("rejectedOnDate");
-            final DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(jsonCommand.dateFormat()).withLocale(
-                    jsonCommand.extractLocale());
-
-            changes.put("locale", jsonCommand.locale());
-            changes.put("dateFormat", jsonCommand.dateFormat());
-            changes.put("rejectedOnDate", rejectedOnDate.toString(dateTimeFormatter));
-            changes.put("rejectedByUserId", appUser.getId());
-
-            if (!changes.isEmpty()) {
-                loanRescheduleRequest.reject(appUser, rejectedOnDate);
-            }
-
-            return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(loanRescheduleRequestId)
-                    .withLoanId(loanRescheduleRequest.getLoan().getId()).with(changes).build();
+            return this.validateAndRejectRequest(jsonCommand, loanRescheduleRequest);
         }
 
         catch (final DataIntegrityViolationException dve) {
@@ -399,6 +410,57 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             // return an empty command processing result object
             return CommandProcessingResult.empty();
         }
+    }
+    
+    @Override
+    @Transactional
+    public CommandProcessingResult rejectReschedule(JsonCommand jsonCommand) {
+
+        try {
+            final Long loanId = jsonCommand.entityId();
+            
+            Integer statusEnum = LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue();
+
+            final LoanRescheduleRequest loanRescheduleRequest = loanRescheduleRequestRepository.findLoanRescheduleRequestByLoanId(loanId,statusEnum);
+
+            if (loanRescheduleRequest == null) { throw new LoanRescheduleRequestNotFoundException(loanId); }
+
+            return this.validateAndRejectRequest(jsonCommand, loanRescheduleRequest);
+        }
+
+        catch (final DataIntegrityViolationException dve) {
+            // handle the data integrity violation
+            handleDataIntegrityViolation(jsonCommand, dve);
+
+            // return an empty command processing result object
+            return CommandProcessingResult.empty();
+        }
+    }
+    
+    private CommandProcessingResult validateAndRejectRequest(JsonCommand jsonCommand, LoanRescheduleRequest loanRescheduleRequest){
+    	// validate the request in the JsonCommand object passed as
+        // parameter
+        this.loanRescheduleRequestDataValidator.validateForRejectAction(jsonCommand, loanRescheduleRequest);
+
+        final Long id = jsonCommand.entityId();
+        final AppUser appUser = this.platformSecurityContext.authenticatedUser();
+        final Map<String, Object> changes = new LinkedHashMap<>();
+
+        LocalDate rejectedOnDate = jsonCommand.localDateValueOfParameterNamed("rejectedOnDate");
+        final DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(jsonCommand.dateFormat()).withLocale(
+                jsonCommand.extractLocale());
+
+        changes.put("locale", jsonCommand.locale());
+        changes.put("dateFormat", jsonCommand.dateFormat());
+        changes.put("rejectedOnDate", rejectedOnDate.toString(dateTimeFormatter));
+        changes.put("rejectedByUserId", appUser.getId());
+
+        if (!changes.isEmpty()) {
+            loanRescheduleRequest.reject(appUser, rejectedOnDate);
+        }
+
+        return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(id)
+                .withLoanId(loanRescheduleRequest.getLoan().getId()).with(changes).build();
     }
 
     /**

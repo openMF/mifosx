@@ -261,6 +261,18 @@ public class CommandWrapper {
     	return this.actionName.equalsIgnoreCase("REJECT");
     }
 
+    public boolean isReschedule() {
+    	return this.actionName.equalsIgnoreCase("RESCHEDULE") && this.entityName.equalsIgnoreCase("LOAN");
+    }
+    
+    public boolean isApproveReschedule() {
+    	return this.actionName.equalsIgnoreCase("APPROVERESCHEDULE") && this.entityName.equalsIgnoreCase("LOAN");
+    }
+    
+    public boolean isRejectReschedule() {
+    	return this.actionName.equalsIgnoreCase("REJECTRESCHEDULE") && this.entityName.equalsIgnoreCase("LOAN");
+    }
+
     public boolean isSmsCampaignActivation() {
         return this.actionName.equalsIgnoreCase("ACTIVATE") && this.entityName.equalsIgnoreCase("SMS_CAMPAIGN");
     }

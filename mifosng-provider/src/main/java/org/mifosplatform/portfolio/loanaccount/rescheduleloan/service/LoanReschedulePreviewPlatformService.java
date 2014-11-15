@@ -10,4 +10,6 @@ import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanResched
 public interface LoanReschedulePreviewPlatformService {
 	
 	public LoanRescheduleModel previewLoanReschedule(Long requestId);
+
+	public LoanRescheduleModel previewRepaymentSchedule(Long loanId);
 }
