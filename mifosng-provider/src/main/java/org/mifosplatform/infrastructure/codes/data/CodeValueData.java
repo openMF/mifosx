@@ -35,7 +35,8 @@ public class CodeValueData implements Serializable {
     
     public static CodeValueData instance(final Long id, final String name) {
         String description = null;
-        return new CodeValueData(id, name, null, description);
+        Integer position=null;
+        return new CodeValueData(id, name, position, description);
        }
 
        private CodeValueData(final Long id, final String name, final Integer position, final String description) {

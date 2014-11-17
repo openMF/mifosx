@@ -336,10 +336,10 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final EnumOptionData status = ClientEnumerations.status(statusEnum);
             
-            final Long subStat = JdbcSupport.getLong(rs, "subStatus");
+            final Long subStatusId = JdbcSupport.getLong(rs, "subStatus");
             final String subStatusValue = rs.getString("subStatusValue");
             final String subStatusDesc = rs.getString("subStatusDesc");
-            final CodeValueData subStatus = CodeValueData.instance(subStat, subStatusValue, subStatusDesc);
+            final CodeValueData subStatus = CodeValueData.instance(subStatusId, subStatusValue, subStatusDesc);
 
             final Long officeId = JdbcSupport.getLong(rs, "officeId");
             final String officeName = rs.getString("officeName");
@@ -486,10 +486,10 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final EnumOptionData status = ClientEnumerations.status(statusEnum);
 
-            final Long subStat = JdbcSupport.getLong(rs, "subStatus");
+            final Long subStatsId = JdbcSupport.getLong(rs, "subStatus");
             final String subStatusValue = rs.getString("subStatusValue");
             final String subStatusDesc = rs.getString("subStatusDesc");
-            final CodeValueData subStatus = CodeValueData.instance(subStat, subStatusValue, subStatusDesc);
+            final CodeValueData subStatus = CodeValueData.instance(subStatsId, subStatusValue, subStatusDesc);
             
             final Long officeId = JdbcSupport.getLong(rs, "officeId");
             final String officeName = rs.getString("officeName");
@@ -633,10 +633,10 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final EnumOptionData status = ClientEnumerations.status(statusEnum);
             
-            final Long subStat = JdbcSupport.getLong(rs, "subStatus");
+            final Long subStatusId = JdbcSupport.getLong(rs, "subStatus");
             final String subStatusValue = rs.getString("subStatusValue");
             final String subStatusDesc = rs.getString("subStatusDesc");
-            final CodeValueData subStatus = CodeValueData.instance(subStat, subStatusValue, subStatusDesc);
+            final CodeValueData subStatus = CodeValueData.instance(subStatusId, subStatusValue, subStatusDesc);
 
             final String firstname = rs.getString("firstname");
             final String middlename = rs.getString("middlename");
