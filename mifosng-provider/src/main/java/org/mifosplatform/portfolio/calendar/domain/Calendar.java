@@ -169,6 +169,59 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
                 firstReminder, secondReminder);
     }
 
+    public Map<String, Object> updateStartDateAndDerivedFeilds(final LocalDate newMeetingStartDate) {
+
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(9);
+
+        final LocalDate currentDate = DateUtils.getLocalDateOfTenant();
+
+        if (newMeetingStartDate.isBefore(currentDate)) {
+            final String defaultUserMessage = "New meeting effective from date cannot be in past";
+            throw new CalendarDateException("new.start.date.cannot.be.in.past", defaultUserMessage, newMeetingStartDate, getStartDateLocalDate());
+        } else if (isStartDateAfter(newMeetingStartDate) && isStartDateBeforeOrEqual(currentDate)) {
+            // new meeting date should be on or after start date or current
+            // date
+            final String defaultUserMessage = "New meeting effective from date cannot be a date before existing meeting start date";
+            throw new CalendarDateException("new.start.date.before.existing.date", defaultUserMessage, newMeetingStartDate,
+                    getStartDateLocalDate());
+        } else {
+            
+            actualChanges.put(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue(), newMeetingStartDate.toString());
+            this.startDate = newMeetingStartDate.toDate();
+            
+            /*
+             * If meeting start date is changed then there is possibilities of
+             * recurring day may change, so derive the recurring day and update
+             * it if it is changed. 
+             * For weekly type is weekday and for monthly type it is day of the month
+             * 
+             */
+
+//            final String newRecurrence = Calendar.constructRecurrence(command, this);
+//            if (!StringUtils.isBlank(this.recurrence) && !newRecurrence.equalsIgnoreCase(this.recurrence)) {
+
+            CalendarFrequencyType calendarFrequencyType = CalendarUtils.getFrequency(this.recurrence);
+            Integer inerval = CalendarUtils.getInterval(this.recurrence);
+            
+            if(calendarFrequencyType.isWeekly()){
+                
+            }
+            
+            /*
+             *  Repeats on day, need to derive based on the start date   
+             */
+            
+            
+            constructRecurrence(calendarFrequencyType,inerval, );
+            
+            deriveRecurrenceBasedOnStartDate(newMeetingStartDate);
+            
+        }
+
+        return actualChanges;
+        
+    }
+
     public Map<String, Object> update(final JsonCommand command) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>(9);

@@ -3856,6 +3856,15 @@ public class Loan extends AbstractPersistable<Long> {
         for (final LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment : this.repaymentScheduleInstallments) {
             final LocalDate oldDueDate = loanRepaymentScheduleInstallment.getDueDate();
             // FIXME: AA this won't update repayment dates before current date.
+            
+            /*
+             * meetingStartDate is used as seedDate
+             * 
+             * Capture the seedDate from user and use the seedDate as meetingStart date  
+             * 
+             *  
+             */
+            
             if (oldDueDate.isAfter(meetingStartDate) && oldDueDate.isAfter(DateUtils.getLocalDateOfTenant())) {
                 newRepaymentDate = CalendarUtils.getNewRepaymentMeetingDate(recuringRule, meetingStartDate, oldDueDate,
                         loanRepaymentInterval, frequency, workingDays);
