@@ -85,4 +85,5 @@ public interface LoanWritePlatformService {
     void applyMeetingDateChanges(Calendar calendar, Collection<CalendarInstance> loanCalendarInstances);
 
 
+
 }

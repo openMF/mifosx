@@ -1986,8 +1986,16 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                     throw new CalendarParameterUpdateNotSupportedException("jlg.loan.recalculation", defaultUserMessage);
                 }
                 holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loan.getOfficeId(), loan.getDisbursementDate().toDate());
-                loan.updateLoanRepaymentScheduleDates(calendar.getStartDateLocalDate(), calendar.getRecurrence(), isHolidayEnabled,
-                        holidays, workingDays, reschedulebasedOnMeetingDates, presentMeetingDate, newMeetingDate);
+                
+                if(reschedulebasedOnMeetingDates != null && reschedulebasedOnMeetingDates ){
+                    loan.updateLoanRepaymentScheduleDates(calendar.getStartDateLocalDate(), calendar.getRecurrence(), isHolidayEnabled,
+                            holidays, workingDays, reschedulebasedOnMeetingDates, presentMeetingDate, newMeetingDate);
+                }else{
+                    loan.updateLoanRepaymentScheduleDates(calendar.getStartDateLocalDate(), calendar.getRecurrence(), isHolidayEnabled,
+                            holidays, workingDays);                    
+                }
+                
+                
                 saveLoanWithDataIntegrityViolationChecks(loan);
             }
         }

@@ -3849,6 +3849,64 @@ public class Loan extends AbstractPersistable<Long> {
             final Boolean reschedulebasedOnMeetingDates, final LocalDate presentMeetingDate, final LocalDate newMeetingDate) {
         
         // first repayment's from date is same as disbursement date.
+        /*
+         * meetingStartDate is used as seedDate Capture the seedDate from
+         * user and use the seedDate as meetingStart date
+         */
+
+        
+        
+        LocalDate tmpFromDate = getDisbursementDate();
+        final PeriodFrequencyType repaymentPeriodFrequencyType = this.loanRepaymentScheduleDetail.getRepaymentPeriodFrequencyType();
+        final Integer loanRepaymentInterval = this.loanRepaymentScheduleDetail.getRepayEvery();
+        final String frequency = CalendarUtils.getMeetingFrequencyFromPeriodFrequencyType(repaymentPeriodFrequencyType);
+
+        LocalDate newRepaymentDate = null;
+        Boolean isFirstTime = true;
+        
+        for (final LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment : this.repaymentScheduleInstallments) {
+            
+            LocalDate oldDueDate = loanRepaymentScheduleInstallment.getDueDate();
+            
+            if ( oldDueDate.isEqual(presentMeetingDate) || oldDueDate.isAfter(presentMeetingDate) ) {
+                
+               
+                if(isFirstTime){
+                    
+                    isFirstTime = false;
+                    newRepaymentDate = newMeetingDate;
+                    
+                }else{
+                    // tmpFromDate.plusDays(1) is done to make sure
+                    // getNewRepaymentMeetingDate method returns next meeting
+                    // date and not the same as tmpFromDate
+                    newRepaymentDate = CalendarUtils.getNewRepaymentMeetingDate(recuringRule, tmpFromDate, tmpFromDate.plusDays(1),
+                            loanRepaymentInterval, frequency, workingDays);
+                }
+                
+                if (isHolidayEnabled) {
+                    newRepaymentDate = HolidayUtil.getRepaymentRescheduleDateToIfHoliday(newRepaymentDate, holidays);
+                }
+
+                loanRepaymentScheduleInstallment.updateDueDate(newRepaymentDate);
+                // reset from date to get actual daysInPeriod
+                
+                if(!isFirstTime){
+                    loanRepaymentScheduleInstallment.updateFromDate(tmpFromDate);
+                }
+                
+                tmpFromDate = newRepaymentDate;// update with new repayment
+                // date
+            } else {
+                tmpFromDate = oldDueDate;
+            }
+        }
+    }
+
+    public void updateLoanRepaymentScheduleDates(final LocalDate meetingStartDate, final String recuringRule,
+            final boolean isHolidayEnabled, final List<Holiday> holidays, final WorkingDays workingDays) {
+        
+        // first repayment's from date is same as disbursement date.
         LocalDate tmpFromDate = getDisbursementDate();
         final PeriodFrequencyType repaymentPeriodFrequencyType = this.loanRepaymentScheduleDetail.getRepaymentPeriodFrequencyType();
         final Integer loanRepaymentInterval = this.loanRepaymentScheduleDetail.getRepayEvery();
@@ -3863,21 +3921,8 @@ public class Loan extends AbstractPersistable<Long> {
             
             // FIXME: AA this won't update repayment dates before current date.
             
-            /*
-             * meetingStartDate is used as seedDate Capture the seedDate from
-             * user and use the seedDate as meetingStart date
-             */
-            
-            if ( (oldDueDate.isAfter(seedDate) && oldDueDate.isAfter(DateUtils.getLocalDateOfTenant()))
-                    || (reschedulebasedOnMeetingDates != null && reschedulebasedOnMeetingDates && oldDueDate.isEqual(presentMeetingDate))
-                    ) {
-                
-                if(reschedulebasedOnMeetingDates != null && reschedulebasedOnMeetingDates ){
-                    seedDate = newMeetingDate;
-                    if(newRepaymentDate != null){
-                        oldDueDate = newRepaymentDate;   
-                    }
-                }
+         
+            if ( oldDueDate.isAfter(seedDate) && oldDueDate.isAfter(DateUtils.getLocalDateOfTenant()) ) {
                 
                 newRepaymentDate = CalendarUtils.getNewRepaymentMeetingDate(recuringRule, seedDate, oldDueDate,
                         loanRepaymentInterval, frequency, workingDays);
