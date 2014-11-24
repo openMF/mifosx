@@ -197,24 +197,23 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
              * 
              */
 
-//            final String newRecurrence = Calendar.constructRecurrence(command, this);
-//            if (!StringUtils.isBlank(this.recurrence) && !newRecurrence.equalsIgnoreCase(this.recurrence)) {
-
             CalendarFrequencyType calendarFrequencyType = CalendarUtils.getFrequency(this.recurrence);
             Integer inerval = CalendarUtils.getInterval(this.recurrence);
-            
-            if(calendarFrequencyType.isWeekly()){
-                
-            }
-            
+            Integer repeatsOnDay = null; 
+
             /*
              *  Repeats on day, need to derive based on the start date   
              */
+
+            if(calendarFrequencyType.isWeekly()){
+                repeatsOnDay = newMeetingStartDate.getDayOfWeek();
+            }else if(calendarFrequencyType.isWeekly()){
+                repeatsOnDay = newMeetingStartDate.getDayOfMonth();
+            }
             
+            // TODO cover other recurrence also
             
-            constructRecurrence(calendarFrequencyType,inerval, );
-            
-            deriveRecurrenceBasedOnStartDate(newMeetingStartDate);
+            this.recurrence = constructRecurrence(calendarFrequencyType,inerval,repeatsOnDay);
             
         }
 

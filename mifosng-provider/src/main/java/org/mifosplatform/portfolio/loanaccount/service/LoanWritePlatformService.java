@@ -57,8 +57,9 @@ public interface LoanWritePlatformService {
 
     CommandProcessingResult removeLoanOfficer(Long loanId, JsonCommand command);
 
-    void applyMeetingDateChanges(Calendar calendar, Collection<CalendarInstance> loanCalendarInstances);
-
+    void applyMeetingDateChanges(Calendar calendar, Collection<CalendarInstance> loanCalendarInstances,
+            Boolean reschedulebasedOnMeetingDates, LocalDate presentMeetingDate, LocalDate newMeetingDate);
+    
     void applyHolidaysToLoans();
 
     LoanTransaction initiateLoanTransfer(Long accountId, LocalDate transferDate);
@@ -80,5 +81,8 @@ public interface LoanWritePlatformService {
     CommandProcessingResult updateDisbursementDateForTranche(Long loanId, Long disbursementId, JsonCommand command);
 
     void recalculateInterest();
+
+    void applyMeetingDateChanges(Calendar calendar, Collection<CalendarInstance> loanCalendarInstances);
+
 
 }

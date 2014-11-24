@@ -188,10 +188,13 @@ public class CalendarWritePlatformServiceJpaRepositoryImpl implements CalendarWr
          * 
          */
         
+        LocalDate newMeetingDate = null;
+        LocalDate presentMeetingDate = null;
+        
         if (reschedulebasedOnMeetingDates != null && reschedulebasedOnMeetingDates) {
 
-            final LocalDate newMeetingDate = command.localDateValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.NEW_MEETING_DATE
-                    .getValue());
+            newMeetingDate = command.localDateValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.NEW_MEETING_DATE.getValue());
+            presentMeetingDate = command.localDateValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.PRESENT_MEETING_DATE.getValue());
 
             /*
              * New meeting date proposed will become the new start date for the
@@ -223,7 +226,9 @@ public class CalendarWritePlatformServiceJpaRepositoryImpl implements CalendarWr
 
                 if (!CollectionUtils.isEmpty(loanCalendarInstances)) {
                     // update all loans associated with modifying calendar
-                    this.loanWritePlatformService.applyMeetingDateChanges(calendarForUpdate, loanCalendarInstances);
+                    this.loanWritePlatformService.applyMeetingDateChanges(calendarForUpdate, loanCalendarInstances,
+                            reschedulebasedOnMeetingDates, presentMeetingDate, newMeetingDate);
+
                 }
             }
         }
