@@ -18,6 +18,8 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
 import org.joda.time.MonthDay;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -29,6 +31,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.googlecode.flyway.core.util.TimeFormat;
 
 /**
  * Helper class to extract values of json named attributes.
@@ -183,6 +186,20 @@ public class JsonParserHelper {
         }
         return value;
     }
+    
+    public String extractTimeFormatParameter(final JsonObject element) {
+        String value = null;
+        if (element.isJsonObject()) {
+            final JsonObject object = element.getAsJsonObject();
+
+            final String timeFormatParameter = "timeFormat";
+            if (object.has(timeFormatParameter) && object.get(timeFormatParameter).isJsonPrimitive()) {
+                final JsonPrimitive primitive = object.get(timeFormatParameter).getAsJsonPrimitive();
+                value = primitive.getAsString();
+            }
+        }
+        return value;
+    }
 
     public String extractMonthDayFormatParameter(final JsonObject element) {
         String value = null;
@@ -329,6 +346,21 @@ public class JsonParserHelper {
         }
         return value;
     }
+    
+    public LocalDateTime extractLocalDateTimeNamed(final String parameterName, final JsonElement element,
+            final Set<String> parametersPassedInCommand) {
+
+        LocalDateTime value = null;
+
+        if (element.isJsonObject()) {
+            final JsonObject object = element.getAsJsonObject();
+
+            final String dateTimeFormat = extractDateFormatParameter(object);
+            final Locale clientApplicationLocale = extractLocaleParameter(object);
+            value = extractLocalDateTimeNamed(parameterName, object, dateTimeFormat, clientApplicationLocale, parametersPassedInCommand);
+        }
+        return value;
+    }
 
     public LocalDate extractLocalDateNamed(final String parameterName, final JsonObject element, final String dateFormat,
             final Locale clientApplicationLocale, final Set<String> parametersPassedInCommand) {
@@ -351,6 +383,27 @@ public class JsonParserHelper {
         return value;
     }
 
+    public LocalDateTime extractLocalDateTimeNamed(final String parameterName, final JsonObject element, final String dateTimeFormat,
+            final Locale clientApplicationLocale, final Set<String> parametersPassedInCommand) {
+        LocalDateTime value = null;
+        if (element.isJsonObject()) {
+            final JsonObject object = element.getAsJsonObject();
+
+            if (object.has(parameterName) && object.get(parameterName).isJsonPrimitive()) {
+
+                parametersPassedInCommand.add(parameterName);
+
+                final JsonPrimitive primitive = object.get(parameterName).getAsJsonPrimitive();
+                final String valueAsString = primitive.getAsString();
+                if (StringUtils.isNotBlank(valueAsString)) {
+                    value = convertToDateTime(valueAsString, parameterName, dateTimeFormat, clientApplicationLocale);
+                }
+            }
+
+        }
+        return value;
+    }
+    
     public static LocalDate convertFrom(final String dateAsString, final String parameterName, final String dateFormat,
             final Locale clientApplicationLocale) {
 
@@ -396,6 +449,96 @@ public class JsonParserHelper {
         return eventLocalDate;
     }
 
+    public static LocalDateTime convertToDateTime(final String dateTimeAsString, final String parameterName, final String dateTimeFormat,
+            final Locale clientApplicationLocale) {
+
+        if (StringUtils.isBlank(dateTimeFormat) || clientApplicationLocale == null) {
+
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            if (StringUtils.isBlank(dateTimeFormat)) {
+                final String defaultMessage = new StringBuilder("The parameter '" + parameterName
+                        + "' requires a 'dateTimeFormat' parameter to be passed with it.").toString();
+                final ApiParameterError error = ApiParameterError.parameterError("validation.msg.missing.dateTimeFormat.parameter",
+                        defaultMessage, parameterName);
+                dataValidationErrors.add(error);
+            }
+            if (clientApplicationLocale == null) {
+                final String defaultMessage = new StringBuilder("The parameter '" + parameterName
+                        + "' requires a 'locale' parameter to be passed with it.").toString();
+                final ApiParameterError error = ApiParameterError.parameterError("validation.msg.missing.locale.parameter", defaultMessage,
+                        parameterName);
+                dataValidationErrors.add(error);
+            }
+            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                    dataValidationErrors);
+        }
+
+        LocalDateTime eventLocalDateTime = null;
+        if (StringUtils.isNotBlank(dateTimeAsString)) {
+            try {
+                // Locale locale = LocaleContextHolder.getLocale();
+                eventLocalDateTime = DateTimeFormat.forPattern(dateTimeFormat).withLocale(clientApplicationLocale)
+                        .parseLocalDateTime(dateTimeAsString.toLowerCase(clientApplicationLocale));
+            } catch (final IllegalArgumentException e) {
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                final ApiParameterError error = ApiParameterError.parameterError("validation.msg.invalid.date.format", "The parameter "
+                        + parameterName + " is invalid based on the dateFormat: '" + dateTimeFormat + "' and locale: '"
+                        + clientApplicationLocale + "' provided:", parameterName, dateTimeAsString, dateTimeFormat);
+                dataValidationErrors.add(error);
+
+                throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                        dataValidationErrors);
+            }
+        }
+
+        return eventLocalDateTime;
+    }
+    
+    public static LocalTime convertToTime(final String timeAsString, final String parameterName, final String timeFormat,
+            final Locale clientApplicationLocale) {
+
+        if (StringUtils.isBlank(timeFormat) || clientApplicationLocale == null) {
+
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            if (StringUtils.isBlank(timeFormat)) {
+                final String defaultMessage = new StringBuilder("The parameter '" + parameterName
+                        + "' requires a 'timeFormat' parameter to be passed with it.").toString();
+                final ApiParameterError error = ApiParameterError.parameterError("validation.msg.missing.timeFormat.parameter",
+                        defaultMessage, parameterName);
+                dataValidationErrors.add(error);
+            }
+            if (clientApplicationLocale == null) {
+                final String defaultMessage = new StringBuilder("The parameter '" + parameterName
+                        + "' requires a 'locale' parameter to be passed with it.").toString();
+                final ApiParameterError error = ApiParameterError.parameterError("validation.msg.missing.locale.parameter", defaultMessage,
+                        parameterName);
+                dataValidationErrors.add(error);
+            }
+            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                    dataValidationErrors);
+        }
+
+        LocalTime eventLocalTime = null;
+        if (StringUtils.isNotBlank(timeAsString)) {
+            try {
+                // Locale locale = LocaleContextHolder.getLocale();
+                eventLocalTime = DateTimeFormat.forPattern(timeFormat).withLocale(clientApplicationLocale)
+                        .parseLocalTime(timeAsString.toLowerCase(clientApplicationLocale));
+            } catch (final IllegalArgumentException e) {
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                final ApiParameterError error = ApiParameterError.parameterError("validation.msg.invalid.date.format", "The parameter "
+                        + parameterName + " is invalid based on the dateFormat: '" + timeFormat + "' and locale: '"
+                        + clientApplicationLocale + "' provided:", parameterName, timeAsString, timeFormat);
+                dataValidationErrors.add(error);
+
+                throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                        dataValidationErrors);
+            }
+        }
+
+        return eventLocalTime;
+    }
+    
     public Integer convertToInteger(final String numericalValueFormatted, final String parameterName, final Locale clientApplicationLocale) {
 
         if (clientApplicationLocale == null) {

@@ -16,6 +16,8 @@ import java.util.Set;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
 import org.joda.time.MonthDay;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.security.domain.BasicPasswordEncodablePlatformUser;
@@ -174,6 +176,18 @@ public final class JsonCommand {
         return differenceExists;
     }
 
+    private boolean differenceExistsInDateTime(final LocalDateTime baseValue, final LocalDateTime workingCopyValue) {
+        boolean differenceExists = false;
+
+        if (baseValue != null) {
+            differenceExists = !baseValue.equals(workingCopyValue);
+        } else {
+            differenceExists = workingCopyValue != null;
+        }
+
+        return differenceExists;
+    }
+    
     private boolean differenceExists(final String baseValue, final String workingCopyValue) {
         boolean differenceExists = false;
 
@@ -282,10 +296,23 @@ public final class JsonCommand {
         return isChanged;
     }
 
+    public boolean isChangeInLocalDateTimeParameterNamed(final String parameterName, final LocalDateTime existingValue) {
+        boolean isChanged = false;
+        if (parameterExists(parameterName)) {
+            final LocalDateTime workingValue = localDateTimeValueOfParameterNamed(parameterName);
+            isChanged = differenceExistsInDateTime(existingValue, workingValue);
+        }
+        return isChanged;
+    }
+    
     public LocalDate localDateValueOfParameterNamed(final String parameterName) {
         return this.fromApiJsonHelper.extractLocalDateNamed(parameterName, this.parsedCommand);
     }
 
+    public LocalDateTime localDateTimeValueOfParameterNamed(final String parameterName) {
+        return this.fromApiJsonHelper.extractLocalDateTimeNamed(parameterName, this.parsedCommand);
+    }
+    
     public MonthDay extractMonthDayNamed(final String parameterName) {
         return this.fromApiJsonHelper.extractMonthDayNamed(parameterName, this.parsedCommand);
     }

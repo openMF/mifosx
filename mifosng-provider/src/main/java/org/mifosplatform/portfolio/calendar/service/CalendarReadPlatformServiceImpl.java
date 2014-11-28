@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
@@ -62,7 +64,7 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
             final String title = rs.getString("title");
             final String description = rs.getString("description");
             final String location = rs.getString("location");
-            final LocalDate startDate = JdbcSupport.getLocalDate(rs, "startDate");
+            final LocalDateTime startDate = JdbcSupport.getLocalDateTime(rs, "startDate");
             final LocalDate endDate = JdbcSupport.getLocalDate(rs, "endDate");
             final Integer duration = rs.getInt("duration");
             final Integer typeId = rs.getInt("typeId");
@@ -81,7 +83,7 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
             final Integer secondReminder = rs.getInt("secondReminder");
             String humanReadable = null;
             if (startDate != null && recurrence != null) {
-                humanReadable = CalendarUtils.getRRuleReadable(startDate, recurrence);
+                humanReadable = CalendarUtils.getRRuleReadable(startDate.toLocalDate(), recurrence);
             }
 
             final LocalDate createdDate = JdbcSupport.getLocalDate(rs, "createdDate");
@@ -215,11 +217,11 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
         /**
          * Start date or effective from date of calendar recurrence.
          */
-        final LocalDate seedDate = this.getSeedDate(calendarData.getStartDate());
+        final LocalDate seedDate = this.getSeedDate(calendarData.getStartDate().toLocalDate());
         /**
          * periodStartDate date onwards recurring dates will be generated.
          */
-        final LocalDate periodStartDate = this.getPeriodStartDate(seedDate, calendarData.getStartDate(), fromDate);
+        final LocalDate periodStartDate = this.getPeriodStartDate(seedDate, calendarData.getStartDate().toLocalDate(), fromDate);
         /**
          * till periodEndDate recurring dates will be generated.
          */
@@ -299,11 +301,11 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
          * then regenerate the nextEligible meeting date based on
          */
         if (nextEligibleMeetingDate == null) {
-            final LocalDate seedDate = (lastMeetingDate != null) ? lastMeetingDate : calendarData.getStartDate();
+            final LocalDate seedDate = (lastMeetingDate != null) ? lastMeetingDate : calendarData.getStartDate().toLocalDate();
             nextEligibleMeetingDate = CalendarUtils.getRecentEligibleMeetingDate(applicableCalendarData.getRecurrence(), seedDate);
         } else if (calendarData.isBetweenStartAndEndDate(nextEligibleMeetingDate)) {
             nextEligibleMeetingDate = CalendarUtils.getRecentEligibleMeetingDate(applicableCalendarData.getRecurrence(),
-                    calendarData.getStartDate());
+                    calendarData.getStartDate().toLocalDate());
         }
 
         return nextEligibleMeetingDate;
@@ -417,7 +419,7 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
             final String title = rs.getString("title");
             final String description = rs.getString("description");
             final String location = rs.getString("location");
-            final LocalDate startDate = JdbcSupport.getLocalDate(rs, "startDate");
+            final LocalDateTime startDate = JdbcSupport.getLocalDate(rs, "startDate").toLocalDateTime(null);
             final LocalDate endDate = JdbcSupport.getLocalDate(rs, "endDate");
             final Integer duration = rs.getInt("duration");
             final Integer typeId = rs.getInt("typeId");
@@ -436,7 +438,7 @@ public class CalendarReadPlatformServiceImpl implements CalendarReadPlatformServ
             final Integer secondReminder = rs.getInt("secondReminder");
             String humanReadable = null;
             if (startDate != null && recurrence != null) {
-                humanReadable = CalendarUtils.getRRuleReadable(startDate, recurrence);
+                humanReadable = CalendarUtils.getRRuleReadable(startDate.toLocalDate(), recurrence);
             }
 
             final LocalDate createdDate = null;

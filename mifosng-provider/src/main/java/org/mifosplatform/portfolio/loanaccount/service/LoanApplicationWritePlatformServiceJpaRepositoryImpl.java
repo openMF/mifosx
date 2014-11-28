@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.api.JsonQuery;
@@ -282,9 +283,9 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
     private void createAndPersistCalendarInstanceForInterestRecalculation(final Loan loan) {
 
-        LocalDate calendarStartDate = loan.loanInterestRecalculationDetails().getRestFrequencyLocalDate();
+        LocalDateTime calendarStartDate = loan.loanInterestRecalculationDetails().getRestFrequencyLocalDate().toLocalDateTime(null);
         if (calendarStartDate == null) {
-            calendarStartDate = loan.getExpectedDisbursedOnLocalDate();
+            calendarStartDate = loan.getExpectedDisbursedOnLocalDate().toLocalDateTime(null);
         }
         final Integer repeatsOnDay = calendarStartDate.getDayOfWeek();
         final RecalculationFrequencyType recalculationFrequencyType = loan.loanInterestRecalculationDetails().getRestFrequencyType();
@@ -301,7 +302,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             case SAME_AS_REPAYMENT_PERIOD:
                 frequency = loan.repaymentScheduleDetail().getRepayEvery();
                 calendarFrequencyType = CalendarFrequencyType.from(loan.repaymentScheduleDetail().getRepaymentPeriodFrequencyType());
-                calendarStartDate = loan.getExpectedDisbursedOnLocalDate();
+                calendarStartDate = loan.getExpectedDisbursedOnLocalDate().toLocalDateTime(null);
             break;
             case WEEKLY:
                 calendarFrequencyType = CalendarFrequencyType.WEEKLY;

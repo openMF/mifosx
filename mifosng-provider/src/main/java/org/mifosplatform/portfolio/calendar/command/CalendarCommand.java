@@ -6,6 +6,8 @@
 package org.mifosplatform.portfolio.calendar.command;
 
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
 
 public class CalendarCommand {
 
@@ -16,7 +18,7 @@ public class CalendarCommand {
     @SuppressWarnings("unused")
     private final String location;
     @SuppressWarnings("unused")
-    private final LocalDate startDate;
+    private final LocalDateTime startDate;
     @SuppressWarnings("unused")
     private final LocalDate endDate;
     @SuppressWarnings("unused")
@@ -34,7 +36,7 @@ public class CalendarCommand {
     @SuppressWarnings("unused")
     private final Integer secondReminder;
 
-    public CalendarCommand(final String title, final String description, final String location, final LocalDate startDate,
+    public CalendarCommand(final String title, final String description, final String location, final LocalDateTime startDate,
             final LocalDate endDate, final LocalDate createdDate, final Integer duration, final Integer typeId, final boolean repeating,
             final Integer remindById, final Integer firstReminder, final Integer secondReminder) {
         this.title = title;

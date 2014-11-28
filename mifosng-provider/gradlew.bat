@@ -12,7 +12,7 @@ if "%OS%"=="Windows_NT" setlocal
 set DEFAULT_JVM_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,address=8005,server=y,suspend=n
 
 set CATALINA_OPTS=-Xms512m -Xmx512m
-set JAVA_OPTS=-Xms512m -Xmx512m -XX:PermSize=256m -XX:MaxPermSize=512m
+set JAVA_OPTS=-Xms512m -Xmx512m -XX:PermSize=256m -XX:MaxPermSize=512m   -javaagent:R:/Rakshith/Softwares/softwares/springsource/sts-3.2.0.RELEASE/plugins/org.zeroturnaround.eclipse.embedder_6.0.0.RELEASE-201410311652/jrebel/jrebel.jar -noverify
 
 set DIRNAME=%~dp0
 if "%DIRNAME%" == "" set DIRNAME=.

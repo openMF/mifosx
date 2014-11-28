@@ -17,6 +17,8 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
 import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
@@ -245,7 +247,7 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
             final String title = rs.getString("title");
             final String description = rs.getString("description");
             final String location = rs.getString("location");
-            final LocalDate startDate = JdbcSupport.getLocalDate(rs, "startDate");
+            final LocalDateTime startDate = JdbcSupport.getLocalDate(rs, "startDate").toLocalDateTime(null);
             final LocalDate endDate = JdbcSupport.getLocalDate(rs, "endDate");
             final String recurrence = rs.getString("recurrence");
 

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
@@ -160,7 +161,7 @@ public class CalendarWritePlatformServiceJpaRepositoryImpl implements CalendarWr
         final Calendar calendarForUpdate = this.calendarRepository.findOne(calendarId);
         if (calendarForUpdate == null) { throw new CalendarNotFoundException(calendarId); }
         final Date oldStartDate = calendarForUpdate.getStartDate();
-        final LocalDate currentDate = DateUtils.getLocalDateOfTenant();
+        final LocalDateTime currentDate = DateUtils.getLocalDateTimeOfTenant();
         // create calendar history before updating calendar
         final CalendarHistory calendarHistory = new CalendarHistory(calendarForUpdate, oldStartDate);
         final Map<String, Object> changes = calendarForUpdate.update(command);
@@ -168,7 +169,7 @@ public class CalendarWritePlatformServiceJpaRepositoryImpl implements CalendarWr
         if (!changes.isEmpty()) {
             // update calendar history table only if there is a change in
             // calendar start date.
-            if (currentDate.isAfter(new LocalDate(oldStartDate))) {
+            if (currentDate.isAfter(new LocalDateTime(oldStartDate))) {
                 final Date endDate = calendarForUpdate.getStartDateLocalDate().minusDays(1).toDate();
                 calendarHistory.updateEndDate(endDate);
                 this.calendarHistoryRepository.save(calendarHistory);

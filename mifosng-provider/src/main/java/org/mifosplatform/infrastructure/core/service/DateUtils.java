@@ -60,6 +60,22 @@ public class DateUtils {
     }
     	
 
+    public static LocalDateTime getLocalDateTimeOfTenant() {
+
+        LocalDateTime today = new LocalDateTime();
+
+        final MifosPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
+
+        if (tenant != null) {
+            final DateTimeZone zone = DateTimeZone.forID(tenant.getTimezoneId());
+            if (zone != null) {
+                today = new LocalDateTime(zone);
+            }
+        }
+
+        return today;
+    }
+    
     public static LocalDate parseLocalDate(final String stringDate, final String pattern) {
 
         try {

@@ -6,6 +6,7 @@
 
 package org.mifosplatform.portfolio.calendar.domain;
 
+import java.sql.Time;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -43,7 +44,7 @@ public class CalendarHistory extends AbstractPersistable<Long> {
     @Column(name = "end_date", nullable = true)
     @Temporal(TemporalType.DATE)
     private Date endDate;
-
+    
     @Column(name = "duration", nullable = true)
     private Integer duration;
 

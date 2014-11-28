@@ -8,11 +8,14 @@ package org.mifosplatform.infrastructure.core.domain;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Date;
 
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
 import org.springframework.jdbc.support.JdbcUtils;
 
 /**
@@ -39,6 +42,24 @@ public class JdbcSupport {
         return localDate;
     }
 
+    public static LocalDateTime getLocalDateTime(final ResultSet rs, final String columnName) throws SQLException {
+        LocalDateTime localDateTime = null;
+        final Date dateValue = rs.getTimestamp(columnName);
+        if (dateValue != null) {
+            localDateTime = new LocalDateTime(dateValue);
+        }
+        return localDateTime;
+    }
+    
+    public static LocalTime getLocalTime(final ResultSet rs, final String columnName) throws SQLException {
+        LocalTime localTime = null;
+        final Time timeValue = rs.getTime(columnName);
+        if (timeValue != null) {
+            localTime = new LocalTime(timeValue);
+        }
+        return localTime;
+    }
+    
     public static Long getLong(final ResultSet rs, final String columnName) throws SQLException {
         return (Long) JdbcUtils.getResultSetValue(rs, rs.findColumn(columnName), Long.class);
     }

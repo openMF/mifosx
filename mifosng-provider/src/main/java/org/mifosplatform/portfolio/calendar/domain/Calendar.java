@@ -27,6 +27,7 @@ import javax.persistence.TemporalType;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
@@ -53,13 +54,13 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
     private String location;
 
     @Column(name = "start_date", nullable = false)
-    @Temporal(TemporalType.DATE)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date startDate;
 
     @Column(name = "end_date", nullable = true)
     @Temporal(TemporalType.DATE)
     private Date endDate;
-
+    
     @Column(name = "duration", nullable = true)
     private Integer duration;
 
@@ -89,7 +90,7 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
 
     }
 
-    public Calendar(final String title, final String description, final String location, final LocalDate startDate,
+    public Calendar(final String title, final String description, final String location, final LocalDateTime startDate,
             final LocalDate endDate, final Integer duration, final Integer typeId, final boolean repeating, final String recurrence,
             final Integer remindById, final Integer firstReminder, final Integer secondReminder) {
 
@@ -108,7 +109,7 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
         this.location = StringUtils.defaultIfEmpty(location, null);
 
         if (null != startDate) {
-            this.startDate = startDate.toDateTimeAtStartOfDay().toDate();
+            this.startDate = startDate.toDateTime().toDate();
         } else {
             this.startDate = null;
         }
@@ -118,7 +119,7 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
         } else {
             this.endDate = null;
         }
-
+        
         this.duration = duration;
         this.typeId = typeId;
         this.repeating = repeating;
@@ -128,7 +129,7 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
         this.secondReminder = secondReminder;
     }
 
-    public static Calendar createRepeatingCalendar(final String title, final LocalDate startDate, final Integer typeId,
+    public static Calendar createRepeatingCalendar(final String title, final LocalDateTime startDate, final Integer typeId,
             final CalendarFrequencyType frequencyType, final Integer interval, final Integer repeatsOnDay) {
 
         final String description = null;
@@ -153,7 +154,7 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
         final String title = command.stringValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.TITLE.getValue());
         final String description = command.stringValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.DESCRIPTION.getValue());
         final String location = command.stringValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.LOCATION.getValue());
-        final LocalDate startDate = command.localDateValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue());
+        final LocalDateTime startDate = command.localDateTimeValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue());
         final LocalDate endDate = command.localDateValueOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.END_DATE.getValue());
         final Integer duration = command.integerValueSansLocaleOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.DURATION.getValue());
         final Integer typeId = command.integerValueSansLocaleOfParameterNamed(CALENDAR_SUPPORTED_PARAMETERS.TYPE_ID.getValue());
@@ -194,11 +195,11 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
         final String dateFormatAsInput = command.dateFormat();
         final String localeAsInput = command.locale();
         final String startDateParamName = CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue();
-        if (command.isChangeInLocalDateParameterNamed(startDateParamName, getStartDateLocalDate())) {
+        if (command.isChangeInLocalDateTimeParameterNamed(startDateParamName, getStartDateLocalDateTime())) {
 
             final String valueAsInput = command.stringValueOfParameterNamed(startDateParamName);
-            final LocalDate newValue = command.localDateValueOfParameterNamed(startDateParamName);
-            final LocalDate currentDate = DateUtils.getLocalDateOfTenant();
+            final LocalDateTime newValue = command.localDateTimeValueOfParameterNamed(startDateParamName);
+            final LocalDateTime currentDate = DateUtils.getLocalDateTimeOfTenant();
 
             if (newValue.isBefore(currentDate)) {
                 final String defaultUserMessage = "New meeting effective from date cannot be in past";
@@ -209,12 +210,11 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
                 final String defaultUserMessage = "New meeting effective from date cannot be a date before existing meeting start date";
                 throw new CalendarDateException("new.start.date.before.existing.date", defaultUserMessage, newValue,
                         getStartDateLocalDate());
-            } else {
-                actualChanges.put(startDateParamName, valueAsInput);
-                actualChanges.put("dateFormat", dateFormatAsInput);
-                actualChanges.put("locale", localeAsInput);
-                this.startDate = newValue.toDate();
             }
+            actualChanges.put(startDateParamName, valueAsInput);
+            actualChanges.put("dateFormat", dateFormatAsInput);
+            actualChanges.put("locale", localeAsInput);
+            this.startDate = newValue.toDate();
         }
 
         final String endDateParamName = CALENDAR_SUPPORTED_PARAMETERS.END_DATE.getValue();
@@ -395,6 +395,14 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
         return startDateLocalDate;
     }
 
+    public LocalDateTime getStartDateLocalDateTime() {
+        LocalDateTime startDateLocalDateTime = null;
+        if (this.startDate != null) {
+            startDateLocalDateTime = LocalDateTime.fromDateFields(this.startDate);
+        }
+        return startDateLocalDateTime;
+    }
+    
     public LocalDate getEndDateLocalDate() {
         LocalDate endDateLocalDate = null;
         if (this.endDate != null) {
@@ -412,15 +420,15 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
         return false;
     }
 
-    public boolean isStartDateBeforeOrEqual(final LocalDate compareDate) {
+    public boolean isStartDateBeforeOrEqual(final LocalDateTime compareDate) {
         if (this.startDate != null && compareDate != null) {
             if (getStartDateLocalDate().isBefore(compareDate) || getStartDateLocalDate().equals(compareDate)) { return true; }
         }
         return false;
     }
 
-    public boolean isStartDateAfter(final LocalDate compareDate) {
-        if (this.startDate != null && compareDate != null && getStartDateLocalDate().isAfter(compareDate)) { return true; }
+    public boolean isStartDateAfter(final LocalDateTime compareDate) {
+        if (this.startDate != null && compareDate != null && getStartDateLocalDateTime().isAfter(compareDate)) { return true; }
         return false;
     }
 
@@ -439,7 +447,7 @@ public class Calendar extends AbstractAuditableCustom<AppUser, Long> {
     }
 
     public boolean isBetweenStartAndEndDate(final LocalDate compareDate) {
-        if (isStartDateBeforeOrEqual(compareDate)) {
+        if (isStartDateBeforeOrEqual(compareDate.toLocalDateTime(null))) {
             if (getEndDateLocalDate() == null || isEndDateAfterOrEqual(compareDate)) { return true; }
         }
         return false;

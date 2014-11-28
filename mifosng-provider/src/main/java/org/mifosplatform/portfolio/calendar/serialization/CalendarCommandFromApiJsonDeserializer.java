@@ -13,6 +13,8 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
@@ -57,7 +59,7 @@ public class CalendarCommandFromApiJsonDeserializer extends AbstractFromApiJsonD
         final String title = this.fromApiJsonHelper.extractStringNamed(CALENDAR_SUPPORTED_PARAMETERS.TITLE.getValue(), element);
         final String description = this.fromApiJsonHelper.extractStringNamed(CALENDAR_SUPPORTED_PARAMETERS.DESCRIPTION.getValue(), element);
         final String location = this.fromApiJsonHelper.extractStringNamed(CALENDAR_SUPPORTED_PARAMETERS.LOCATION.getValue(), element);
-        final LocalDate startDate = this.fromApiJsonHelper.extractLocalDateNamed(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue(),
+        final LocalDateTime startDate = this.fromApiJsonHelper.extractLocalDateTimeNamed(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue(),
                 element);
         final LocalDate endDate = this.fromApiJsonHelper.extractLocalDateNamed(CALENDAR_SUPPORTED_PARAMETERS.END_DATE.getValue(), element);
         final LocalDate createdDate = this.fromApiJsonHelper.extractLocalDateNamed(CALENDAR_SUPPORTED_PARAMETERS.CREATED_DATE.getValue(),
@@ -74,7 +76,7 @@ public class CalendarCommandFromApiJsonDeserializer extends AbstractFromApiJsonD
         final Integer secondReminder = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(
                 CALENDAR_SUPPORTED_PARAMETERS.SECOND_REMINDER.getValue(), element);
 
-        return new CalendarCommand(title, description, location, startDate, endDate, createdDate, duration, typeId, repeating, remindById,
+        return new CalendarCommand(title, description, location, startDate, endDate, createdDate,duration, typeId, repeating, remindById,
                 firstReminder, secondReminder);
     }
 
@@ -111,7 +113,7 @@ public class CalendarCommandFromApiJsonDeserializer extends AbstractFromApiJsonD
         baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue()).value(startDateStr).notBlank();
 
         if (!StringUtils.isBlank(startDateStr)) {
-            final LocalDate startDate = this.fromApiJsonHelper.extractLocalDateNamed(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue(),
+            final LocalDateTime startDate = this.fromApiJsonHelper.extractLocalDateTimeNamed(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue(),
                     element);
             baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue()).value(startDate).notNull();
         }
@@ -224,7 +226,7 @@ public class CalendarCommandFromApiJsonDeserializer extends AbstractFromApiJsonD
                     element);
             baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue()).value(startDateStr).notNull();
 
-            final LocalDate startDate = this.fromApiJsonHelper.extractLocalDateNamed(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue(),
+            final LocalDateTime startDate = this.fromApiJsonHelper.extractLocalDateTimeNamed(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue(),
                     element);
             baseDataValidator.reset().parameter(CALENDAR_SUPPORTED_PARAMETERS.START_DATE.getValue()).value(startDate).notNull();
         }

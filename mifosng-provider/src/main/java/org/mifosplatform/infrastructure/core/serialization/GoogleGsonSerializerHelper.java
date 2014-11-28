@@ -11,9 +11,11 @@ import java.util.Set;
 
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.joda.time.MonthDay;
 import org.mifosplatform.infrastructure.core.api.JodaDateTimeAdapter;
 import org.mifosplatform.infrastructure.core.api.JodaLocalDateAdapter;
+import org.mifosplatform.infrastructure.core.api.JodaLocalDateTimeAdapter;
 import org.mifosplatform.infrastructure.core.api.JodaMonthDayAdapter;
 import org.mifosplatform.infrastructure.core.api.ParameterListExclusionStrategy;
 import org.mifosplatform.infrastructure.core.api.ParameterListInclusionStrategy;
@@ -78,6 +80,7 @@ public final class GoogleGsonSerializerHelper {
 
         final GsonBuilder builder = new GsonBuilder().addSerializationExclusionStrategy(strategy);
         builder.registerTypeAdapter(LocalDate.class, new JodaLocalDateAdapter());
+        builder.registerTypeAdapter(LocalDateTime.class, new JodaLocalDateTimeAdapter());
         builder.registerTypeAdapter(DateTime.class, new JodaDateTimeAdapter());
         builder.registerTypeAdapter(MonthDay.class, new JodaMonthDayAdapter());
         if (prettyPrint) {
