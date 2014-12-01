@@ -20,6 +20,7 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
@@ -310,7 +311,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                         CalendarEntityType.SAVINGS.getValue());
             }
         } else {
-            LocalDateTime calendarStartDate = account.depositStartDate().toLocalDateTime(null);
+            LocalDateTime calendarStartDate = account.depositStartDate().toLocalDateTime(LocalTime.MIDNIGHT);
             final Integer frequencyType = command.integerValueSansLocaleOfParameterNamed(recurringFrequencyTypeParamName);
             final PeriodFrequencyType periodFrequencyType = PeriodFrequencyType.fromInt(frequencyType);
             final Integer frequency = command.integerValueSansLocaleOfParameterNamed(recurringFrequencyParamName);
