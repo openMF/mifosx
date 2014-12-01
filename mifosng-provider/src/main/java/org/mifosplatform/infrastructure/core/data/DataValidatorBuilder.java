@@ -146,6 +146,19 @@ public class DataValidatorBuilder {
         }
         return this;
     }
+    
+    public DataValidatorBuilder isTrue() {
+    	if (this.value == null && this.ignoreNullValue) { return this; }
+            final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
+                    .append(this.parameter).append(".should.have.atleast.one.attribute.set.to.true");
+            final StringBuilder defaultEnglishMessage = new StringBuilder("If the parameter ").append(this.parameter).append(
+                    " is true then atleast one configurable attribute must be true.");
+            final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                    defaultEnglishMessage.toString(), this.parameter);
+            this.dataValidationErrors.add(error);
+        
+        return this;
+    }
 
     public DataValidatorBuilder notNull() {
         if (this.value == null && !this.ignoreNullValue) {

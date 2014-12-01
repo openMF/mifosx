@@ -31,6 +31,7 @@ import org.mifosplatform.portfolio.loanaccount.data.LoanInterestRecalculationDat
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestMethod;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProductConfigurableAttributes;
 import org.mifosplatform.portfolio.loanproduct.service.LoanEnumerations;
 import org.springframework.util.CollectionUtils;
 
@@ -137,6 +138,7 @@ public class LoanProductData {
 
     private final Boolean holdGuaranteeFunds;
     private final LoanProductGuaranteeData productGuaranteeData;
+    private final LoanProductConfigurableAttributes loanProductConfigurableAttributes;
 
     /**
      * Used when returning lookup information about loan product for dropdowns.
@@ -193,6 +195,7 @@ public class LoanProductData {
         final boolean isInterestRecalculationEnabled = false;
         final LoanProductInterestRecalculationData interestRecalculationData = null;
         final Integer minimumDaysBetweenDisbursalAndFirstRepayment = null;
+        final LoanProductConfigurableAttributes loanProductConfigurableAttributes = null;
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -202,7 +205,7 @@ public class LoanProductData {
                 accountingType, includeInBorrowerCycle, useBorrowerCycle, startDate, closeDate, status, externalId, principalVariations,
                 interestRateVariations, numberOfRepaymentVariations, multiDisburseLoan, maxTrancheCount, outstandingLoanBalance,
                 graceOnArrearsAgeing, overdueDaysForNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled,
-                interestRecalculationData, minimumDaysBetweenDisbursalAndFirstRepayment, holdGuaranteeFunds, productGuaranteeData);
+                interestRecalculationData, minimumDaysBetweenDisbursalAndFirstRepayment, holdGuaranteeFunds, productGuaranteeData,loanProductConfigurableAttributes);
     }
 
     public static LoanProductData lookupWithCurrency(final Long id, final String name, final CurrencyData currency) {
@@ -258,6 +261,7 @@ public class LoanProductData {
         final Integer minimumDaysBetweenDisbursalAndFirstRepayment = null;
         final Boolean holdGuaranteeFunds = false;
         final LoanProductGuaranteeData productGuaranteeData = null;
+        final LoanProductConfigurableAttributes loanProductConfigurableAttributes = null;
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -267,7 +271,7 @@ public class LoanProductData {
                 accountingType, includeInBorrowerCycle, useBorrowerCycle, startDate, closeDate, status, externalId, principalVariations,
                 interestRateVariations, numberOfRepaymentVariations, multiDisburseLoan, maxTrancheCount, outstandingLoanBalance,
                 graceOnArrearsAgeing, overdueDaysForNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled,
-                interestRecalculationData, minimumDaysBetweenDisbursalAndFirstRepayment, holdGuaranteeFunds, productGuaranteeData);
+                interestRecalculationData, minimumDaysBetweenDisbursalAndFirstRepayment, holdGuaranteeFunds, productGuaranteeData,loanProductConfigurableAttributes);
     }
 
     public static LoanProductData sensibleDefaultsForNewLoanProductCreation() {
@@ -330,6 +334,7 @@ public class LoanProductData {
         final Integer minimumDaysBetweenDisbursalAndFirstRepayment = null;
         final Boolean holdGuaranteeFunds = false;
         final LoanProductGuaranteeData productGuaranteeData = null;
+        final LoanProductConfigurableAttributes loanProductConfigurableAttributes = null;
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -340,7 +345,7 @@ public class LoanProductData {
                 principalVariationsForBorrowerCycle, interestRateVariationsForBorrowerCycle, numberOfRepaymentVariationsForBorrowerCycle,
                 multiDisburseLoan, maxTrancheCount, outstandingLoanBalance, graceOnArrearsAgeing, overdueDaysForNPA, daysInMonthType,
                 daysInYearType, isInterestRecalculationEnabled, interestRecalculationData, minimumDaysBetweenDisbursalAndFirstRepayment,
-                holdGuaranteeFunds, productGuaranteeData);
+                holdGuaranteeFunds, productGuaranteeData,loanProductConfigurableAttributes);
     }
 
     public static LoanProductData withAccountingDetails(final LoanProductData productData, final Map<String, Object> accountingMappings,
@@ -372,7 +377,7 @@ public class LoanProductData {
             final Integer overdueDaysForNPA, final EnumOptionData daysInMonthType, final EnumOptionData daysInYearType,
             final boolean isInterestRecalculationEnabled, final LoanProductInterestRecalculationData interestRecalculationData,
             final Integer minimumDaysBetweenDisbursalAndFirstRepayment, boolean holdGuaranteeFunds,
-            LoanProductGuaranteeData loanProductGuaranteeData) {
+            LoanProductGuaranteeData loanProductGuaranteeData,LoanProductConfigurableAttributes loanProductConfigurableAttributes) {
         this.id = id;
         this.name = name;
         this.shortName = shortName;
@@ -445,6 +450,7 @@ public class LoanProductData {
         this.interestRecalculationData = interestRecalculationData;
         this.holdGuaranteeFunds = holdGuaranteeFunds;
         this.productGuaranteeData = loanProductGuaranteeData;
+        this.loanProductConfigurableAttributes = loanProductConfigurableAttributes;
 
         this.daysInMonthTypeOptions = null;
         this.daysInYearTypeOptions = null;
@@ -553,6 +559,7 @@ public class LoanProductData {
         this.daysInYearTypeOptions = daysInYearTypeOptions;
         this.interestRecalculationCompoundingTypeOptions = interestRecalculationCompoundingTypeOptions;
         this.rescheduleStrategyTypeOptions = rescheduleStrategyTypeOptions;
+        this.loanProductConfigurableAttributes = productData.loanProductConfigurableAttributes;
 
         if (CollectionUtils.isEmpty(interestRecalculationFrequencyTypeOptions)) {
             this.interestRecalculationFrequencyTypeOptions = null;
@@ -808,5 +815,8 @@ public class LoanProductData {
     public Integer getRecalculationRestFrequencyInterval() {
         if (isInterestRecalculationEnabled()) { return this.interestRecalculationData.getRecalculationRestFrequencyInterval(); }
         return null;
+    }
+    public LoanProductConfigurableAttributes getloanProductConfigurableAttributes(){
+    	return this.loanProductConfigurableAttributes;
     }
 }
