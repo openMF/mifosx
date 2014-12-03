@@ -1,3 +1,5 @@
+# This (sudo: false) is needed to "run on container-based infrastructure" on which cache: is available
+sudo: false
 language: java
 jdk:
   - openjdk7
@@ -9,3 +11,6 @@ notifications:
 # @see http://gradle.1045684.n5.nabble.com/Plain-console-output-td5710237.html
 env:
   - TERM=dumb
+cache:
+  directories:
+  - $HOME/.m2
