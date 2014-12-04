@@ -16,4 +16,5 @@ env:
 cache:
   apt: true
   directories:
+  - $HOME/.gradle
   - $HOME/.m2
