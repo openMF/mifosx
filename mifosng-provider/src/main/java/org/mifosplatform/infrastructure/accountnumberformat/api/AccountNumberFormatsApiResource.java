@@ -18,6 +18,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
+import org.apache.commons.lang.StringUtils;
 
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
@@ -117,9 +118,14 @@ public class AccountNumberFormatsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String create(final String apiRequestBodyAsJson) {
 
+    	String jsonApiRequest = apiRequestBodyAsJson;
+        if (StringUtils.isBlank(jsonApiRequest)) {
+    	    jsonApiRequest = "{}";
+    	}
         final CommandWrapper commandRequest = new CommandWrapperBuilder() //
                 .createAccountNumberFormat() //
                 .withJson(apiRequestBodyAsJson) //
+                .withJson(jsonApiRequest) //
                 .build(); //
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
@@ -133,9 +139,14 @@ public class AccountNumberFormatsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String update(@PathParam("accountNumberFormatId") final Long accountNumberFormatId, final String apiRequestBodyAsJson) {
 
+    	String jsonApiRequest = apiRequestBodyAsJson;
+        if (StringUtils.isBlank(jsonApiRequest)) {
+    	    jsonApiRequest = "{}";
+    	}
         final CommandWrapper commandRequest = new CommandWrapperBuilder() //
                 .updateAccountNumberFormat(accountNumberFormatId) //
                 .withJson(apiRequestBodyAsJson) //
+                .withJson(jsonApiRequest) //
                 .build(); //
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
