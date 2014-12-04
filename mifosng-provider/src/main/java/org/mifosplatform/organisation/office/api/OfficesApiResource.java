@@ -5,9 +5,13 @@
  */
 package org.mifosplatform.organisation.office.api;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -76,10 +80,17 @@ public class OfficesApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        final Collection<OfficeData> offices = this.readPlatformService.retrieveAllOffices(onlyManualEntries);
-
+        // Sort Alphabetically
+        List<OfficeData> officeList = new ArrayList<OfficeData>(this.readPlatformService.retrieveAllOffices(onlyManualEntries));
+        Comparator<OfficeData> comparator = new Comparator<OfficeData>(){
+        	public int compare(OfficeData officeA, OfficeData officeB) {
+        		return officeA.name().compareTo(officeB.name());
+        	}
+        };
+        Collections.sort(officeList, comparator);
+        
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, offices, this.RESPONSE_DATA_PARAMETERS);
+        return this.toApiJsonSerializer.serialize(settings, officeList, this.RESPONSE_DATA_PARAMETERS);
     }
 
     @GET
