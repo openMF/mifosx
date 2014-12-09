@@ -195,6 +195,30 @@
 							</tr>
 							<tr>
 								<td></td>
+								<td>clients/{clientId}?command=reject</td>
+								<td><a href="#clients_reject">Reject a Client Application</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>clients/{clientId}?command=withdraw</td>
+								<td><a href="#clients_withdraw">Withdraw a Client Application</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>clients/{clientId}?command=reactivate</td>
+								<td><a href="#clients_reactivate">Reactivate a Client</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
 								<td>clients/{clientId}?command=assignStaff</td>
 								<td><a href="#clients_assignStaff">Assign Staff</a></td>
 								<td></td>
@@ -725,6 +749,14 @@
 								<td></td>
 								<td>recurringdepositaccounts/{accountId}?command=activate</td>
 								<td><a href="#rdaccounts_activate">Activate a recurring deposit account</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>recurringdepositaccounts/{accountId}?command=updateDepositAmount</td>
+								<td><a href="#rdaccounts_update_deposit_amount">Update recommended deposit amount</a></td>
 								<td></td>
 								<td></td>
 								<td></td>
@@ -3516,6 +3548,119 @@ Request Body:
 	    </div>
 	</div>
 	
+	<a id="clients_reject" name="clients_reject" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h4>Reject a Client</h4>
+	        <p>Clients can be rejected when client is in pending for activation status.</p>
+	        <p>If the client is any other status, this API throws an error.</p>
+	        <table class=matrixHeading>
+				<tr class="matrixHeadingBG">
+					<td><div class="mifosXHeading2">Mandatory Fields</div></td>
+				</tr>
+				<tr class=alt>
+					<td>rejectDate, rejectReasonId<br>
+					</td>
+				</tr>
+			</table>
+	    </div>
+	    
+		<div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/clients/{clientId}?command=reject</code>
+	        <code class="method-request">POST clients/1?command=reject
+Content-Type: application/json
+Request Body:
+{
+"rejectDate":"28 November 2014",
+"rejectReasonId":16,
+"locale":"en",
+"dateFormat":"dd MMMM yyyy"
+}			
+			</code>
+	        <code class="method-response">
+{ 
+  "clientId":15,
+  "resourceId":15
+}
+	        </code>
+	    </div>
+	</div>
+	
+	<a id="clients_withdraw" name="clients_withdraw" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h4>Withdraw a Client</h4>
+	        <p>Client applications can be withdrawn when client is in a pending for activation status.</p>
+	        <p>If the client is any other status, this API throws an error.</p>
+	        <table class=matrixHeading>
+				<tr class="matrixHeadingBG">
+					<td><div class="mifosXHeading2">Mandatory Fields</div></td>
+				</tr>
+				<tr class=alt>
+					<td>withdrawDate, withdrawReasonId<br>
+					</td>
+				</tr>
+			</table>
+	    </div>
+		<div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/clients/{clientId}?command=withdraw</code>
+	        <code class="method-request">POST clients/1?command=withdraw
+Content-Type: application/json
+Request Body:
+{
+"withdrawDate":"28 November 2014",
+"withdrawReasonId":17,
+"locale":"en",
+"dateFormat":"dd MMMM yyyy"
+}			
+			</code>
+	        <code class="method-response">
+{ 
+  "officeId":1,
+  "clientId":15,
+  "resourceId":15
+}
+	        </code>
+	    </div>
+	</div>
+	
+	
+	<a id="clients_reactivate" name="clients_reactivate" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h4>Reactivate a Client</h4>
+	        <p>Clients can be reactivated after they have been closed.</p>
+	        <p>Trying to reactivate a client in any other state throws an error.</p>
+	         <table class=matrixHeading>
+				<tr class="matrixHeadingBG">
+					<td><div class="mifosXHeading2">Mandatory Fields</div></td>
+				</tr>
+				<tr class=alt>
+					<td>reactivationDate<br>
+					</td>
+				</tr>
+			</table>
+	    </div>
+		<div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/clients/{clientId}?command=reactivate</code>
+	        <code class="method-request">POST clients/1?command=reactivate
+Content-Type: application/json
+Request Body:
+{
+"reactivationDate":"28 November 2014",
+"locale":"en",
+"dateFormat":"dd MMMM yyyy"
+}			
+			</code>
+	        <code class="method-response">
+{ 
+
+  "clientId":15,
+  "resourceId":15
+}
+	        </code>
+	    </div>
+	</div>
 		<a id="clients_assignStaff" name="clients_assignStaff" class="old-syle-anchor">&nbsp;</a>
 	<div class="method-section">
 	    <div class="method-description">
@@ -13208,6 +13353,7 @@ Request Body:
 						<li><b>allow-transactions-on-holiday</b> - defaults to false - if true allows transactions on <a href="#holidays">holidays</a></li>
 						<li><b>savings-interest-posting-current-period-end</b> - Set it at the database level before any savings interest is posted. When set as false(default), interest will be posted on the first date of next period. If set as true, interest will be posted on last date of current period. There is no difference in the interest amount posted.</li>
 						<li><b>financial-year-beginning-month</b> - Set it at the database level before any savings interest is posted. Allowed values 1 - 12 (January - December). Interest posting periods are evaluated based on this configuration.</li>
+						<li><b>meetings-mandatory-for-jlg-loans</b> - if set to true, enforces all JLG loans to follow a meeting schedule belonging to either the parent group or Center.</li>
 					</ol>
 				</div>
 			</div>
@@ -23323,6 +23469,42 @@ Request Body:
 	    </div>
 	</div>
 
+	<a id="rdaccounts_update_deposit_amount" name="rdaccounts_update_deposit_amount" class="old-syle-anchor">&nbsp;</a>
+	<div class="method-section">
+	    <div class="method-description">
+	        <h2>Update the recommended deposit amount for a recurring deposit account</h2>
+	        <p>Updates the recommended deposit amount for a RD account as on the effective date.</p>
+	    </div>
+	    <div class="method-example">
+	        <code class="method-declaration">POST https://Domain Name/api/v1/recurringdepositaccounts/{accountId}?command=updateDepositAmount</code>
+	        <code class="method-request">POST recurringdepositaccounts/4?command=updateDepositAmount
+Content-Type: application/json
+Request Body:
+{
+  "locale": "en",
+  "dateFormat": "dd MMMM yyyy",
+  "effectiveDate": "01 Dec 2014"
+  "mandatoryRecommendedDepositAmount": 398
+}
+			</code>
+	        <code class="method-response">
+
+{
+   "officeId": 1,
+   "clientId": 6,
+   "savingsId": 4,
+   "resourceId": 4,
+   "changes":
+   {
+       "mandatoryRecommendedDepositAmount": 398
+   }
+}
+
+	        </code>
+	    </div>
+	</div>
+
+
 	<a id="rdaccounts_close" name="rdaccounts_close" class="old-syle-anchor">&nbsp;</a>
 	<div class="method-section">
 	    <div class="method-description">
@@ -26810,7 +26992,9 @@ No Request Body:
                             <td class=fielddesc>
                                 Column type. Must be one of the following:
                                 <ul class="field">
+                                    <li>Boolean</li>
                                     <li>Date</li>
+                                    <li>DateTime</li>
                                     <li>Decimal</li>
                                     <li>Dropdown</li>
                                     <li>Number</li>
@@ -27120,7 +27304,9 @@ GET https://DomainName/api/v1/datatables/{datatable}
                             <td class=fielddesc>
                                 Column type. Must be one of the following:
                                 <ul class="field">
+                                    <li>Boolean</li>
                                     <li>Date</li>
+                                    <li>DateTime</li>
                                     <li>Decimal</li>
                                     <li>Dropdown</li>
                                     <li>Number</li>

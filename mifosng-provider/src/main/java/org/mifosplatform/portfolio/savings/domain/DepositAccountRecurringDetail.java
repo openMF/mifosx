@@ -8,7 +8,10 @@ package org.mifosplatform.portfolio.savings.domain;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.mandatoryRecommendedDepositAmountParamName;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.persistence.Column;
@@ -18,8 +21,13 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
+import org.mifosplatform.infrastructure.core.data.ApiParameterError;
+import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.monetary.domain.Money;
+import org.mifosplatform.portfolio.savings.DepositsApiConstants;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 @Entity
@@ -89,6 +97,29 @@ public class DepositAccountRecurringDetail extends AbstractPersistable<Long> {
         if (this.recurringDetail != null) {
             actualChanges.putAll(this.recurringDetail.update(command));
         }
+        return actualChanges;
+    }
+
+    public Map<String, Object> updateMandatoryRecommendedDepositAmount(BigDecimal newMandatoryRecommendedDepositAmount,
+            LocalDate effectiveDate, Boolean isSavingsInterestPostingAtCurrentPeriodEnd, Integer financialYearBeginningMonth) {
+        final Map<String, Object> actualChanges = new LinkedHashMap<>(10);
+        actualChanges.put(mandatoryRecommendedDepositAmountParamName, newMandatoryRecommendedDepositAmount);
+        this.mandatoryRecommendedDepositAmount = newMandatoryRecommendedDepositAmount;
+        RecurringDepositAccount depositAccount = (RecurringDepositAccount) this.account;
+        if (depositAccount.isNotActive()) {
+            final String defaultUserMessage = "Updates to the recommended deposit amount are allowed only when the underlying account is active.";
+            final ApiParameterError error = ApiParameterError.generalError("error.msg."
+                    + DepositsApiConstants.RECURRING_DEPOSIT_ACCOUNT_RESOURCE_NAME + ".is.not.active", defaultUserMessage);
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            dataValidationErrors.add(error);
+            throw new PlatformApiDataValidationException(dataValidationErrors);
+        }
+        depositAccount.updateScheduleInstallmentsWithNewRecommendedDepositAmount(newMandatoryRecommendedDepositAmount, effectiveDate);
+        depositAccount.updateOverduePayments(DateUtils.getLocalDateOfTenant());
+        MathContext mc = MathContext.DECIMAL64;
+        Boolean isPreMatureClosure = false;
+        depositAccount.updateMaturityDateAndAmount(mc, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
+                financialYearBeginningMonth);
         return actualChanges;
     }
 

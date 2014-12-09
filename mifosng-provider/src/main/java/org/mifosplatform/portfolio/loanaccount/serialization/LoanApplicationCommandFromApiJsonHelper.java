@@ -46,9 +46,9 @@ public final class LoanApplicationCommandFromApiJsonHelper {
      */
     final Set<String> supportedParameters = new HashSet<>(Arrays.asList("dateFormat", "locale", "id", "clientId", "groupId", "loanType",
             "productId", "principal", "loanTermFrequency", "loanTermFrequencyType", "numberOfRepayments", "repaymentEvery",
-            "repaymentFrequencyType","repaymentFrequencyNthDayType", "repaymentFrequencyDayOfWeekType", "interestRatePerPeriod", "amortizationType", "interestType", "interestCalculationPeriodType",
-            "expectedDisbursementDate", "repaymentsStartingFromDate", "graceOnPrincipalPayment",
-            "graceOnInterestPayment",
+            "repaymentFrequencyType", "repaymentFrequencyNthDayType", "repaymentFrequencyDayOfWeekType", "interestRatePerPeriod",
+            "amortizationType", "interestType", "interestCalculationPeriodType", "expectedDisbursementDate", "repaymentsStartingFromDate",
+            "graceOnPrincipalPayment", "graceOnInterestPayment",
             "graceOnInterestCharged",
             "interestChargedFromDate", //
             "submittedOnDate",
@@ -78,7 +78,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         this.apiJsonHelper = apiJsonHelper;
     }
 
-    public void validateForCreate(final String json) {
+    public void validateForCreate(final String json, final boolean isMeetingMandatoryForJLGLoans) {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
@@ -112,32 +112,24 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             if (loanType.isJLGAccount()) {
                 baseDataValidator.reset().parameter("clientId").value(clientId).notNull().integerGreaterThanZero();
                 baseDataValidator.reset().parameter("groupId").value(groupId).notNull().longGreaterThanZero();
-                /**
-                 * these validations should be carried out based on Global
-                 * configurations, commenting them for now
-                 **/
 
-                /**
-                 * // if it is JLG loan then must have a meeting details
-                 * (calendar) final String calendarIdParameterName =
-                 * "calendarId"; final Long calendarId =
-                 * this.fromApiJsonHelper.extractLongNamed
-                 * (calendarIdParameterName, element);
-                 * baseDataValidator.reset().
-                 * parameter(calendarIdParameterName).value
-                 * (calendarId).notNull().integerGreaterThanZero();
-                 * 
-                 * // if it is JLG loan then must have a syncDisbursement final
-                 * String syncDisbursementParameterName =
-                 * "syncDisbursementWithMeeting"; final Boolean syncDisbursement
-                 * = this.fromApiJsonHelper.extractBooleanNamed(
-                 * syncDisbursementParameterName, element);
-                 * 
-                 * if (syncDisbursement == null) {
-                 * baseDataValidator.reset().parameter
-                 * (syncDisbursementParameterName
-                 * ).value(syncDisbursement).trueOrFalseRequired(false); }
-                 **/
+                // if it is JLG loan that must have meeting details
+                if (isMeetingMandatoryForJLGLoans) {
+                    final String calendarIdParameterName = "calendarId";
+                    final Long calendarId = this.fromApiJsonHelper.extractLongNamed(calendarIdParameterName, element);
+                    baseDataValidator.reset().parameter(calendarIdParameterName).value(calendarId).notNull().integerGreaterThanZero();
+
+                    // if it is JLG loan then must have a value for
+                    // syncDisbursement passed in
+                    String syncDisbursementParameterName = "syncDisbursementWithMeeting";
+                    final Boolean syncDisbursement = this.fromApiJsonHelper.extractBooleanNamed(syncDisbursementParameterName, element);
+
+                    if (syncDisbursement == null) {
+                        baseDataValidator.reset().parameter(syncDisbursementParameterName).value(syncDisbursement)
+                                .trueOrFalseRequired(false);
+                    }
+                }
+
             }
 
         }
@@ -289,14 +281,14 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             final Long linkAccountId = this.fromApiJsonHelper.extractLongNamed(linkAccountIdParameterName, element);
             baseDataValidator.reset().parameter(linkAccountIdParameterName).value(linkAccountId).ignoreIfNull().longGreaterThanZero();
         }
-        
+
         final String createSiAtDisbursementParameterName = "createStandingInstructionAtDisbursement";
-        if(this.fromApiJsonHelper.parameterExists(createSiAtDisbursementParameterName, element)) {
-            final Boolean createStandingInstructionAtDisbursement = this.fromApiJsonHelper
-                    .extractBooleanNamed(createSiAtDisbursementParameterName, element);
+        if (this.fromApiJsonHelper.parameterExists(createSiAtDisbursementParameterName, element)) {
+            final Boolean createStandingInstructionAtDisbursement = this.fromApiJsonHelper.extractBooleanNamed(
+                    createSiAtDisbursementParameterName, element);
             final Long linkAccountId = this.fromApiJsonHelper.extractLongNamed(linkAccountIdParameterName, element);
-            
-            if(createStandingInstructionAtDisbursement) {
+
+            if (createStandingInstructionAtDisbursement) {
                 baseDataValidator.reset().parameter(linkAccountIdParameterName).value(linkAccountId).notNull().longGreaterThanZero();
             }
         }
@@ -771,10 +763,43 @@ public final class LoanApplicationCommandFromApiJsonHelper {
     }
 
     public void validateLoanTermAndRepaidEveryValues(final Integer loanTermFrequency, final Integer loanTermFrequencyType,
-            final Integer numberOfRepayments, final Integer repaymentEvery, final Integer repaymentEveryType) {
+            final Integer numberOfRepayments, final Integer repaymentEvery, final Integer repaymentEveryType, final Loan loan) {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         this.apiJsonHelper.validateSelectedPeriodFrequencyTypeIsTheSame(dataValidationErrors, loanTermFrequency, loanTermFrequencyType,
                 numberOfRepayments, repaymentEvery, repaymentEveryType);
+
+        /**
+         * For multi-disbursal loans where schedules are auto-generated based on
+         * a fixed EMI, ensure the number of repayments is within the
+         * permissible range defined by the loan product
+         **/
+        if (loan.loanProduct().isMultiDisburseLoan() && loan.getFixedEmiAmount() != null) {
+            Integer minimumNoOfRepayments = loan.loanProduct().getMinNumberOfRepayments();
+            Integer maximumNoOfRepayments = loan.loanProduct().getMaxNumberOfRepayments();
+            Integer actualNumberOfRepayments = loan.getRepaymentScheduleInstallments().size();
+            // validate actual number of repayments is > minimum number of
+            // repayments
+            if (minimumNoOfRepayments != null && minimumNoOfRepayments != 0 && actualNumberOfRepayments < minimumNoOfRepayments) {
+                final ApiParameterError error = ApiParameterError.generalError(
+                        "validation.msg.loan.numberOfRepayments.lesser.than.minimumNumberOfRepayments",
+                        "The total number of calculated repayments for this loan " + actualNumberOfRepayments
+                                + " is lesser than the allowed minimum of " + minimumNoOfRepayments, actualNumberOfRepayments,
+                        minimumNoOfRepayments);
+                dataValidationErrors.add(error);
+            }
+
+            // validate actual number of repayments is < maximum number of
+            // repayments
+            if (maximumNoOfRepayments != null && maximumNoOfRepayments != 0 && actualNumberOfRepayments > maximumNoOfRepayments) {
+                final ApiParameterError error = ApiParameterError.generalError(
+                        "validation.msg.loan.numberOfRepayments.greater.than.maximumNumberOfRepayments",
+                        "The total number of calculated repayments for this loan " + actualNumberOfRepayments
+                                + " is greater than the allowed maximum of " + maximumNoOfRepayments, actualNumberOfRepayments,
+                        maximumNoOfRepayments);
+                dataValidationErrors.add(error);
+            }
+
+        }
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
                 "Validation errors exist.", dataValidationErrors); }
     }

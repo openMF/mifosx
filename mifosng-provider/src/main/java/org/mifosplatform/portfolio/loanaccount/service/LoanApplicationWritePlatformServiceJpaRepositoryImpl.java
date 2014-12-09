@@ -18,6 +18,7 @@ import org.mifosplatform.infrastructure.accountnumberformat.domain.AccountNumber
 import org.mifosplatform.infrastructure.accountnumberformat.domain.AccountNumberFormatRepositoryWrapper;
 import org.mifosplatform.infrastructure.accountnumberformat.domain.EntityAccountType;
 import org.mifosplatform.infrastructure.codes.domain.CodeValue;
+import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.api.JsonQuery;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
@@ -131,6 +132,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     private final LoanAccountDomainService loanAccountDomainService;
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final ConfigurationDomainService configurationDomainService;
 
     @Autowired
     public LoanApplicationWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final FromJsonHelper fromJsonHelper,
@@ -148,7 +150,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final LoanRepaymentScheduleInstallmentRepository repaymentScheduleInstallmentRepository,
             final LoanReadPlatformService loanReadPlatformService, final LoanAccountDomainService loanAccountDomainService,
             final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-            final BusinessEventNotifierService businessEventNotifierService) {
+            final BusinessEventNotifierService businessEventNotifierService, final ConfigurationDomainService configurationDomainService) {
         this.context = context;
         this.fromJsonHelper = fromJsonHelper;
         this.loanApplicationTransitionApiJsonValidator = loanApplicationTransitionApiJsonValidator;
@@ -176,6 +178,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         this.loanAccountDomainService = loanAccountDomainService;
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.businessEventNotifierService = businessEventNotifierService;
+        this.configurationDomainService = configurationDomainService;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -189,8 +192,9 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
         try {
             final AppUser currentUser = getAppUserIfPresent();
+            boolean isMeetingMandatoryForJLGLoans = configurationDomainService.isMeetingMandatoryForJLGLoans();
 
-            this.fromApiJsonDeserializer.validateForCreate(command.json());
+            this.fromApiJsonDeserializer.validateForCreate(command.json(), isMeetingMandatoryForJLGLoans);
 
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
@@ -223,7 +227,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final LoanProductRelatedDetail productRelatedDetail = newLoanApplication.repaymentScheduleDetail();
             this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(newLoanApplication.getTermFrequency(),
                     newLoanApplication.getTermPeriodFrequencyType(), productRelatedDetail.getNumberOfRepayments(),
-                    productRelatedDetail.getRepayEvery(), productRelatedDetail.getRepaymentPeriodFrequencyType().getValue());
+                    productRelatedDetail.getRepayEvery(), productRelatedDetail.getRepaymentPeriodFrequencyType().getValue(),
+                    newLoanApplication);
 
             this.loanRepository.save(newLoanApplication);
 
@@ -483,11 +488,6 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             existingLoanApplication.updateIsInterestRecalculationEnabled();
             validateSubmittedOnDate(existingLoanApplication);
 
-            final LoanProductRelatedDetail productRelatedDetail = existingLoanApplication.repaymentScheduleDetail();
-            this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(existingLoanApplication.getTermFrequency(),
-                    existingLoanApplication.getTermPeriodFrequencyType(), productRelatedDetail.getNumberOfRepayments(),
-                    productRelatedDetail.getRepayEvery(), productRelatedDetail.getRepaymentPeriodFrequencyType().getValue());
-
             final String fundIdParamName = "fundId";
             if (changes.containsKey(fundIdParamName)) {
                 final Long fundId = command.longValueOfParameterNamed(fundIdParamName);
@@ -539,6 +539,12 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             if (changes.containsKey(chargesParamName)) {
                 existingLoanApplication.updateLoanCharges(possiblyModifedLoanCharges);
             }
+
+            final LoanProductRelatedDetail productRelatedDetail = existingLoanApplication.repaymentScheduleDetail();
+            this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(existingLoanApplication.getTermFrequency(),
+                    existingLoanApplication.getTermPeriodFrequencyType(), productRelatedDetail.getNumberOfRepayments(),
+                    productRelatedDetail.getRepayEvery(), productRelatedDetail.getRepaymentPeriodFrequencyType().getValue(),
+                    existingLoanApplication);
 
             saveAndFlushLoanWithDataIntegrityViolationChecks(existingLoanApplication);
 

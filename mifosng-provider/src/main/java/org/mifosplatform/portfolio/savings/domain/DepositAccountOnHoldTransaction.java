@@ -18,8 +18,6 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
 import org.joda.time.LocalDate;
 import org.mifosplatform.portfolio.loanaccount.guarantor.domain.GuarantorFundingTransaction;
 import org.mifosplatform.portfolio.savings.DepositAccountOnHoldTransactionType;
@@ -29,7 +27,6 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
 @Table(name = "m_deposit_account_on_hold_transaction")
 public class DepositAccountOnHoldTransaction extends AbstractPersistable<Long> {
 
-    @SuppressWarnings("unused")
     @ManyToOne
     @JoinColumn(name = "savings_account_id", nullable = true)
     private SavingsAccount savingsAccount;
@@ -50,7 +47,7 @@ public class DepositAccountOnHoldTransaction extends AbstractPersistable<Long> {
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_date", nullable = false)
     private Date createdDate;
-    
+
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "depositAccountOnHoldTransaction", optional = true, orphanRemoval = true)
     private GuarantorFundingTransaction guarantorFundingTransaction;
 
