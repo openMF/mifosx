@@ -9,18 +9,23 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mifosplatform.integrationtests.common.Utils;
-import org.mifosplatform.integrationtests.common.office.OfficeHelper;
+import org.mifosplatform.integrationtests.common.office.OfficeDOHelper;
 import org.mifosplatform.integrationtests.common.office.OfficeResourceHandler;
+import org.mifosplatform.integrationtests.common.office.OfficeDOHelperSerializer;
 
 import com.jayway.restassured.builder.RequestSpecBuilder;
 import com.jayway.restassured.builder.ResponseSpecBuilder;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.jayway.restassured.specification.ResponseSpecification;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 import java.util.*;
 
@@ -38,17 +43,21 @@ public class OfficeIntegrationsTest {
     }
 
     @Test
-    public void testCreateOffice() {
-        int random_array = {1997, 26, 12};
-        OfficeHelper oh = OfficeHelper                                            // oh ---> Office Helper
+    public void testCreateOffice() throws ParseException {
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        OfficeDOHelper oh = OfficeDOHelper                                            // oh ---> Office Helper
                 .create(Utils.randomNameGenerator("", 5))
-                .externalId(Utils.randomNameGenerator("offices-", 7))
+                .externalId(Utils.randomNameGenerator("office-", 7))
                 .nameDecorated(Utils.randomNameGenerator("", 8))
-                .openingDate(random_array)
+                .openingDate(date)
                 .hierarchy(".")
                 .build();
         String JsonData = oh.toJSON();
-        final Long officeID = createOfficeID(JsonData, this.requestSpec, this.statusOkResponseSpec);
+        final Long officeID = createOffice(JsonData, this.requestSpec, this.statusOkResponseSpec);
         Assert.assertNotNull(officeID);
 
     }
@@ -63,130 +72,378 @@ public class OfficeIntegrationsTest {
         }
 
         return new Long(officeId);
+    }
 
-        @Test
-        public void testCreateOfficeWithEmptyName ()
-        {
-            int random_array = {2000, 4, 8};
-            OfficeHelper oh = new OfficeHelper
-                    .create(null)
-                    .externalId(Utils.randomNameGenerator("", 5))
-                    .nameDecorated(Utils.randomNameGenerator("offices-", 6))
-                    .openingDate(random_array)
-                    .hierarchy(".")
-                    .build();
-            String JsonData = oh.toJSON();
-            final Long officeID = createOfficeID(JsonData, this.requestSpec, this.statusOkResponseSpec);
-            Assert.assertNull(officeID);
-        }
+    @Test
+    public void testCreateOfficeWithEmptyName() throws ParseException {
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
 
-        @Test
-        public void testCreateOfficeWithEmptyExternalId ()
-        {
-            int random_array = {2005, 1, 1};
-            OfficeHelper oh = new OfficeHelper
-                    .create(Utils.randomNameGenerator("", 3))
-                    .externalId(null)
-                    .nameDecorated(Utils.randomNameGenerator("offices-", 5))
-                    .openingDate(random_array)
-                    .hierarchy(".")
-                    .build();
-            String JsonData = oh.toJSON();
-            final Long OfficeID = createOfficeID(JsonData, this.requestSpec, this.statusOkResponseSpec);
-            Assert.assertNotNull(OfficeID);
-        }
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(null)
+                .externalId(Utils.randomNameGenerator("", 5))
+                .nameDecorated(Utils.randomNameGenerator("office-", 6))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+        String JsonData = oh.toJSON();
+        final Long officeID = createOffice(JsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNull(officeID);
+    }
 
-        @Test
-        public void testCreateOfficeWithDuplicateName ()
-        {
-            int random_array1 = {1998, 12, 10};
-            OfficeHelper oh1 = new OfficeHelper
-                    .create(Utils.randomNameGenerator("", 7))
-                    .externalId(Utils.randomNameGenerator("Offices-", 4))
-                    .nameDecorated(Utils.randomNameGenerator("", 10))
-                    .openingDate(random_array1)
-                    .hierarchy(".")
-                    .build();
-            String JsonData = oh1.toJSON();
-            final Long OfficeID1 = createOfficeID(JsonData, this.requestSpec, this.statusOkResponseSpec);
-            Assert.assertNotNull(OfficeID);
+    @Test
+    public void testCreateOfficeWithEmptyExternalId() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 3))
+                .externalId(null)
+                .nameDecorated(Utils.randomNameGenerator("office-", 5))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+        String JsonData = oh.toJSON();
+        final Long officeID = createOffice(JsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID);
+    }
 
-            int random_array2 = {2002, 10, 10};
-            OfficeHelper oh2 = new OfficeHelper
-                    .create(Utils.randomNameGenerator("", 7))
-                    .externalId(Utils.randomNameGenerator(oh.getName()))
-                    .nameDecorated(Utils.randomNameGenerator("", 11))
-                    .openingDate(random_array2)
-                    .hierarchy(".")
-                    .build();
+    @Test
+    public void testCreateOfficeWithDuplicateName() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
 
-            String JsonData = oh2.toJSON();
-            ResponseSpecification responseSpec = new ResponseSpecBuilder().expectStatusCode(400).build(); // 400 if the test works
-            final Long OfficeID2 = createOfficeID(JsonData, this.requestSpec, this.statusOkResponseSpec);
-            Assert.assertNull(OfficeID2);
-        }
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
 
-        @Test
-        public void testCreateOfficeWithDuplicateExternalId ()
-        {
-            int random_array1 = {2003, 2, 2};
-            OfficeHelper oh1 = new OfficeHelper
-                    .create(Utils.randomNameGenerator("", 8))
-                    .externalId(oh1.getExternalId())
-                    .nameDecorated(Utils.randomNameGenerator("", 10))
-                    .openingDate(random_array1)
-                    .hierarchy(".")
-                    .build();
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 7))
+                .externalId(Utils.randomNameGenerator("Office-", 4))
+                .nameDecorated(Utils.randomNameGenerator("", 10))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+        String JsonData = oh.toJSON();
+        final Long officeID1 = createOffice(JsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID1);
 
-            String JsonData = oh1.toJSON();
-            final Long OfficeID1 = createOfficeID(JsonData1, this.requestSpec, this.statusOkResponseSpec);
-            Assert.assertNotNull(OfficeID);
+        OfficeDOHelper oh2 = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 7))
+                .externalId(Utils.randomNameGenerator(oh.getName(), 6))
+                .nameDecorated(Utils.randomNameGenerator("", 11))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
 
-            int random_array2 = {2005, 5, 5};
-            OfficeHelper oh2 = new OfficeHelper
-                    .create(Utils.randomNameGenerator("", 9))
-                    .externalId(Utils.randomNameGenerator("Offices-", 5))
-                    .nameDecorated(Utils.randomNameGenerator("", 11))
-                    .openingDate(random_array2)
-                    .hierarchy(".")
-                    .build();
+        JsonData = oh2.toJSON();
+        ResponseSpecification responseSpec = new ResponseSpecBuilder().expectStatusCode(400).build(); // 400 if the test works
+        final Long officeID2 = createOffice(JsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNull(officeID2);
+    }
 
-            String JsonData = oh2.toJSON();
-            ResponseSpecification responseSpec = new ResponseSpecBuilder().expectStatusCode(402).build(); // 402 if the test works
-            final Long OfficeID2 = createOfficeID(JsonData2, this.requestSpec, this.statusOkResponseSpec);
-            Assert.assertNull(OfficeID2);
+    @Test
+    public void testCreateOfficeWithDuplicateExternalId() throws ParseException{
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        OfficeDOHelper oh1 = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 8))
+                .externalId(Utils.randomNameGenerator("Office-", 4))
+                .nameDecorated(Utils.randomNameGenerator("", 10))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
 
+        String JsonData = oh1.toJSON();
+        final Long officeID1 = createOffice(JsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID1);
 
-        }
+        OfficeDOHelper oh2 = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 9))
+                .externalId(Utils.randomNameGenerator("Office-", 5))
+                .nameDecorated(Utils.randomNameGenerator("", 11))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
 
-        @Test
-        public void testCreateOfficeWithEmptyOpeningDate ()
-        {
-            OfficeHelper oh = new OfficeHelper
-                    .create(Utils.randomNameGenerator("", 9))
-                    .externalId(Utils.randomNameGenerator("Offices-", 4))
-                    .nameDecorated(Utils.randomNameGenerator("", 3))
-                    .openingDate(null)
-                    .hierarchy(".")
-                    .build();
+        JsonData = oh2.toJSON();
+        ResponseSpecification responseSpec = new ResponseSpecBuilder().expectStatusCode(402).build(); // 402 if the test works
+        final Long officeID2 = createOffice(JsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNull(officeID2);
 
-            String JsonData = oh.toJSON();
-            final Long OfficeID = createOfficeID(JsonData, this.requestSpec, this.statusOkResponseSpec);
-            Assert.assertNotNull(OfficeID);
-        }
-
-        @Test
-        public void testNameUnknowForNow ()
-        {
-            OfficeHelper oh = new OfficeHelper
-                    .create()
-                    .externalId()
-                    .nameDecorated()
-                    .openingDate()
-                    .hierarchy(".")
-                    .build();
-
-        }
 
     }
+
+    @Test
+    public void testCreateOfficeWithEmptyOpeningDate() {
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 9))
+                .externalId(Utils.randomNameGenerator("Office-", 4))
+                .nameDecorated(Utils.randomNameGenerator("", 3))
+                .openingDate(null)
+                .hierarchy(".")
+                .build();
+
+        String JsonData = oh.toJSON();
+        final Long officeID = createOffice(JsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID);
+    }
+
+    @Test
+    public void testRetrieveOffice() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 7))
+                .externalId(Utils.randomNameGenerator("Office-", 6))
+                .nameDecorated(Utils.randomNameGenerator("", 5))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+        String jsonData = oh.toJSON();
+        final Long officeID = createOffice(jsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID);
+        jsonData = OfficeResourceHandler.retrieveOffice(officeID, this.requestSpec, this.statusOkResponseSpec);
+
+        OfficeDOHelper oh2 = OfficeDOHelper.fromJSON(jsonData);
+        assertEquals(oh.getName(), oh2.getName());
+
+    }
+
+    @Test
+    public void testRetrieveAllOffice() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 9))
+                .externalId(Utils.randomNameGenerator("Office-", 4))
+                .nameDecorated(Utils.randomNameGenerator("", 2))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+        String jsonData = oh.toJSON();
+        final Long officeID = createOffice(jsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID);
+
+        List<OfficeDOHelper> ohList = OfficeResourceHandler.retrieveAllOffice(this.requestSpec, this.statusOkResponseSpec);
+
+        Assert.assertNotNull(ohList);
+        Assert.assertThat(ohList.size(), greaterThanOrEqualTo(1));
+        Assert.assertThat(ohList, hasItem(oh));
+
+    }
+
+    @Test
+    public void testRetrieveUnknownOffice() {
+        ResponseSpecification responseSpec = new ResponseSpecBuilder().expectStatusCode(419).build();
+        String jsonData = OfficeResourceHandler.retrieveOffice(Long.MAX_VALUE, this.requestSpec, responseSpec);
+        HashMap<String, String> map = new Gson().fromJson(jsonData, HashMap.class);
+        assertEquals(map.get("userMessageGlobalisationCode"), "error.msg.resource.not.found");
+    }
+
+    @Test
+    public void testUpdateOffice() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 7))
+                .externalId(Utils.randomNameGenerator("Office-", 5))
+                .nameDecorated(Utils.randomNameGenerator("", 3))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+        String jsonData = oh.toJSON();
+
+        final long officeID = createOffice(jsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID);
+
+        String newName = Utils.randomNameGenerator("", 9);
+        String newExternalId = Utils.randomNameGenerator("Office-", 6);
+        OfficeDOHelper oh2 = OfficeResourceHandler.updateOffice(officeID, newName, newExternalId, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertEquals(newName, oh2.getName());
+        Assert.assertEquals(newExternalId, oh2.getExternalId());
+    }
+
+    @Test
+    public void testUpdateUnkownOffice() {
+        String newName = Utils.randomNameGenerator("", 4);
+        String newExternalId = Utils.randomNameGenerator("Office-", 9);
+        ResponseSpecification responseSpec = new ResponseSpecBuilder().expectStatusCode(450).build();
+        OfficeDOHelper oh = OfficeResourceHandler.updateOffice(Long.MAX_VALUE, newName, newExternalId, this.requestSpec, responseSpec);
+        Assert.assertNull(oh);
+
+    }
+
+    @Test
+    public void testUpdateOfficeWithInvalidName()  throws ParseException{
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 4))
+                .externalId(Utils.randomNameGenerator("Office-", 3))
+                .nameDecorated(Utils.randomNameGenerator("", 8))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+
+        String jsonData = oh.toJSON();
+
+        final long officeID = createOffice(jsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID);
+
+        String newName = Utils.randomNameGenerator("", 500);
+        String newExternalId = Utils.randomNameGenerator("Office-", 5);
+        ResponseSpecification responseSpec = new ResponseSpecBuilder().expectStatusCode(475).build();
+        OfficeDOHelper oh2 = OfficeResourceHandler.updateOffice(officeID, newName, newExternalId, this.requestSpec, responseSpec);
+        Assert.assertNull(oh2);
+
+
+    }
+
+    @Test
+    public void testUpdateOfficeWithNewExternalId() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 5))
+                .externalId(Utils.randomNameGenerator("Office-", 6))
+                .nameDecorated(Utils.randomNameGenerator("", 9))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+
+        String jsonData = oh.toJSON();
+
+        final long officeID = createOffice(jsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID);
+
+        String newExternalId = Utils.randomNameGenerator("", 4);
+        OfficeDOHelper oh2 = OfficeResourceHandler.updateOffice(officeID, null, newExternalId, this.requestSpec, this.statusOkResponseSpec);
+
+        Assert.assertEquals(newExternalId, oh2.getExternalId());
+
+    }
+
+    @Test
+    public void testUpdateOfficeWithInvalidNewExternalId() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 9))
+                .externalId(Utils.randomNameGenerator("Office-", 3))
+                .nameDecorated(Utils.randomNameGenerator("", 4))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+
+        String jsonData = oh.toJSON();
+
+        final long officeID = createOffice(jsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID);
+
+        String newName = Utils.randomNameGenerator("", 5);
+        String newExternalId = Utils.randomNameGenerator("Office-", 900);
+        ResponseSpecification responseSpec = new ResponseSpecBuilder().expectStatusCode(480).build();
+
+        OfficeDOHelper oh2 = OfficeResourceHandler.updateOffice(officeID, newName, newExternalId, this.requestSpec, responseSpec);
+        Assert.assertNull(oh2);
+
+    }
+
+    @Test
+    public void testUpdateOfficeWithNewName()  throws ParseException{
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 6))
+                .externalId(Utils.randomNameGenerator("Office-", 7))
+                .nameDecorated(Utils.randomNameGenerator("", 3))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+
+        String jsonData = oh.toJSON();
+
+        final long officeID = createOffice(jsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID);
+
+        String newName = Utils.randomNameGenerator("", 9);
+        OfficeDOHelper oh2 = OfficeResourceHandler.updateOffice(officeID, newName, null, this.requestSpec, this.statusOkResponseSpec);
+
+        Assert.assertEquals(newName, oh2.getName());
+
+    }
+
+    public void testUpdateOfficeWithEmptyParams() throws ParseException
+    {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = sdf.parse("21/12/2012");
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OfficeDOHelper.class, new OfficeDOHelperSerializer())
+                .create();
+        OfficeDOHelper oh = OfficeDOHelper
+                .create(Utils.randomNameGenerator("", 3))
+                .externalId(Utils.randomNameGenerator("Office-", 4))
+                .nameDecorated(Utils.randomNameGenerator("", 5))
+                .openingDate(date)
+                .hierarchy(".")
+                .build();
+
+        String jsonData = oh.toJSON();
+
+        final Long officeID = createOffice(jsonData, this.requestSpec, this.statusOkResponseSpec);
+        Assert.assertNotNull(officeID);
+
+        OfficeDOHelper oh2 = OfficeResourceHandler.updateOffice(officeID, null, null, this.requestSpec, this.statusOkResponseSpec);
+
+        Assert.assertNull(oh2.getName());
+        Assert.assertNull(oh2.getExternalId());
+
+        jsonData = OfficeResourceHandler.retrieveOffice(officeID, this.requestSpec, this.statusOkResponseSpec);
+        OfficeDOHelper oh3 = new Gson().fromJson(jsonData, OfficeDOHelper.class);
+
+        Assert.assertEquals(oh.getName(), oh3.getName());
+        Assert.assertEquals(oh.getExternalId(), oh3.getExternalId());
+
+    }
+
 }
+
+
+
+
+
+
+
+
+
+

@@ -16,18 +16,46 @@ import java.util.List;
 
 public class OfficeResourceHandler {
 
-    private static final String OFFICES_URL = "/mifosng-provider/api/v1/offices";
-    private static final String CREATE_OFFICES_URL = OFFICES_URL + "?" + Utils.TENANT_IDENTIFIER;
+    private static final String OFFICE_URL = "/mifosng-provider/api/v1/office";
+    private static final String CREATE_OFFICE_URL = OFFICE_URL + "?" + Utils.TENANT_IDENTIFIER;
 
     public static Integer createOffice(final String officeJSON,
-                                     final RequestSpecification requestSpec,
-                                     final ResponseSpecification responseSpec) {
-        return Utils.performServerPost(requestSpec, responseSpec, CREATE_OFFICES_URL, officeJSON, "resourceId");
+                                       final RequestSpecification requestSpec,
+                                       final ResponseSpecification responseSpec) {
+        return Utils.performServerPost(requestSpec, responseSpec, CREATE_OFFICE_URL, officeJSON, "resourceId");
     }
 
-    public Integer createOffice(final String openingDate) {
-        String json = getAsJSON(openingDate);
-        return Utils.performServerPost(this.requestSpec, this.responseSpec, OFFICE_URL + "?" + Utils.TENANT_IDENTIFIER, json,
-                CommonConstants.RESPONSE_RESOURCE_ID);
+    public static String retrieveOffice(final Long officeID,
+                                        final RequestSpecification requestSpec,
+                                        final ResponseSpecification responseSpec) {
+        final String URL = OFFICE_URL + "/" + officeID + "?" + Utils.TENANT_IDENTIFIER;
+        final HashMap response = Utils.performServerGet(requestSpec, responseSpec, URL, "");
+        return new Gson().toJson(response);
+
     }
+
+    public static List<OfficeDOHelper> retrieveAllOffice(final RequestSpecification requestSpec,
+                                                         final ResponseSpecification responseSpec) {
+        final String URL = OFFICE_URL + "?" + Utils.TENANT_IDENTIFIER;
+        List<HashMap<String, Object>> list = Utils.performServerGet(requestSpec, responseSpec, URL, "");
+        final String jsonData = new Gson().toJson(list);
+        return new Gson().fromJson(jsonData, new TypeToken<List<OfficeDOHelper>>() {
+        }.getType());
+    }
+
+    public static OfficeDOHelper updateOffice(final Long officeID,
+                                         final String newName,
+                                         final String newExternalId,
+                                         final RequestSpecification requestSpec,
+                                         final ResponseSpecification responseSpec) {
+        OfficeDOHelper oh = OfficeDOHelper.create(newName).externalId(newExternalId).build();
+        String updateJSON = new Gson().toJson(oh);
+
+        final String URL = OFFICE_URL + "/" + officeID + "?" + Utils.TENANT_IDENTIFIER;
+        final HashMap<String, String> response = Utils.performServerPut(requestSpec, responseSpec, URL, updateJSON, "changes");
+        final String jsonData = new Gson().toJson(response);
+        return new Gson().fromJson(jsonData, OfficeDOHelper.class);
+    }
+
+
 }
