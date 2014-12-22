@@ -129,6 +129,23 @@ public class GroupReadPlatformServiceImpl implements GroupReadPlatformService {
     }
 
     @Override
+    public ClientData retrieveGroupClientTemplate(final Long officeId, final Long groupId,
+            final boolean staffInSelectedOfficeOnly) {
+        this.context.authenticatedUser();
+
+        final ClientData clientTemplateData = clientReadPlatformService.retrieveTemplate(officeId, staffInSelectedOfficeOnly);
+        final GroupGeneralData group = retrieveOne(groupId);
+
+        final Long staffId = group.staffId();
+        final String staffName = group.staffName();
+        final Collection<GroupGeneralData> groupOptions = Arrays.asList(group);
+
+        final ClientData clientGroupTemplateData = ClientData.templateForGroup(staffId, staffName, groupOptions);
+
+        return ClientData.templateOnTop(clientGroupTemplateData, clientTemplateData);
+    }
+
+    @Override
     public Page<GroupGeneralData> retrievePagedAll(final SearchParameters searchParameters, final PaginationParameters parameters) {
 
         this.paginationParametersDataValidator.validateParameterValues(parameters, supportedOrderByValues, "audits");

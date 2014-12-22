@@ -176,6 +176,14 @@ public class GroupGeneralData {
         return this.name;
     }
 
+    public Long staffId() {
+        return this.staffId;
+    }
+
+    public String staffName()  {
+        return this.staffName;
+    }
+
     public Long officeId() {
         return this.officeId;
     }

@@ -34,12 +34,13 @@ import org.mifosplatform.infrastructure.core.exception.UnrecognizedQueryParamExc
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.mifosplatform.infrastructure.core.service.Page;
+import org.mifosplatform.infrastructure.core.service.SearchParameters;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.accountdetails.data.AccountSummaryCollectionData;
 import org.mifosplatform.portfolio.accountdetails.service.AccountDetailsReadPlatformService;
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
-import org.mifosplatform.infrastructure.core.service.SearchParameters;
+import org.mifosplatform.portfolio.group.service.GroupReadPlatformService;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountData;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,7 @@ public class ClientsApiResource {
 
     private final PlatformSecurityContext context;
     private final ClientReadPlatformService clientReadPlatformService;
+    private final GroupReadPlatformService groupReadPlatformService;
     private final ToApiJsonSerializer<ClientData> toApiJsonSerializer;
     private final ToApiJsonSerializer<AccountSummaryCollectionData> clientAccountSummaryToApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
@@ -62,6 +64,7 @@ public class ClientsApiResource {
 
     @Autowired
     public ClientsApiResource(final PlatformSecurityContext context, final ClientReadPlatformService readPlatformService,
+            final GroupReadPlatformService groupReadPlatformService,
             final ToApiJsonSerializer<ClientData> toApiJsonSerializer,
             final ToApiJsonSerializer<AccountSummaryCollectionData> clientAccountSummaryToApiJsonSerializer,
             final ApiRequestParameterHelper apiRequestParameterHelper,
@@ -70,6 +73,7 @@ public class ClientsApiResource {
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
         this.context = context;
         this.clientReadPlatformService = readPlatformService;
+        this.groupReadPlatformService = groupReadPlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.clientAccountSummaryToApiJsonSerializer = clientAccountSummaryToApiJsonSerializer;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
@@ -84,6 +88,7 @@ public class ClientsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveTemplate(@Context final UriInfo uriInfo, @QueryParam("officeId") final Long officeId,
             @QueryParam("commandParam") final String commandParam,
+            @QueryParam("groupId") final Long groupId,
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly) {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
@@ -100,7 +105,11 @@ public class ClientsApiResource {
             clientData = this.clientReadPlatformService.retrieveAllNarrations(ClientApiConstants.CLIENT_WITHDRAW_REASON);
         }
         else {
-            clientData = this.clientReadPlatformService.retrieveTemplate(officeId, staffInSelectedOfficeOnly);
+            if(groupId == null) {
+                clientData = this.clientReadPlatformService.retrieveTemplate(officeId, staffInSelectedOfficeOnly);
+            } else {
+                clientData = this.groupReadPlatformService.retrieveGroupClientTemplate(officeId, groupId, staffInSelectedOfficeOnly);
+            }
         }
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
@@ -253,7 +262,7 @@ public class ClientsApiResource {
            commandRequest = builder.reActivateClient(clientId).build();
            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
           }
-        
+
 
         if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "activate",
                 "unassignStaff", "assignStaff", "close", "proposeTransfer", "withdrawTransfer", "acceptTransfer", "rejectTransfer",

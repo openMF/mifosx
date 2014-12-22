@@ -335,7 +335,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final EnumOptionData status = ClientEnumerations.status(statusEnum);
-            
+
             final Long subStatusId = JdbcSupport.getLong(rs, "subStatus");
             final String subStatusValue = rs.getString("subStatusValue");
             final String subStatusDesc = rs.getString("subStatusDesc");
@@ -490,7 +490,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String subStatusValue = rs.getString("subStatusValue");
             final String subStatusDesc = rs.getString("subStatusDesc");
             final CodeValueData subStatus = CodeValueData.instance(subStatusId, subStatusValue, subStatusDesc);
-            
+
             final Long officeId = JdbcSupport.getLong(rs, "officeId");
             final String officeName = rs.getString("officeName");
 
@@ -632,7 +632,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final EnumOptionData status = ClientEnumerations.status(statusEnum);
-            
+
             final Long subStatusId = JdbcSupport.getLong(rs, "subStatus");
             final String subStatusValue = rs.getString("subStatusValue");
             final String subStatusDesc = rs.getString("subStatusDesc");

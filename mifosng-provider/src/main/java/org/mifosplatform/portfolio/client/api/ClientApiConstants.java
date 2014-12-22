@@ -19,7 +19,7 @@ public class ClientApiConstants {
     public static final String CLIENT_REJECT_REASON = "ClientRejectReason";
     public static final String CLIENT_WITHDRAW_REASON = "ClientWithdrawReason";
 
-	
+
     public static final String GENDER = "Gender";
     public static final String CLIENT_TYPE = "ClientType";
     public static final String CLIENT_CLASSIFICATION = "ClientClassification";
@@ -45,12 +45,12 @@ public class ClientApiConstants {
     public static final String staffIdParamName = "staffId";
     public static final String closureDateParamName = "closureDate";
     public static final String closureReasonIdParamName = "closureReasonId";
-    
+
     public static final String rejectionDateParamName = "rejectionDate";
     public static final String rejectionReasonIdParamName ="rejectionReasonId";
     public static final String withdrawalDateParamName = "withdrawalDate";
     public static final String withdrawalReasonIdParamName ="withdrawalReasonId";
-        
+
     public static final String submittedOnDateParamName = "submittedOnDate";
     public static final String savingsProductIdParamName = "savingsProductId";
     public static final String savingsAccountIdParamName = "savingsAccountId";
@@ -81,6 +81,7 @@ public class ClientApiConstants {
     // template related part of response
     public static final String officeOptionsParamName = "officeOptions";
     public static final String staffOptionsParamName = "staffOptions";
+    public static final String groupOptionsParamName = "groupOptions";
 
     public static final Set<String> CLIENT_CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, groupIdParamName, accountNoParamName, externalIdParamName, mobileNoParamName, firstnameParamName,
@@ -105,7 +106,7 @@ public class ClientApiConstants {
             lastnameParamName, fullnameParamName, displayNameParamName, mobileNoParamName, officeIdParamName, officeNameParamName,
             transferToOfficeIdParamName, transferToOfficeNameParamName, hierarchyParamName, imageIdParamName, imagePresentParamName,
             staffIdParamName, staffNameParamName, timelineParamName, groupsParamName, officeOptionsParamName, staffOptionsParamName,
-            dateOfBirthParamName, genderParamName,clientTypeParamName,clientClassificationParamName));
+            groupOptionsParamName, dateOfBirthParamName, genderParamName,clientTypeParamName,clientClassificationParamName));
 
     public static final Set<String> ACTIVATION_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, activationDateParamName));
@@ -114,7 +115,7 @@ public class ClientApiConstants {
 
     public static final Set<String> CLIENT_CLOSE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, closureDateParamName, closureReasonIdParamName));
-	
+
     public static final Set<String> CLIENT_REJECT_DATA_PARAMETERS =	new HashSet<>(Arrays.asList(localeParamName,dateFormatParamName,rejectionDateParamName,rejectionReasonIdParamName));
 
     public static final Set<String> CLIENT_WITHDRAW_DATA_PARAMETERS =	new HashSet<>(Arrays.asList(localeParamName,dateFormatParamName,withdrawalDateParamName,withdrawalReasonIdParamName));
