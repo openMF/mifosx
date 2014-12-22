@@ -120,6 +120,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
         try {
             final String name = command.stringValueOfParameterNamed(GroupingTypesApiConstants.nameParamName);
             final String externalId = command.stringValueOfParameterNamed(GroupingTypesApiConstants.externalIdParamName);
+            
 
             final AppUser currentUser = this.context.authenticatedUser();
             Long officeId = null;
@@ -183,13 +184,25 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
                 rollbackTransaction = this.commandProcessingService.validateCommand(commandWrapper, currentUser);
             }
 
+            
             // pre-save to generate id for use in group hierarchy
             this.groupRepository.save(newGroup);
 
             newGroup.generateHierarchy();
 
             this.groupRepository.saveAndFlush(newGroup);
+            
+         // check whether the center is active or not and check whether the
+            // staff is assigned to center or not before making an entry into DB
+            if (newGroup.isCenter() && newGroup.isActive()) {
+                if (staff != null) {
+                    // make an entry in StaffAssignmentHistory while center
+                    // creation
+                    newGroup.assignStaffDuringCenterCreation(staff, activationDate);
 
+                }
+
+            }
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
                     .withOfficeId(groupOffice.getId()) //
@@ -404,7 +417,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
         final Map<String, Object> actualChanges = new LinkedHashMap<>(9);
 
         this.fromApiJsonDeserializer.validateForUnassignStaff(command.json());
-
+        final LocalDate dateOfStaffUnassigned = new LocalDate();
         final Group groupForUpdate = this.groupRepository.findOneWithNotFoundDetection(grouptId);
 
         final Staff presentStaff = groupForUpdate.getStaff();
@@ -413,6 +426,8 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
         presentStaffId = presentStaff.getId();
         final String staffIdParamName = "staffId";
         if (!command.isChangeInLongParameterNamed(staffIdParamName, presentStaffId)) {
+            // For StaffAssignmentHistory[unassign operation]
+            groupForUpdate.removeStaff(dateOfStaffUnassigned);
             groupForUpdate.unassignStaff();
         }
         this.groupRepository.saveAndFlush(groupForUpdate);
@@ -442,7 +457,8 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
 
         Staff staff = null;
         final Long staffId = command.longValueOfParameterNamed(GroupingTypesApiConstants.staffIdParamName);
-
+        final LocalDate dateOfStaffAssignment = LocalDate.now();
+        // final AppUser currentUser = this.context.authenticatedUser();
         final boolean inheritStaffForClientAccounts = command
                 .booleanPrimitiveValueOfParameterNamed(GroupingTypesApiConstants.inheritStaffForClientAccounts);
         staff = this.staffRepository.findByOfficeHierarchyWithNotFoundDetection(staffId, groupForUpdate.getOffice().getHierarchy());
@@ -476,7 +492,8 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
                 }
             }
         }
-
+        // For StaffAssignmentHistory[assign operation]
+        groupForUpdate.reassignStaff(staff, dateOfStaffAssignment);
         this.groupRepository.saveAndFlush(groupForUpdate);
 
         actualChanges.put(GroupingTypesApiConstants.staffIdParamName, staffId);

@@ -12,5 +12,4 @@ public class LoanOfficerAssignmentDateException extends AbstractPlatformDomainRu
     public LoanOfficerAssignmentDateException(final String postFix, final String defaultUserMessage, final Object... defaultUserMessageArgs) {
         super("error.msg.loan.assignment.date." + postFix, defaultUserMessage, defaultUserMessageArgs);
     }
-
 }
