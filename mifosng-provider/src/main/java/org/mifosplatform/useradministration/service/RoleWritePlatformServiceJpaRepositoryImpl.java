@@ -20,6 +20,7 @@ import org.mifosplatform.useradministration.domain.PermissionRepository;
 import org.mifosplatform.useradministration.domain.Role;
 import org.mifosplatform.useradministration.domain.RoleRepository;
 import org.mifosplatform.useradministration.exception.PermissionNotFoundException;
+import org.mifosplatform.useradministration.exception.RoleAssociatedException;
 import org.mifosplatform.useradministration.exception.RoleNotFoundException;
 import org.mifosplatform.useradministration.serialization.PermissionsCommandFromApiJsonDeserializer;
 import org.slf4j.Logger;
@@ -62,7 +63,6 @@ public class RoleWritePlatformServiceJpaRepositoryImpl implements RoleWritePlatf
             this.roleCommandFromApiJsonDeserializer.validateForCreate(command.json());
 
             final Role entity = Role.fromJson(command);
-
             this.roleRepository.save(entity);
 
             return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(entity.getId()).build();
@@ -172,7 +172,97 @@ public class RoleWritePlatformServiceJpaRepositoryImpl implements RoleWritePlatf
                 if (permission.hasCode(permissionCode)) { return permission; }
             }
         }
-
         throw new PermissionNotFoundException(permissionCode);
+    }
+
+    @Caching(evict = { @CacheEvict(value = "users", allEntries = true), @CacheEvict(value = "usersByUsername", allEntries = true) })
+    @Transactional
+    @Override
+    public CommandProcessingResult deleteRole(Long roleId) {
+
+        try {
+            /**
+             * Roles associated with users can't be deleted
+             */
+            this.context.authenticatedUser();
+
+            final Integer count = this.roleRepository.getCountOfRolesAssociatedWithUsersByRoleId(roleId);
+            if (count > 0) { throw new RoleAssociatedException("error.msg.role.id.associated.with.user.delete", "Role associated with users can't be deleted", roleId); }
+
+            /**
+             * Checking the role present in DB or not using role_id
+             */
+            final Role role = this.roleRepository.findOne(roleId);
+            if (role == null) { throw new RoleNotFoundException(roleId); }
+            // role.delete();
+            this.roleRepository.delete(role);
+            this.roleRepository.flush();
+            return new CommandProcessingResultBuilder().withEntityId(roleId).build();
+        } catch (final DataIntegrityViolationException e) {
+            throw new PlatformDataIntegrityException("error.msg.unknown.data.integrity.issue",
+                    "Unknown data integrity issue with resource: " + e.getMostSpecificCause());
+        }
+    }
+
+    /**
+     * Method for disabling the role
+     */
+    @Caching(evict = { @CacheEvict(value = "users", allEntries = true), @CacheEvict(value = "usersByUsername", allEntries = true) })
+    @Transactional
+    @Override
+    public CommandProcessingResult disableRole(Long roleId) {
+        try {
+            /**
+             * Roles associated with users can't be disable
+             */
+            this.context.authenticatedUser();
+
+            final Integer count = this.roleRepository.getCountOfRolesAssociatedWithUsersByRoleId(roleId);
+
+            if (count > 0) { throw new RoleAssociatedException("error.msg.role.id.associated.with.user.disable", "Role associated with users can't be disabled", roleId); }
+
+            /**
+             * Checking the role present in DB or not using role_id
+             */
+            final Role role = this.roleRepository.findOne(roleId);
+            if (role == null || role.isDisabled()) { throw new RoleNotFoundException(roleId); }
+
+            role.disable();
+            this.roleRepository.save(role);
+            this.roleRepository.flush();
+            return new CommandProcessingResultBuilder().withEntityId(roleId).build();
+
+        } catch (final DataIntegrityViolationException e) {
+            throw new PlatformDataIntegrityException("error.msg.unknown.data.integrity.issue",
+                    "Unknown data integrity issue with resource: " + e.getMostSpecificCause());
+        }
+    }
+
+    /**
+     * Method for Enabling the role
+     */
+    @Caching(evict = { @CacheEvict(value = "users", allEntries = true), @CacheEvict(value = "usersByUsername", allEntries = true) })
+    @Transactional
+    @Override
+    public CommandProcessingResult enableRole(Long roleId) {
+        try {
+
+            this.context.authenticatedUser();
+
+            /**
+             * Checking the role present in DB or not using role_id
+             */
+            final Role role = this.roleRepository.findOne(roleId);
+            if (role == null || !role.isEnabled()) { throw new RoleNotFoundException(roleId); }
+
+            role.enable();
+            this.roleRepository.save(role);
+            this.roleRepository.flush();
+            return new CommandProcessingResultBuilder().withEntityId(roleId).build();
+
+        } catch (final DataIntegrityViolationException e) {
+            throw new PlatformDataIntegrityException("error.msg.unknown.data.integrity.issue",
+                    "Unknown data integrity issue with resource: " + e.getMostSpecificCause());
+        }
     }
 }

@@ -13,6 +13,8 @@ public interface RoleReadPlatformService {
 
     Collection<RoleData> retrieveAll();
 
+    Collection<RoleData> retrieveAllActiveRole();
+
     RoleData retrieveOne(Long roleId);
 
     Collection<RoleData> retrieveAppUserRoles(Long appUserId);
