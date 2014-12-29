@@ -11356,6 +11356,12 @@ An enumeration that indicates the type of transaction processing strategy to be 
 						<tr>
 							<td class=fielddesc>Specifies rest frequency start date for interest recalculation.<br>
 						</tr>
+						<tr class=alt>
+							<td>isArrearsBasedOnOriginalSchedule</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>If Specified as true, arrears will be identified based on original schedule.<br>
+						</tr>
 					</table>
 				</div>
 			</div>
@@ -11470,7 +11476,8 @@ GET https://DomainName/api/v1/loanproducts
 		    "id":1,
 			"code":"interestRecalculationFrequencyType.same.as.repayment.period",
 			"value":"Same as repayment period"
-		}
+		},
+		"isArrearsBasedOnOriginalSchedule" : true
     },
     "accountingRule": {
       "id": 2,
@@ -12629,6 +12636,14 @@ GET https://DomainName/api/v1/loanproducts/{productId}
 						</tr>
 						<tr class=alt>
 							<td>interestRecalculationCompoundingMethod, rescheduleStrategyMethod, recalculationRestFrequencyType</td>
+						</tr>
+					</table>
+					<table class=matrixHeading>						
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Additional Optional Fields if interest recalculation is enabled(true) </div></td>
+						</tr>
+						<tr class=alt>
+							<td>isArrearsBasedOnOriginalSchedule</td>
 						</tr>
 					</table>
 					<table class=matrixHeading>						

@@ -989,4 +989,12 @@ public class LoanProduct extends AbstractPersistable<Long> {
         return this.shortName;
     }
 
+    public boolean isArrearsBasedOnOriginalSchedule() {
+        boolean isBasedOnOriginalSchedule = false;
+        if (getProductInterestRecalculationDetails() != null) {
+            isBasedOnOriginalSchedule = getProductInterestRecalculationDetails().isArrearsBasedOnOriginalSchedule();
+        }
+        return isBasedOnOriginalSchedule;
+    }
+
 }
