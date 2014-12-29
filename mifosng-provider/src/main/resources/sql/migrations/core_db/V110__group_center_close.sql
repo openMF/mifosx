@@ -1,4 +1,5 @@
 INSERT INTO `m_code` (`code_name`, `is_system_defined`) VALUES ('GroupClosureReason', 1);
+INSERT INTO `m_code` (`code_name`,`is_system_defined`) VALUES('CenterClosureReason',1);
 
 ALTER TABLE `m_group` ADD COLUMN `closure_reason_cv_id` INT(11) NULL DEFAULT NULL,
 ADD COLUMN `closedon_date` DATE NULL DEFAULT NULL,
