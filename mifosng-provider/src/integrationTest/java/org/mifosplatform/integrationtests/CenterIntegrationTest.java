@@ -5,6 +5,8 @@
  */
 package org.mifosplatform.integrationtests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.sql.Timestamp;
 import java.util.HashMap;
 
@@ -14,8 +16,8 @@ import org.junit.Test;
 import org.mifosplatform.integrationtests.common.CenterDomain;
 import org.mifosplatform.integrationtests.common.CenterHelper;
 import org.mifosplatform.integrationtests.common.OfficeHelper;
-import org.mifosplatform.integrationtests.common.StaffHelper;
 import org.mifosplatform.integrationtests.common.Utils;
+import org.mifosplatform.integrationtests.common.organisation.StaffHelper;
 
 import com.google.gson.Gson;
 import com.jayway.restassured.builder.RequestSpecBuilder;
@@ -82,4 +84,51 @@ public class CenterIntegrationTest {
         Assert.assertTrue(center.getStaffId() == staffId);
         Assert.assertTrue(center.isActive() == false);
     }
+
+    @Test
+    public void testStaffAssignmentDuringCenterCreation() {
+
+        Integer staffId = StaffHelper.createStaff(this.requestSpec, this.responseSpec);
+        System.out.println("--------------creating first staff with id-------------" + staffId);
+        Assert.assertNotNull(staffId);
+
+        Integer centerID = CenterHelper.createCenterWithStaffId(this.requestSpec, this.responseSpec, staffId);
+        CenterHelper.verifyCenterCreatedOnServer(this.requestSpec, this.responseSpec, centerID);
+
+    }
+
+    @Test
+    public void testAssignStaffToCenter() {
+        Integer staffId = StaffHelper.createStaff(this.requestSpec, this.responseSpec);
+        System.out.println("--------------creating first staff with id-------------" + staffId);
+        Assert.assertNotNull(staffId);
+
+        Integer groupID = CenterHelper.createCenter(this.requestSpec, this.responseSpec);
+        CenterHelper.verifyCenterCreatedOnServer(this.requestSpec, this.responseSpec, groupID);
+
+        HashMap assignStaffGroupId = (HashMap) CenterHelper.assignStaff(this.requestSpec, this.responseSpec, groupID.toString(),
+                staffId.longValue());
+        assertEquals("Verify assigned staff id is the same as id sent", assignStaffGroupId.get("staffId"), staffId);
+
+    }
+
+    @Test
+    public void testUnassignStaffToCenter() {
+        Integer staffId = StaffHelper.createStaff(this.requestSpec, this.responseSpec);
+        System.out.println("--------------creating first staff with id-------------" + staffId);
+        Assert.assertNotNull(staffId);
+
+        Integer groupID = CenterHelper.createCenter(this.requestSpec, this.responseSpec);
+        CenterHelper.verifyCenterCreatedOnServer(this.requestSpec, this.responseSpec, groupID);
+
+        HashMap assignStaffGroupId = (HashMap) CenterHelper.assignStaff(this.requestSpec, this.responseSpec, groupID.toString(),
+                staffId.longValue());
+        assertEquals("Verify assigned staff id is the same as id sent", assignStaffGroupId.get("staffId"), staffId);
+
+        HashMap unassignStaffGroupId = (HashMap) CenterHelper.unassignStaff(this.requestSpec, this.responseSpec, groupID.toString(),
+                staffId.longValue());
+        assertEquals("Verify assigned staff id is the same as id sent", assignStaffGroupId.get("staffId"), staffId);
+
+    }
+
 }
