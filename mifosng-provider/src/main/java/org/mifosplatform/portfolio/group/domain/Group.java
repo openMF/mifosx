@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -28,6 +29,8 @@ import javax.persistence.TemporalType;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
@@ -118,6 +121,10 @@ public final class Group extends AbstractPersistable<Long> {
     @JoinColumn(name = "submittedon_userid", nullable = true)
     private AppUser submittedBy;
 
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "center", orphanRemoval = true)
+    private Set<StaffAssignmentHistory> staffHistory;
+
     // JPA default constructor for entity
     protected Group() {
         this.name = null;
@@ -174,6 +181,7 @@ public final class Group extends AbstractPersistable<Long> {
 
         this.submittedOnDate = submittedOnDate.toDate();
         this.submittedBy = currentUser;
+        this.staffHistory = null;
 
         associateClients(clientMembers);
 
@@ -619,5 +627,59 @@ public final class Group extends AbstractPersistable<Long> {
 
     public Set<Client> getClientMembers() {
         return this.clientMembers;
+    }
+
+    public void assignStaffDuringCenterCreation(final Staff newStaff, final LocalDate assignmentDate) {
+        this.staff = newStaff;
+        final StaffAssignmentHistory staffAssignmentHistory = StaffAssignmentHistory.createNew(this, this.staff, assignmentDate);
+        if (staffAssignmentHistory != null) {
+            staffHistory = new HashSet<>();
+            this.staffHistory.add(staffAssignmentHistory);
+        }
+    }
+
+    // StaffAssignmentHistory[assign staff]
+
+    public void reassignStaff(final Staff newStaff, final LocalDate assignmentDate) {
+
+        final StaffAssignmentHistory latestHistoryRecord = findLatestIncompleteHistoryRecord();
+
+        if (latestHistoryRecord != null && this.staff.identifiedBy(newStaff)) {
+            latestHistoryRecord.updateStartDate(assignmentDate);
+        } else if (latestHistoryRecord != null && latestHistoryRecord.matchesStartDateOf(assignmentDate)) {
+            latestHistoryRecord.updateStaff(newStaff);
+            this.staff = newStaff;
+        } else {
+            if (latestHistoryRecord != null) {
+                latestHistoryRecord.updateEndDate(assignmentDate);
+            }
+            this.staff = newStaff;
+            final StaffAssignmentHistory staffAssignmentHistory = StaffAssignmentHistory.createNew(this, this.staff, assignmentDate);
+            this.staffHistory.add(staffAssignmentHistory);
+
+        }
+    }
+
+ // StaffAssignmentHistory[unassign staff]
+    public void removeStaff(final LocalDate unassignDate) {
+
+        final StaffAssignmentHistory latestHistoryRecord = findLatestIncompleteHistoryRecord();
+
+        if (latestHistoryRecord != null) {
+            latestHistoryRecord.updateEndDate(unassignDate);
+        }
+        this.staff = null;
+    }
+
+    private StaffAssignmentHistory findLatestIncompleteHistoryRecord() {
+
+        StaffAssignmentHistory latestRecordWithNoEndDate = null;
+        for (final StaffAssignmentHistory historyRecord : this.staffHistory) {
+            if (historyRecord.isCurrentRecord()) {
+                latestRecordWithNoEndDate = historyRecord;
+                break;
+            }
+        }
+        return latestRecordWithNoEndDate;
     }
 }
