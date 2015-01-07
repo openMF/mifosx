@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this file,
+    You can obtain one at http://mozilla.org/MPL/2.0/.
+
+-->
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:oauth="http://www.springframework.org/schema/security/oauth2"
+    xsi:schemaLocation="
+   http://www.springframework.org/schema/beans
+   http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+   http://www.springframework.org/schema/security/oauth2
+   http://www.springframework.org/schema/security/spring-security-oauth2.xsd
+   http://www.springframework.org/schema/security
+   http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+    <oauth:authorization-server client-details-service-ref="clientDetailsService"
+        token-services-ref="tokenServices" token-endpoint-url="/api/v1/oauth/token">
+        <oauth:client-credentials />
+    </oauth:authorization-server>
+
+    <oauth:resource-server id="resourceServerFilter" token-services-ref="tokenServices"/>
+
+    <beans:bean id="tokenServices" class="org.springframework.security.oauth2.provider.token.DefaultTokenServices">
+        <beans:property name="tokenStore" ref="tokenStore" />
+        <beans:property name="clientDetailsService" ref="clientDetailsService" />
+    </beans:bean>
+</beans:beans>

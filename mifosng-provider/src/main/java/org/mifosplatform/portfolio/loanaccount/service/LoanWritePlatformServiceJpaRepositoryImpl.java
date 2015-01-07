@@ -418,7 +418,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
     /**
      * create standing instruction for disbursed loan
-     * 
+     *
      * @param loan
      *            the disbursed loan
      * @return void
@@ -521,7 +521,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
     /****
      * TODO Vishwas: Pair with Ashok and re-factor collection sheet code-base
-     * 
+     *
      * May of the changes made to disburseLoan aren't being made here, should
      * refactor to reuse disburseLoan ASAP
      *****/
