@@ -35,16 +35,16 @@ import org.springframework.stereotype.Service;
 
 /**
  * A customised version of spring security's {@link BasicAuthenticationFilter}.
- * 
+ *
  * This filter is responsible for extracting multi-tenant and basic auth
  * credentials from the request and checking that the details provided are
  * valid.
- * 
+ *
  * If multi-tenant and basic auth credentials are valid, the details of the
  * tenant are stored in {@link MifosPlatformTenant} and stored in a
  * {@link ThreadLocal} variable for this request using
  * {@link ThreadLocalContextUtil}.
- * 
+ *
  * If multi-tenant and basic auth credentials are invalid, a http error response
  * is returned.
  */
@@ -53,7 +53,7 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 
     private static boolean firstRequestProcessed = false;
     private final static Logger logger = LoggerFactory.getLogger(TenantAwareBasicAuthenticationFilter.class);
-    
+
     private final BasicAuthTenantDetailsService basicAuthTenantDetailsService;
     private final ToApiJsonSerializer<PlatformRequestLog> toApiJsonSerializer;
     private final ConfigurationDomainService configurationDomainService;
@@ -61,6 +61,8 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 
     private final String tenantRequestHeader = "X-Mifos-Platform-TenantId";
     private final boolean exceptionIfHeaderMissing = true;
+
+    private final String apiUri = "/api/v1/";
 
     @Autowired
     public TenantAwareBasicAuthenticationFilter(final AuthenticationManager authenticationManager,
@@ -110,9 +112,10 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
                 }
 
                 if (!firstRequestProcessed) {
-                	final String baseUrl = request.getRequestURL().toString().replace(request.getPathInfo(), "/");
-                	System.setProperty("baseUrl", baseUrl);
-                	
+                    final String baseUrl = request.getRequestURL().toString().replace(request.getRequestURI(),
+                            request.getContextPath() + apiUri);
+                    System.setProperty("baseUrl", baseUrl);
+
                     final boolean ehcacheEnabled = this.configurationDomainService.isEhcacheEnabled();
                     if (ehcacheEnabled) {
                         this.cacheWritePlatformService.switchToCache(CacheType.SINGLE_NODE);
@@ -122,7 +125,7 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
                     TenantAwareBasicAuthenticationFilter.firstRequestProcessed = true;
                 }
             }
-            
+
             super.doFilter(req, res, chain);
         } catch (final InvalidTenantIdentiferException e) {
             // deal with exception at low level

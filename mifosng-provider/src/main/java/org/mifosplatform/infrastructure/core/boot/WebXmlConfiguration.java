@@ -15,7 +15,9 @@ import org.springframework.boot.context.embedded.FilterRegistrationBean;
 import org.springframework.boot.context.embedded.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.CompositeFilter;
 import org.springframework.web.filter.DelegatingFilterProxy;
+import org.springframework.web.servlet.DispatcherServlet;
 
 import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
 
@@ -30,6 +32,9 @@ public class WebXmlConfiguration {
 
     @Autowired
     private TenantAwareBasicAuthenticationFilter basicAuthenticationProcessingFilter;
+
+    @Autowired
+    private CompositeFilter customSecurityProcessingFilters;
 
     @Bean
     public Filter springSecurityFilterChain() {
@@ -60,6 +65,20 @@ public class WebXmlConfiguration {
         filterRegistrationBean.setFilter(basicAuthenticationProcessingFilter);
         filterRegistrationBean.setEnabled(false);
         return filterRegistrationBean;
+    }
+
+    @Bean
+    public FilterRegistrationBean chainFilterRegistrationBean() {
+        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
+        filterRegistrationBean.setFilter(customSecurityProcessingFilters);
+        filterRegistrationBean.setEnabled(false);
+        return filterRegistrationBean;
+    }
+
+    @Bean ServletRegistrationBean dispatcherRegistration(DispatcherServlet dispatcherServlet) {
+        ServletRegistrationBean registrationBean = new ServletRegistrationBean(dispatcherServlet);
+        registrationBean.addUrlMappings("/api/v1/oauth/token");
+        return registrationBean;
     }
 
 }

@@ -6,15 +6,15 @@
     You can obtain one at http://mozilla.org/MPL/2.0/.
 
 -->
-<!-- This Source Code Form is subject to the terms of the Mozilla Public 
-	License, v. 2.0. If a copy of the MPL was not distributed with this file, 
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+	License, v. 2.0. If a copy of the MPL was not distributed with this file,
 	You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <beans:beans xmlns="http://www.springframework.org/schema/security"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:beans="http://www.springframework.org/schema/beans"
 	xsi:schemaLocation="
-   http://www.springframework.org/schema/security 
+   http://www.springframework.org/schema/security
    http://www.springframework.org/schema/security/spring-security-3.2.xsd
-   http://www.springframework.org/schema/beans 
+   http://www.springframework.org/schema/beans
    http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
 
 	<http create-session="stateless" use-expressions="true" pattern="/api/**"
@@ -32,9 +32,18 @@
 		<intercept-url pattern="/api/**" access="isFullyAuthenticated()"
 			method="HEAD" requires-channel="https" />
 
-		<custom-filter after="SECURITY_CONTEXT_FILTER"
-			ref="basicAuthenticationProcessingFilter" />
+		<custom-filter before="PRE_AUTH_FILTER"
+			ref="customSecurityProcessingFilters"/>
 	</http>
+
+	<beans:bean id="customSecurityProcessingFilters" class="org.springframework.web.filter.CompositeFilter">
+		<beans:property name="filters">
+			<beans:list>
+				<beans:ref bean="basicAuthenticationProcessingFilter" />
+				<beans:ref bean="resourceServerFilter" />
+			</beans:list>
+		</beans:property>
+	</beans:bean>
 
 	<beans:bean id="basicAuthenticationEntryPoint"
 		class="org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint">

@@ -1943,6 +1943,14 @@
 								<td></td>
 							</tr>
 							<tr>
+								<td></td>
+								<td>oauth/token</td>
+								<td><a href="#oauth">OAuth2 Access Token Request</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
 								<td><a href="#users">User</a></td>
 								<td>users</td>
 								<td><a href="#users_create">Create a User</a></td>
@@ -2814,11 +2822,20 @@
 			<div class="method-section">
 				<div class="method-description">
 					<h3>Authentication Overview</h3>
+					<p>There are 2 ways for authentication:
+						<ul>
+							<li>
+								Authentication via
+									<a href="http://en.wikipedia.org/wiki/Basic_access_authentication">
+										HTTP Basic Auth
+									</a>
+							</li>
+							<li>
+								Authentication via
+								<a href="http://tools.ietf.org/html/rfc6749">OAuth2</a>
+							</li>
+						</ul>
 					<p>
-						Authentication to the API occurs via <a
-							href="http://en.wikipedia.org/wiki/Basic_access_authentication">HTTP
-							Basic Auth</a>.
-					</p>
 
 					<p>
 						The platform has been configured to reject plain HTTP requests and
@@ -2828,7 +2845,7 @@
 					</p>
 				</div>
 				<div class="method-example">
-<code> 
+					<code>
 // A Javascript/Jquery example of how to login to Mifos X and use its api. 
 // Typically, the javascript application would 
 // 1) Display a login page to retrieve the username and password. 
@@ -2870,8 +2887,11 @@ function executeAjaxRequest(url, verbType, jsonData, basicAuthKey, successFuncti
 		error : errorFunction 
 	}); 
 } 
-</code>
+						</code>
 					</div>
+					<h3>OAuth2 Overview</h3>
+					<p>The supported grant type is <span>client_credentials</span>.<br>
+					Every access token has a validity of 1 day(86400 seconds).<br>
 			</div>
 
 			<a id="batch_api" name="batch_api" class="old-syle-anchor">&nbsp;</a>
@@ -14543,14 +14563,14 @@ Content-Type: application/json
 					<h3>Audits</h3>
 					<p>Every non-read Mifos API request is audited.  A fully processed request can
                                         not be changed or deleted.  See maker checker api for situations where an audit is not
-                                        fully processed.<br><br>                                 
-                                        
+                                        fully processed.<br><br>
+
                                         Permissions: To search and look at audit entries a user needs to be attached to a role
                                         that has one of the ALL_FUNCTIONS, ALL_FUNCTIONS_READ or READ_AUDIT permissions.<br><br>
-                                        
+
                                         Data Scope: A user can only see audits that are within their data scope.  However,
                                         'head office' users can see all audits including those that aren't office/branch related
-                                        e.g. Loan Product changes.                                        
+                                        e.g. Loan Product changes.
 					<p/>
 				</div>
 			</div>
@@ -29767,7 +29787,7 @@ GET https://DomainName/api/v1/runreports/{reportName}
 			<a id="authentication" name="authentication" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h3>Authentication</h3>
+					<h3>Authentication via HTTP Basic Auth</h3>
 					<p>An API capability that allows client applications to verify
 						authentication details.</p>
 					<table class=matrixHeading>
@@ -29870,6 +29890,53 @@ No Request Body
     "defaultUserMessage": "Unauthenticated. Please login.",
     "userMessageGlobalisationCode": "error.msg.not.authenticated",
     "errors": []
+}
+					</code>
+				</div>
+			</div>
+
+			<a id="oauth" name="oauth" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h3>Authentication via OAuth2</h3>
+					<p>API for requesting OAuth2 access tokens.</p>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Field Descriptions</div></td>
+						</tr>
+						<tr class=alt>
+							<td>grant_type</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Mandatory field.
+							Indicates the requested grant type. Supported values:
+							<span>client_credentials</span>.
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+
+			<a id="oauth_request" name="oauth_request" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>OAuth2 Token Request</h4>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+POST https://DomainName/api/v1/oauth/token?grant_type=client_credentials
+					</code>
+					<code class="method-request">
+POST oauth/token?grant_type=client_credentials
+Content-Type: application/json
+No Request Body
+					</code>
+					<code class="method-response">
+{
+	access_token: "b771987f-82fc-45ba-b521-bfe280c4e603"
+	token_type: "bearer"
+	expires_in: 86400
+	scope: "all"
 }
 					</code>
 				</div>
@@ -32163,7 +32230,7 @@ GET https://DomainName/api/v1/financialactivityaccounts
                             <td>financialActivityId, glAccountId 
                             </td>
                         </tr>
-                       
+
                     </table>
                     <br />
 					
@@ -32299,7 +32366,7 @@ Content-Type: application/json
                             <td class=fielddesc>which specifies periodic accruals should happen till the given Date 
                             	</td>
                         </tr>
-                        
+
                     </table>
                 </div>
             </div>
@@ -32318,7 +32385,7 @@ Content-Type: application/json
                             <td>tillDate 
                             </td>
                         </tr>
-                       
+
                     </table>
                     <br />
 					
