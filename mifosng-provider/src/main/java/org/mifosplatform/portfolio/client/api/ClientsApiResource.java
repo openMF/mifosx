@@ -94,12 +94,11 @@ public class ClientsApiResource {
             clientData = this.clientReadPlatformService.retrieveAllNarrations(ClientApiConstants.CLIENT_CLOSURE_REASON);
         } else if (is(commandParam, "acceptTransfer")) {
             clientData = this.clientReadPlatformService.retrieveAllNarrations(ClientApiConstants.CLIENT_CLOSURE_REASON);
-        }else if (is(commandParam, "reject")) {
+        } else if (is(commandParam, "reject")) {
             clientData = this.clientReadPlatformService.retrieveAllNarrations(ClientApiConstants.CLIENT_REJECT_REASON);
-        }else if (is(commandParam, "withdraw")) {
+        } else if (is(commandParam, "withdraw")) {
             clientData = this.clientReadPlatformService.retrieveAllNarrations(ClientApiConstants.CLIENT_WITHDRAW_REASON);
-        }
-        else {
+        } else {
             clientData = this.clientReadPlatformService.retrieveTemplate(officeId, staffInSelectedOfficeOnly);
         }
 
@@ -144,8 +143,7 @@ public class ClientsApiResource {
             final ClientData templateData = this.clientReadPlatformService.retrieveTemplate(clientData.officeId(),
                     staffInSelectedOfficeOnly);
             clientData = ClientData.templateOnTop(clientData, templateData);
-            Collection<SavingsAccountData> savingAccountOptions = this.savingsAccountReadPlatformService.retrieveForLookup(
-                    clientId, null);
+            Collection<SavingsAccountData> savingAccountOptions = this.savingsAccountReadPlatformService.retrieveForLookup(clientId, null);
             if (savingAccountOptions != null && savingAccountOptions.size() > 0) {
                 clientData = ClientData.templateWithSavingAccountOptions(clientData, savingAccountOptions);
             }
@@ -243,21 +241,20 @@ public class ClientsApiResource {
         } else if (is(commandParam, "updateSavingsAccount")) {
             commandRequest = builder.updateClientSavingsAccount(clientId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-        }else if (is(commandParam,"reject")){
-        	commandRequest = builder.rejectClient(clientId).build();
+        } else if (is(commandParam, "reject")) {
+            commandRequest = builder.rejectClient(clientId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-       }else if (is(commandParam,"withdraw")){
-       	commandRequest = builder.withdrawClient(clientId).build();
-        result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-       }else if (is(commandParam,"reactivate")){
-           commandRequest = builder.reActivateClient(clientId).build();
-           result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-          }
-        
+        } else if (is(commandParam, "withdraw")) {
+            commandRequest = builder.withdrawClient(clientId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "reactivate")) {
+            commandRequest = builder.reActivateClient(clientId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }
 
         if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "activate",
                 "unassignStaff", "assignStaff", "close", "proposeTransfer", "withdrawTransfer", "acceptTransfer", "rejectTransfer",
-                "updateSavingsAccount","reject" ,"withdraw","reactivate"}); }
+                "updateSavingsAccount", "reject", "withdraw", "reactivate" }); }
 
         return this.toApiJsonSerializer.serialize(result);
     }
@@ -270,13 +267,20 @@ public class ClientsApiResource {
     @Path("{clientId}/accounts")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAssociatedAccounts(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo) {
+    public String retrieveAssociatedAccounts(@PathParam("clientId") final Long clientId, @QueryParam("command") final String commandParam,
+            @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
-        final AccountSummaryCollectionData clientAccount = this.accountDetailsReadPlatformService.retrieveClientAccountDetails(clientId);
-
-        final Set<String> CLIENT_ACCOUNTS_DATA_PARAMETERS = new HashSet<>(Arrays.asList("loanAccounts", "savingsAccounts"));
+        final AccountSummaryCollectionData clientAccount = this.accountDetailsReadPlatformService.retrieveClientAccountDetails(clientId,
+                commandParam);
+        
+        final Set<String> CLIENT_ACCOUNTS_DATA_PARAMETERS;
+        if (is(commandParam, "loanrepaymentamount")) {
+            CLIENT_ACCOUNTS_DATA_PARAMETERS = new HashSet<>(Arrays.asList("loanAccounts", "savingsAccounts", "paymentTypeOptions"));
+        } else {
+            CLIENT_ACCOUNTS_DATA_PARAMETERS = new HashSet<>(Arrays.asList("loanAccounts", "savingsAccounts"));
+        }
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.clientAccountSummaryToApiJsonSerializer.serialize(settings, clientAccount, CLIENT_ACCOUNTS_DATA_PARAMETERS);

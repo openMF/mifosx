@@ -22,4 +22,6 @@ public interface ScheduledJobRunnerService {
     void updateNPA();
 
     void updateMaturityDetailsOfDepositAccounts();
+    
+    void updateClientSubStatus();
 }
