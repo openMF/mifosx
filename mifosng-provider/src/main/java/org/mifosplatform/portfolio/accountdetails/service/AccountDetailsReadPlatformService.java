@@ -12,7 +12,7 @@ import org.mifosplatform.portfolio.accountdetails.data.LoanAccountSummaryData;
 
 public interface AccountDetailsReadPlatformService {
 
-    public AccountSummaryCollectionData retrieveClientAccountDetails(final Long clientId);
+    public AccountSummaryCollectionData retrieveClientAccountDetails(final Long clientId, final String commandParam);
 
     public AccountSummaryCollectionData retrieveGroupAccountDetails(final Long groupId);
 
