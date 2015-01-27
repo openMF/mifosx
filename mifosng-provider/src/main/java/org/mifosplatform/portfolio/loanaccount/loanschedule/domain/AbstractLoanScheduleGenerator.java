@@ -475,7 +475,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             instalmentNumber++;
         }
 
-        if (principalDisbursed.isNotEqualTo(expectedPrincipalDisburse) && diffAmt == null) {
+        if ((!loanApplicationTerms.isMultiDisburseLoan()) && principalDisbursed.isNotEqualTo(expectedPrincipalDisburse) && diffAmt == null) {
             final String errorMsg = "One of the Disbursement date is not falling on Loan Schedule";
             throw new MultiDisbursementDisbursementDateException(errorMsg);
         }
