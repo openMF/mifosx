@@ -124,6 +124,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             final AppUser currentUser = this.context.authenticatedUser();
             Long officeId = null;
             Group parentGroup = null;
+            Group groupForUpdate = null;
 
             if (centerId == null) {
                 officeId = command.longValueOfParameterNamed(GroupingTypesApiConstants.officeIdParamName);
@@ -131,7 +132,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
                 parentGroup = this.groupRepository.findOneWithNotFoundDetection(centerId);
                 officeId = parentGroup.officeId();
             }
-
+                       
             final Office groupOffice = this.officeRepository.findOne(officeId);
             if (groupOffice == null) { throw new OfficeNotFoundException(officeId); }
 
@@ -185,6 +186,16 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
 
             // pre-save to generate id for use in group hierarchy
             this.groupRepository.save(newGroup);
+            
+			/* Generate Hierarchy for groups associated to center */
+			if (newGroup.isCenter() && newGroup.hasActiveGroups()) {
+				for (final Group group : groupMembers) {
+					Long groupId = group.getId();
+					groupForUpdate = this.groupRepository
+							.findOneWithNotFoundDetection(groupId);
+					groupForUpdate.generateHierarchyToAssociateGroups(newGroup);
+				}
+			}          
 
             newGroup.generateHierarchy();
 
@@ -416,7 +427,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             groupForUpdate.unassignStaff();
         }
         this.groupRepository.saveAndFlush(groupForUpdate);
-
+        
         actualChanges.put(staffIdParamName, null);
 
         return new CommandProcessingResultBuilder() //
@@ -760,17 +771,24 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
     public CommandProcessingResult associateGroupsToCenter(final Long centerId, final JsonCommand command) {
 
         this.fromApiJsonDeserializer.validateForAssociateGroups(command.json());
-
+        Group groupForUpdate = null;
         final Group centerForUpdate = this.groupRepository.findOneWithNotFoundDetection(centerId);
         final Set<Group> groupMembers = assembleSetOfChildGroups(centerForUpdate.officeId(), command);
         checkGroupMembersMeetingSyncWithCenterMeeting(centerId, groupMembers);
-
+               
+		for (final Group group : groupMembers) {
+			Long groupId = group.getId();
+			groupForUpdate = this.groupRepository
+					.findOneWithNotFoundDetection(groupId);
+			groupForUpdate.generateHierarchyToAssociateGroups(centerForUpdate);
+		}
+        
         final Map<String, Object> actualChanges = new HashMap<>();
         final List<String> changes = centerForUpdate.associateGroups(groupMembers);
         if (!changes.isEmpty()) {
             actualChanges.put(GroupingTypesApiConstants.groupMembersParamName, changes);
         }
-
+                      
         this.groupRepository.saveAndFlush(centerForUpdate);
 
         return new CommandProcessingResultBuilder() //
@@ -787,11 +805,20 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
     public CommandProcessingResult disassociateGroupsToCenter(final Long centerId, final JsonCommand command) {
         this.fromApiJsonDeserializer.validateForDisassociateGroups(command.json());
 
+        Group groupForUpdate = null;
         final Group centerForUpdate = this.groupRepository.findOneWithNotFoundDetection(centerId);
         final Set<Group> groupMembers = assembleSetOfChildGroups(centerForUpdate.officeId(), command);
 
         final Map<String, Object> actualChanges = new HashMap<>();
 
+		for (final Group group : groupMembers) {
+			Long groupId = group.getId();
+			groupForUpdate = this.groupRepository
+					.findOneWithNotFoundDetection(groupId);
+			groupForUpdate
+					.generateHierarchyToDisassociateGroups(groupForUpdate);
+		}
+        
         final List<String> changes = centerForUpdate.disassociateGroups(groupMembers);
         if (!changes.isEmpty()) {
             actualChanges.put(GroupingTypesApiConstants.clientMembersParamName, changes);
