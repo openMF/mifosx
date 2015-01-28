@@ -339,14 +339,22 @@ public final class Group extends AbstractPersistable<Long> {
         return this.clientMembers.contains(client);
     }
 
-    public void generateHierarchy() {
-        if (this.parent != null) {
-            this.hierarchy = this.parent.hierarchyOf(getId());
-        } else {
-            this.hierarchy = "." + getId() + ".";
-        }
-    }
-
+	public void generateHierarchy(Group group) {
+		if (group != null) {
+			this.hierarchy = "." + group.getId() + this.hierarchy;
+		} else {
+			if (this.parent != null) {
+				this.hierarchy = this.parent.hierarchyOf(getId());
+			} else {
+				this.hierarchy = "." + getId() + ".";
+			}
+		}
+	}
+    
+	public void resetHierarchy() {
+			this.hierarchy = "." + this.getId();
+	}
+    
     private String hierarchyOf(final Long id) {
         return this.hierarchy + id.toString() + ".";
     }
@@ -366,7 +374,7 @@ public final class Group extends AbstractPersistable<Long> {
         }
         return staffId;
     }
-
+   
     private void addChild(final Group group) {
         this.groupMembers.add(group);
     }
