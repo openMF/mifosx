@@ -25,6 +25,8 @@ apply plugin: 'idea'
 apply plugin: 'tomcat'
 apply plugin: 'project-report'
 apply plugin: 'java'
+apply plugin: "application"
+apply plugin: "jacoco"
 
 /* define the valid syntax level for source files */
 sourceCompatibility = JavaVersion.VERSION_1_7
@@ -105,6 +107,20 @@ task dist(type:Zip){
     from war.outputs.files
     into(baseName + '-' + version)
 }
+
+jacoco {
+   toolVersion = "0.7.1.201405082137"
+   reportsDir = file("$buildDir/MifosJacocoReportDir")
+}
+
+// If you want a different output format just add:
+//jacocoTestReport {
+//    reports {
+//        xml.enabled false (eneble if you want xml)
+//        csv.enabled false (eneble if you want csv)
+//        html.destination "${buildDir}/jacocoHtml" (If you want custom destination of the report
+//    }
+//}
 
 task deployPentahoReports() {
 	def pentahoReportDir = System.properties['user.home'] + System.properties['file.separator'] + '.mifosx' + System.properties['file.separator'] + 'pentahoReports'
