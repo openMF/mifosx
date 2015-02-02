@@ -618,10 +618,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         public String clientLookupByIdentifierSchema() {
             return "c.id as id, c.account_no as accountNo, c.status_enum as statusEnum, c.sub_status as subStatus, c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, "
                     + "c.fullname as fullname, c.display_name as displayName,"
-                    + "c.office_id as officeId, o.name as officeName "
-                    + " from m_client c, m_office o, m_client_identifier ci "
-                    + "where o.id = c.office_id and c.id=ci.client_id "
-                    + "and ci.document_type_id= ? and ci.document_key like ?";
+                    + "c.office_id as officeId, o.name as officeName, "
+                    + "cv.code_value as subStatusValue, cv.code_value as subStatusDesc "
+                    + "from m_client c join m_office o on o.id = c.office_id join m_client_identifier ci on c.id = ci.client_id "
+                    + "left join m_code_value cv on c.sub_status = cv.id " 
+                    + " where ci.document_type_id= ? and ci.document_key like ?";
         }
 
         @Override
