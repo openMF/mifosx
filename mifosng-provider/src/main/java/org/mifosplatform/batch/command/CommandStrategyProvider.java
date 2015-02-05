@@ -85,6 +85,10 @@ public class CommandStrategyProvider {
                 "approveLoanCommandStrategy");
         this.commandStrategies.put(CommandContext.resource("loans\\/\\d+\\?command=disburse").method("POST").build(),
                 "disburseLoanCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("loans\\/\\d+\\/repayment\\?command=repayment").method("POST").build(),
+                "loanTransactionsCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("savingsaccounts\\/\\d+\\/transactions\\?command=deposit").method("POST").build(),
+                "savingsTransactionsCommandStrategy");
     }
 
 }
