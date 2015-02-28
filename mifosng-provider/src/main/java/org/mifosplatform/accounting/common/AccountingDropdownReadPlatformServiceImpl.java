@@ -86,6 +86,15 @@ public class AccountingDropdownReadPlatformServiceImpl implements AccountingDrop
             liabilityAccountOptions = null;
         }
         accountOptions.put("liabilityAccountOptions", liabilityAccountOptions);
+        
+        List<GLAccountData> openingBalancesTransferContraOptions = this.accountReadPlatformService
+                .retrieveAllEnabledDetailGLAccounts(GLAccountType.EQUITY);
+        if (openingBalancesTransferContraOptions.isEmpty()) {
+        	openingBalancesTransferContraOptions = null;
+        }
+        accountOptions.put("openingBalancesTransferContraOptions", openingBalancesTransferContraOptions);
+        
+        
         return accountOptions;
     }
 

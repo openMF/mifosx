@@ -223,7 +223,7 @@ public class AccountingConstants {
     public static enum FINANCIAL_ACTIVITY {
         ASSET_TRANSFER(100, "assetTransfer", GLAccountType.ASSET), LIABILITY_TRANSFER(200, "liabilityTransfer", GLAccountType.LIABILITY),
         CASH_AT_MAINVAULT (300, "cashAtMainVault", GLAccountType.ASSET),
-        CASH_AT_TELLER (400, "cashAtTeller", GLAccountType.ASSET);
+        CASH_AT_TELLER (400, "cashAtTeller", GLAccountType.ASSET),OPENING_BALANCES_TRANSFER_CONTRA (500,"openingBalancesTransferContra",GLAccountType.EQUITY);
 
         private final Integer value;
         private final String code;

@@ -15,11 +15,12 @@ import javax.persistence.Table;
 import org.mifosplatform.accounting.glaccount.domain.GLAccount;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
+@SuppressWarnings("serial")
 @Entity
 @Table(name = "acc_gl_financial_activity_account")
 public class FinancialActivityAccount extends AbstractPersistable<Long> {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "gl_account_id")
     private GLAccount glAccount;
 
