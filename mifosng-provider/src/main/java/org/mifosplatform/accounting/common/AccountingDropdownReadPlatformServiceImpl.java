@@ -8,7 +8,6 @@ package org.mifosplatform.accounting.common;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.mifosplatform.accounting.glaccount.data.GLAccountData;
 import org.mifosplatform.accounting.glaccount.domain.GLAccountType;
 import org.mifosplatform.accounting.glaccount.domain.GLAccountUsage;
