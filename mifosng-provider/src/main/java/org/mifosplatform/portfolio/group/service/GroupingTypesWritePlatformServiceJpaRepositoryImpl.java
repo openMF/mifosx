@@ -248,7 +248,12 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             group.activate(currentUser, activationDate);
 
             this.groupRepository.saveAndFlush(group);
-
+            
+            if(group.isCenter()&& group.hasStaff()){
+               Staff staff = group.getStaff(); 
+               group.reassignStaff(staff, activationDate);
+            }
+            
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
                     .withOfficeId(group.officeId()) //

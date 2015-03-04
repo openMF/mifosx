@@ -492,6 +492,11 @@ public final class Group extends AbstractPersistable<Long> {
         return this.groupMembers.contains(group);
     }
 
+    public boolean hasStaff() {
+        if (this.staff != null) { return true; }
+        return false;
+    }
+
     public List<String> associateGroups(final Set<Group> groupMembersSet) {
 
         final List<String> differences = new ArrayList<>();
