@@ -26,6 +26,9 @@ import static org.mifosplatform.portfolio.savings.DepositsApiConstants.minDeposi
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositEveryParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositEveryTypeParamName;
+
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.currencyCodeParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.descriptionParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.digitsAfterDecimalParamName;
@@ -36,8 +39,8 @@ import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCa
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCalculationTypeParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCompoundingPeriodTypeParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestPostingPeriodTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minBalanceForInterestCalculationParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minRequiredOpeningBalanceParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nameParamName;
@@ -666,6 +669,8 @@ public class DepositProductDataValidator {
     }
 
     public void validateRecurringDetailForCreate(JsonElement element, DataValidatorBuilder baseDataValidator) {
+    	
+    	validateDepositEvery(element,baseDataValidator);
 
         final Boolean isMandatoryDeposit = this.fromApiJsonHelper.extractBooleanNamed(isMandatoryDepositParamName, element);
         baseDataValidator.reset().parameter(isMandatoryDepositParamName).value(isMandatoryDeposit).ignoreIfNull().validateForBooleanValue();
@@ -678,7 +683,9 @@ public class DepositProductDataValidator {
     }
 
     public void validateRecurringDepositUpdate(JsonElement element, DataValidatorBuilder baseDataValidator) {
-
+    	
+    	validateDepositEvery(element,baseDataValidator);
+         
         if (this.fromApiJsonHelper.parameterExists(isMandatoryDepositParamName, element)) {
             final Boolean isMandatoryDeposit = this.fromApiJsonHelper.extractBooleanNamed(isMandatoryDepositParamName, element);
             baseDataValidator.reset().parameter(isMandatoryDepositParamName).value(isMandatoryDeposit).ignoreIfNull()
@@ -728,7 +735,7 @@ public class DepositProductDataValidator {
             baseDataValidator.reset().parameter(depositAmountParamName).value(depositAmount).notLessThanMin(depositMinAmount);
         }
     }
-
+    
     private void validateDepositAmountForUpdate(JsonElement element, DataValidatorBuilder baseDataValidator) {
         BigDecimal depositAmount = null;
 
@@ -764,5 +771,33 @@ public class DepositProductDataValidator {
                 baseDataValidator.reset().parameter(depositAmountParamName).value(depositAmount).notLessThanMin(depositMinAmount);
             }
         }
+    }
+    
+    private void validateDepositEvery(JsonElement element, DataValidatorBuilder baseDataValidator){
+    	 if (fromApiJsonHelper.parameterExists(depositEveryParamName, element)) {
+
+             final Integer depositEvery = fromApiJsonHelper.extractIntegerWithLocaleNamed(depositEveryParamName, element);
+             baseDataValidator.reset().parameter(depositEveryParamName).value(depositEvery).integerZeroOrGreater();
+
+             if (depositEvery != null) {
+                 final Integer depositEveryType = fromApiJsonHelper.extractIntegerSansLocaleNamed(
+                		 depositEveryTypeParamName, element);
+                 baseDataValidator.reset().parameter(depositEveryTypeParamName).value(depositEveryType).notNull()
+                         .inMinMaxRange(0, 3);
+             }
+         }
+
+         if (fromApiJsonHelper.parameterExists(depositEveryTypeParamName, element)) {
+             final Integer depositEveryType = fromApiJsonHelper.extractIntegerSansLocaleNamed(depositEveryTypeParamName,
+                     element);
+             baseDataValidator.reset().parameter(depositEveryTypeParamName).value(depositEveryType).inMinMaxRange(0, 3);
+
+             if (depositEveryType != null) {
+                 final Integer depositEvery = fromApiJsonHelper.extractIntegerWithLocaleNamed(depositEveryParamName,
+                         element);
+                 baseDataValidator.reset().parameter(depositEveryParamName).value(depositEvery).notNull()
+                         .integerZeroOrGreater();
+             }
+         }
     }
 }

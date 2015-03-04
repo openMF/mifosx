@@ -84,8 +84,12 @@ public class DepositsApiConstants {
     public static final String interestPostingPeriodTypeParamName = "interestPostingPeriodType";
     public static final String interestCalculationTypeParamName = "interestCalculationType";
     public static final String interestCalculationDaysInYearTypeParamName = "interestCalculationDaysInYearType";
+    public static final String depositEveryParamName = "depositEvery";
+    public static final String depositEveryTypeParamName = "depositEveryType";
     public static final String lockinPeriodFrequencyParamName = "lockinPeriodFrequency";
     public static final String lockinPeriodFrequencyTypeParamName = "lockinPeriodFrequencyType";
+    
+    
     public static final String feeAmountParamName = "feeAmount";// to be deleted
     public static final String feeOnMonthDayParamName = "feeOnMonthDay";
     public static final String feeIntervalParamName = "feeInterval";
@@ -196,7 +200,7 @@ public class DepositsApiConstants {
             monthDayFormatParamName, nameParamName, shortNameParamName, descriptionParamName, currencyCodeParamName,
             digitsAfterDecimalParamName, inMultiplesOfParamName, nominalAnnualInterestRateParamName,
             interestCompoundingPeriodTypeParamName, interestPostingPeriodTypeParamName, interestCalculationTypeParamName,
-            interestCalculationDaysInYearTypeParamName, lockinPeriodFrequencyParamName, lockinPeriodFrequencyTypeParamName,
+            interestCalculationDaysInYearTypeParamName, lockinPeriodFrequencyParamName, lockinPeriodFrequencyTypeParamName,            
             accountingRuleParamName, chargesParamName, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_FEES.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_PENALTIES.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_ON_SAVINGS.getValue(),
@@ -222,11 +226,13 @@ public class DepositsApiConstants {
 
     private static final Set<String> RECURRING_DETAILS_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
             mandatoryRecommendedDepositAmountParamName, isMandatoryDepositParamName, allowWithdrawalParamName,
+            depositEveryParamName,depositEveryTypeParamName,
             adjustAdvanceTowardsFuturePaymentsParamName, recurringFrequencyTypeParamName, recurringFrequencyParamName,
             isCalendarInheritedParamName));
 
     private static final Set<String> RECURRING_DETAILS_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
             mandatoryRecommendedDepositAmountParamName, isMandatoryDepositParamName, allowWithdrawalParamName,
+            depositEveryParamName,depositEveryTypeParamName,
             adjustAdvanceTowardsFuturePaymentsParamName, recurringFrequencyTypeParamName, recurringFrequencyParamName,
             isCalendarInheritedParamName));
 

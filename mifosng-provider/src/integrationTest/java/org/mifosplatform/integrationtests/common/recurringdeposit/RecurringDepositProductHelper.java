@@ -62,12 +62,16 @@ public class RecurringDepositProductHelper {
     private final String interestPostingPeriodType = MONTHLY;
     private final String interestCalculationType = INTEREST_CALCULATION_USING_DAILY_BALANCE;
     private String accountingRule = NONE;
+    
+    private final String depositEvery="3";
+    private final String depositEveryType=MONTHS;
     private final String lockinPeriodFrequency = "1";
     private final String lockingPeriodFrequencyType = MONTHS;
     private final String minDepositTerm = "6";
     private final String minDepositTermTypeId = MONTHS;
     private final String maxDepositTerm = "10";
     private final String maxDepositTermTypeId = YEARS;
+     
     private final String inMultiplesOfDepositTerm = "2";
     private final String inMultiplesOfDepositTermTypeId = MONTHS;
     private final String preClosurePenalInterest = "2";
@@ -145,6 +149,8 @@ public class RecurringDepositProductHelper {
         map.put("interestCompoundingPeriodType", this.interestCompoundingPeriodType);
         map.put("interestPostingPeriodType", this.interestPostingPeriodType);
         map.put("accountingRule", this.accountingRule);
+        map.put("depositEvery", this.depositEvery);
+        map.put("depositEveryType", this.depositEveryType);
         map.put("lockinPeriodFrequency", this.lockinPeriodFrequency);
         map.put("lockinPeriodFrequencyType", this.lockingPeriodFrequencyType);
         map.put("preClosurePenalApplicable", "true");

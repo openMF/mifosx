@@ -20,6 +20,8 @@ import static org.mifosplatform.portfolio.savings.DepositsApiConstants.isCalenda
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.isMandatoryDepositParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.mandatoryRecommendedDepositAmountParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.transferInterestToSavingsParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositEveryParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositEveryTypeParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.accountNoParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.clientIdParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.externalIdParamName;
@@ -367,6 +369,8 @@ public class DepositAccountAssembler {
         boolean allowWithdrawal;
         boolean adjustAdvanceTowardsFuturePayments;
         boolean isCalendarInherited;
+        Integer depositEvery=null;
+        Integer depositEveryType=null;
 
         if (command.parameterExists(isMandatoryDepositParamName)) {
             isMandatoryDeposit = command.booleanObjectValueOfParameterNamed(isMandatoryDepositParamName);
@@ -391,6 +395,15 @@ public class DepositAccountAssembler {
         } else {
             isCalendarInherited = false;
         }
+        
+        if (command.parameterExists(depositEveryParamName)){
+        	depositEvery=command.integerValueOfParameterNamed(depositEveryParamName);
+        }
+        
+        if (command.parameterExists(depositEveryTypeParamName)){
+        	depositEveryType=command.integerValueOfParameterNamed(depositEveryTypeParamName);
+        }
+       
 
         final DepositRecurringDetail depositRecurringDetail = DepositRecurringDetail.createFrom(isMandatoryDeposit, allowWithdrawal,
                 adjustAdvanceTowardsFuturePayments);

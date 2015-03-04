@@ -21,6 +21,8 @@ import static org.mifosplatform.portfolio.savings.DepositsApiConstants.minDeposi
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositEveryParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositEveryTypeParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.chargesParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.currencyCodeParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.descriptionParamName;
@@ -37,6 +39,7 @@ import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minBalance
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nameParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.shortNameParamName;
+
 
 import java.math.BigDecimal;
 import java.util.HashSet;
@@ -189,6 +192,9 @@ public class DepositProductAssembler {
             interestCalculationDaysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(interestCalculationDaysInYearTypeValue);
         }
 
+        Integer depositEvery=command.integerValueOfParameterNamed(depositEveryParamName);
+        Integer depositEveryType=command.integerValueOfParameterNamed(depositEveryTypeParamName);
+        
         final Integer lockinPeriodFrequency = command.integerValueOfParameterNamedDefaultToNullIfZero(lockinPeriodFrequencyParamName);
         SavingsPeriodFrequencyType lockinPeriodFrequencyType = null;
         final Integer lockinPeriodFrequencyTypeValue = command.integerValueOfParameterNamed(lockinPeriodFrequencyTypeParamName);
@@ -207,7 +213,7 @@ public class DepositProductAssembler {
         final DepositProductTermAndPreClosure productTermAndPreClosure = DepositProductTermAndPreClosure.createNew(preClosureDetail,
                 depositTermDetail, depositProductAmountDetails, null);
         final DepositRecurringDetail recurringDetail = this.assembleRecurringDetail(command);
-        final DepositProductRecurringDetail productRecurringDetail = DepositProductRecurringDetail.createNew(recurringDetail, null);
+        final DepositProductRecurringDetail productRecurringDetail = DepositProductRecurringDetail.createNew(recurringDetail, null,depositEvery,depositEveryType);
 
         // Savings product charges
         final Set<Charge> charges = assembleListOfSavingsProductCharges(command, currencyCode);
@@ -377,6 +383,9 @@ public class DepositProductAssembler {
         Boolean allowWithdrawal = command.booleanObjectValueOfParameterNamed(allowWithdrawalParamName);
         Boolean adjustAdvanceTowardsFuturePayments = command
                 .booleanObjectValueOfParameterNamed(adjustAdvanceTowardsFuturePaymentsParamName);
+        
+        
+        
 
         if (isMandatoryDeposit == null) isMandatoryDeposit = false;
         if (allowWithdrawal == null) allowWithdrawal = false;
