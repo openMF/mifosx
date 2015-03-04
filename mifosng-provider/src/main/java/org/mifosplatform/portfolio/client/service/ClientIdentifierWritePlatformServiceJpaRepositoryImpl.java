@@ -53,7 +53,8 @@ public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements Cl
         this.clientIdentifierCommandFromApiJsonDeserializer = clientIdentifierCommandFromApiJsonDeserializer;
     }
 
-    @Transactional
+
+	@Transactional
     @Override
     public CommandProcessingResult addClientIdentifier(final Long clientId, final JsonCommand command) {
 
@@ -72,7 +73,6 @@ public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements Cl
                     .getDocumentTypeId());
             documentTypeId = documentType.getId();
             documentTypeLabel = documentType.label();
-
             final ClientIdentifier clientIdentifier = ClientIdentifier.fromJson(client, documentType, command);
 
             this.clientIdentifierRepository.save(clientIdentifier);
@@ -107,7 +107,6 @@ public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements Cl
             final Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
             final ClientIdentifier clientIdentifierForUpdate = this.clientIdentifierRepository.findOne(identifierId);
             if (clientIdentifierForUpdate == null) { throw new ClientIdentifierNotFoundException(identifierId); }
-
             final Map<String, Object> changes = clientIdentifierForUpdate.update(command);
 
             if (changes.containsKey("documentTypeId")) {
