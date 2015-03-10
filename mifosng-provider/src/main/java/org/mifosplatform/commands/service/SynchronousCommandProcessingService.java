@@ -445,6 +445,9 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             if (wrapper.isUpdateDisbursementDate()) {
                 handler = this.applicationContext.getBean("updateLoanDisbuseDateCommandHandler", NewCommandSourceHandler.class);
             }
+            if (wrapper.addAndDeleteDisbursementDetails()) {
+                handler = this.applicationContext.getBean("addAndDeleteLoanDisburseDetailsCommandHandler", NewCommandSourceHandler.class);
+            }
         } else if (wrapper.isGLAccountResource()) {
             if (wrapper.isCreate()) {
                 handler = this.applicationContext.getBean("createGLAccountCommandHandler", NewCommandSourceHandler.class);
@@ -907,6 +910,16 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 handler = this.applicationContext.getBean("updateAccountNumberFormatCommandHandler", NewCommandSourceHandler.class);
             } else if (wrapper.isDelete()) {
                 handler = this.applicationContext.getBean("deleteAccountNumberFormatCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
+        } else if (wrapper.isEntityMappingResource()) {
+            if (wrapper.isCreate()) {
+                handler = this.applicationContext.getBean("createEntityToEntityMappingCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdate()) {
+                handler = this.applicationContext.getBean("updateEntityToEntityMappingCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isDelete()) {
+                handler = this.applicationContext.getBean("deleteEntityToEntityMappingCommandHandler", NewCommandSourceHandler.class);
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
