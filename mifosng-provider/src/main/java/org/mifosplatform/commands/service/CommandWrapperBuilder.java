@@ -2330,6 +2330,7 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+<<<<<<< HEAD
     public CommandWrapperBuilder createMap(Long relId) {
         this.actionName = "CREATE";
         this.entityName = "ENTITYMAPPING";
@@ -2353,4 +2354,12 @@ public class CommandWrapperBuilder {
         this.href = "/entitytoentitymapping/" + mapId;
         return this;
     }
+    public CommandWrapperBuilder updateWorkingDays(final Long workingDaysId) {
+        this.actionName = "UPDATE";
+        this.entityName = "WORKINGDAYS";
+        this.entityId = workingDaysId;
+        this.href = "/workingdays/" + workingDaysId;
+        return this;
+    }
+
 }
