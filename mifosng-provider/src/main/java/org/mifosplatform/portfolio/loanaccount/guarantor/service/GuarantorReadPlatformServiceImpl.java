@@ -256,7 +256,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
             final boolean transactionReversed = rs.getBoolean("transactionReversed");
             if (id != null) {
                 DepositAccountOnHoldTransactionData onHoldTransactionData = DepositAccountOnHoldTransactionData.instance(transactionId,
-                        amount, transactionType, date, transactionReversed);
+                        amount, transactionType, date, transactionReversed,null,null,null,null);
                 guarantorTransactionData = GuarantorTransactionData.instance(id, onHoldTransactionData, null, reversed);
             }
             return guarantorTransactionData;
