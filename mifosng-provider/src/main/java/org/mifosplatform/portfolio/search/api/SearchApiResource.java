@@ -12,6 +12,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -86,13 +87,17 @@ public class SearchApiResource {
     @Path("/advance")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String advancedSearch(@Context final UriInfo uriInfo, final String json) {
+    public String advancedSearch(@Context final UriInfo uriInfo,@QueryParam("clientInfo") boolean clientInfo, final String json) {
 
         final AdHocQuerySearchConditions searchConditions = this.fromApiJsonDeserializer.retrieveSearchConditions(json);
-
-        final Collection<AdHocSearchQueryData> searchResults = this.searchReadPlatformService
-                .retrieveAdHocQueryMatchingData(searchConditions);
-
+        Collection<AdHocSearchQueryData> searchResults = null;
+        if(!clientInfo){
+        	searchResults = this.searchReadPlatformService
+                    .retrieveAdHocQueryMatchingData(searchConditions);
+        }else{
+        	searchResults = this.searchReadPlatformService
+                    .retrieveMapFundSourceToLoan(searchConditions);
+        }
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, searchResults);
     }
