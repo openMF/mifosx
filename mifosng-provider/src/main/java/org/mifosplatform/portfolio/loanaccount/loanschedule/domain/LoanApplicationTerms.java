@@ -1016,7 +1016,9 @@ public final class LoanApplicationTerms {
         for (LoanTermVariationsData loanVariationTermsData : this.emiAmountVariations) {
             if (!periodDate.isBefore(loanVariationTermsData.getTermApplicableFrom())
                     && !startDate.isAfter(loanVariationTermsData.getTermApplicableFrom())) {
-                this.fixedEmiAmount = loanVariationTermsData.getTermValue();
+            	if(loanVariationTermsData.getTermValue() != null){
+                    this.fixedEmiAmount = loanVariationTermsData.getTermValue();
+            	}
                 startDate = loanVariationTermsData.getTermApplicableFrom();
             }
         }
