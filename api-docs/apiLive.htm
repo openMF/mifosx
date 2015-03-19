@@ -12803,7 +12803,7 @@ GET https://DomainName/api/v1/loanproducts/{productId}
 							numberOfRepaymentVariationsForBorrowerCycle,
 							interestRateVariationsForBorrowerCycle,
 							multiDisburseLoan,maxTrancheCount,
-							outstandingLoanBalance,overdueDaysForNPA,holdGuaranteeFunds, principalThresholdForLastInstalment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount, installmentAmountInMultiplesOf
+							outstandingLoanBalance,overdueDaysForNPA,holdGuaranteeFunds, principalThresholdForLastInstalment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount, installmentAmountInMultiplesOf, loanProductConfigurableAttributes
 							</td>
 						</tr>
 					</table>
@@ -12905,6 +12905,16 @@ Request Body:
 		"defaultValue":"15",
 		"maxValue":"20"
 	}
+],
+"loanProductConfigurableAttributes":[
+	{configureAmortization : true,	
+	 configureInterestMethod : true,
+	 configureRepaymentStrategy : false,
+	 configureInterestCalcPeriod : true,
+	 configureArrearsTolerance : false,
+	 configureRepaymentFrequency : true,
+	 configureMoratorium : true,
+	 configureGraceOnArrearsAging : true}
 ],
 "accountingRule":"2",
 "name":"product 5",

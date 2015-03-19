@@ -232,6 +232,11 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             validateSubmittedOnDate(newLoanApplication);
 
             final LoanProductRelatedDetail productRelatedDetail = newLoanApplication.repaymentScheduleDetail();
+            
+        	if(loanProduct.getLoanProductConfigurableAttributes() != null){
+        		updateProductRelatedDetails(productRelatedDetail,loanProduct,newLoanApplication);
+        	}
+            
             this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(newLoanApplication.getTermFrequency(),
                     newLoanApplication.getTermPeriodFrequencyType(), productRelatedDetail.getNumberOfRepayments(),
                     productRelatedDetail.getRepayEvery(), productRelatedDetail.getRepaymentPeriodFrequencyType().getValue(),
@@ -301,6 +306,43 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         }
     }
 
+    private void updateProductRelatedDetails(LoanProductRelatedDetail productRelatedDetail,
+    										LoanProduct loanProduct, Loan loan){
+    	final Boolean amortization = loanProduct.getLoanProductConfigurableAttributes().getConfigureAmortization();
+        final Boolean arrearsTolerance = loanProduct.getLoanProductConfigurableAttributes().getConfigureArrearsTolerance();
+        final Boolean graceOnArrearsAging = loanProduct.getLoanProductConfigurableAttributes().getConfigureGraceOnArrearsAging();
+    	final Boolean interestCalcPeriod = loanProduct.getLoanProductConfigurableAttributes().getConfigureInterestCalcPeriod();
+    	final Boolean interestMethod = loanProduct.getLoanProductConfigurableAttributes().getConfigureInterestMethod();
+    	final Boolean moratorium = loanProduct.getLoanProductConfigurableAttributes().getConfigureMoratorium();
+    	final Boolean repaymentFrequency = loanProduct.getLoanProductConfigurableAttributes().getConfigureRepaymentFrequency();
+    	final Boolean repaymentStrategy = loanProduct.getLoanProductConfigurableAttributes().getConfigureRepaymentStrategy();
+        
+    	if(!amortization){
+    		productRelatedDetail.setAmortizationMethod(loanProduct.getLoanProductRelatedDetail().getAmortizationMethod());
+    	}
+    	if(!arrearsTolerance){
+    		productRelatedDetail.setInArrearsTolerance(loanProduct.getLoanProductRelatedDetail().getArrearsTolerance());
+    	}
+    	if(!graceOnArrearsAging){
+    		productRelatedDetail.setGraceOnArrearsAgeing(loanProduct.getLoanProductRelatedDetail().getGraceOnArrearsAgeing());
+    	}
+    	if(!interestCalcPeriod){
+    		productRelatedDetail.setInterestCalculationPeriodMethod(loanProduct.getLoanProductRelatedDetail().getInterestCalculationPeriodMethod());
+    	}
+    	if(!interestMethod){
+    		productRelatedDetail.setInterestMethod(loanProduct.getLoanProductRelatedDetail().getInterestMethod());
+    	}
+    	if(!moratorium){
+    		productRelatedDetail.setGraceOnInterestPayment(loanProduct.getLoanProductRelatedDetail().getGraceOnInterestPayment());
+    		productRelatedDetail.setGraceOnPrincipalPayment(loanProduct.getLoanProductRelatedDetail().getGraceOnPrincipalPayment());
+    	}
+    	if(!repaymentFrequency){
+    		productRelatedDetail.setRepayEvery(loanProduct.getLoanProductRelatedDetail().getRepayEvery());
+    	}
+    	if(!repaymentStrategy){
+    		loan.updateTransactionProcessingStrategy(loanProduct.getRepaymentStrategy());
+    	}
+    }
     private void createAndPersistCalendarInstanceForInterestRecalculation(final Loan loan) {
 
         LocalDate calendarStartDate = loan.loanInterestRecalculationDetails().getRestFrequencyLocalDate();
@@ -461,11 +503,11 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             }
 
             final String productIdParamName = "productId";
-            if (changes.containsKey(productIdParamName)) {
-                final Long productId = command.longValueOfParameterNamed(productIdParamName);
-                final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
-                if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
+            final Long productId = command.longValueOfParameterNamed(productIdParamName);
+            final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
+            if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
 
+            if (changes.containsKey(productIdParamName)) {                
                 existingLoanApplication.updateLoanProduct(loanProduct);
                 if (!changes.containsKey("interestRateFrequencyType")) {
                     existingLoanApplication.updateInterestRateFrequencyType();
@@ -494,6 +536,11 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             existingLoanApplication.updateIsInterestRecalculationEnabled();
             validateSubmittedOnDate(existingLoanApplication);
 
+            final LoanProductRelatedDetail productRelatedDetail = existingLoanApplication.repaymentScheduleDetail();
+        	if(loanProduct.getLoanProductConfigurableAttributes() != null){
+                updateProductRelatedDetails(productRelatedDetail,loanProduct,existingLoanApplication);
+        	}
+            
             final String fundIdParamName = "fundId";
             if (changes.containsKey(fundIdParamName)) {
                 final Long fundId = command.longValueOfParameterNamed(fundIdParamName);
@@ -546,7 +593,6 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 existingLoanApplication.updateLoanCharges(possiblyModifedLoanCharges);
             }
 
-            final LoanProductRelatedDetail productRelatedDetail = existingLoanApplication.repaymentScheduleDetail();
             this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(existingLoanApplication.getTermFrequency(),
                     existingLoanApplication.getTermPeriodFrequencyType(), productRelatedDetail.getNumberOfRepayments(),
                     productRelatedDetail.getRepayEvery(), productRelatedDetail.getRepaymentPeriodFrequencyType().getValue(),

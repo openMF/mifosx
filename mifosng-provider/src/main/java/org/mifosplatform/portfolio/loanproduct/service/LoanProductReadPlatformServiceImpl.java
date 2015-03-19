@@ -28,6 +28,7 @@ import org.mifosplatform.portfolio.loanproduct.data.LoanProductBorrowerCycleVari
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductGuaranteeData;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductInterestRecalculationData;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProductConfigurableAttributes;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductParamType;
 import org.mifosplatform.portfolio.loanproduct.exception.LoanProductNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,7 +77,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
         final String sql = "select " + rm.schema() + " where bc.loan_product_id=?  order by bc.borrower_cycle_number,bc.value_condition";
         return this.jdbcTemplate.query(sql, rm, new Object[] { loanProductId });
     }
-
+    
     @Override
     public Collection<LoanProductData> retrieveAllLoanProducts() {
 
@@ -169,12 +170,16 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + "lpg.id as lpgId, lpg.mandatory_guarantee as mandatoryGuarantee, "
                     + "lpg.minimum_guarantee_from_own_funds as minimumGuaranteeFromOwnFunds, lpg.minimum_guarantee_from_guarantor_funds as minimumGuaranteeFromGuarantor, "
                     + "lp.account_moves_out_of_npa_only_on_arrears_completion as accountMovesOutOfNPAOnlyOnArrearsCompletion, "
-                    + "curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, curr.display_symbol as currencyDisplaySymbol, lp.external_id as externalId "
+                    + "curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, curr.display_symbol as currencyDisplaySymbol, lp.external_id as externalId, "
+                    + "lca.id as lcaId, lca.amortization as configureAmortization, lca.interest_method as configureInterestMethod, "
+                    + "lca.repayment_strategy as configureRepaymentStrategy,lca.interest_calculation_period as configureInterestCalcPeriod, lca.arrears_tolerance as configureArrearsTolerance, "
+                    + "lca.repay_every as configureRepaymentFrequency, lca.moratorium as configureMoratorium, lca.grace_on_arrears_aging as configureGraceOnArrearsAging "
                     + " from m_product_loan lp "
                     + " left join m_fund f on f.id = lp.fund_id "
                     + " left join m_product_loan_recalculation_details lpr on lpr.product_id=lp.id "
                     + " left join m_product_loan_guarantee_details lpg on lpg.loan_product_id=lp.id "
                     + " left join ref_loan_transaction_processing_strategy ltps on ltps.id = lp.loan_transaction_strategy_id"
+                    + " left join m_product_loan_configurable_attributes lca on lca.loan_product_id = lp.id "
                     + " join m_currency curr on curr.code = lp.currency_code";
         }
 
@@ -300,7 +305,24 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                         interestRecalculationCompoundingType, rescheduleStrategyType, restFrequencyType, restFrequencyInterval,
                         restFrequencyDate, isArrearsBasedOnOriginalSchedule);
             }
+            
+            final boolean configureAmortization = rs.getBoolean("configureAmortization");
+            final boolean configureInterestMethod = rs.getBoolean("configureInterestMethod");
+            final boolean configureRepaymentStrategy = rs.getBoolean("configureRepaymentStrategy");
+            final boolean configureInterestCalcPeriod = rs.getBoolean("configureInterestCalcPeriod");
+            final boolean configureArrearsTolerance = rs.getBoolean("configureArrearsTolerance");
+            final boolean configureRepaymentFrequency = rs.getBoolean("configureRepaymentFrequency");
+            final boolean configureMoratorium = rs.getBoolean("configureMoratorium");
+            final boolean configureGraceOnArrearsAging = rs.getBoolean("configureGraceOnArrearsAging");
 
+
+            LoanProductConfigurableAttributes loanProductConfigurableAttributes = null;
+            
+                loanProductConfigurableAttributes = new LoanProductConfigurableAttributes(configureAmortization,configureInterestMethod,
+                		configureRepaymentStrategy,configureInterestCalcPeriod,configureArrearsTolerance,configureRepaymentFrequency,configureMoratorium,configureGraceOnArrearsAging);
+            
+            
+            
             final boolean holdGuaranteeFunds = rs.getBoolean("holdGuaranteeFunds");
             LoanProductGuaranteeData loanProductGuaranteeData = null;
             if (holdGuaranteeFunds) {
@@ -326,7 +348,8 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     graceOnArrearsAgeing, overdueDaysForNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled,
                     interestRecalculationData, minimumDaysBetweenDisbursalAndFirstRepayment, holdGuaranteeFunds, loanProductGuaranteeData,
                     principalThresholdForLastInstalment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount,
-                    installmentAmountInMultiplesOf);
+                    installmentAmountInMultiplesOf, loanProductConfigurableAttributes);
+
         }
     }
 
