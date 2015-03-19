@@ -93,7 +93,10 @@ public class LoanProductTestBuilder {
     private String minimumGuaranteeFromOwnFunds = null;
     private String minimumGuaranteeFromGuarantor = null;
     private String isArrearsBasedOnOriginalSchedule = null;
-
+    private String graceOnPrincipalPayment = "1";
+    private String graceOnInterestPayment = "1";
+    private List<HashMap> loanProductConfigurableAttributes = null;
+    
     public String build(final String chargeId) {
         final HashMap<String, Object> map = new HashMap<>();
 
@@ -160,6 +163,11 @@ public class LoanProductTestBuilder {
                 map.put("minimumGuaranteeFromGuarantor", this.minimumGuaranteeFromGuarantor);
                 map.put("minimumGuaranteeFromOwnFunds", this.minimumGuaranteeFromOwnFunds);
             }
+        }
+        map.put("graceOnPrincipalPayment", graceOnPrincipalPayment);
+        map.put("graceOnInterestPayment", graceOnInterestPayment);
+        if(loanProductConfigurableAttributes != null){
+        	map.put("loanProductConfigurableAttributes", this.loanProductConfigurableAttributes);
         }
         return new Gson().toJson(map);
     }
@@ -415,5 +423,29 @@ public class LoanProductTestBuilder {
         this.minimumGuaranteeFromOwnFunds = minimumGuaranteeFromOwnFunds;
         return this;
     }
-
+   
+    public LoanProductTestBuilder withMoratorium(String principal, String interest){
+    	this.graceOnPrincipalPayment = principal;
+    	this.graceOnInterestPayment = interest;
+    	return this;
+    }
+    
+    public LoanProductTestBuilder withLoanProductConfiguration(final List<HashMap> loanProductConfigurableAttributes){
+    	this.loanProductConfigurableAttributes = loanProductConfigurableAttributes;
+    	return this;
+    }
+    
+    public Map<String, Boolean> getLoanProductConfiguration(){
+    	final Map<String, Boolean> map = new HashMap<>();
+        
+        map.put("configureAmortization", false);
+        map.put("configureInterestMethod", false);
+        map.put("configureRepaymentStrategy", false);
+        map.put("configureInterestCalcPeriod", false);
+        map.put("configureArrearsTolerance", false );
+        map.put("configureRepaymentFrequency", false);
+        map.put("configureMoratorium", false);
+        map.put("configureGraceOnArrearsAging", false);
+    	return map;
+    }
 }
