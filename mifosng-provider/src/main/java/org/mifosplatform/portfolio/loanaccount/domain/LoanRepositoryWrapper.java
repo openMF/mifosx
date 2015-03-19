@@ -5,6 +5,10 @@
  */
 package org.mifosplatform.portfolio.loanaccount.domain;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.mifosplatform.portfolio.loanaccount.exception.LoanNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,4 +35,12 @@ public class LoanRepositoryWrapper {
         return loan;
     }
 
+	public Collection<Loan> findActiveLoansByLoanIdAndGroupId(Long clientId,Long groupId) {
+		final Collection<Integer> loanStatuses = new ArrayList<>(Arrays.asList(LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue(),
+                LoanStatus.APPROVED.getValue(), LoanStatus.ACTIVE.getValue()));
+		final Collection<Loan> loans = this.repository.findByClientIdAndGroupIdAndLoanStatus(clientId, groupId, loanStatuses);
+		return loans;
+	}
+    
+     
 }
