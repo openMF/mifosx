@@ -1,3 +1,8 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package org.mifosplatform.integrationtests;
 
 import java.text.DateFormat;
@@ -56,7 +61,7 @@ public class ConcurrencyIntegrationTest {
         Calendar date = Calendar.getInstance();
         date.set(2011, 9, 20);
         Float repaymentAmount = 100.0f;
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 10; i++) {
             System.out.println("Starting concurrent transaction number " + i);
             date.add(Calendar.DAY_OF_MONTH, 1);
             repaymentAmount = repaymentAmount + 100;
