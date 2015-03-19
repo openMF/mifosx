@@ -18,6 +18,7 @@ public interface AdHocQuerySearchConstants {
     public static final String entitiesParamName = "entities";
     public static final String loanStatusParamName = "loanStatus";
     public static final String loanProductsParamName = "loanProducts";
+    public static final String loanProductIdParamName = "loanProductId";
     public static final String officesParamName = "offices";
     public static final String loanDateOptionParamName = "loanDateOption";
     public static final String loanFromDateParamName = "loanFromDate";
@@ -38,7 +39,7 @@ public interface AdHocQuerySearchConstants {
             includeOutStandingAmountPercentageParamName, outStandingAmountPercentageConditionParamName,
             minOutStandingAmountPercentageParamName, maxOutStandingAmountPercentageParamName, outStandingAmountPercentageParamName,
             includeOutstandingAmountParamName, outstandingAmountConditionParamName, minOutstandingAmountParamName,
-            maxOutstandingAmountParamName, outstandingAmountParamName, localeParamName, dateFormatParamName));
+            maxOutstandingAmountParamName, outstandingAmountParamName, localeParamName, dateFormatParamName,loanProductIdParamName));
 
     public static final Set<String> AD_HOC_SEARCH_QUERY_CONDITIONS = new HashSet<>(
             Arrays.asList("between", "<=", ">=", "<", ">", "="));

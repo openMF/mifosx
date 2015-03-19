@@ -10,6 +10,7 @@ import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
@@ -225,7 +226,7 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
         return this.namedParameterjdbcTemplate.query(rm.schema(searchConditions, params), params, rm);
     }
 
-    private static final class AdHocQuerySearchMapper implements RowMapper<AdHocSearchQueryData> {
+    public static final class AdHocQuerySearchMapper implements RowMapper<AdHocSearchQueryData> {
 
         private boolean isWhereClauseAdded = false;
 
@@ -234,55 +235,16 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
         public String schema(final AdHocQuerySearchConditions searchConditions, final MapSqlParameterSource params) {
             final StringBuffer sql = new StringBuffer();
             sql.append(
-                    "Select a.name as officeName, a.Product as productName, a.cnt as 'count', a.outstandingAmt as outstanding, a.percentOut as percentOut  ")
-                    .append("from (select mo.name, mp.name Product, sum(ifnull(ml.total_expected_repayment_derived,0.0)) TotalAmt, count(*) cnt, ")
+                    "Select a.name as officeName, a.ProductId as productId, a.Product as productName, a.cnt as 'count', a.outstandingAmt as outstanding, a.percentOut as percentOut  ")
+                    .append("from (select mo.name, mp.id ProductId, mp.name Product, sum(ifnull(ml.total_expected_repayment_derived,0.0)) TotalAmt, count(*) cnt, ")
                     .append("sum(ifnull(ml.total_outstanding_derived,0.0)) outstandingAmt,  ")
                     .append("(sum(ifnull(ml.total_outstanding_derived,0.0)) * 100 / sum(ifnull(ml.total_expected_repayment_derived,0.0))) percentOut ")
                     .append("from m_loan ml inner join m_product_loan mp on mp.id=ml.product_id  ")
                     .append("inner join m_client mc on mc.id=ml.client_id  ").append("inner join m_office mo on mo.id=mc.office_id  ");
-
-            if (searchConditions.getLoanStatus() != null && searchConditions.getLoanStatus().size() > 0) {
-                // If user requests for all statuses no need to add loanStatus
-                // filter
-                if (!searchConditions.getLoanStatus().contains("all")) {
-                    checkAndUpdateWhereClause(sql);
-                    params.addValue("loanStatus", searchConditions.getLoanStatus());
-                    sql.append(" ml.loan_status_id in (:loanStatus) ");
-                }
-            }
-
-            if (searchConditions.getLoanProducts() != null && searchConditions.getLoanProducts().size() > 0) {
-                checkAndUpdateWhereClause(sql);
-                params.addValue("loanProducts", searchConditions.getLoanProducts());
-                sql.append(" mp.id in (:loanProducts) ");
-            }
-
-            if (searchConditions.getOffices() != null && searchConditions.getOffices().size() > 0) {
-                checkAndUpdateWhereClause(sql);
-                params.addValue("offices", searchConditions.getOffices());
-                sql.append(" mo.id in (:offices) ");
-            }
-
-            if (StringUtils.isNotBlank(searchConditions.getLoanDateOption())) {
-                if (searchConditions.getLoanDateOption().equals(SearchConstants.SEARCH_LOAN_DATE.APPROVAL_DATE.getValue())) {
-                    checkAndUpdateWhereClause(sql);
-                    params.addValue("loanFromDate", searchConditions.getLoanFromDate().toDate());
-                    params.addValue("loanToDate", searchConditions.getLoanToDate().toDate());
-                    sql.append(" ( ml.approvedon_date between :loanFromDate and :loanToDate ) ");
-                } else if (searchConditions.getLoanDateOption().equals(SearchConstants.SEARCH_LOAN_DATE.CREATED_DATE.getValue())) {
-                    checkAndUpdateWhereClause(sql);
-                    params.addValue("loanFromDate", searchConditions.getLoanFromDate().toDate());
-                    params.addValue("loanToDate", searchConditions.getLoanToDate().toDate());
-                    sql.append(" ( ml.submittedon_date between :loanFromDate and :loanToDate ) ");
-                } else if (searchConditions.getLoanDateOption().equals(SearchConstants.SEARCH_LOAN_DATE.DISBURSAL_DATE.getValue())) {
-                    checkAndUpdateWhereClause(sql);
-                    params.addValue("loanFromDate", searchConditions.getLoanFromDate().toDate());
-                    params.addValue("loanToDate", searchConditions.getLoanToDate().toDate());
-                    sql.append(" ( ml.disbursedon_date between :loanFromDate and :loanToDate ) ");
-                }
-            }
-
-            sql.append(" group by mo.id) a ");
+            
+            	appendQuery(searchConditions,params,sql);
+            	
+            	sql.append(" group by mo.id) a ");
 
             // update isWhereClauseAdded to false to add filters for derived
             // table
@@ -327,7 +289,52 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
             return sql.toString();
         }
 
-        private void checkAndUpdateWhereClause(final StringBuffer sql) {
+        public void appendQuery(final AdHocQuerySearchConditions searchConditions, final MapSqlParameterSource params,StringBuffer sql) {
+        	if (searchConditions.getLoanStatus() != null && searchConditions.getLoanStatus().size() > 0) {
+                // If user requests for all statuses no need to add loanStatus
+                // filter
+                if (!searchConditions.getLoanStatus().contains("all")) {
+                    checkAndUpdateWhereClause(sql);
+                    params.addValue("loanStatus", searchConditions.getLoanStatus());
+                    sql.append(" ml.loan_status_id in (:loanStatus) ");
+                }
+            }
+
+            if (searchConditions.getLoanProducts() != null && searchConditions.getLoanProducts().size() > 0) {
+                checkAndUpdateWhereClause(sql);
+                params.addValue("loanProducts", searchConditions.getLoanProducts());
+                sql.append(" mp.id in (:loanProducts) ");
+            }
+
+            if (searchConditions.getOffices() != null && searchConditions.getOffices().size() > 0) {
+                checkAndUpdateWhereClause(sql);
+                params.addValue("offices", searchConditions.getOffices());
+                sql.append(" mo.id in (:offices) ");
+            }
+
+            if (StringUtils.isNotBlank(searchConditions.getLoanDateOption())) {
+                if (searchConditions.getLoanDateOption().equals(SearchConstants.SEARCH_LOAN_DATE.APPROVAL_DATE.getValue())) {
+                    checkAndUpdateWhereClause(sql);
+                    params.addValue("loanFromDate", searchConditions.getLoanFromDate().toDate());
+                    params.addValue("loanToDate", searchConditions.getLoanToDate().toDate());
+                    sql.append(" ( ml.approvedon_date between :loanFromDate and :loanToDate ) ");
+                } else if (searchConditions.getLoanDateOption().equals(SearchConstants.SEARCH_LOAN_DATE.CREATED_DATE.getValue())) {
+                    checkAndUpdateWhereClause(sql);
+                    params.addValue("loanFromDate", searchConditions.getLoanFromDate().toDate());
+                    params.addValue("loanToDate", searchConditions.getLoanToDate().toDate());
+                    sql.append(" ( ml.submittedon_date between :loanFromDate and :loanToDate ) ");
+                } else if (searchConditions.getLoanDateOption().equals(SearchConstants.SEARCH_LOAN_DATE.DISBURSAL_DATE.getValue())) {
+                    checkAndUpdateWhereClause(sql);
+                    params.addValue("loanFromDate", searchConditions.getLoanFromDate().toDate());
+                    params.addValue("loanToDate", searchConditions.getLoanToDate().toDate());
+                    sql.append(" ( ml.disbursedon_date between :loanFromDate and :loanToDate ) ");
+                }
+            }
+
+			
+		}
+
+		private void checkAndUpdateWhereClause(final StringBuffer sql) {
             if (isWhereClauseAdded) {
                 sql.append(" and ");
             } else {
@@ -341,14 +348,71 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
 
             final String officeName = rs.getString("officeName");
             final String loanProductName = rs.getString("productName");
+            final Integer loanProductId = rs.getInt("productId");
             final Integer count = JdbcSupport.getInteger(rs, "count");
             final BigDecimal loanOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "outstanding").setScale(2,
                     RoundingMode.HALF_UP);
             final Double percentage = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "percentOut").setScale(2, RoundingMode.HALF_UP)
                     .doubleValue();
-            return AdHocSearchQueryData.matchedResult(officeName, loanProductName, count, loanOutStanding, percentage);
+            return AdHocSearchQueryData.matchedResult(officeName, loanProductName, count, loanOutStanding, percentage, loanProductId);
         }
+
 
     }
 
+	@Override
+	public Collection<AdHocSearchQueryData> retrieveMapFundSourceToLoan(AdHocQuerySearchConditions searchConditions) {
+		 
+		this.context.authenticatedUser();
+		
+		 final AdHocSearchMapper rm = new AdHocSearchMapper();
+	     final MapSqlParameterSource params = new MapSqlParameterSource();
+
+	     return this.namedParameterjdbcTemplate.query(rm.getClientSchema(searchConditions, params), params, rm);
+	 
+	}
+	
+	  private static final class AdHocSearchMapper implements RowMapper<AdHocSearchQueryData> {
+
+			public String getClientSchema(AdHocQuerySearchConditions searchConditions,MapSqlParameterSource params) {
+				final StringBuffer sql = new StringBuffer();
+	            sql.append("select ml.account_no clientAccountNo, mc.display_name displayName,mp.id productId, mp.name productName, ml.disbursedon_date disbursedDate, ml.principal_disbursed_derived disbursementAmount, ").
+	            			append("ml.maturedon_date maturedDate, ml.principal_outstanding_derived principalOutstanding, ml.principal_repaid_derived principalRepaid, mla.total_overdue_derived arrearsAmount, ").
+	            			append("ml.interest_outstanding_derived interestOutstanding, ml.interest_repaid_derived interestRepaid ").
+							append("from m_client mc ").
+							append("inner join m_loan ml on mc.id = ml.client_id ").
+							append("inner join m_product_loan mp on ml.product_id = mp.id ").
+							append("inner join m_office mo on mc.office_id = mo.id ").
+							append("left join m_loan_arrears_aging mla on mla.loan_id = ml.id ");
+	            AdHocQuerySearchMapper adHocQuerySearchMapper = new AdHocQuerySearchMapper();
+	            adHocQuerySearchMapper.appendQuery(searchConditions,params,sql);
+	            
+	             return sql.toString();
+			}
+			
+			@Override
+			public AdHocSearchQueryData mapRow(ResultSet rs, int rowNum)throws SQLException {
+				
+				 final String clientAccountNo = rs.getString("clientAccountNo");
+				 final String clientName = rs.getString("displayName");
+				 final Integer loanProductId = rs.getInt("productId");
+				 final String productName = rs.getString("productName");
+				 final Date disbursedDate = rs.getDate("disbursedDate");
+				 final BigDecimal disbursementAmount = rs.getBigDecimal("disbursementAmount");
+				 final Date maturedDate = rs.getDate("maturedDate");
+				 final BigDecimal principalOutstanding = rs.getBigDecimal("principalOutstanding");
+				 final BigDecimal principalRepaid = rs.getBigDecimal("principalRepaid");
+				 BigDecimal arrearsAmount = rs.getBigDecimal("arrearsAmount");
+				 final BigDecimal interestOutstanding = rs.getBigDecimal("interestOutstanding");
+				 final BigDecimal interestRepaid = rs.getBigDecimal("interestRepaid");
+				 if(arrearsAmount == null){
+					 arrearsAmount = new BigDecimal(0);
+				 }
+				
+				return AdHocSearchQueryData.matchedClientsResult(clientAccountNo,clientName,loanProductId,productName,disbursedDate,disbursementAmount,maturedDate,principalOutstanding,
+						principalRepaid,arrearsAmount,interestOutstanding,interestRepaid);
+			}
+	  }
+	  
+	 
 }
