@@ -726,7 +726,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
     @Override
     public CommandProcessingResult disassociateClientsFromGroup(final Long groupId, final JsonCommand command) {
         this.fromApiJsonDeserializer.validateForDisassociateClients(command.json());
-
+        
         final Group groupForUpdate = this.groupRepository.findOneWithNotFoundDetection(groupId);
         final Set<Client> clientMembers = assembleSetOfClients(groupForUpdate.officeId(), command);
 
@@ -734,14 +734,11 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
         validateForJLGLoan(groupForUpdate.getId(), clientMembers);
         validateForJLGSavings(groupForUpdate.getId(), clientMembers);
         final Map<String, Object> actualChanges = new HashMap<>();
-
         final List<String> changes = groupForUpdate.disassociateClients(clientMembers);
         if (!changes.isEmpty()) {
             actualChanges.put(GroupingTypesApiConstants.clientMembersParamName, changes);
         }
-
         this.groupRepository.saveAndFlush(groupForUpdate);
-
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withOfficeId(groupForUpdate.officeId()) //
@@ -809,10 +806,15 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
     private void validateForJLGLoan(final Long groupId, final Set<Client> clientMembers) {
         for (final Client client : clientMembers) {
             final Collection<Loan> loans = this.loanRepository.findByClientIdAndGroupId(client.getId(), groupId);
-            if (!CollectionUtils.isEmpty(loans)) {
-                final String defaultUserMessage = "Client with identifier " + client.getId()
-                        + " cannot be disassociated it has group loans.";
-                throw new GroupAccountExistsException("disassociate", "client.has.group.loan", defaultUserMessage, client.getId(), groupId);
+            final Loan loan = this.loanRepository.findByClientIdAndGroupIdForLoanStatus(client.getId(), groupId);
+            if(loan != null && loan.isRejected() || loan.isClosed()){
+            	//allow delete operation
+            }else if(loan != null && loan.isApproved() || loan.isDisbursed()){
+            	if(!CollectionUtils.isEmpty(loans)){
+                    final String defaultUserMessage = "Client with identifier " + client.getId()
+                            + " cannot be disassociated it has group loans.";
+                    throw new GroupAccountExistsException("disassociate", "client.has.group.loan", defaultUserMessage, client.getId(), groupId);
+                }
             }
         }
     }

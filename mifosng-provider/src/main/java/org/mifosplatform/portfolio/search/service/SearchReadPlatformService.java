@@ -19,4 +19,6 @@ public interface SearchReadPlatformService {
     AdHocSearchQueryData retrieveAdHocQueryTemplate();
 
     Collection<AdHocSearchQueryData> retrieveAdHocQueryMatchingData(AdHocQuerySearchConditions searchConditions);
+
+	Collection<AdHocSearchQueryData> retrieveMapFundSourceToLoan(AdHocQuerySearchConditions searchConditions);
 }
