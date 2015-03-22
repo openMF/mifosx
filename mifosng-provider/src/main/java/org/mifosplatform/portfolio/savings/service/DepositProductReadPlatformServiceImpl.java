@@ -269,6 +269,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("dprd.is_mandatory as isMandatoryDeposit, ");
             sqlBuilder.append("dprd.allow_withdrawal as allowWithdrawal, ");
             sqlBuilder.append("dprd.adjust_advance_towards_future_payments as adjustAdvanceTowardsFuturePayments, ");
+            sqlBuilder.append("dprd.deposit_every as depositEvery, ");
+            sqlBuilder.append("dprd.deposit_every_type_enum as depositEveryTypeId, ");
             sqlBuilder.append("dptp.min_deposit_term as minDepositTerm, ");
             sqlBuilder.append("dptp.max_deposit_term as maxDepositTerm, ");
             sqlBuilder.append("dptp.min_deposit_term_type_enum as minDepositTermTypeId, ");
@@ -316,10 +318,14 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             final Integer inMultiplesOfDepositTermTypeId = JdbcSupport.getInteger(rs, "inMultiplesOfDepositTermTypeId");
             final EnumOptionData inMultiplesOfDepositTermType = (inMultiplesOfDepositTermTypeId == null) ? null : SavingsEnumerations
                     .depositTermFrequencyType(inMultiplesOfDepositTermTypeId);
+            final Integer depositEvery=JdbcSupport.getInteger(rs, "depositEvery");
+            final Integer depositEveryTypeId=JdbcSupport.getInteger(rs, "depositEveryTypeId");
+            final EnumOptionData depositEveyType = (depositEveryTypeId == null) ? null : SavingsEnumerations
+                    .depositTermFrequencyType(depositEveryTypeId);
 
             return RecurringDepositProductData.instance(depositProductData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
-                    inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, isMandatoryDeposit, allowWithdrawal,
+                    inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, isMandatoryDeposit, allowWithdrawal,depositEvery,depositEveyType,
                     adjustAdvanceTowardsFuturePayments, minDepositAmount, depositAmount, maxDepositAmount);
         }
     }

@@ -67,6 +67,37 @@ public class SavingsEnumerations {
         } else if (typeName.equals(RECURRING_FREQUENCY_TYPE)) { return depositPeriodFrequency(id); }
         return null;
     }
+    
+    public static EnumOptionData depositEveryType(final int id) {
+        return depositEveryType(SavingsPeriodFrequencyType.fromInt(id));
+    }
+
+    public static EnumOptionData depositEveryType(final SavingsPeriodFrequencyType type) {
+        final String codePrefix = "recurring.deposit.every";
+        EnumOptionData optionData = new EnumOptionData(SavingsPeriodFrequencyType.INVALID.getValue().longValue(),
+                SavingsPeriodFrequencyType.INVALID.getCode(), "Invalid");
+        switch (type) {
+            case INVALID:
+            break;
+            case DAYS:
+                optionData = new EnumOptionData(SavingsPeriodFrequencyType.DAYS.getValue().longValue(), codePrefix
+                        + SavingsPeriodFrequencyType.DAYS.getCode(), "Days");
+            break;
+            case WEEKS:
+                optionData = new EnumOptionData(SavingsPeriodFrequencyType.WEEKS.getValue().longValue(), codePrefix
+                        + SavingsPeriodFrequencyType.WEEKS.getCode(), "Weeks");
+            break;
+            case MONTHS:
+                optionData = new EnumOptionData(SavingsPeriodFrequencyType.MONTHS.getValue().longValue(), codePrefix
+                        + SavingsPeriodFrequencyType.MONTHS.getCode(), "Months");
+            break;
+            case YEARS:
+                optionData = new EnumOptionData(SavingsPeriodFrequencyType.YEARS.getValue().longValue(), codePrefix
+                        + SavingsPeriodFrequencyType.YEARS.getCode(), "Years");
+            break;
+        }
+        return optionData;
+    }
 
     public static EnumOptionData lockinPeriodFrequencyType(final int id) {
         return lockinPeriodFrequencyType(SavingsPeriodFrequencyType.fromInt(id));

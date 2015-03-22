@@ -250,6 +250,8 @@ public class RecurringDepositProductsApiResource {
 
         final Collection<EnumOptionData> lockinPeriodFrequencyTypeOptions = this.savingsDropdownReadPlatformService
                 .retrieveLockinPeriodFrequencyTypeOptions();
+        
+        final Collection<EnumOptionData> depositEveryTypeOptions = this.savingsDropdownReadPlatformService.retrieveDepositEveryTypeOptions();
 
         final Collection<EnumOptionData> withdrawalFeeTypeOptions = this.savingsDropdownReadPlatformService
                 .retrievewithdrawalFeeTypeOptions();
@@ -280,14 +282,14 @@ public class RecurringDepositProductsApiResource {
         if (savingsProduct != null) {
             recurringDepositProductToReturn = RecurringDepositProductData.withTemplate(savingsProduct, currencyOptions,
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
-                    interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions,
+                    interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions,depositEveryTypeOptions, withdrawalFeeTypeOptions,
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, chartTemplate,
                     preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions);
         } else {
             recurringDepositProductToReturn = RecurringDepositProductData.template(currency, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, accountingRule, currencyOptions,
-                    interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
-                    interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions,
+                    interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions,interestCalculationTypeOptions,
+                    interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions,depositEveryTypeOptions, withdrawalFeeTypeOptions,
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, chartTemplate,
                     preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions);
         }

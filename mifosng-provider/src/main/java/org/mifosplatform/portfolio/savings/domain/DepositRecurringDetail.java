@@ -8,6 +8,8 @@ package org.mifosplatform.portfolio.savings.domain;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.adjustAdvanceTowardsFuturePaymentsParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.allowWithdrawalParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.isMandatoryDepositParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositEveryParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositEveryTypeParamName;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -33,6 +35,8 @@ public class DepositRecurringDetail {
 
     @Column(name = "adjust_advance_towards_future_payments", nullable = true)
     private boolean adjustAdvanceTowardsFuturePayments;
+    
+  
 
     protected DepositRecurringDetail() {
         //
@@ -48,6 +52,7 @@ public class DepositRecurringDetail {
         this.isMandatoryDeposit = isMandatoryDeposit;
         this.allowWithdrawal = allowWithdrawal;
         this.adjustAdvanceTowardsFuturePayments = adjustAdvanceTowardsFuturePayments;
+
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -70,6 +75,7 @@ public class DepositRecurringDetail {
             actualChanges.put(adjustAdvanceTowardsFuturePaymentsParamName, newValue);
             this.adjustAdvanceTowardsFuturePayments = newValue;
         }
+      
 
         return actualChanges;
     }
@@ -85,6 +91,7 @@ public class DepositRecurringDetail {
     public boolean adjustAdvanceTowardsFuturePayments() {
         return this.adjustAdvanceTowardsFuturePayments;
     }
+    
 
     public DepositRecurringDetail copy() {
         return DepositRecurringDetail.createFrom(this.isMandatoryDeposit, this.allowWithdrawal, this.adjustAdvanceTowardsFuturePayments);
