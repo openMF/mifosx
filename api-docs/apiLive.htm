@@ -11558,6 +11558,12 @@ An enumeration that indicates the type of transaction processing strategy to be 
 						<tr>
 							<td class=fielddesc>If Specified as true, arrears will be identified based on original schedule.<br>
 						</tr>
+						<tr class=alt>
+							<td>allowAttributeOverrides</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Specifies if select attributes may be overridden for individual loan accounts.<br>
+						</tr>
 					</table>
 				</div>
 			</div>
@@ -12803,7 +12809,7 @@ GET https://DomainName/api/v1/loanproducts/{productId}
 							numberOfRepaymentVariationsForBorrowerCycle,
 							interestRateVariationsForBorrowerCycle,
 							multiDisburseLoan,maxTrancheCount,
-							outstandingLoanBalance,overdueDaysForNPA,holdGuaranteeFunds, principalThresholdForLastInstalment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount, installmentAmountInMultiplesOf
+							outstandingLoanBalance,overdueDaysForNPA,holdGuaranteeFunds, principalThresholdForLastInstalment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount, installmentAmountInMultiplesOf, allowAttributeOverrides
 							</td>
 						</tr>
 					</table>
@@ -12906,6 +12912,16 @@ Request Body:
 		"maxValue":"20"
 	}
 ],
+"allowAttributeOverrides":
+	{amortization : true,	
+	 interestMethod : true,
+	 transactionProcessingStrategy : false,
+	 interestCalcPeriod : true,
+	 arrearsTolerance : false,
+	 repaymentEvery : true,
+	 graceOnPrincipalAndInterestPayment : true,
+	 graceOnArrearsAging : true},
+	 
 "accountingRule":"2",
 "name":"product 5",
 "shortName":"prd5",

@@ -40,6 +40,7 @@ import org.mifosplatform.integrationtests.common.savings.SavingsAccountHelper;
 import org.mifosplatform.integrationtests.common.savings.SavingsProductHelper;
 import org.mifosplatform.integrationtests.common.savings.SavingsStatusChecker;
 
+import com.google.gson.JsonObject;
 import com.jayway.restassured.builder.RequestSpecBuilder;
 import com.jayway.restassured.builder.ResponseSpecBuilder;
 import com.jayway.restassured.http.ContentType;
@@ -4034,6 +4035,7 @@ public class ClientLoanIntegrationTest {
         }
     }
 
+
     /***
      * Test case to verify Mifos Style payment strategy
      */
@@ -4567,5 +4569,141 @@ public class ClientLoanIntegrationTest {
                 .withMinimumOpenningBalance(minOpenningBalance).build();
         return SavingsProductHelper.createSavingsProduct(savingsProductJSON, requestSpec, responseSpec);
     }
+    
+    @Test
+	public void testLoanProductConfiguration() {
+		final String proposedAmount = "5000";
+		JsonObject loanProductConfigurationAsTrue = new JsonObject();
+		loanProductConfigurationAsTrue = this.createLoanProductConfigurationDetailAsTrue(loanProductConfigurationAsTrue);
+		
+		JsonObject loanProductConfigurationAsFalse = new JsonObject();
+		loanProductConfigurationAsFalse = this.createLoanProductConfigurationDetailAsFalse(loanProductConfigurationAsFalse);
 
+		final Integer clientID = ClientHelper.createClient(this.requestSpec,
+				this.responseSpec, "01 January 2012");
+		Integer loanProductID = this.loanTransactionHelper
+				.getLoanProductId(new LoanProductTestBuilder()
+						.withAmortizationTypeAsEqualInstallments()
+						.withRepaymentTypeAsMonth()
+						.withRepaymentAfterEvery("1")
+						.withRepaymentStrategy(
+								LoanProductTestBuilder.MIFOS_STANDARD_STRATEGY)
+						.withInterestTypeAsDecliningBalance()
+						.withInterestCalculationPeriodTypeAsDays()
+						.withInArrearsTolerance("10").withMoratorium("2", "3")
+						.withLoanProductConfiguration(loanProductConfigurationAsTrue).build(null));
+		System.out.println("-----------------------LOAN PRODUCT CREATED WITH ATTRIBUTE CONFIGURATION AS TRUE--------------------------"
+                + loanProductID);
+		Integer loanID = applyForLoanApplicationWithProductConfigurationAsTrue(
+				clientID, loanProductID, proposedAmount);
+		System.out.println("------------------------LOAN CREATED WITH ID------------------------------"
+                + loanID);
+		
+		loanProductID = this.loanTransactionHelper
+				.getLoanProductId(new LoanProductTestBuilder()
+						.withAmortizationTypeAsEqualInstallments()
+						.withRepaymentTypeAsMonth()
+						.withRepaymentAfterEvery("1")
+						.withRepaymentStrategy(
+								LoanProductTestBuilder.MIFOS_STANDARD_STRATEGY)
+						.withInterestTypeAsDecliningBalance()
+						.withInterestCalculationPeriodTypeAsDays()
+						.withInArrearsTolerance("10")
+						.withMoratorium("2", "3")
+						.withLoanProductConfiguration(loanProductConfigurationAsFalse).build(null));
+		System.out.println("-------------------LOAN PRODUCT CREATED WITH ATTRIBUTE CONFIGURATION AS FALSE----------------------"
+                + loanProductID);
+		/* Try to override attribute values in loan account when attribute configurations are set to false at product level */
+		loanID = applyForLoanApplicationWithProductConfigurationAsFalse(clientID, loanProductID, proposedAmount);
+		System.out.println("--------------------------LOAN CREATED WITH ID-------------------------"
+                + loanID);
+		this.validateIfValuesAreNotOverridden(loanID, loanProductID);
+
+	}
+    
+    private void validateIfValuesAreNotOverridden(Integer loanID, Integer loanProductID){
+    	assertEquals(this.loanTransactionHelper.getLoanProductDetail(this.requestSpec, this.responseSpec, loanProductID, "amortizationType"),
+    			this.loanTransactionHelper.getLoanDetail(this.requestSpec, this.responseSpec, loanID, "amortizationType"));
+    	assertEquals(this.loanTransactionHelper.getLoanProductDetail(this.requestSpec, this.responseSpec, loanProductID, "interestType"),
+    			this.loanTransactionHelper.getLoanDetail(this.requestSpec, this.responseSpec, loanID, "interestType"));
+    	assertEquals(this.loanTransactionHelper.getLoanProductDetail(this.requestSpec, this.responseSpec, loanProductID, "transactionProcessingStrategyId"),
+    			this.loanTransactionHelper.getLoanDetail(this.requestSpec, this.responseSpec, loanID, "transactionProcessingStrategyId"));
+    	assertEquals(this.loanTransactionHelper.getLoanProductDetail(this.requestSpec, this.responseSpec, loanProductID, "interestCalculationPeriodType"),
+    			this.loanTransactionHelper.getLoanDetail(this.requestSpec, this.responseSpec, loanID, "interestCalculationPeriodType"));
+    	assertEquals(this.loanTransactionHelper.getLoanProductDetail(this.requestSpec, this.responseSpec, loanProductID, "repaymentFrequencyType"),
+    			this.loanTransactionHelper.getLoanDetail(this.requestSpec, this.responseSpec, loanID, "repaymentFrequencyType"));
+    	assertEquals(this.loanTransactionHelper.getLoanProductDetail(this.requestSpec, this.responseSpec, loanProductID, "graceOnPrincipalPayment"),
+    			this.loanTransactionHelper.getLoanDetail(this.requestSpec, this.responseSpec, loanID, "graceOnPrincipalPayment"));
+    	assertEquals(this.loanTransactionHelper.getLoanProductDetail(this.requestSpec, this.responseSpec, loanProductID, "graceOnInterestPayment"),
+    			this.loanTransactionHelper.getLoanDetail(this.requestSpec, this.responseSpec, loanID, "graceOnInterestPayment"));
+    	assertEquals(this.loanTransactionHelper.getLoanProductDetail(this.requestSpec, this.responseSpec, loanProductID, "inArrearsTolerance"),
+    			this.loanTransactionHelper.getLoanDetail(this.requestSpec, this.responseSpec, loanID, "inArrearsTolerance"));
+    	assertEquals(this.loanTransactionHelper.getLoanProductDetail(this.requestSpec, this.responseSpec, loanProductID, "graceOnArrearsAgeing"),
+    			this.loanTransactionHelper.getLoanDetail(this.requestSpec, this.responseSpec, loanID, "graceOnArrearsAgeing"));
+    }
+    
+    private JsonObject createLoanProductConfigurationDetailAsTrue(JsonObject loanProductConfigurationAsTrue) {
+    	loanProductConfigurationAsTrue.addProperty("amortization", true);
+    	loanProductConfigurationAsTrue.addProperty("interestMethod", true);
+    	loanProductConfigurationAsTrue.addProperty("transactionProcessingStrategy", true);
+    	loanProductConfigurationAsTrue.addProperty("interestCalcPeriod", true);
+    	loanProductConfigurationAsTrue.addProperty("arrearsTolerance", true);
+    	loanProductConfigurationAsTrue.addProperty("repaymentEvery", true);
+    	loanProductConfigurationAsTrue.addProperty("graceOnPrincipalAndInterestPayment", true);
+    	loanProductConfigurationAsTrue.addProperty("graceOnArrearsAging", true);
+    	return  loanProductConfigurationAsTrue;
+    }
+    
+    private JsonObject createLoanProductConfigurationDetailAsFalse(JsonObject loanProductConfigurationAsFalse) {
+    	loanProductConfigurationAsFalse.addProperty("amortization", false);
+    	loanProductConfigurationAsFalse.addProperty("interestMethod", false);
+    	loanProductConfigurationAsFalse.addProperty("transactionProcessingStrategy", false);
+    	loanProductConfigurationAsFalse.addProperty("interestCalcPeriod", false);
+    	loanProductConfigurationAsFalse.addProperty("arrearsTolerance", false);
+    	loanProductConfigurationAsFalse.addProperty("repaymentEvery", false);
+    	loanProductConfigurationAsFalse.addProperty("graceOnPrincipalAndInterestPayment", false);
+    	loanProductConfigurationAsFalse.addProperty("graceOnArrearsAging", false);
+        return loanProductConfigurationAsFalse;
+    }
+    
+    private Integer applyForLoanApplicationWithProductConfigurationAsTrue(final Integer clientID, final Integer loanProductID, String principal) {
+        System.out.println("--------------------------------APPLYING FOR LOAN APPLICATION--------------------------------");
+        final String loanApplicationJSON = new LoanApplicationTestBuilder() //
+                .withPrincipal(principal) //
+                .withRepaymentEveryAfter("1") //
+                .withLoanTermFrequency("4") //
+                .withLoanTermFrequencyAsMonths() //
+                .withNumberOfRepayments("4") //
+                .withRepaymentFrequencyTypeAsMonths() //
+                .withInterestRatePerPeriod("2") //
+                .withInterestCalculationPeriodTypeSameAsRepaymentPeriod() //
+                .withExpectedDisbursementDate("1 March 2014") //
+                .withSubmittedOnDate("1 March 2014") //
+                .build(clientID.toString(), loanProductID.toString(), null);
+        return this.loanTransactionHelper.getLoanId(loanApplicationJSON);
+    }
+    
+    private Integer applyForLoanApplicationWithProductConfigurationAsFalse(final Integer clientID, final Integer loanProductID, String principal){
+        System.out.println("--------------------------------APPLYING FOR LOAN APPLICATION--------------------------------");
+		final String loanApplicationJSON = new LoanApplicationTestBuilder()//
+				.withPrincipal(principal)//
+				.withRepaymentEveryAfter("2")//
+				.withAmortizationTypeAsEqualPrincipalPayments()
+				.withRepaymentFrequencyTypeAsWeeks()
+				.withwithRepaymentStrategy(LoanProductTestBuilder.RBI_INDIA_STRATEGY)
+				.withInterestTypeAsFlatBalance()
+				.withInterestCalculationPeriodTypeSameAsRepaymentPeriod()
+				.withPrincipalGrace("1").withInterestGrace("1")
+				.withLoanTermFrequency("4") //
+				.withLoanTermFrequencyAsMonths() //
+				.withNumberOfRepayments("4") //
+				.withRepaymentFrequencyTypeAsMonths() //
+				.withInterestRatePerPeriod("2") //
+				.withInterestCalculationPeriodTypeSameAsRepaymentPeriod() //
+				.withExpectedDisbursementDate("1 March 2014") //
+				.withSubmittedOnDate("1 March 2014") //
+				.build(clientID.toString(), loanProductID.toString(), null);
+		
+		return this.loanTransactionHelper.getLoanId(loanApplicationJSON);
+    }
 }

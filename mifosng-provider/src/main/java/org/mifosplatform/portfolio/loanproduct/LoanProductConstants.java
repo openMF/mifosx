@@ -64,6 +64,7 @@ public interface LoanProductConstants {
     public static final String overdueDaysForNPAParameterName = "overdueDaysForNPA";
     public static final String minimumDaysBetweenDisbursalAndFirstRepayment = "minimumDaysBetweenDisbursalAndFirstRepayment";
     public static final String accountMovesOutOfNPAOnlyOnArrearsCompletionParamName = "accountMovesOutOfNPAOnlyOnArrearsCompletion";
+    public static final String configurableAttributesParameterName = "allowAttributeOverrides";
 
     // Interest recalculation related
     public static final String isInterestRecalculationEnabledParameterName = "isInterestRecalculationEnabled";
