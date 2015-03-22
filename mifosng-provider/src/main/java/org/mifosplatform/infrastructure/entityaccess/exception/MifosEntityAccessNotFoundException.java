@@ -15,4 +15,5 @@ public class MifosEntityAccessNotFoundException extends AbstractPlatformResource
     public MifosEntityAccessNotFoundException(final Long id) {
         super("error.msg.entityaccess.id.invalid", "MifosEntityAccess with identifier " + id + " does not exist", id);
     }
+     
 }

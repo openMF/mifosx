@@ -25,7 +25,6 @@ public class CommandWrapperBuilder {
     private String transactionId;
     private Long productId;
     private Long templateId;
-    private Long tellerId;
 
     public CommandWrapper build() {
         return new CommandWrapper(this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId, this.actionName,
@@ -59,11 +58,6 @@ public class CommandWrapperBuilder {
 
     public CommandWrapperBuilder withSubEntityId(final Long withSubEntityId) {
         this.subentityId = withSubEntityId;
-        return this;
-    }
-
-    public CommandWrapperBuilder withTellerId(final Long withTellerId) {
-        this.tellerId = withTellerId;
         return this;
     }
 
@@ -737,6 +731,15 @@ public class CommandWrapperBuilder {
         this.entityId = disbursementId;
         this.loanId = loanId;
         this.href = "/loans/" + loanId + "/disbursementdetail/" + disbursementId;
+        return this;
+    }
+
+    public CommandWrapperBuilder addAndDeleteDisbursementDetails(final Long loanId) {
+        this.actionName = "UPDATE";
+        this.entityName = "DISBURSEMENTDETAIL";
+        this.entityId = null;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "/editdisbursementdetails/";
         return this;
     }
 
@@ -1425,7 +1428,7 @@ public class CommandWrapperBuilder {
         this.href = "/groups/" + groupId + "?command=saveCollectionSheet";
         return this;
     }
-    
+
     public CommandWrapperBuilder saveIndividualCollectionSheet() {
         this.actionName = "SAVE";
         this.entityName = "COLLECTIONSHEET";
@@ -2327,4 +2330,27 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder createMap(Long relId) {
+        this.actionName = "CREATE";
+        this.entityName = "ENTITYMAPPING";
+        this.entityId = relId;
+        this.href = "/entitytoentitymapping/" + relId;
+        return this;
+    }
+
+    public CommandWrapperBuilder updateMap(Long mapId) {
+        this.actionName = "UPDATE";
+        this.entityName = "ENTITYMAPPING";
+        this.entityId = mapId;
+        this.href = "/entitytoentitymapping" + mapId;
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteMap(final Long mapId) {
+        this.actionName = "DELETE";
+        this.entityName = "ENTITYMAPPING";
+        this.entityId = mapId;
+        this.href = "/entitytoentitymapping/" + mapId;
+        return this;
+    }
 }

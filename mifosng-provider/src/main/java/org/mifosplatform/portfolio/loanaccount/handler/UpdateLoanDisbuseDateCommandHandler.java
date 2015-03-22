@@ -26,7 +26,7 @@ public class UpdateLoanDisbuseDateCommandHandler implements NewCommandSourceHand
     @Transactional
     @Override
     public CommandProcessingResult processCommand(final JsonCommand command) {
-
-        return this.writePlatformService.updateDisbursementDateForTranche(command.getLoanId(), command.entityId(), command);
+    	 
+        return this.writePlatformService.updateDisbursementDateAndAmountForTranche(command.getLoanId(), command.entityId(), command);
     }
 }

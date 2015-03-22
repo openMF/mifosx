@@ -55,6 +55,7 @@ import org.mifosplatform.portfolio.group.exception.InvalidGroupStateTransitionEx
 import org.mifosplatform.portfolio.group.serialization.GroupingTypesDataValidator;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.mifosplatform.portfolio.note.domain.Note;
 import org.mifosplatform.portfolio.note.domain.NoteRepository;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
@@ -89,6 +90,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
     private final CalendarInstanceRepository calendarInstanceRepository;
     private final ConfigurationDomainService configurationDomainService;
     private final SavingsAccountRepository savingsAccountRepository;
+    private final LoanRepositoryWrapper loanRepositoryWrapper;
 
     @Autowired
     public GroupingTypesWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -98,7 +100,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             final LoanRepository loanRepository, final SavingsAccountRepository savingsRepository,
             final CodeValueRepositoryWrapper codeValueRepository, final CommandProcessingService commandProcessingService,
             final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
-            final SavingsAccountRepository savingsAccountRepository) {
+            final SavingsAccountRepository savingsAccountRepository, final LoanRepositoryWrapper loanRepositoryWrapper) {
         this.context = context;
         this.groupRepository = groupRepository;
         this.clientRepositoryWrapper = clientRepositoryWrapper;
@@ -114,6 +116,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
         this.calendarInstanceRepository = calendarInstanceRepository;
         this.configurationDomainService = configurationDomainService;
         this.savingsAccountRepository = savingsAccountRepository;
+        this.loanRepositoryWrapper = loanRepositoryWrapper;
     }
 
     private CommandProcessingResult createGroupingType(final JsonCommand command, final GroupTypes groupingType, final Long centerId) {
@@ -186,10 +189,14 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             // pre-save to generate id for use in group hierarchy
             this.groupRepository.save(newGroup);
 
+            /*
+             * Generate hierarchy for a new center/group and all the child
+             * groups if they exist
+             */
             newGroup.generateHierarchy();
 
             this.groupRepository.saveAndFlush(newGroup);
-
+            newGroup.captureStaffHistoryDuringCenterCreation(staff, activationDate);
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
                     .withOfficeId(groupOffice.getId()) //
@@ -404,9 +411,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
         final Map<String, Object> actualChanges = new LinkedHashMap<>(9);
 
         this.fromApiJsonDeserializer.validateForUnassignStaff(command.json());
-
         final Group groupForUpdate = this.groupRepository.findOneWithNotFoundDetection(grouptId);
-
         final Staff presentStaff = groupForUpdate.getStaff();
         Long presentStaffId = null;
         if (presentStaff == null) { throw new GroupHasNoStaffException(grouptId); }
@@ -442,7 +447,6 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
 
         Staff staff = null;
         final Long staffId = command.longValueOfParameterNamed(GroupingTypesApiConstants.staffIdParamName);
-
         final boolean inheritStaffForClientAccounts = command
                 .booleanPrimitiveValueOfParameterNamed(GroupingTypesApiConstants.inheritStaffForClientAccounts);
         staff = this.staffRepository.findByOfficeHierarchyWithNotFoundDetection(staffId, groupForUpdate.getOffice().getHierarchy());
@@ -476,7 +480,6 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
                 }
             }
         }
-
         this.groupRepository.saveAndFlush(groupForUpdate);
 
         actualChanges.put(GroupingTypesApiConstants.staffIdParamName, staffId);
@@ -735,7 +738,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
         final Set<Client> clientMembers = assembleSetOfClients(groupForUpdate.officeId(), command);
 
         // check if any client has got group loans
-        validateForJLGLoan(groupForUpdate.getId(), clientMembers);
+        checkForActiveJLGLoans(groupForUpdate.getId(), clientMembers);
         validateForJLGSavings(groupForUpdate.getId(), clientMembers);
         final Map<String, Object> actualChanges = new HashMap<>();
 
@@ -760,12 +763,12 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
     public CommandProcessingResult associateGroupsToCenter(final Long centerId, final JsonCommand command) {
 
         this.fromApiJsonDeserializer.validateForAssociateGroups(command.json());
-
         final Group centerForUpdate = this.groupRepository.findOneWithNotFoundDetection(centerId);
         final Set<Group> groupMembers = assembleSetOfChildGroups(centerForUpdate.officeId(), command);
         checkGroupMembersMeetingSyncWithCenterMeeting(centerId, groupMembers);
 
         final Map<String, Object> actualChanges = new HashMap<>();
+
         final List<String> changes = centerForUpdate.associateGroups(groupMembers);
         if (!changes.isEmpty()) {
             actualChanges.put(GroupingTypesApiConstants.groupMembersParamName, changes);
@@ -810,9 +813,9 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
     }
 
     @Transactional
-    private void validateForJLGLoan(final Long groupId, final Set<Client> clientMembers) {
+    private void checkForActiveJLGLoans(final Long groupId, final Set<Client> clientMembers) {
         for (final Client client : clientMembers) {
-            final Collection<Loan> loans = this.loanRepository.findByClientIdAndGroupId(client.getId(), groupId);
+            final Collection<Loan> loans = this.loanRepositoryWrapper.findActiveLoansByLoanIdAndGroupId(client.getId(), groupId);
             if (!CollectionUtils.isEmpty(loans)) {
                 final String defaultUserMessage = "Client with identifier " + client.getId()
                         + " cannot be disassociated it has group loans.";

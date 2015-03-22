@@ -258,7 +258,7 @@ public class CommandWrapper {
     public boolean isAccountNumberFormatResource() {
         return this.entityName.equals(AccountNumberFormatConstants.ENTITY_NAME.toUpperCase());
     }
-
+    
     public boolean isApprove() {
         return this.actionName.equalsIgnoreCase("APPROVE");
     }
@@ -488,9 +488,13 @@ public class CommandWrapper {
     }
 
     public boolean isUpdateDisbursementDate() {
-        return this.actionName.equalsIgnoreCase("UPDATE") && this.entityName.equalsIgnoreCase("DISBURSEMENTDETAIL");
+        return this.actionName.equalsIgnoreCase("UPDATE") && this.entityName.equalsIgnoreCase("DISBURSEMENTDETAIL") && this.entityId != null;
     }
-
+    
+    public boolean addAndDeleteDisbursementDetails() {
+        return this.actionName.equalsIgnoreCase("UPDATE") && this.entityName.equalsIgnoreCase("DISBURSEMENTDETAIL") && this.entityId == null;
+    }
+    
     public boolean isStandingInstruction() {
         return this.entityName.equalsIgnoreCase("STANDINGINSTRUCTION");
     }
@@ -1007,5 +1011,9 @@ public class CommandWrapper {
 
     public boolean isEnableOperation() {
         return this.actionName.equalsIgnoreCase("ENABLE");
+    }
+    
+    public boolean isEntityMappingResource() {
+        return this.entityName.equalsIgnoreCase("ENTITYMAPPING");
     }
 }

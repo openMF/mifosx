@@ -3164,7 +3164,7 @@ public class ClientLoanIntegrationTest {
 
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
 
-        Calendar todaysDate = Calendar.getInstance();
+        Calendar todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -14);
         final String LOAN_DISBURSEMENT_DATE = dateFormat.format(todaysDate.getTime());
 
@@ -3184,7 +3184,7 @@ public class ClientLoanIntegrationTest {
 
         ArrayList<HashMap> loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         List<Map<String, Object>> expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "0.0", "0.0");
@@ -3202,7 +3202,7 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.67", "23.24", "0.0", "0.0");
@@ -3210,7 +3210,7 @@ public class ClientLoanIntegrationTest {
 
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -7);
         final String LOAN_FIRST_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         Float totalDueForCurrentPeriod = (Float) loanSchedule.get(1).get("totalDueForPeriod");
@@ -3218,7 +3218,7 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "0.0", "0.0");
@@ -3226,13 +3226,13 @@ public class ClientLoanIntegrationTest {
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
         Float earlyPayment = new Float("4000");
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -5);
         final String LOAN_SECOND_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         this.loanTransactionHelper.makeRepayment(LOAN_SECOND_REPAYMENT_DATE, earlyPayment, loanID);
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "3965.31", "34.69", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "1771.88", "16.39", "0.0", "0.0");
@@ -3241,7 +3241,7 @@ public class ClientLoanIntegrationTest {
 
         HashMap prepayDetail = this.loanTransactionHelper.getPrepayAmount(this.requestSpec, this.responseSpec, loanID);
         String prepayAmount = String.valueOf(prepayDetail.get("amount"));
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         String LOAN_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         this.loanTransactionHelper.makeRepayment(LOAN_REPAYMENT_DATE, new Float(prepayAmount), loanID);
         loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(this.requestSpec, this.responseSpec, loanID);
@@ -3254,7 +3254,7 @@ public class ClientLoanIntegrationTest {
 
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
 
-        Calendar todaysDate = Calendar.getInstance();
+        Calendar todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -14);
         final String LOAN_DISBURSEMENT_DATE = dateFormat.format(todaysDate.getTime());
 
@@ -3278,7 +3278,7 @@ public class ClientLoanIntegrationTest {
 
         ArrayList<HashMap> loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         List<Map<String, Object>> expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "4.62", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "3.47", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "2.32", "0.0");
@@ -3296,7 +3296,7 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "4.62", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2482.76", "46.15", "4.62", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.67", "23.24", "2.32", "0.0");
@@ -3304,7 +3304,7 @@ public class ClientLoanIntegrationTest {
 
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -7);
         final String LOAN_FIRST_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         Float totalDueForCurrentPeriod = (Float) loanSchedule.get(1).get("totalDueForPeriod");
@@ -3312,7 +3312,7 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "4.62", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "3.47", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "2.32", "0.0");
@@ -3320,13 +3320,13 @@ public class ClientLoanIntegrationTest {
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
         Float earlyPayment = new Float("4000");
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -5);
         final String LOAN_SECOND_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         this.loanTransactionHelper.makeRepayment(LOAN_SECOND_REPAYMENT_DATE, earlyPayment, loanID);
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "4.62", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "3961.84", "34.69", "3.47", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "1773.61", "16.41", "1.64", "0.0");
@@ -3335,7 +3335,7 @@ public class ClientLoanIntegrationTest {
 
         HashMap prepayDetail = this.loanTransactionHelper.getPrepayAmount(this.requestSpec, this.responseSpec, loanID);
         String prepayAmount = String.valueOf(prepayDetail.get("amount"));
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         String LOAN_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         this.loanTransactionHelper.makeRepayment(LOAN_REPAYMENT_DATE, new Float(prepayAmount), loanID);
         loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(this.requestSpec, this.responseSpec, loanID);
@@ -3348,7 +3348,7 @@ public class ClientLoanIntegrationTest {
 
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
 
-        Calendar todaysDate = Calendar.getInstance();
+        Calendar todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -14);
         final String LOAN_DISBURSEMENT_DATE = dateFormat.format(todaysDate.getTime());
 
@@ -3368,7 +3368,7 @@ public class ClientLoanIntegrationTest {
 
         ArrayList<HashMap> loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         List<Map<String, Object>> expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "0.0", "0.0");
@@ -3387,24 +3387,26 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2482.55", "46.36", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2482.54", "46.37", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.67", "23.24", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2517.24", "11.67", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "11.79", "0.05", "0.0", "0.0");
 
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
         loanSchedule = this.loanTransactionHelper.getLoanFutureRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
-        addRepaymentValues(expectedvalues, todaysDate, 0, "4965.31", "92.51", "0.0", "0.0");
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
+        addRepaymentValues(expectedvalues, todaysDate, 0, "4965.3", "92.52", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.67", "23.24", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2517.24", "11.67", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "11.79", "0.05", "0.0", "0.0");
 
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues, 0);
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -7);
         final String LOAN_FIRST_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         Float totalDueForCurrentPeriod = (Float) loanSchedule.get(1).get("totalDueForPeriod");
@@ -3412,7 +3414,7 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "0.0", "0.0");
@@ -3420,14 +3422,14 @@ public class ClientLoanIntegrationTest {
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
         Float earlyPayment = new Float("4000");
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -5);
         final String LOAN_SECOND_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         this.loanTransactionHelper.makeRepayment(LOAN_SECOND_REPAYMENT_DATE, earlyPayment, loanID);
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
-        Calendar today = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
+        Calendar today = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         Map<String, Object> paymentday = new HashMap<>(3);
         paymentday.put("dueDate", getDateAsArray(today, -5, Calendar.DAY_OF_MONTH));
         paymentday.put("principalDue", "3990.09");
@@ -3442,7 +3444,7 @@ public class ClientLoanIntegrationTest {
 
         HashMap prepayDetail = this.loanTransactionHelper.getPrepayAmount(this.requestSpec, this.responseSpec, loanID);
         String prepayAmount = String.valueOf(prepayDetail.get("amount"));
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         String LOAN_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         this.loanTransactionHelper.makeRepayment(LOAN_REPAYMENT_DATE, new Float(prepayAmount), loanID);
         loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(this.requestSpec, this.responseSpec, loanID);
@@ -3456,13 +3458,13 @@ public class ClientLoanIntegrationTest {
 
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
 
-        Calendar todaysDate = Calendar.getInstance();
+        Calendar todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -14);
         final String LOAN_DISBURSEMENT_DATE = dateFormat.format(todaysDate.getTime());
         todaysDate.add(Calendar.DAY_OF_MONTH, -2);
         final String REST_START_DATE = dateFormat.format(todaysDate.getTime());
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -14);
         todaysDate.add(Calendar.DAY_OF_MONTH, 2);
         final String LOAN_FLAT_CHARGE_DATE = dateFormat.format(todaysDate.getTime());
@@ -3493,11 +3495,12 @@ public class ClientLoanIntegrationTest {
 
         ArrayList<HashMap> loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         List<Map<String, Object>> expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "100.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "200", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2517.29", "11.62", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2486.04", "42.87", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2497.5", "31.41", "200", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2508.98", "19.93", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "24.72", "8.38", "0.0", "0.0");
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
         System.out.println("-----------------------------------APPROVE LOAN-----------------------------------------");
@@ -3511,15 +3514,16 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "100.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2490.75", "38.16", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2505.71", "23.2", "200", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2517.28", "11.63", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2482.57", "46.34", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2497.49", "31.42", "200", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2508.96", "19.95", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "28.22", "8.4", "0.0", "0.0");
 
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
-        Calendar repaymentDate = Calendar.getInstance();
+        Calendar repaymentDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         repaymentDate.add(Calendar.DAY_OF_MONTH, -7);
         final String LOAN_FIRST_REPAYMENT_DATE = dateFormat.format(repaymentDate.getTime());
         Float totalDueForCurrentPeriod = (Float) loanSchedule.get(1).get("totalDueForPeriod");
@@ -3527,31 +3531,33 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "100.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "200", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2517.29", "11.62", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2486.04", "42.87", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2497.5", "31.41", "200", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2508.98", "19.93", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "24.72", "8.38", "0.0", "0.0");
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
         Float earlyPayment = new Float("5100");
-        repaymentDate = Calendar.getInstance();
+        repaymentDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         repaymentDate.add(Calendar.DAY_OF_MONTH, -5);
         final String LOAN_SECOND_REPAYMENT_DATE = dateFormat.format(repaymentDate.getTime());
         this.loanTransactionHelper.makeRepayment(LOAN_SECOND_REPAYMENT_DATE, earlyPayment, loanID);
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "100.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "5100", "27.96", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "0", "11.16", "200", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2417.24", "11.16", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "5057.13", "42.87", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "0", "19.55", "200", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2349.13", "11.35", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "110.98", "8.26", "0.0", "0.0");
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
         HashMap prepayDetail = this.loanTransactionHelper.getPrepayAmount(this.requestSpec, this.responseSpec, loanID);
         String prepayAmount = String.valueOf(prepayDetail.get("amount"));
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         String LOAN_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         this.loanTransactionHelper.makeRepayment(LOAN_REPAYMENT_DATE, new Float(prepayAmount), loanID);
         loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(this.requestSpec, this.responseSpec, loanID);
@@ -3567,13 +3573,13 @@ public class ClientLoanIntegrationTest {
 
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
 
-        Calendar todaysDate = Calendar.getInstance();
+        Calendar todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -7 * 3);
         final String LOAN_DISBURSEMENT_DATE = dateFormat.format(todaysDate.getTime());
         todaysDate.add(Calendar.DAY_OF_MONTH, -2);
         final String REST_START_DATE = dateFormat.format(todaysDate.getTime());
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
 
         Integer overdueFeeChargeId = ChargesHelper.createCharges(this.requestSpec, this.responseSpec,
                 ChargesHelper.getLoanOverdueFeeJSONWithCalculattionTypePercentage());
@@ -3595,7 +3601,7 @@ public class ClientLoanIntegrationTest {
 
         ArrayList<HashMap> loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         List<Map<String, Object>> expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -2, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "0.0", "0.0");
@@ -3613,12 +3619,15 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
+        
+        
         addRepaymentValues(expectedvalues, todaysDate, -2, "2482.76", "46.15", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2482.55", "46.36", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2482.54", "46.37", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2482.33", "46.58", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2517.13", "11.78", "0.0", "0.0");
-
+        addRepaymentValues(expectedvalues, todaysDate, 1, "35.24", "0.16", "0.0", "0.0");
+        
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
         String JobName = "Apply penalty to overdue loans";
@@ -3626,14 +3635,14 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -2, "2482.76", "46.15", "0.0", "252.89");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2481.38", "47.53", "0.0", "252.89");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2479.99", "48.92", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2517.11", "11.8", "0.0", "0.0");
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
-        Calendar repaymentDate = Calendar.getInstance();
+        Calendar repaymentDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         repaymentDate.add(Calendar.DAY_OF_MONTH, -7 * 2);
         final String LOAN_FIRST_REPAYMENT_DATE = dateFormat.format(repaymentDate.getTime());
         Float totalDueForCurrentPeriod = (Float) loanSchedule.get(1).get("totalDueForPeriod");
@@ -3642,14 +3651,14 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
-        addRepaymentValues(expectedvalues, todaysDate, -2, "2482.76", "46.15", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "252.89");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2492.89", "36.02", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2517.23", "11.68", "0.0", "0.0");
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
+        addRepaymentValues(expectedvalues, todaysDate, -2, "2482.76", "46.15", "0.0", "252.89");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2493.05", "35.86", "0.0", "252.89");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2491.72", "37.19", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2517.22", "11.69", "0.0", "0.0");
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
-        repaymentDate = Calendar.getInstance();
+        repaymentDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         repaymentDate.add(Calendar.DAY_OF_MONTH, -3);
         final String LOAN_SECOND_REPAYMENT_DATE = dateFormat.format(repaymentDate.getTime());
         totalDueForCurrentPeriod = (Float) loanSchedule.get(2).get("totalDueForPeriod");
@@ -3657,11 +3666,11 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
-        addRepaymentValues(expectedvalues, todaysDate, -2, "2482.76", "46.15", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "252.89");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2498.39", "30.52", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2517.26", "11.65", "0.0", "0.0");
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
+        addRepaymentValues(expectedvalues, todaysDate, -2, "2482.76", "46.15", "0.0", "252.89");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2493.05", "35.86", "0.0", "252.89");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2491.72", "37.19", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2517.22", "11.69", "0.0", "0.0");
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
     }
@@ -3679,7 +3688,7 @@ public class ClientLoanIntegrationTest {
         final Account expenseAccount = this.accountHelper.createExpenseAccount();
         final Account overpaymentAccount = this.accountHelper.createLiabilityAccount();
 
-        Calendar todaysDate = Calendar.getInstance();
+        Calendar todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -14);
         final String LOAN_DISBURSEMENT_DATE = dateFormat.format(todaysDate.getTime());
 
@@ -3700,7 +3709,7 @@ public class ClientLoanIntegrationTest {
 
         ArrayList<HashMap> loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         List<Map<String, Object>> expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "0.0", "0.0");
@@ -3718,7 +3727,7 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.67", "23.24", "0.0", "0.0");
@@ -3729,13 +3738,13 @@ public class ClientLoanIntegrationTest {
         final JournalEntry[] assetAccountInitialEntry = { new JournalEntry(10000.0f, JournalEntry.TransactionType.CREDIT),
                 new JournalEntry(10000.0f, JournalEntry.TransactionType.DEBIT), };
         this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, LOAN_DISBURSEMENT_DATE, assetAccountInitialEntry);
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         String runOndate = dateFormat.format(todaysDate.getTime());
         this.periodicAccrualAccountingHelper.runPeriodicAccrualAccounting(runOndate);
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(LocalDate.now().minusDays(7), 46.15f, 0f, 0f, loanID);
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(LocalDate.now(), 46.15f, 0f, 0f, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(Utils.getLocalDateOfTenant().minusDays(7), 46.15f, 0f, 0f, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(Utils.getLocalDateOfTenant(), 46.15f, 0f, 0f, loanID);
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -7);
         final String LOAN_FIRST_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         Float totalDueForCurrentPeriod = (Float) loanSchedule.get(1).get("totalDueForPeriod");
@@ -3743,26 +3752,26 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2517.29", "11.62", "0.0", "0.0");
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(LocalDate.now().minusDays(7), 46.15f, 0f, 0f, loanID);
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(LocalDate.now(), 34.69f, 0f, 0f, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(Utils.getLocalDateOfTenant().minusDays(7), 46.15f, 0f, 0f, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(Utils.getLocalDateOfTenant(), 34.69f, 0f, 0f, loanID);
 
         HashMap prepayDetail = this.loanTransactionHelper.getPrepayAmount(this.requestSpec, this.responseSpec, loanID);
         String prepayAmount = String.valueOf(prepayDetail.get("amount"));
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         String LOAN_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         this.loanTransactionHelper.makeRepayment(LOAN_REPAYMENT_DATE, new Float(prepayAmount), loanID);
         loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(this.requestSpec, this.responseSpec, loanID);
         LoanStatusChecker.verifyLoanAccountIsClosed(loanStatusHashMap);
 
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(LocalDate.now().minusDays(7), 46.15f, 0f, 0f, loanID);
-        this.loanTransactionHelper.checkAccrualTransactionForRepayment(LocalDate.now(), 34.69f, 0f, 0f, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(Utils.getLocalDateOfTenant().minusDays(7), 46.15f, 0f, 0f, loanID);
+        this.loanTransactionHelper.checkAccrualTransactionForRepayment(Utils.getLocalDateOfTenant(), 34.69f, 0f, 0f, loanID);
 
     }
 
@@ -3772,7 +3781,7 @@ public class ClientLoanIntegrationTest {
 
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
 
-        Calendar todaysDate = Calendar.getInstance();
+        Calendar todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -14);
         final String LOAN_DISBURSEMENT_DATE = dateFormat.format(todaysDate.getTime());
 
@@ -3792,7 +3801,7 @@ public class ClientLoanIntegrationTest {
 
         ArrayList<HashMap> loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         List<Map<String, Object>> expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "0.0", "0.0");
@@ -3811,14 +3820,15 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2482.55", "46.36", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2482.54", "46.37", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.67", "23.24", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2517.24", "11.67", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "11.79", "0.05", "0.0", "0.0");
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -7);
         HashMap loanSummary = this.loanTransactionHelper.getLoanSummary(this.requestSpec, this.responseSpec, loanID);
         List dates = (List) loanSummary.get("overdueSinceDate");
@@ -3826,13 +3836,13 @@ public class ClientLoanIntegrationTest {
         assertEquals(todaysDate.get(Calendar.MONTH) + 1, dates.get(1));
         assertEquals(todaysDate.get(Calendar.DAY_OF_MONTH), dates.get(2));
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -8);
         final String LOAN_FIRST_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         Float totalDueForCurrentPeriod = (Float) loanSchedule.get(1).get("totalDueForPeriod");
         this.loanTransactionHelper.makeRepayment(LOAN_FIRST_REPAYMENT_DATE, totalDueForCurrentPeriod, loanID);
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -7);
         loanSummary = this.loanTransactionHelper.getLoanSummary(this.requestSpec, this.responseSpec, loanID);
         dates = (List) loanSummary.get("overdueSinceDate");
@@ -3848,7 +3858,8 @@ public class ClientLoanIntegrationTest {
 
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
 
-        Calendar todaysDate = Calendar.getInstance();
+        Calendar todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
+        System.out.println("----timeeeeeeeeeeeeee------>"+dateFormat.format(todaysDate.getTime()));
         todaysDate.add(Calendar.DAY_OF_MONTH, -14);
         final String LOAN_DISBURSEMENT_DATE = dateFormat.format(todaysDate.getTime());
 
@@ -3868,7 +3879,7 @@ public class ClientLoanIntegrationTest {
 
         ArrayList<HashMap> loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         List<Map<String, Object>> expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2494.22", "34.69", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.73", "23.18", "0.0", "0.0");
@@ -3887,14 +3898,15 @@ public class ClientLoanIntegrationTest {
 
         loanSchedule = this.loanTransactionHelper.getLoanRepaymentSchedule(this.requestSpec, this.responseSpec, loanID);
         expectedvalues = new ArrayList<>();
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         addRepaymentValues(expectedvalues, todaysDate, -1, "2482.76", "46.15", "0.0", "0.0");
-        addRepaymentValues(expectedvalues, todaysDate, 1, "2482.55", "46.36", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "2482.54", "46.37", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2505.67", "23.24", "0.0", "0.0");
         addRepaymentValues(expectedvalues, todaysDate, 1, "2517.24", "11.67", "0.0", "0.0");
+        addRepaymentValues(expectedvalues, todaysDate, 1, "11.79", "0.05", "0.0", "0.0");
         verifyLoanRepaymentSchedule(loanSchedule, expectedvalues);
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -7);
         HashMap loanSummary = this.loanTransactionHelper.getLoanSummary(this.requestSpec, this.responseSpec, loanID);
         List dates = (List) loanSummary.get("overdueSinceDate");
@@ -3902,13 +3914,13 @@ public class ClientLoanIntegrationTest {
         assertEquals(todaysDate.get(Calendar.MONTH) + 1, dates.get(1));
         assertEquals(todaysDate.get(Calendar.DAY_OF_MONTH), dates.get(2));
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -8);
         final String LOAN_FIRST_REPAYMENT_DATE = dateFormat.format(todaysDate.getTime());
         Float totalDueForCurrentPeriod = (Float) loanSchedule.get(1).get("totalDueForPeriod");
         this.loanTransactionHelper.makeRepayment(LOAN_FIRST_REPAYMENT_DATE, totalDueForCurrentPeriod, loanID);
 
-        todaysDate = Calendar.getInstance();
+        todaysDate = Calendar.getInstance(Utils.getTimeZoneOfTenant());
         todaysDate.add(Calendar.DAY_OF_MONTH, -7);
         loanSummary = this.loanTransactionHelper.getLoanSummary(this.requestSpec, this.responseSpec, loanID);
         dates = (List) loanSummary.get("overdueSinceDate");

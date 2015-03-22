@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.integrationtests.common.Utils;
@@ -104,18 +105,29 @@ public class LoanTransactionHelper {
     }
 
     public HashMap approveLoan(final String approvalDate, final Integer loanID) {
-        return performLoanTransaction(createLoanOperationURL(APPROVE_LOAN_COMMAND, loanID), getApproveLoanAsJSON(approvalDate));
+        String loanApprovalCommand = createLoanOperationURL(APPROVE_LOAN_COMMAND, loanID);
+        String loanApprovalRequest = getApproveLoanAsJSON(approvalDate);
+        System.out.println("Loan approval command:" + loanApprovalCommand);
+        System.out.println("Loan approval request:" + loanApprovalRequest);
+        return performLoanTransaction(loanApprovalCommand, loanApprovalRequest);
     }
 
-    public HashMap approveLoanWithApproveAmount(final String approvalDate, final String approvalAmount, final Integer loanID) {
+    public HashMap approveLoanWithApproveAmount(final String approvalDate, final String expectedDisbursementDate,
+            final String approvalAmount, final Integer loanID, List<HashMap> tranches) {
         return performLoanTransaction(createLoanOperationURL(APPROVE_LOAN_COMMAND, loanID),
-                getApproveLoanAsJSON(approvalDate, approvalAmount));
+                getApproveLoanAsJSON(approvalDate, expectedDisbursementDate, approvalAmount, tranches));
+    }
+
+    public List<HashMap<String, Object>> approveLoanForTranches(final String approvalDate, final String expectedDisbursementDate,
+            final String approvalAmount, final Integer loanID, List<HashMap> tranches, final String responseAttribute) {
+        return (List<HashMap<String, Object>>) performLoanTransaction(createLoanOperationURL(APPROVE_LOAN_COMMAND, loanID),
+                getApproveLoanAsJSON(approvalDate, expectedDisbursementDate, approvalAmount, tranches), responseAttribute);
     }
 
     public Object approveLoan(final String approvalDate, final String approvalAmount, final Integer loanID, final String responseAttribute) {
 
         final String approvalURL = createLoanOperationURL(APPROVE_LOAN_COMMAND, loanID);
-        final String approvalJSONData = getApproveLoanAsJSON(approvalDate, approvalAmount);
+        final String approvalJSONData = getApproveLoanAsJSON(approvalDate, null, approvalAmount, null);
 
         return performLoanTransaction(approvalURL, approvalJSONData, responseAttribute);
     }
@@ -225,17 +237,24 @@ public class LoanTransactionHelper {
     }
 
     private String getApproveLoanAsJSON(final String approvalDate) {
-        return getApproveLoanAsJSON(approvalDate, null);
+        return getApproveLoanAsJSON(approvalDate, null, null, null);
     }
 
-    private String getApproveLoanAsJSON(final String approvalDate, final String approvalAmount) {
-        final HashMap<String, String> map = new HashMap<>();
+    private String getApproveLoanAsJSON(final String approvalDate, final String expectedDisbursementDate, final String approvalAmount,
+            List<HashMap> tranches) {
+        final HashMap<String, Object> map = new HashMap<>();
         map.put("locale", "en");
         map.put("dateFormat", "dd MMMM yyyy");
         if (approvalAmount != null) {
             map.put("approvedLoanAmount", approvalAmount);
         }
         map.put("approvedOnDate", approvalDate);
+        if (expectedDisbursementDate != null) {
+            map.put("expectedDisbursementDate", expectedDisbursementDate);
+        }
+        if (tranches != null && tranches.size() > 0) {
+            map.put("disbursementData", tranches);
+        }
         map.put("note", "Approval NOTE");
         return new Gson().toJson(map);
     }
