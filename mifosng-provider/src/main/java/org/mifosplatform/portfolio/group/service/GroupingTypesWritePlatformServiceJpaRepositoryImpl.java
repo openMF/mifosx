@@ -741,14 +741,11 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
         checkForActiveJLGLoans(groupForUpdate.getId(), clientMembers);
         validateForJLGSavings(groupForUpdate.getId(), clientMembers);
         final Map<String, Object> actualChanges = new HashMap<>();
-
         final List<String> changes = groupForUpdate.disassociateClients(clientMembers);
         if (!changes.isEmpty()) {
             actualChanges.put(GroupingTypesApiConstants.clientMembersParamName, changes);
         }
-
         this.groupRepository.saveAndFlush(groupForUpdate);
-
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withOfficeId(groupForUpdate.officeId()) //
