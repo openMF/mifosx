@@ -20,7 +20,7 @@ public class AuthenticatedUserData {
     @SuppressWarnings("unused")
     private final Long userId;
     @SuppressWarnings("unused")
-    private final String base64EncodedAuthenticationKey;
+    private final String accessToken;
     @SuppressWarnings("unused")
     private final boolean authenticated;
     @SuppressWarnings("unused")
@@ -44,7 +44,7 @@ public class AuthenticatedUserData {
     public AuthenticatedUserData(final String username, final Collection<String> permissions) {
         this.username = username;
         this.userId = null;
-        this.base64EncodedAuthenticationKey = null;
+        this.accessToken = null;
         this.authenticated = false;
         this.officeId = null;
         this.officeName = null;
@@ -58,7 +58,7 @@ public class AuthenticatedUserData {
 
     public AuthenticatedUserData(final String username, final Long officeId, final String officeName, final Long staffId,
             final String staffDisplayName, final EnumOptionData organisationalRole, final Collection<RoleData> roles,
-            final Collection<String> permissions, final Long userId, final String base64EncodedAuthenticationKey) {
+            final Collection<String> permissions, final Long userId, final String accessToken) {
         this.username = username;
         this.officeId = officeId;
         this.officeName = officeName;
@@ -66,14 +66,14 @@ public class AuthenticatedUserData {
         this.staffDisplayName = staffDisplayName;
         this.organisationalRole = organisationalRole;
         this.userId = userId;
-        this.base64EncodedAuthenticationKey = base64EncodedAuthenticationKey;
+        this.accessToken = accessToken;
         this.authenticated = true;
         this.roles = roles;
         this.permissions = permissions;
         this.shouldRenewPassword = false;
     }
 
-    public AuthenticatedUserData(final String username, final Long userId, final String base64EncodedAuthenticationKey) {
+    public AuthenticatedUserData(final String username, final Long userId, final String accessToken) {
         this.username = username;
         this.officeId = null;
         this.officeName = null;
@@ -81,7 +81,7 @@ public class AuthenticatedUserData {
         this.staffDisplayName = null;
         this.organisationalRole = null;
         this.userId = userId;
-        this.base64EncodedAuthenticationKey = base64EncodedAuthenticationKey;
+        this.accessToken = accessToken;
         this.authenticated = true;
         this.roles = null;
         this.permissions = null;
