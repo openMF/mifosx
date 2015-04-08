@@ -75,6 +75,7 @@ public interface LoanProductConstants {
     public static final String recalculationRestFrequencyIntervalParameterName = "recalculationRestFrequencyInterval";
     public static final String recalculationRestFrequencyDateParamName = "recalculationRestFrequencyDate";
     public static final String isArrearsBasedOnOriginalScheduleParamName = "isArrearsBasedOnOriginalSchedule";
+    public static final String preClosureInterestCalculationStrategyParamName = "preClosureInterestCalculationStrategy";
 
     // Guarantee related
     public static final String holdGuaranteeFundsParamName = "holdGuaranteeFunds";
@@ -88,5 +89,15 @@ public interface LoanProductConstants {
     // Fixed installment configuration related
     public static final String canDefineEmiAmountParamName = "canDefineInstallmentAmount";
     public static final String installmentAmountInMultiplesOfParamName = "installmentAmountInMultiplesOf";
+    
+    //Loan Configurable Attributes
+    public static final String allowAttributeOverridesParamName = "allowAttributeOverrides";
+    public static final String amortizationTypeParamName = "amortizationType";
+    public static final String interestTypeParamName = "interestType";
+    public static final String transactionProcessingStrategyIdParamName = "transactionProcessingStrategyId";
+    public static final String interestCalculationPeriodTypeParamName = "interestCalculationPeriodType";
+    public static final String inArrearsToleranceParamName = "inArrearsTolerance";
+    public static final String repaymentEveryParamName = "repaymentEvery";
+    public static final String graceOnPrincipalAndInterestPaymentParamName = "graceOnPrincipalAndInterestPayment";
 
 }

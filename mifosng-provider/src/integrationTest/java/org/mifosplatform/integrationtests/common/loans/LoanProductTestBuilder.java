@@ -14,6 +14,7 @@ import org.mifosplatform.integrationtests.common.Utils;
 import org.mifosplatform.integrationtests.common.accounting.Account;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 public class LoanProductTestBuilder {
 
@@ -52,6 +53,9 @@ public class LoanProductTestBuilder {
     private static final String ACCRUAL_PERIODIC = "3";
     private static final String ACCRUAL_UPFRONT = "4";
 
+    public static final String INTEREST_APPLICABLE_STRATEGY_REST_DATE = "2";
+    public static final String INTEREST_APPLICABLE_STRATEGY_ON_PRE_CLOSE_DATE = "1";
+
     private String digitsAfterDecimal = "2";
     private String inMultiplesOf = "0";
 
@@ -83,6 +87,7 @@ public class LoanProductTestBuilder {
     private String daysInYearType = "1";
     private String daysInMonthType = "1";
     private String interestRecalculationCompoundingMethod = "0";
+    private String preCloseInterestCalculationStrategy = INTEREST_APPLICABLE_STRATEGY_ON_PRE_CLOSE_DATE;
     private String rescheduleStrategyMethod = "1";
     private String recalculationRestFrequencyType = "1";
     private String recalculationRestFrequencyInterval = "0";
@@ -93,7 +98,10 @@ public class LoanProductTestBuilder {
     private String minimumGuaranteeFromOwnFunds = null;
     private String minimumGuaranteeFromGuarantor = null;
     private String isArrearsBasedOnOriginalSchedule = null;
-
+    private String graceOnPrincipalPayment = "1";
+    private String graceOnInterestPayment = "1";
+    private JsonObject allowAttributeOverrides = null;
+    
     public String build(final String chargeId) {
         final HashMap<String, Object> map = new HashMap<>();
 
@@ -149,6 +157,7 @@ public class LoanProductTestBuilder {
             map.put("recalculationRestFrequencyType", recalculationRestFrequencyType);
             map.put("recalculationRestFrequencyInterval", recalculationRestFrequencyInterval);
             map.put("recalculationRestFrequencyDate", recalculationRestFrequencyDate);
+            map.put("preClosureInterestCalculationStrategy", preCloseInterestCalculationStrategy);
             if (isArrearsBasedOnOriginalSchedule != null) {
                 map.put("isArrearsBasedOnOriginalSchedule", isArrearsBasedOnOriginalSchedule);
             }
@@ -160,6 +169,11 @@ public class LoanProductTestBuilder {
                 map.put("minimumGuaranteeFromGuarantor", this.minimumGuaranteeFromGuarantor);
                 map.put("minimumGuaranteeFromOwnFunds", this.minimumGuaranteeFromOwnFunds);
             }
+        }
+        map.put("graceOnPrincipalPayment", graceOnPrincipalPayment);
+        map.put("graceOnInterestPayment", graceOnInterestPayment);
+        if(allowAttributeOverrides != null){
+        	map.put("allowAttributeOverrides", this.allowAttributeOverrides);
         }
         return new Gson().toJson(map);
     }
@@ -381,10 +395,11 @@ public class LoanProductTestBuilder {
     }
 
     public LoanProductTestBuilder withInterestRecalculationDetails(final String interestRecalculationCompoundingMethod,
-            final String rescheduleStrategyMethod) {
+            final String rescheduleStrategyMethod, String preCloseInterestCalculationStrategy) {
         this.isInterestRecalculationEnabled = true;
         this.interestRecalculationCompoundingMethod = interestRecalculationCompoundingMethod;
         this.rescheduleStrategyMethod = rescheduleStrategyMethod;
+        this.preCloseInterestCalculationStrategy = preCloseInterestCalculationStrategy;
         return this;
     }
 
@@ -416,4 +431,14 @@ public class LoanProductTestBuilder {
         return this;
     }
 
+    public LoanProductTestBuilder withMoratorium(String principal, String interest) {
+        this.graceOnPrincipalPayment = principal;
+        this.graceOnInterestPayment = interest;
+        return this;
+    }
+
+    public LoanProductTestBuilder withLoanProductConfiguration(JsonObject loanProductConfigurableAttributes) {
+        this.allowAttributeOverrides = loanProductConfigurableAttributes;
+        return this;
+    }   
 }

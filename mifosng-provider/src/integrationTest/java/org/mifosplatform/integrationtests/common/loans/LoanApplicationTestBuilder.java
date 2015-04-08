@@ -74,8 +74,9 @@ public class LoanApplicationTestBuilder {
         map.put("expectedDisbursementDate", this.expectedDisbursmentDate);
         map.put("submittedOnDate", this.submittedOnDate);
         map.put("loanType", this.loanType);
-        map.put("repaymentsStartingFromDate", this.repaymentsStartingFromDate);
-        
+        if(repaymentsStartingFromDate != null){
+            map.put("repaymentsStartingFromDate", this.repaymentsStartingFromDate);
+        }
         if (charges != null) {
             map.put("charges", charges);
         }
@@ -100,7 +101,7 @@ public class LoanApplicationTestBuilder {
         if (recalculationRestFrequencyDate != null) {
             map.put("recalculationRestFrequencyDate", recalculationRestFrequencyDate);
         }
-
+        System.out.println("Loan Application request : " + map);
         return new Gson().toJson(map);
     }
 

@@ -26,11 +26,13 @@ import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidation
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.portfolio.loanproduct.LoanProductConstants;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestMethod;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanPreClosureInterestCalculationStrategy;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductValueConditionType;
 import org.mifosplatform.portfolio.loanproduct.domain.RecalculationFrequencyType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProductConfigurableAttributes;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -76,7 +78,8 @@ public final class LoanProductDataValidator {
             LoanProductConstants.holdGuaranteeFundsParamName, LoanProductConstants.minimumGuaranteeFromGuarantorParamName,
             LoanProductConstants.minimumGuaranteeFromOwnFundsParamName, LoanProductConstants.principalThresholdForLastInstallmentParamName,
             LoanProductConstants.accountMovesOutOfNPAOnlyOnArrearsCompletionParamName, LoanProductConstants.canDefineEmiAmountParamName,
-            LoanProductConstants.installmentAmountInMultiplesOfParamName));
+            LoanProductConstants.installmentAmountInMultiplesOfParamName,
+            LoanProductConstants.preClosureInterestCalculationStrategyParamName, LoanProductConstants.allowAttributeOverridesParamName));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -439,7 +442,37 @@ public final class LoanProductDataValidator {
 
         validateMultiDisburseLoanData(baseDataValidator, element);
 
+        // validateLoanConfigurableAttributes(baseDataValidator,element);
+
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    private void validateLoanConfigurableAttributes(final DataValidatorBuilder baseDataValidator, final JsonElement element) {
+
+        if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.allowAttributeOverridesParamName, element)) {
+
+            final JsonObject object = element.getAsJsonObject().getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName);
+
+            Integer length = LoanProductConfigurableAttributes.supportedloanConfigurableAttributes.length;
+
+            Boolean bool[] = new Boolean[length];
+
+            for (int i = 0; i < length; i++) {
+                /* Validate the attribute names */
+                if (!this.fromApiJsonHelper.parameterExists(LoanProductConfigurableAttributes.supportedloanConfigurableAttributes[i],
+                        object)) {
+                    baseDataValidator.reset().parameter(LoanProductConstants.allowAttributeOverridesParamName)
+                            .failWithCode("invalid.loan.configuration.attribute.passed");
+                } else {
+                    bool[i] = this.fromApiJsonHelper.extractBooleanNamed(
+                            LoanProductConfigurableAttributes.supportedloanConfigurableAttributes[i], object);
+                    /* Validate the boolean value */
+                    baseDataValidator.reset().parameter(LoanProductConstants.allowAttributeOverridesParamName).value(bool[i])
+                            .ignoreIfNull().validateForBooleanValue();
+                }
+
+            }
+        }
     }
 
     private void validateMultiDisburseLoanData(final DataValidatorBuilder baseDataValidator, final JsonElement element) {
@@ -537,6 +570,16 @@ public final class LoanProductDataValidator {
             baseDataValidator.reset().parameter(LoanProductConstants.isArrearsBasedOnOriginalScheduleParamName)
                     .value(isArrearsBasedOnOriginalSchedule).notNull().isOneOfTheseValues(true, false);
         }
+
+        final Integer preCloseInterestCalculationStrategy = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(
+                LoanProductConstants.preClosureInterestCalculationStrategyParamName, element);
+        baseDataValidator
+                .reset()
+                .parameter(LoanProductConstants.preClosureInterestCalculationStrategyParamName)
+                .value(preCloseInterestCalculationStrategy)
+                .ignoreIfNull()
+                .inMinMaxRange(LoanPreClosureInterestCalculationStrategy.getMinValue(),
+                        LoanPreClosureInterestCalculationStrategy.getMaxValue());
     }
 
     public void validateForUpdate(final String json, final LoanProduct loanProduct) {
@@ -888,6 +931,8 @@ public final class LoanProductDataValidator {
         }
 
         validateMultiDisburseLoanData(baseDataValidator, element);
+
+        // validateLoanConfigurableAttributes(baseDataValidator,element);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
