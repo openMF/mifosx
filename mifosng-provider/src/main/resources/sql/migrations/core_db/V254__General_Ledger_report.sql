@@ -5,20 +5,21 @@ INSERT INTO `stretchy_parameter` (`parameter_name`, `parameter_variable`, `param
 INSERT INTO `stretchy_report_parameter` (`report_id`, `parameter_id`, `report_parameter_name`) VALUES
  ((select sr.id from stretchy_report sr where sr.report_name='GeneralLedgerReport'), 
  (select sp.id from stretchy_parameter sp where sp.parameter_name='SelectGLAccountNO'), 
-  'Account');
+  'account');
   
    INSERT INTO `stretchy_report_parameter` (`report_id`, `parameter_id`, `report_parameter_name`) VALUES
  ((select sr.id from stretchy_report sr where sr.report_name='GeneralLedgerReport'), 
  (select sp.id from stretchy_parameter sp where sp.parameter_name='startDateselect'),
-  'ondate');
+  'fromDate');
   
     INSERT INTO `stretchy_report_parameter` (`report_id`, `parameter_id`, `report_parameter_name`) VALUES
  ((select sr.id from stretchy_report sr where sr.report_name='GeneralLedgerReport'), 
  (select sp.id from stretchy_parameter sp where sp.parameter_name='endDateselect'), 
-  'todate');
+  'toDate');
   
    INSERT INTO `stretchy_report_parameter` (`report_id`, `parameter_id`, `report_parameter_name`) VALUES
  ((select sr.id from stretchy_report sr where sr.report_name='GeneralLedgerReport'), 
  (select sp.id from stretchy_parameter sp where sp.parameter_name='OfficeIdSelectOne'), 
-  'office');
+  'branch');
   
+  INSERT INTO `m_permission` VALUES ('report', 'READ_GeneralLedgerReport', 'GeneralLedgerReport', 'READ', 0);
