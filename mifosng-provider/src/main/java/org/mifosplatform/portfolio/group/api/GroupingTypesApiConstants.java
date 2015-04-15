@@ -36,6 +36,7 @@ public class GroupingTypesApiConstants {
     // center parameters
     public static final String idParamName = "id";
     public static final String nameParamName = "name";
+    public static final String mobileNoParamName = "mobileNo";
     public static final String externalIdParamName = "externalId";
     public static final String officeIdParamName = "officeId";
     public static final String staffIdParamName = "staffId";
@@ -75,7 +76,7 @@ public class GroupingTypesApiConstants {
 
     public static final Set<String> GROUP_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName, dateFormatParamName,
             idParamName, nameParamName, externalIdParamName, centerIdParamName, officeIdParamName, staffIdParamName, activeParamName,
-            activationDateParamName, clientMembersParamName, collectionMeetingCalendar, submittedOnDateParamName));
+            activationDateParamName, clientMembersParamName, collectionMeetingCalendar, submittedOnDateParamName, mobileNoParamName));
 
     public static final Set<String> GROUP_ROLES_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(roleParamName,
             clientIdParamName));

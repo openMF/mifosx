@@ -96,6 +96,7 @@ public class GroupHelper {
         map.put("externalId", randomIDGenerator("ID_", 7));
         map.put("dateFormat", "dd MMMM yyyy");
         map.put("locale", "en");
+        map.put("mobileNo", "0123456789");
         if (active) {
             map.put("active", "true");
             map.put("activationDate", activationDate);

@@ -1,0 +1,1 @@
+ALTER TABLE `m_group` ADD COLUMN `mobile_no` VARCHAR(20) NULL;
