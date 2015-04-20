@@ -10,6 +10,7 @@ import org.mifosplatform.portfolio.charge.domain.ChargeAppliesTo;
 import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
 import org.mifosplatform.portfolio.charge.domain.ChargePaymentMode;
 import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
+import org.mifosplatform.portfolio.charge.domain.DisbursementChargeType;
 
 public class ChargeEnumerations {
 
@@ -104,9 +105,9 @@ public class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeCalculationType.FLAT.getValue().longValue(), ChargeCalculationType.FLAT.getCode(),
                         "Flat");
             break;
-            case PERCENT_OF_AMOUNT:
-                optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_AMOUNT.getValue().longValue(),
-                        ChargeCalculationType.PERCENT_OF_AMOUNT.getCode(), "% Amount");
+            case PERCENT_OF_APPROVED_AMOUNT:
+                optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_APPROVED_AMOUNT.getValue().longValue(),
+                        ChargeCalculationType.PERCENT_OF_APPROVED_AMOUNT.getCode(), "% Approved Amount");
             break;
             case PERCENT_OF_AMOUNT_AND_INTEREST:
                 optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_AMOUNT_AND_INTEREST.getValue().longValue(),
@@ -115,6 +116,10 @@ public class ChargeEnumerations {
             case PERCENT_OF_INTEREST:
                 optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_INTEREST.getValue().longValue(),
                         ChargeCalculationType.PERCENT_OF_INTEREST.getCode(), "% Interest");
+            break;
+            case PERCENT_OF_DISBURSEMENT_AMOUNT:
+                optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue().longValue(),
+                        ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getCode(), "% Disbursement Amount");
             break;
             default:
                 optionData = new EnumOptionData(ChargeCalculationType.INVALID.getValue().longValue(),
@@ -138,6 +143,25 @@ public class ChargeEnumerations {
             default:
                 optionData = new EnumOptionData(ChargePaymentMode.REGULAR.getValue().longValue(), ChargePaymentMode.REGULAR.getCode(),
                         "Regular");
+            break;
+        }
+        return optionData;
+    }
+    
+    public static EnumOptionData disbursementChargeType(final int id) {
+        return disbursementChargeType(DisbursementChargeType.fromInt(id));
+    }
+    
+    public static EnumOptionData disbursementChargeType(final DisbursementChargeType type) {
+        EnumOptionData optionData = null;
+        switch (type) {
+            case WITH_EACH_DISBURSEMENT:
+                optionData = new EnumOptionData(DisbursementChargeType.WITH_EACH_DISBURSEMENT.getValue().longValue(),
+                        DisbursementChargeType.WITH_EACH_DISBURSEMENT.getCode(), "With Each Disbursement");
+            break;
+            default:
+                optionData = new EnumOptionData(DisbursementChargeType.FIRST_DISBURSEMENT.getValue().longValue(), DisbursementChargeType.FIRST_DISBURSEMENT.getCode(),
+                        "First Disbursement");
             break;
         }
         return optionData;

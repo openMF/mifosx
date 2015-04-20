@@ -138,10 +138,11 @@ public class LoanChargeReadPlatformServiceImpl implements LoanChargeReadPlatform
         final List<EnumOptionData> savingsChargeTimeTypeOptions = this.chargeDropdownReadPlatformService
                 .retrieveSavingsCollectionTimeTypes();
         final List<EnumOptionData> feeFrequencyOptions = this.dropdownReadPlatformService.retrievePeriodFrequencyTypeOptions();
+        final List<EnumOptionData> disbursementChargeTypeOptions= this.chargeDropdownReadPlatformService.retrieveLoanDisbursementChargesType();
 
         return ChargeData.template(null, allowedChargeCalculationTypeOptions, null, allowedChargeTimeOptions, null,
                 loansChargeCalculationTypeOptions, loansChargeTimeTypeOptions, savingsChargeCalculationTypeOptions,
-                savingsChargeTimeTypeOptions, feeFrequencyOptions);
+                savingsChargeTimeTypeOptions, feeFrequencyOptions, disbursementChargeTypeOptions);
     }
 
     @Override

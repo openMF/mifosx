@@ -444,7 +444,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
              * Stores all charges which are passed in during modify loan
              * application
              **/
-            final Set<LoanCharge> possiblyModifedLoanCharges = this.loanChargeAssembler.fromParsedJson(command.parsedJson());
+            final Set<LoanCharge> possiblyModifedLoanCharges = this.loanChargeAssembler.fromParsedJson(command.parsedJson(),null);
             /** Boolean determines if any charge has been modified **/
             boolean isChargeModified = false;
 

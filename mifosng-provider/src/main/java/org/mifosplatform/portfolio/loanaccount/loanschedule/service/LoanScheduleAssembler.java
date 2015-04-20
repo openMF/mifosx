@@ -332,7 +332,7 @@ public class LoanScheduleAssembler {
                             && StringUtils.isNotBlank((jsonObject.get(LoanApiConstants.disbursementPrincipalParameterName).getAsString()))) {
                         principal = jsonObject.getAsJsonPrimitive(LoanApiConstants.disbursementPrincipalParameterName).getAsBigDecimal();
                     }
-                    disbursementDatas.add(new DisbursementData(null, expectedDisbursementDate, null, principal));
+                    disbursementDatas.add(new DisbursementData(null, expectedDisbursementDate, null, principal, null, null));
                     i++;
                 } while (i < disbursementDataArray.size());
             }
@@ -420,7 +420,7 @@ public class LoanScheduleAssembler {
     public LoanScheduleModel assembleLoanScheduleFrom(final LoanApplicationTerms loanApplicationTerms, final boolean isHolidayEnabled,
             final List<Holiday> holidays, final WorkingDays workingDays, final JsonElement element) {
 
-        final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element);
+        final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element,null);
 
         final LoanScheduleGenerator loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
 
