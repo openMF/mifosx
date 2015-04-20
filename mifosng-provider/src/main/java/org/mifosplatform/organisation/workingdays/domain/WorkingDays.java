@@ -25,13 +25,17 @@ public class WorkingDays extends AbstractPersistable<Long> {
     @Column(name = "repayment_rescheduling_enum", nullable = false)
     private Integer repaymentReschedulingType;
 
+    @Column(name = "extend_term_daily_repayments", nullable = false)
+    private Boolean extendTermForDailyRepayments;
+    
     protected WorkingDays() {
 
     }
 
-    protected WorkingDays(final String recurrence, final Integer repaymentReschedulingType) {
+    protected WorkingDays(final String recurrence, final Integer repaymentReschedulingType, final Boolean extendTermForDailyRepayments ) {
         this.recurrence = recurrence;
         this.repaymentReschedulingType = repaymentReschedulingType;
+        this.extendTermForDailyRepayments = extendTermForDailyRepayments;
     }
 
     /**
@@ -48,6 +52,10 @@ public class WorkingDays extends AbstractPersistable<Long> {
         return this.repaymentReschedulingType;
     }
 
+    
+    public Boolean getExtendTermForDailyRepayments(){
+        return this.extendTermForDailyRepayments;
+    }
 
     public Map<String, Object> update(final JsonCommand command) {
         final Map<String, Object> actualChanges = new LinkedHashMap<>(7);
@@ -64,6 +72,13 @@ public class WorkingDays extends AbstractPersistable<Long> {
             final Integer newValue =command.integerValueOfParameterNamed(repaymentRescheduleTypeParamName);
             actualChanges.put(repaymentRescheduleTypeParamName,  WorkingDaysEnumerations.workingDaysStatusType(newValue));
             this.repaymentReschedulingType = RepaymentRescheduleType.fromInt(newValue).getValue();
+        }
+        
+        final String extendTermForDailyRepayments = "extendTermForDailyRepayments";
+        if(command.isChangeInBooleanParameterNamed(extendTermForDailyRepayments, this.extendTermForDailyRepayments)){
+            final Boolean newValue = command.booleanPrimitiveValueOfParameterNamed(extendTermForDailyRepayments);
+            actualChanges.put(extendTermForDailyRepayments, newValue);
+            this.extendTermForDailyRepayments = newValue;
         }
         return actualChanges;
     }

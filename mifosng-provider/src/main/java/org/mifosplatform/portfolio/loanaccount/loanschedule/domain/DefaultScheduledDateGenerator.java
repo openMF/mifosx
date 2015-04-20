@@ -53,6 +53,7 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
             final HolidayDetailDTO holidayDetailDTO) {
 
         LocalDate adjustedDate = dueRepaymentPeriodDate;
+
         /**
          * Fix for https://mifosforge.jira.com/browse/MIFOSX-1357
          */
@@ -62,13 +63,22 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
             final LocalDate nextDueRepaymentPeriodDate = getRepaymentPeriodDate(loanApplicationTerms.getRepaymentPeriodFrequencyType(),
                     loanApplicationTerms.getRepaymentEvery(), adjustedDate, loanApplicationTerms.getNthDay(),
                     loanApplicationTerms.getWeekDayType());
-            adjustedDate = WorkingDaysUtil.getOffSetDateIfNonWorkingDay(adjustedDate, nextDueRepaymentPeriodDate,
-                    holidayDetailDTO.getWorkingDays());
+            if(holidayDetailDTO.getWorkingDays().getExtendTermForDailyRepayments() == true &&
+                    loanApplicationTerms.getRepaymentPeriodFrequencyType() == PeriodFrequencyType.DAYS &&
+                    loanApplicationTerms.getRepaymentEvery() == 1){
+                adjustedDate = adjustedDate.plusDays(1);
+            }
+            else{
+                adjustedDate = WorkingDaysUtil.getOffSetDateIfNonWorkingDay(adjustedDate, nextDueRepaymentPeriodDate,
+                        holidayDetailDTO.getWorkingDays());
+            }
+            
         }
 
         if (holidayDetailDTO.isHolidayEnabled()) {
             adjustedDate = HolidayUtil.getRepaymentRescheduleDateToIfHoliday(adjustedDate, holidayDetailDTO.getHolidays());
         }
+
         return adjustedDate;
     }
 
