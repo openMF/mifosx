@@ -31,6 +31,10 @@ import org.mifosplatform.organisation.staff.exception.StaffRoleException;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDays;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
 import org.mifosplatform.portfolio.accountdetails.service.AccountEnumerations;
+import org.mifosplatform.portfolio.charge.domain.Charge;
+import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
+import org.mifosplatform.portfolio.charge.domain.ChargePaymentMode;
+import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
 import org.mifosplatform.portfolio.client.exception.ClientNotActiveException;
@@ -54,6 +58,7 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleTrans
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanSummaryWrapper;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanTrancheDisbursementCharge;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionProcessingStrategyRepository;
 import org.mifosplatform.portfolio.loanaccount.exception.ExceedingTrancheCountException;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanTransactionProcessingStrategyNotFoundException;
@@ -172,8 +177,38 @@ public class LoanAssembler {
         if (loanPurposeId != null) {
             loanPurpose = this.codeValueRepository.findOneWithNotFoundDetection(loanPurposeId);
         }
+        Set<LoanDisbursementDetails> disbursementDetails = null;
+        BigDecimal fixedEmiAmount = null;
+        if (loanProduct.isMultiDisburseLoan() || loanProduct.canDefineInstallmentAmount()) {
+            fixedEmiAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanApiConstants.emiAmountParameterName, element);
+        }
+        BigDecimal maxOutstandingLoanBalance = null;
+        if (loanProduct.isMultiDisburseLoan()) {
+            disbursementDetails = fetchDisbursementData(element.getAsJsonObject());
+            final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(element.getAsJsonObject());
+            maxOutstandingLoanBalance = this.fromApiJsonHelper.extractBigDecimalNamed(LoanApiConstants.maxOutstandingBalanceParameterName,
+                    element, locale);
+            if (disbursementDetails.isEmpty()) {
+                final String errorMessage = "For this loan product, disbursement details must be provided";
+                throw new MultiDisbursementDataRequiredException(LoanApiConstants.disbursementDataParameterName, errorMessage);
+            }
+
+            if (disbursementDetails.size() > loanProduct.maxTrancheCount()) {
+                final String errorMessage = "Number of tranche shouldn't be greter than " + loanProduct.maxTrancheCount();
+                throw new ExceedingTrancheCountException(LoanApiConstants.disbursementDataParameterName, errorMessage,
+                        loanProduct.maxTrancheCount(), disbursementDetails.size());
+            }
+        }
+        Set<LoanCharge> loanCharges = new HashSet<LoanCharge>();
+        Set<LoanCharge> loanTrancheCharges = null;
+        Set<LoanCharge> charges = null;
+        if(loanProduct.isTrancheChargeExist()){
+            loanTrancheCharges = createChargesFromProductDefinition(loanProduct,element,disbursementDetails);
+        }
+        charges = this.loanChargeAssembler.fromParsedJson(element);
+        loanCharges.addAll(loanTrancheCharges);
+        loanCharges.addAll(charges);
         final Set<LoanCollateral> collateral = this.loanCollateralAssembler.fromParsedJson(element);
-        final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element);
         for (final LoanCharge loanCharge : loanCharges) {
             if (!loanProduct.hasCurrencyCodeOf(loanCharge.currencyCode())) {
                 final String errorMessage = "Charge and Loan must have the same currency.";
@@ -197,29 +232,7 @@ public class LoanAssembler {
         final String loanTypeParameterName = "loanType";
         final String loanTypeStr = this.fromApiJsonHelper.extractStringNamed(loanTypeParameterName, element);
         final EnumOptionData loanType = AccountEnumerations.loanType(loanTypeStr);
-        Set<LoanDisbursementDetails> disbursementDetails = null;
-        BigDecimal fixedEmiAmount = null;
-        if (loanProduct.isMultiDisburseLoan() || loanProduct.canDefineInstallmentAmount()) {
-            fixedEmiAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanApiConstants.emiAmountParameterName, element);
-        }
-        BigDecimal maxOutstandingLoanBalance = null;
-        if (loanProduct.isMultiDisburseLoan()) {
-            disbursementDetails = fetchDisbursementData(element.getAsJsonObject());
-            final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(element.getAsJsonObject());
-            maxOutstandingLoanBalance = this.fromApiJsonHelper.extractBigDecimalNamed(LoanApiConstants.maxOutstandingBalanceParameterName,
-                    element, locale);
-            if (disbursementDetails.isEmpty()) {
-                final String errorMessage = "For this loan product, disbursement details must be provided";
-                throw new MultiDisbursementDataRequiredException(LoanApiConstants.disbursementDataParameterName, errorMessage);
-            }
-
-            if (disbursementDetails.size() > loanProduct.maxTrancheCount()) {
-                final String errorMessage = "Number of tranche shouldn't be greter than " + loanProduct.maxTrancheCount();
-                throw new ExceedingTrancheCountException(LoanApiConstants.disbursementDataParameterName, errorMessage,
-                        loanProduct.maxTrancheCount(), disbursementDetails.size());
-            }
-        }
-
+       
         if (clientId != null) {
             client = this.clientRepository.findOneWithNotFoundDetection(clientId);
             if (client.isNotActive()) { throw new ClientNotActiveException(clientId); }
@@ -286,8 +299,8 @@ public class LoanAssembler {
 
         return loanApplication;
     }
-
-    private Set<LoanDisbursementDetails> fetchDisbursementData(final JsonObject command) {
+    
+     private Set<LoanDisbursementDetails> fetchDisbursementData(final JsonObject command) {
         final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(command);
         final String dateFormat = this.fromApiJsonHelper.extractDateFormatParameter(command);
         Set<LoanDisbursementDetails> disbursementDatas = new HashSet<>();
@@ -375,4 +388,60 @@ public class LoanAssembler {
         loanApplication.validateExpectedDisbursementForHolidayAndNonWorkingDay(workingDays, allowTransactionsOnHoliday, holidays,
                 allowTransactionsOnNonWorkingDay);
     }
+    
+    public Set<LoanCharge> createChargesFromProductDefinition(LoanProduct loanProduct, final JsonElement element, Set<LoanDisbursementDetails> disbursementDetails){
+        final Set<LoanCharge> loanCharges = new HashSet<>();
+            Charge chargeDefinition = null;
+            List<Charge> chargeList = loanProduct.getLoanProductCharges();
+            for(Charge charge : chargeList){
+                if(charge.getChargeTime() == ChargeTimeType.DISBURSEMENT.getValue() 
+                     || charge.getChargeTime() == ChargeTimeType.TRANCHE_DISBURSEMENT.getValue()){
+                    chargeDefinition = charge;
+                }
+            }
+            LocalDate dueDate = null;
+            LocalDate expectedDisbursementDate = null;
+            final BigDecimal principal = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("principal", element);
+            final Integer numberOfRepayments = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("numberOfRepayments", element);
+            ChargeTimeType chargeTime = null;
+            ChargeCalculationType chargeCalculation = null;
+            ChargePaymentMode chargePaymentModeEnum = null;
+            if(chargeDefinition.isPercentageOfApprovedAmount()){
+                final LoanCharge loanCharge = LoanCharge.createNewWithoutLoan(chargeDefinition, principal, chargeDefinition.getAmount(), chargeTime,
+                        chargeCalculation, dueDate, chargePaymentModeEnum, numberOfRepayments);
+                loanCharges.add(loanCharge);
+            }
+            final JsonObject topLevelJsonElement = element.getAsJsonObject();
+            final String dateFormat = this.fromApiJsonHelper.extractDateFormatParameter(topLevelJsonElement);
+            final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(topLevelJsonElement);
+            if(topLevelJsonElement.has("disbursementData") && topLevelJsonElement.get("disbursementData").isJsonArray()){
+                final JsonArray disbursementArray = topLevelJsonElement.get("disbursementData").getAsJsonArray();
+                JsonObject disbursementDataElement = disbursementArray.get(0).getAsJsonObject();
+                expectedDisbursementDate = this.fromApiJsonHelper.extractLocalDateNamed(LoanApiConstants.disbursementDateParameterName,
+                        disbursementDataElement, dateFormat, locale);
+                 
+            }
+            if(chargeDefinition.isPercentageOfDisbursementAmount() && disbursementDetails != null){
+                LoanTrancheDisbursementCharge loanTrancheDisbursementCharge = null;
+                for(LoanDisbursementDetails disbursementDetail : disbursementDetails){
+                    if(chargeDefinition.getChargeTime() == ChargeTimeType.DISBURSEMENT.getValue()) {
+                        if(expectedDisbursementDate.equals(disbursementDetail.expectedDisbursementDateAsLocalDate())){
+                            final LoanCharge loanCharge = LoanCharge.createNewWithoutLoan(chargeDefinition, disbursementDetail.principal(), chargeDefinition.getAmount(), chargeTime,
+                                    chargeCalculation, disbursementDetail.expectedDisbursementDateAsLocalDate(), chargePaymentModeEnum, numberOfRepayments);
+                            loanCharges.add(loanCharge);
+                            loanTrancheDisbursementCharge = new LoanTrancheDisbursementCharge(loanCharge,disbursementDetail);
+                            loanCharge.updateLoanTrancheDisbursementCharge(loanTrancheDisbursementCharge);
+                        }
+                    }else if(chargeDefinition.getChargeTime() == ChargeTimeType.TRANCHE_DISBURSEMENT.getValue()) {
+                            final LoanCharge loanCharge = LoanCharge.createNewWithoutLoan(chargeDefinition, disbursementDetail.principal(), chargeDefinition.getAmount(), chargeTime,
+                                    chargeCalculation, disbursementDetail.expectedDisbursementDateAsLocalDate(), chargePaymentModeEnum, numberOfRepayments);
+                            loanCharges.add(loanCharge);
+                            loanTrancheDisbursementCharge = new LoanTrancheDisbursementCharge(loanCharge,disbursementDetail);
+                            loanCharge.updateLoanTrancheDisbursementCharge(loanTrancheDisbursementCharge);
+                    }   
+                }
+            }
+        return loanCharges;
+    }
+    
 }
