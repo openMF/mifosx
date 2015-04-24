@@ -146,11 +146,12 @@ public class SavingsAccountChargeReadPlatformServiceImpl implements SavingsAccou
                 .retrieveSavingsCollectionTimeTypes();
 
         final List<EnumOptionData> feeFrequencyOptions = this.dropdownReadPlatformService.retrievePeriodFrequencyTypeOptions();
+        final List<EnumOptionData> disbursementChargeTypeOptions = this.chargeDropdownReadPlatformService.retrieveLoanDisbursementChargesType();
 
         // TODO AA : revisit for merge conflict - Not sure method signature
         return ChargeData.template(null, allowedChargeCalculationTypeOptions, null, allowedChargeTimeOptions, null,
                 loansChargeCalculationTypeOptions, loansChargeTimeTypeOptions, savingsChargeCalculationTypeOptions,
-                savingsChargeTimeTypeOptions, feeFrequencyOptions);
+                savingsChargeTimeTypeOptions, feeFrequencyOptions, disbursementChargeTypeOptions);
     }
 
     @Override

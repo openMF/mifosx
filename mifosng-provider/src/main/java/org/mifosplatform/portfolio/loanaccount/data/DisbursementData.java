@@ -19,13 +19,17 @@ public class DisbursementData implements Comparable<DisbursementData> {
     private final LocalDate expectedDisbursementDate;
     private final LocalDate actualDisbursementDate;
     private final BigDecimal principal;
+    private final Long loanChargeId;
+    private final BigDecimal chargeAmount;
 
     public DisbursementData(Long id, final LocalDate expectedDisbursementDate, final LocalDate actualDisbursementDate,
-            final BigDecimal principalDisbursed) {
+            final BigDecimal principalDisbursed, final Long loanChargeId, BigDecimal chargeAmount) {
         this.id = id;
         this.expectedDisbursementDate = expectedDisbursementDate;
         this.actualDisbursementDate = actualDisbursementDate;
         this.principal = principalDisbursed;
+        this.loanChargeId = loanChargeId;
+        this.chargeAmount = chargeAmount;
     }
 
     public LocalDate disbursementDate() {
@@ -42,6 +46,10 @@ public class DisbursementData implements Comparable<DisbursementData> {
     
     public boolean isDisbursed() {
         return this.actualDisbursementDate != null;
+    }
+    
+    public BigDecimal getChargeAmount(){
+        return this.chargeAmount;
     }
 
     @Override

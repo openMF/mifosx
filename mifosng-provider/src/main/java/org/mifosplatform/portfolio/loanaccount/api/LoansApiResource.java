@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,6 +55,7 @@ import org.mifosplatform.portfolio.calendar.data.CalendarData;
 import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
 import org.mifosplatform.portfolio.calendar.service.CalendarReadPlatformService;
 import org.mifosplatform.portfolio.charge.data.ChargeData;
+import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
 import org.mifosplatform.portfolio.charge.service.ChargeReadPlatformService;
 import org.mifosplatform.portfolio.client.data.ClientData;
@@ -72,6 +74,9 @@ import org.mifosplatform.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionData;
 import org.mifosplatform.portfolio.loanaccount.data.PaidInAdvanceData;
 import org.mifosplatform.portfolio.loanaccount.data.RepaymentScheduleRelatedLoanData;
+import org.mifosplatform.portfolio.loanaccount.domain.Loan;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTermVariationType;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanTemplateTypeRequiredException;
 import org.mifosplatform.portfolio.loanaccount.exception.NotSupportedLoanTemplateTypeException;
@@ -145,6 +150,7 @@ public class LoansApiResource {
     private final PortfolioAccountReadPlatformService portfolioAccountReadPlatformService;
     private final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService;
     private final LoanScheduleHistoryReadPlatformService loanScheduleHistoryReadPlatformService;
+    private final LoanRepositoryWrapper loanRepositoryWrapper;
 
     @Autowired
     public LoansApiResource(final PlatformSecurityContext context, final LoanReadPlatformService loanReadPlatformService,
@@ -163,7 +169,8 @@ public class LoansApiResource {
             final CalendarReadPlatformService calendarReadPlatformService, final NoteReadPlatformServiceImpl noteReadPlatformService,
             final PortfolioAccountReadPlatformService portfolioAccountReadPlatformServiceImpl,
             final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
-            final LoanScheduleHistoryReadPlatformService loanScheduleHistoryReadPlatformService) {
+            final LoanScheduleHistoryReadPlatformService loanScheduleHistoryReadPlatformService,
+            final LoanRepositoryWrapper loanRepositoryWrapper) {
         this.context = context;
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanProductReadPlatformService = loanProductReadPlatformService;
@@ -187,6 +194,7 @@ public class LoansApiResource {
         this.portfolioAccountReadPlatformService = portfolioAccountReadPlatformServiceImpl;
         this.accountAssociationsReadPlatformService = accountAssociationsReadPlatformService;
         this.loanScheduleHistoryReadPlatformService = loanScheduleHistoryReadPlatformService;
+        this.loanRepositoryWrapper = loanRepositoryWrapper;
     }
 
     /*
@@ -398,8 +406,9 @@ public class LoansApiResource {
                 mandatoryResponseParameters.add("repaymentSchedule");
 
                 final RepaymentScheduleRelatedLoanData repaymentScheduleRelatedData = loanBasicDetails.repaymentScheduleRelatedData();
+                final Loan loanDetails = this.loanRepositoryWrapper.findOneWithNotFoundDetection(loanId);
                 repaymentSchedule = this.loanReadPlatformService.retrieveRepaymentSchedule(loanId, repaymentScheduleRelatedData,
-                        disbursementData, loanBasicDetails.isInterestRecalculationEnabled());
+                        disbursementData, loanBasicDetails.isInterestRecalculationEnabled(),loanDetails);
 
                 if (associationParameters.contains("futureSchedule") && loanBasicDetails.isInterestRecalculationEnabled()) {
                     mandatoryResponseParameters.add("futureSchedule");

@@ -190,11 +190,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                         final LoanScheduleModelDisbursementPeriod disbursementPeriod = LoanScheduleModelDisbursementPeriod.disbursement(
                                 disburseDetail.getKey(), disburseDetail.getValue(), chargesDueAtTimeOfDisbursement);
                         periods.add(disbursementPeriod);
-                        // updates actual outstanding balance with new
-                        // disbursement detail
-                        outstandingBalance = outstandingBalance.plus(disburseDetail.getValue());
-                        principalDisbursed = principalDisbursed.plus(disburseDetail.getValue());
-                        loanApplicationTerms.setPrincipal(loanApplicationTerms.getPrincipal().plus(disburseDetail.getValue()));
                     }
                 }
             }

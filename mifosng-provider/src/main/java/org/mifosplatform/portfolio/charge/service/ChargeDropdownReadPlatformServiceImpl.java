@@ -10,6 +10,7 @@ import org.mifosplatform.portfolio.charge.domain.ChargeAppliesTo;
 import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
 import org.mifosplatform.portfolio.charge.domain.ChargePaymentMode;
 import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
+import org.mifosplatform.portfolio.charge.domain.DisbursementChargeType;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -25,9 +26,10 @@ public class ChargeDropdownReadPlatformServiceImpl implements ChargeDropdownRead
     public List<EnumOptionData> retrieveCalculationTypes() {
 
         return Arrays.asList(chargeCalculationType(ChargeCalculationType.FLAT),
-                chargeCalculationType(ChargeCalculationType.PERCENT_OF_AMOUNT),
+                chargeCalculationType(ChargeCalculationType.PERCENT_OF_APPROVED_AMOUNT),
                 chargeCalculationType(ChargeCalculationType.PERCENT_OF_AMOUNT_AND_INTEREST),
-                chargeCalculationType(ChargeCalculationType.PERCENT_OF_INTEREST));
+                chargeCalculationType(ChargeCalculationType.PERCENT_OF_INTEREST),
+                chargeCalculationType(ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT));
     }
 
     @Override
@@ -62,9 +64,10 @@ public class ChargeDropdownReadPlatformServiceImpl implements ChargeDropdownRead
     @Override
     public List<EnumOptionData> retrieveLoanCalculationTypes() {
         return Arrays.asList(chargeCalculationType(ChargeCalculationType.FLAT),
-                chargeCalculationType(ChargeCalculationType.PERCENT_OF_AMOUNT),
+                chargeCalculationType(ChargeCalculationType.PERCENT_OF_APPROVED_AMOUNT),
                 chargeCalculationType(ChargeCalculationType.PERCENT_OF_AMOUNT_AND_INTEREST),
-                chargeCalculationType(ChargeCalculationType.PERCENT_OF_INTEREST));
+                chargeCalculationType(ChargeCalculationType.PERCENT_OF_INTEREST),
+                chargeCalculationType(ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT));
     }
 
     @Override
@@ -76,7 +79,7 @@ public class ChargeDropdownReadPlatformServiceImpl implements ChargeDropdownRead
     @Override
     public List<EnumOptionData> retrieveSavingsCalculationTypes() {
         return Arrays.asList(chargeCalculationType(ChargeCalculationType.FLAT),
-                chargeCalculationType(ChargeCalculationType.PERCENT_OF_AMOUNT));
+                chargeCalculationType(ChargeCalculationType.PERCENT_OF_APPROVED_AMOUNT));
     }
 
     @Override
@@ -86,5 +89,10 @@ public class ChargeDropdownReadPlatformServiceImpl implements ChargeDropdownRead
                 chargeTimeType(ChargeTimeType.WITHDRAWAL_FEE), chargeTimeType(ChargeTimeType.ANNUAL_FEE),
                 chargeTimeType(ChargeTimeType.MONTHLY_FEE), chargeTimeType(ChargeTimeType.WEEKLY_FEE),
                 chargeTimeType(ChargeTimeType.OVERDRAFT_FEE));
+    }
+    
+    @Override
+    public List<EnumOptionData> retrieveLoanDisbursementChargesType(){
+        return Arrays.asList(disbursementChargeType(DisbursementChargeType.FIRST_DISBURSEMENT), disbursementChargeType(DisbursementChargeType.WITH_EACH_DISBURSEMENT));
     }
 }
