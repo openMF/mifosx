@@ -19,6 +19,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -39,6 +40,7 @@ import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.portfolio.charge.domain.Charge;
+import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
 import org.mifosplatform.portfolio.common.domain.DaysInMonthType;
 import org.mifosplatform.portfolio.common.domain.DaysInYearType;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
@@ -83,7 +85,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
     @Column(name = "description")
     private String description;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "m_product_loan_charge", joinColumns = @JoinColumn(name = "product_loan_id"), inverseJoinColumns = @JoinColumn(name = "charge_id"))
     private List<Charge> charges;
 
@@ -601,6 +603,10 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
     public Integer getAccountingType() {
         return this.accountingRule;
+    }
+    
+    public List<Charge> getLoanProductCharges(){
+        return this.charges;
     }
 
     public void update(final LoanProductConfigurableAttributes loanConfigurableAttributes) {
@@ -1181,5 +1187,18 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
     public LoanProductRelatedDetail getLoanProductRelatedDetail() {
         return loanProductRelatedDetail;
+    }
+    
+    public boolean isTrancheChargeExist(){
+        boolean isChargeExist = false;
+        if(this.charges != null){
+            for(Charge charge : this.charges){
+                if(charge.getChargeTime() == ChargeTimeType.DISBURSEMENT.getValue() 
+                     || charge.getChargeTime() == ChargeTimeType.TRANCHE_DISBURSEMENT.getValue()){
+                    isChargeExist = true;
+                }
+            }
+        }
+        return isChargeExist;
     }
 }

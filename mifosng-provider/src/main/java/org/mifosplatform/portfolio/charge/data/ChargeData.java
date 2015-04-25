@@ -88,7 +88,7 @@ public class ChargeData implements Comparable<ChargeData>, Serializable {
         final List<EnumOptionData> savingsChargeCalculationTypeOptions = null;
         final List<EnumOptionData> savingsChargeTimeTypeOptions = null;
         final List<EnumOptionData> feeFrequencyOptions = null;
-
+ 
         return new ChargeData(id, name, amount, currency, chargeTimeType, chargeAppliesTo, chargeCalculationType, chargePaymentMode,
                 penalty, active, currencyOptions, chargeCalculationTypeOptions, chargeAppliesToOptions, chargeTimeTypeOptions,
                 chargePaymentModeOptions, loansChargeCalculationTypeOptions, loansChargeTimeTypeOptions,
@@ -225,5 +225,13 @@ public class ChargeData implements Comparable<ChargeData>, Serializable {
             isOverdueInstallmentCharge = ChargeTimeType.fromInt(this.chargeTimeType.getId().intValue()).isOverdueInstallment();
         }
         return isOverdueInstallmentCharge;
+    }
+    
+    public boolean isDisbursementCharges(){
+        boolean isDisbursementCharges = false;
+        if(this.chargeTimeType != null){
+            isDisbursementCharges = ChargeTimeType.fromInt(this.chargeTimeType.getId().intValue()).isDueDisbursementCharges();
+        }
+        return isDisbursementCharges;
     }
 }

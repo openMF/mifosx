@@ -252,7 +252,7 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
                 this.amountWaived = null;
                 this.amountWrittenOff = null;
             break;
-            case PERCENT_OF_AMOUNT:
+            case PERCENT_OF_APPROVED_AMOUNT:
                 this.percentage = chargeAmount;
                 this.amountPercentageAppliedTo = transactionAmount;
                 this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
@@ -389,7 +389,7 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
                 case FLAT:
                     this.amount = amount;
                 break;
-                case PERCENT_OF_AMOUNT:
+                case PERCENT_OF_APPROVED_AMOUNT:
                     this.percentage = amount;
                     this.amountPercentageAppliedTo = transactionAmount;
                     this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
@@ -460,7 +460,7 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
                     this.amount = newValue;
                     this.amountOutstanding = calculateOutstanding();
                 break;
-                case PERCENT_OF_AMOUNT:
+                case PERCENT_OF_APPROVED_AMOUNT:
                     this.percentage = newValue;
                     this.amountPercentageAppliedTo = null;
                     this.amount = percentageOf(this.amountPercentageAppliedTo, this.percentage);
@@ -699,7 +699,7 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
         BigDecimal amountPaybale = BigDecimal.ZERO;
         if (ChargeCalculationType.fromInt(this.chargeCalculation).isFlat()) {
             amountPaybale = this.amount;
-        } else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfAmount()) {
+        } else if (ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfApprovedAmount()) {
             amountPaybale = transactionAmount.multiply(this.percentage).divide(BigDecimal.valueOf(100l));
         }
         this.amountOutstanding = amountPaybale;

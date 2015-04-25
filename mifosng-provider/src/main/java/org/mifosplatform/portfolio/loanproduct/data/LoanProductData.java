@@ -822,6 +822,17 @@ public class LoanProductData {
         }
         return overdueFeeCharges;
     }
+    
+    public Collection<ChargeData> disbursementCharges(){
+        Collection<ChargeData> disbursementCharges = new ArrayList<>();
+        Collection<ChargeData> charges = charges();
+        for(ChargeData chargeData : charges) {
+            if(chargeData.isDisbursementCharges()){
+                disbursementCharges.add(chargeData);
+            }
+        }
+        return disbursementCharges;
+    }
 
     public LoanInterestRecalculationData toLoanInterestRecalculationData() {
         final Long id = null;
