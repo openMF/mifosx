@@ -202,7 +202,7 @@ public class GroupReadPlatformServiceImpl implements GroupReadPlatformService {
         if (sqlSearch != null) {
             sqlSearch = sqlSearch.replaceAll(" display_name ", " g.display_name ");
             sqlSearch = sqlSearch.replaceAll("display_name ", "g.display_name ");
-            extraCriteria.append(" and ( ").append(sqlSearch).append(") ");
+            extraCriteria.append(" and g.display_name like ").append(ApiParameterHelper.sqlEncodeString("%" + sqlSearch + "%"));
         }
 
         final Long officeId = searchCriteria.getOfficeId();
