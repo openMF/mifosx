@@ -6,6 +6,7 @@
 package org.mifosplatform.portfolio.loanaccount.domain;
 
 import java.util.List;
+import java.util.Set;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
@@ -99,7 +100,7 @@ public final class LoanSummaryWrapper {
             final MonetaryCurrency currency) {
         Money total = Money.zero(currency);
         for (final LoanRepaymentScheduleInstallment installment : repaymentScheduleInstallments) {
-            total = total.plus(installment.getFeeChargesCharged(currency));
+        	 total = total.plus(installment.getFeeChargesCharged(currency));
         }
         return total;
     }
@@ -216,5 +217,16 @@ public final class LoanSummaryWrapper {
         }
 
         return overdueSince;
+    }
+    
+    public Money calculateTotalChargesRepaidAtDisbursement(Set<LoanCharge> charges, MonetaryCurrency currency) {
+        Money total = Money.zero(currency);
+        for (final LoanCharge loanCharge : charges) {
+            if(loanCharge.getAmountPaid(currency).isGreaterThanZero()){
+                total =  total.plus(loanCharge.getAmountPaid(currency));
+            }
+        }
+        return total;
+        
     }
 }

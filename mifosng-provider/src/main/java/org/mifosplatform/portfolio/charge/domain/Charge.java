@@ -84,7 +84,7 @@ public class Charge extends AbstractPersistable<Long> {
 
     @Column(name = "fee_frequency", nullable = true)
     private Integer feeFrequency;
-
+    
     public static Charge fromJson(final JsonCommand command) {
 
         final String name = command.stringValueOfParameterNamed("name");
@@ -106,7 +106,7 @@ public class Charge extends AbstractPersistable<Long> {
         final BigDecimal minCap = command.bigDecimalValueOfParameterNamed("minCap");
         final BigDecimal maxCap = command.bigDecimalValueOfParameterNamed("maxCap");
         final Integer feeFrequency = command.integerValueOfParameterNamed("feeFrequency");
-
+     
         return new Charge(name, amount, currencyCode, chargeAppliesTo, chargeTimeType, chargeCalculationType, penalty, active, paymentMode,
                 feeOnMonthDay, feeInterval, minCap, maxCap, feeFrequency);
     }
@@ -128,7 +128,7 @@ public class Charge extends AbstractPersistable<Long> {
         this.penalty = penalty;
         this.active = active;
         this.chargePaymentMode = paymentMode == null ? null : paymentMode.getValue();
-
+    
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("charges");
 
@@ -152,7 +152,7 @@ public class Charge extends AbstractPersistable<Long> {
             }
 
             if (!ChargeTimeType.fromInt(getChargeTime()).isWithdrawalFee()
-                    && ChargeCalculationType.fromInt(getChargeCalculation()).isPercentageOfAmount()) {
+                    && ChargeCalculationType.fromInt(getChargeCalculation()).isPercentageOfApprovedAmount()) {
                 baseDataValidator.reset().parameter("chargeCalculationType").value(this.chargeCalculation)
                         .failWithCodeNoParameterAddedToErrorCode("savings.charge.calculation.type.percentage.allowed.only.for.withdrawal");
             }
@@ -166,7 +166,7 @@ public class Charge extends AbstractPersistable<Long> {
                         .failWithCodeNoParameterAddedToErrorCode("not.allowed.charge.time.for.loan");
             }
         }
-        if (isPercentageOfAmount()) {
+        if (isPercentageOfApprovedAmount()) {
             this.minCap = minCap;
             this.maxCap = maxCap;
         }
@@ -244,8 +244,12 @@ public class Charge extends AbstractPersistable<Long> {
         return ChargeCalculationType.fromInt(this.chargeCalculation).isAllowedSavingsChargeCalculationType();
     }
 
-    public boolean isPercentageOfAmount() {
-        return ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfAmount();
+    public boolean isPercentageOfApprovedAmount() {
+        return ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfApprovedAmount();
+    }
+    
+    public boolean isPercentageOfDisbursementAmount(){
+        return ChargeCalculationType.fromInt(this.chargeCalculation).isPercentageOfDisbursementAmount();
     }
 
     public BigDecimal getMinCap() {
@@ -255,8 +259,8 @@ public class Charge extends AbstractPersistable<Long> {
     public BigDecimal getMaxCap() {
         return this.maxCap;
     }
-
-    public Map<String, Object> update(final JsonCommand command) {
+    
+     public Map<String, Object> update(final JsonCommand command) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>(7);
 
@@ -345,7 +349,7 @@ public class Charge extends AbstractPersistable<Long> {
                 }
 
                 if (!ChargeTimeType.fromInt(getChargeTime()).isWithdrawalFee()
-                        && ChargeCalculationType.fromInt(getChargeCalculation()).isPercentageOfAmount()) {
+                        && ChargeCalculationType.fromInt(getChargeCalculation()).isPercentageOfApprovedAmount()) {
                     baseDataValidator.reset().parameter("chargeCalculationType").value(this.chargeCalculation)
                             .failWithCodeNoParameterAddedToErrorCode("charge.calculation.type.percentage.allowed.only.for.withdrawal");
                 }
@@ -414,7 +418,7 @@ public class Charge extends AbstractPersistable<Long> {
             this.active = newValue;
         }
         // allow min and max cap to be only added to PERCENT_OF_AMOUNT for now
-        if (isPercentageOfAmount()) {
+        if (isPercentageOfApprovedAmount()) {
             final String minCapParamName = "minCap";
             if (command.isChangeInBigDecimalParameterNamed(minCapParamName, this.minCap)) {
                 final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(minCapParamName);
@@ -429,7 +433,8 @@ public class Charge extends AbstractPersistable<Long> {
                 actualChanges.put("locale", localeAsInput);
                 this.maxCap = newValue;
             }
-        }
+            
+         }
 
         if (this.penalty && ChargeTimeType.fromInt(this.chargeTime).isTimeOfDisbursement()) { throw new ChargeDueAtDisbursementCannotBePenaltyException(
                 this.name); }
