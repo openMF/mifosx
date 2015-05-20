@@ -18,7 +18,7 @@ public class HookHelper {
     private final ResponseSpecification responseSpec;
 
     private static final String CREATE_HOOK_URL = "/mifosng-provider/api/v1/hooks?" + Utils.TENANT_IDENTIFIER;
-
+    
     public HookHelper(final RequestSpecification requestSpec, final ResponseSpecification responseSpec) {
         this.requestSpec = requestSpec;
         this.responseSpec = responseSpec;
@@ -48,5 +48,16 @@ public class HookHelper {
         System.out.println("map : " + map);
         return new Gson().toJson(map);
     }
+    
+    public Integer updateHook(final String payloadURL, final Long hookId) {
+        System.out.println("---------------------------------UPDATING HOOK---------------------------------------------");
+        final String UPDATE_HOOK_URL = "/mifosng-provider/api/v1/hooks/" + hookId + "?" + Utils.TENANT_IDENTIFIER;
+        return Utils.performServerPut(this.requestSpec, this.responseSpec, UPDATE_HOOK_URL, getTestHookAsJson(payloadURL), "resourceId");
+    }
 
+    public Integer deleteHook(final Long hookId) {
+        System.out.println("---------------------------------DELETING HOOK---------------------------------------------");
+        final String DELETE_HOOK_URL = "/mifosng-provider/api/v1/hooks/" + hookId + "?" + Utils.TENANT_IDENTIFIER;
+        return Utils.performServerDelete(this.requestSpec, this.responseSpec, DELETE_HOOK_URL, "resourceId");
+    }
 }

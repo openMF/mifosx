@@ -80,4 +80,16 @@ public class HookIntegrationTest {
         }
 
     }
+    
+    @Test
+    public void createUpdateAndDeleteHook(){
+    	final String payloadURL = "http://echo-webhook.herokuapp.com:80/Z7RXoCBdLSFMDrpn?";
+        Long hookId = this.hookHelper.createHook(payloadURL).longValue();
+    	System.out.println("---------------------SUCCESSFULLY CREATED HOOK-------------------------"+hookId);
+    	this.hookHelper.updateHook(payloadURL, hookId);
+    	System.out.println("---------------------SUCCESSFULLY UPDATED HOOK-------------------------"+hookId);
+    	this.hookHelper.deleteHook(hookId);
+    	System.out.println("---------------------SUCCESSFULLY DELETED HOOK-------------------------"+hookId);
+
+    }
 }
