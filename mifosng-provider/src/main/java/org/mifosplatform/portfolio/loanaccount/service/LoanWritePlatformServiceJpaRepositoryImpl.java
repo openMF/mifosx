@@ -120,6 +120,7 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleInsta
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallmentRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanTrancheDisbursementCharge;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionType;
@@ -1308,19 +1309,40 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
         checkClientOrGroupActive(loan);
 
+        Set<LoanDisbursementDetails> loanDisburseDetails = loan.getDisbursementDetails();
+        
         final Long chargeDefinitionId = command.longValueOfParameterNamed("chargeId");
         final Charge chargeDefinition = this.chargeRepository.findOneWithNotFoundDetection(chargeDefinitionId);
+        boolean isAppliedOnBackDate = false;
+        LoanCharge loanCharge = null;
+        if(chargeDefinition.isPercentageOfDisbursementAmount()){
+        	LoanTrancheDisbursementCharge loanTrancheDisbursementCharge = null;
+        	for(LoanDisbursementDetails disbursementDetail : loanDisburseDetails){
+         		loanCharge = LoanCharge.createNewWithoutLoan(chargeDefinition, disbursementDetail.principal(), null, null,
+                         null, disbursementDetail.expectedDisbursementDateAsLocalDate(), null, null);
+                 loanTrancheDisbursementCharge = new LoanTrancheDisbursementCharge(loanCharge,disbursementDetail);
+                 loanCharge.updateLoanTrancheDisbursementCharge(loanTrancheDisbursementCharge);
+                this.businessEventNotifierService.notifyBusinessEventToBeExecuted(BUSINESS_EVENTS.LOAN_ADD_CHARGE,
+                        constructEntityMap(BUSINESS_ENTITY.LOAN_CHARGE, loanCharge));
 
-        final LoanCharge loanCharge = LoanCharge.createNewFromJson(loan, chargeDefinition, command);
-        this.businessEventNotifierService.notifyBusinessEventToBeExecuted(BUSINESS_EVENTS.LOAN_ADD_CHARGE,
-                constructEntityMap(BUSINESS_ENTITY.LOAN_CHARGE, loanCharge));
+                validateAddLoanCharge(loan, chargeDefinition, loanCharge);
+                isAppliedOnBackDate = addCharge(loan, chargeDefinition, loanCharge);
+            }
+        }else{
+        	loanCharge = LoanCharge.createNewFromJson(loan, chargeDefinition, command);
+            this.businessEventNotifierService.notifyBusinessEventToBeExecuted(BUSINESS_EVENTS.LOAN_ADD_CHARGE,
+                    constructEntityMap(BUSINESS_ENTITY.LOAN_CHARGE, loanCharge));
 
-        validateAddLoanCharge(loan, chargeDefinition, loanCharge);
+            validateAddLoanCharge(loan, chargeDefinition, loanCharge);
+            isAppliedOnBackDate = addCharge(loan, chargeDefinition, loanCharge);
+        }
+        
+        
 
         final List<Long> existingTransactionIds = new ArrayList<>(loan.findExistingTransactionIds());
         final List<Long> existingReversedTransactionIds = new ArrayList<>(loan.findExistingReversedTransactionIds());
 
-        boolean isAppliedOnBackDate = addCharge(loan, chargeDefinition, loanCharge);
+        
         boolean reprocessRequired = true;
         if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
             if (isAppliedOnBackDate && loan.isFeeCompoundingEnabledForInterestRecalculation()) {
@@ -1477,10 +1499,12 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 throw new LinkedAccountRequiredException("loanCharge.add", errorMessage, loanCharge.name());
             }
         }
+        
+        loan.addLoanCharge(loanCharge);
 
         this.loanChargeRepository.save(loanCharge);
 
-        loan.addLoanCharge(loanCharge);
+        
 
         /**
          * we want to apply charge transactions only for those loans charges

@@ -21,7 +21,8 @@ public enum ChargeTimeType {
     OVERDUE_INSTALLMENT(9, "chargeTimeType.overdueInstallment"), // only for
                                                                  // loan charges
     OVERDRAFT_FEE(10, "chargeTimeType.overdraftFee"),// only for savings
-    WEEKLY_FEE(11, "chargeTimeType.weeklyFee"); // only for savings
+    WEEKLY_FEE(11, "chargeTimeType.weeklyFee"), // only for savings
+    TRANCHE_DISBURSEMENT(12,"chargeTimeType.tranchedisbursement"); // only for loan
 
     private final Integer value;
     private final String code;
@@ -41,7 +42,7 @@ public enum ChargeTimeType {
 
     public static Object[] validLoanValues() {
         return new Integer[] { ChargeTimeType.DISBURSEMENT.getValue(), ChargeTimeType.SPECIFIED_DUE_DATE.getValue(),
-                ChargeTimeType.INSTALMENT_FEE.getValue(), ChargeTimeType.OVERDUE_INSTALLMENT.getValue() };
+                ChargeTimeType.INSTALMENT_FEE.getValue(), ChargeTimeType.OVERDUE_INSTALLMENT.getValue(), ChargeTimeType.TRANCHE_DISBURSEMENT.getValue() };
     }
     
     public static Object[] validLoanChargeValues() {
@@ -92,6 +93,9 @@ public enum ChargeTimeType {
                 case 11:
                     chargeTimeType = WEEKLY_FEE;
                 break;
+                case 12:
+                    chargeTimeType = TRANCHE_DISBURSEMENT;
+                break;
                 default:
                     chargeTimeType = INVALID;
                 break;
@@ -141,7 +145,7 @@ public enum ChargeTimeType {
     }
 
     public boolean isAllowedLoanChargeTime() {
-        return isTimeOfDisbursement() || isOnSpecifiedDueDate() || isInstalmentFee() || isOverdueInstallment();
+        return isTimeOfDisbursement() || isOnSpecifiedDueDate() || isInstalmentFee() || isOverdueInstallment() || isTrancheDisbursement();
     }
 
     public boolean isAllowedSavingsChargeTime() {
@@ -151,6 +155,10 @@ public enum ChargeTimeType {
 
     public boolean isOverdraftFee() {
         return this.value.equals(ChargeTimeType.OVERDRAFT_FEE.getValue());
+    }
+    
+    public boolean isTrancheDisbursement(){
+    	return this.value.equals(ChargeTimeType.TRANCHE_DISBURSEMENT.getValue());
     }
 
 }
