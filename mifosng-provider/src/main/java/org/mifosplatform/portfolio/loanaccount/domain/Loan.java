@@ -1149,8 +1149,8 @@ public class Loan extends AbstractPersistable<Long> {
             final Money recoveredAmount = calculateTotalRecoveredPayments();
             this.totalRecovered = recoveredAmount.getAmountDefaultedToNullIfZero();
 
-            final Money principal = this.loanRepaymentScheduleDetail.getPrincipal();
-            this.summary.updateSummary(loanCurrency(), principal, this.repaymentScheduleInstallments, this.loanSummaryWrapper,
+            final Money totalPrincipalDisbursed = Money.of(getCurrency(), this.summary.getTotalPrincipalDisbursed());
+            this.summary.updateSummary(loanCurrency(), totalPrincipalDisbursed, this.repaymentScheduleInstallments, this.loanSummaryWrapper,
                     isDisbursed());
             updateLoanOutstandingBalaces();
         }
@@ -2208,7 +2208,8 @@ public class Loan extends AbstractPersistable<Long> {
                     }
                     totalAmount = totalAmount.add(disbursementDetails.principal());
                 }
-                this.loanRepaymentScheduleDetail.setPrincipal(setPrincipalAmount);
+                this.loanRepaymentScheduleDetail.setPrincipal(totalAmount);
+                this.summary.setTotalPrincipalDisbursed(setPrincipalAmount);
                 if (totalAmount.compareTo(this.approvedPrincipal) == 1) {
                     final String errorMsg = "Loan can't be disbursed,disburse amount is exceeding approved principal ";
                     throw new LoanDisbursalException(errorMsg, "disburse.amount.must.be.less.than.approved.principal", principalDisbursed,
@@ -2216,6 +2217,7 @@ public class Loan extends AbstractPersistable<Long> {
                 }
             } else {
                 this.loanRepaymentScheduleDetail.setPrincipal(this.loanRepaymentScheduleDetail.getPrincipal().minus(diff).getAmount());
+                this.summary.setTotalPrincipalDisbursed(this.loanRepaymentScheduleDetail.getPrincipal().minus(diff).getAmount());
             }
             if (!(this.loanProduct().isMultiDisburseLoan()) && diff.compareTo(BigDecimal.ZERO) == -1) {
                 final String errorMsg = "Loan can't be disbursed,disburse amount is exceeding approved amount ";
