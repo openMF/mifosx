@@ -32,7 +32,7 @@ public class GLAccountData {
     private final EnumOptionData usage;
     private final String description;
     private final String nameDecorated;
-    private final CodeValueData tagId;
+    private List<CodeValueData> tagId;
     private final Long organizationRunningBalance;
 
     // templates
@@ -51,7 +51,7 @@ public class GLAccountData {
 
     public GLAccountData(final Long id, final String name, final Long parentId, final String glCode, final boolean disabled,
             final boolean manualEntriesAllowed, final EnumOptionData type, final EnumOptionData usage, final String description,
-            final String nameDecorated, final CodeValueData tagId, final Long organizationRunningBalance) {
+            final String nameDecorated, final List<CodeValueData> tagId, final Long organizationRunningBalance) {
         this.id = id;
         this.name = name;
         this.parentId = parentId;
@@ -127,7 +127,7 @@ public class GLAccountData {
         final EnumOptionData usage = AccountingEnumerations.gLAccountUsage(GLAccountUsage.DETAIL);
         final String description = null;
         final String nameDecorated = null;
-        final CodeValueData tagId = null;
+        final List<CodeValueData> tagId = null;
         final Long organizationRunningBalance = null;
 
         return new GLAccountData(id, name, parentId, glCode, disabled, manualEntriesAllowed, type, usage, description, nameDecorated,
@@ -181,5 +181,10 @@ public class GLAccountData {
         if (this.type != null) { return this.type.getId().intValue(); }
         return null;
     }
+    
+    public void setTags(List<CodeValueData> tagId) {
+        this.tagId = tagId;
+           
+       }
 
 }

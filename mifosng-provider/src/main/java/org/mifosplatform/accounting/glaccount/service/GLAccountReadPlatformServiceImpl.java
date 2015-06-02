@@ -7,6 +7,7 @@ package org.mifosplatform.accounting.glaccount.service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -57,12 +58,11 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
             sb.append(
                     " gl.id as id, name as name, parent_id as parentId, gl_code as glCode, disabled as disabled, manual_journal_entries_allowed as manualEntriesAllowed, ")
                     .append("classification_enum as classification, account_usage as accountUsage, gl.description as description, ")
-                    .append(nameDecoratedBaseOnHierarchy).append(" as nameDecorated, ")
-                    .append("cv.id as codeId, cv.code_value as codeValue ");
+                    .append(nameDecoratedBaseOnHierarchy).append(" as nameDecorated ");
             if (this.associationParametersData.isRunningBalanceRequired()) {
                 sb.append(",gl_j.organization_running_balance as organizationRunningBalance ");
             }
-            sb.append("from acc_gl_account gl left join m_code_value cv on tag_id=cv.id ");
+            sb.append(" from acc_gl_account gl ");
             if (this.associationParametersData.isRunningBalanceRequired()) {
                 sb.append("left outer Join acc_gl_journal_entry gl_j on gl_j.account_id = gl.id");
             }
@@ -84,15 +84,12 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
             final EnumOptionData usage = AccountingEnumerations.gLAccountUsage(usageId);
             final String description = rs.getString("description");
             final String nameDecorated = rs.getString("nameDecorated");
-            final Long codeId = rs.wasNull() ? null : rs.getLong("codeId");
-            final String codeValue = rs.getString("codeValue");
-            final CodeValueData tagId = CodeValueData.instance(codeId, codeValue);
             Long organizationRunningBalance = null;
             if (associationParametersData.isRunningBalanceRequired()) {
                 organizationRunningBalance = rs.getLong("organizationRunningBalance");
             }
             return new GLAccountData(id, name, parentId, glCode, disabled, manualEntriesAllowed, accountType, usage, description,
-                    nameDecorated, tagId, organizationRunningBalance);
+                    nameDecorated, null, organizationRunningBalance);
         }
     }
 
@@ -111,7 +108,8 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
         String sql = "select " + rm.schema();
         // append SQL statement for fetching account totals
         if (associationParametersData.isRunningBalanceRequired()) {
-            sql = sql + " and gl_j.id in (select t1.id from (select t2.account_id, max(t2.id) as id from "
+            sql = sql
+                    + " and gl_j.id in (select t1.id from (select t2.account_id, max(t2.id) as id from "
                     + "(select id, max(entry_date) as entry_date, account_id from acc_gl_journal_entry where is_running_balance_calculated = 1 "
                     + "group by account_id desc) t3 inner join acc_gl_journal_entry t2 on t2.account_id = t3.account_id and t2.entry_date = t3.entry_date "
                     + "group by t2.account_id desc) t1)";
@@ -200,11 +198,20 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
                 sql.append("  ORDER BY gl_j.entry_date DESC,gl_j.id DESC LIMIT 1");
             }
             final GLAccountData glAccountData = this.jdbcTemplate.queryForObject(sql.toString(), rm, new Object[] { glAccountId });
-
+            final List<CodeValueData> tagId = new ArrayList<CodeValueData>();
+            tagId.addAll(getGLTags(glAccountData.getId()));
+            glAccountData.setTags(tagId);
             return glAccountData;
         } catch (final EmptyResultDataAccessException e) {
             throw new GLAccountNotFoundException(glAccountId);
         }
+    }
+
+    private List<CodeValueData> getGLTags(final Long id) {
+
+        final GLAccountTagDataMapper mapper = new GLAccountTagDataMapper();
+        final String glAccountSchema = "Select" + mapper.glAccountTagSchema() + " where gl.id = ? ";
+        return this.jdbcTemplate.query(glAccountSchema, mapper, new Object[] { id });
     }
 
     @Override
@@ -253,7 +260,8 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
     private static final class GLAccountDataLookUpMapper implements RowMapper<GLAccountDataForLookup> {
 
         public String schema() {
-            return " gl.id as id, gl.name as name, gl.gl_code as glCode from acc_accounting_rule rule join acc_rule_tags tags on tags.acc_rule_id = rule.id join acc_gl_account gl on gl.tag_id=tags.tag_id";
+            return " gl.id as id, gl.name as name, gl.gl_code as glCode from acc_accounting_rule rule join acc_rule_tags tags on tags.acc_rule_id = rule.id "
+                    + "join acc_gl_accounttags tg on tg.tag_id = tags.tag_id join acc_gl_account gl on gl.id = tg.gl_account_id";
         }
 
         @Override
@@ -262,6 +270,22 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
             final String name = rs.getString("name");
             final String glCode = rs.getString("glCode");
             return new GLAccountDataForLookup(id, name, glCode);
+        }
+
+    }
+
+    private static final class GLAccountTagDataMapper implements RowMapper<CodeValueData> {
+
+        public String glAccountTagSchema() {
+            return " tag.tag_id as tagId, cv.code_value as tagName from m_code_value cv join acc_gl_accounttags tag on tag.tag_id = cv.id join acc_gl_account gl on tag.gl_account_id = gl.id ";
+        }
+
+        @Override
+        public CodeValueData mapRow(ResultSet rs, int rowNum) throws SQLException {
+            final Long tagId = rs.getLong("tagId");
+            final String tagName = rs.getString("tagName");
+            final CodeValueData tag = CodeValueData.instance(tagId, tagName);
+            return tag;
         }
 
     }
