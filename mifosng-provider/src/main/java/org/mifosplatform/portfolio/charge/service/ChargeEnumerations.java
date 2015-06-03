@@ -56,6 +56,11 @@ public class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeTimeType.INSTALMENT_FEE.getValue().longValue(),
                         ChargeTimeType.INSTALMENT_FEE.getCode(), "Installment Fee");
             break;
+            case PRECLOSURE_FEE:
+            	optionData = new EnumOptionData(ChargeTimeType.PRECLOSURE_FEE.getValue().longValue(),
+            			ChargeTimeType.PRECLOSURE_FEE.getCode(), "PreClosure Fee");
+            	
+            break;
             case OVERDUE_INSTALLMENT:
                 optionData = new EnumOptionData(ChargeTimeType.OVERDUE_INSTALLMENT.getValue().longValue(),
                         ChargeTimeType.OVERDUE_INSTALLMENT.getCode(), "Overdue Fees");
@@ -116,6 +121,10 @@ public class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_INTEREST.getValue().longValue(),
                         ChargeCalculationType.PERCENT_OF_INTEREST.getCode(), "% Interest");
             break;
+            case PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING:
+            	optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING.getValue().longValue(),
+            			ChargeCalculationType.PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING.getCode(), "% Outstanding Principal");
+            	break;
             default:
                 optionData = new EnumOptionData(ChargeCalculationType.INVALID.getValue().longValue(),
                         ChargeCalculationType.INVALID.getCode(), "Invalid");

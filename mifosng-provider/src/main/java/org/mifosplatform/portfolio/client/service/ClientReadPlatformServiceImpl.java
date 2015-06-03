@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.mapping.DependantValue;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.codes.service.CodeValueReadPlatformService;
@@ -97,6 +98,15 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         }
         final List<CodeValueData> genderOptions = new ArrayList<>(
                 this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.GENDER));
+        
+        final List<CodeValueData>maritalOptions = new ArrayList<>(
+        		this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.MARITAL));
+        final List<CodeValueData>religionOptions = new ArrayList<>(
+        		this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.RELIGION));
+        final List<CodeValueData>dependentOptions = new ArrayList<>(
+        		this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.DEPENDENT));
+        final List<CodeValueData>educationOptions = new ArrayList<>(
+        		this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.EDUCATION));        
 
         final List<CodeValueData> clientTypeOptions = new ArrayList<>(
                 this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.CLIENT_TYPE));
@@ -104,8 +114,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final List<CodeValueData> clientClassificationOptions = new ArrayList<>(
                 this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.CLIENT_CLASSIFICATION));
 
-        return ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions, null, genderOptions, savingsProductDatas,
-                clientTypeOptions, clientClassificationOptions);
+        return ClientData.template(defaultOfficeId, new LocalDate(), offices, staffOptions, null, genderOptions,maritalOptions,religionOptions,dependentOptions,educationOptions, null, clientTypeOptions, clientClassificationOptions);
     }
 
     @Override
@@ -283,12 +292,20 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             sqlBuilder
                     .append("cvSubStatus.code_value as subStatusValue,cvSubStatus.code_description as subStatusDesc,c.office_id as officeId, o.name as officeName, ");
             sqlBuilder.append("c.transfer_to_office_id as transferToOfficeId, transferToOffice.name as transferToOfficeName, ");
-            sqlBuilder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, ");
-            sqlBuilder.append("c.fullname as fullname, c.display_name as displayName, ");
+            sqlBuilder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname,c.fathername as fathername, ");
+            sqlBuilder.append("c.fullname as fullname, c.display_name as displayName,c.emailaddress as emailAddress,c.code as code, ");
             sqlBuilder.append("c.mobile_no as mobileNo, ");
             sqlBuilder.append("c.date_of_birth as dateOfBirth, ");
             sqlBuilder.append("c.gender_cv_id as genderId, ");
             sqlBuilder.append("cv.code_value as genderValue, ");
+            sqlBuilder.append("c.marital_cv_id as maritalId,");
+            sqlBuilder.append("cvmarital.code_value as maritalValue,");
+            sqlBuilder.append("c.religion_cv_id as religionId,");
+            sqlBuilder.append("cvreligion.code_value as religionValue,");
+            sqlBuilder.append("c.dependent_cv_id as dependentId, ");
+            sqlBuilder.append("cvdependent.code_value as dependentValue, ");
+            sqlBuilder.append("c.education_cv_id as educationId, ");
+            sqlBuilder.append("cveducation.code_value as educationValue, ");
             sqlBuilder.append("c.client_type_cv_id as clienttypeId, ");
             sqlBuilder.append("cvclienttype.code_value as clienttypeValue, ");
             sqlBuilder.append("c.client_classification_cv_id as classificationId, ");
@@ -324,6 +341,10 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             sqlBuilder.append("left join m_appuser clu on clu.id = c.closedon_userid ");
             sqlBuilder.append("left join m_code_value cv on cv.id = c.gender_cv_id ");
             sqlBuilder.append("left join m_code_value cvclienttype on cvclienttype.id = c.client_type_cv_id ");
+            sqlBuilder.append("left join m_code_value cvmarital on cvmarital.id = c.marital_cv_id ");
+            sqlBuilder.append("left join m_code_value cvreligion on cvreligion.id = c.religion_cv_id ");
+            sqlBuilder.append("left join m_code_value cvdependent on cvdependent.id = c.dependent_cv_id ");
+            sqlBuilder.append("left join m_code_value cveducation on cveducation.id = c.education_cv_id ");
             sqlBuilder.append("left join m_code_value cvclassification on cvclassification.id = c.client_classification_cv_id ");
             sqlBuilder.append("left join m_code_value cvSubStatus on cvSubStatus.id = c.sub_status ");
 
@@ -359,13 +380,29 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String lastname = rs.getString("lastname");
             final String fullname = rs.getString("fullname");
             final String displayName = rs.getString("displayName");
+            final String fathername = rs.getString("fathername");
+            final String emailAddress = rs.getString("emailAddress");
+            final String code = rs.getString("code");
             final String externalId = rs.getString("externalId");
             final String mobileNo = rs.getString("mobileNo");
             final LocalDate dateOfBirth = JdbcSupport.getLocalDate(rs, "dateOfBirth");
             final Long genderId = JdbcSupport.getLong(rs, "genderId");
             final String genderValue = rs.getString("genderValue");
             final CodeValueData gender = CodeValueData.instance(genderId, genderValue);
-
+            final Long maritalId = JdbcSupport.getLong(rs, "maritalId");
+            final String maritalValue = rs.getString("maritalValue");
+            final CodeValueData marital = CodeValueData.instance(maritalId, maritalValue);
+            final Long religionId = JdbcSupport.getLong(rs, "religionId");
+            final String religionValue = rs.getString("religionValue");
+            final CodeValueData religion = CodeValueData.instance(religionId, religionValue);
+            final Long dependentId = JdbcSupport.getLong(rs, "dpendentId");
+            final String dependentValue = rs.getString("dependentValue");
+            final CodeValueData dependent = CodeValueData.instance(dependentId, dependentValue);
+            final Long educationId = JdbcSupport.getLong(rs, "educationId");
+            final String educationValue = rs.getString("educationValue");
+            final CodeValueData education = CodeValueData.instance(educationId, educationValue);
+  
+            
             final Long clienttypeId = JdbcSupport.getLong(rs, "clienttypeId");
             final String clienttypeValue = rs.getString("clienttypeValue");
             final CodeValueData clienttype = CodeValueData.instance(clienttypeId, clienttypeValue);
@@ -403,7 +440,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                     closedByUsername, closedByFirstname, closedByLastname);
 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
-                    firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, dateOfBirth, gender, activationDate,
+                    firstname, middlename, lastname, fullname, displayName,fathername, emailAddress,code,externalId, mobileNo, dateOfBirth, gender,marital,religion,dependent,education,activationDate,
                     imageId, staffId, staffName, timeline, savingsProductId, savingsProductName, savingsAccountId, clienttype,
                     classification);
 
@@ -435,17 +472,27 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("c.id as id, c.account_no as accountNo, c.external_id as externalId, c.status_enum as statusEnum,c.sub_status as subStatus, ");
             builder.append("cvSubStatus.code_value as subStatusValue,cvSubStatus.code_description as subStatusDesc,c.office_id as officeId, o.name as officeName, ");
             builder.append("c.transfer_to_office_id as transferToOfficeId, transferToOffice.name as transferToOfficeName, ");
-            builder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, ");
-            builder.append("c.fullname as fullname, c.display_name as displayName, ");
-            builder.append("c.mobile_no as mobileNo, ");
+            builder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname,");
+            builder.append("c.fullname as fullname, c.display_name as displayName,");
+            builder.append("c.mobile_no as mobileNo,");
+            builder.append("c.fathername as fathername,");
+            builder.append("c.emailaddress as emailAddress,");
+            builder.append("c.code as code, ");
             builder.append("c.date_of_birth as dateOfBirth, ");
             builder.append("c.gender_cv_id as genderId, ");
             builder.append("cv.code_value as genderValue, ");
+            builder.append("c.marital_cv_id as maritalId,");
+            builder.append("cvmarital.code_value as maritalValue,");
+            builder.append("c.religion_cv_id as religionId,");
+            builder.append("cvreligion.code_value as religionValue,");
+            builder.append("c.dependent_cv_id as dependentId, ");
+            builder.append("cvdependent.code_value as dependentValue, ");
+            builder.append("c.education_cv_id as educationId, ");
+            builder.append("cveducation.code_value as educationValue, ");
             builder.append("c.client_type_cv_id as clienttypeId, ");
             builder.append("cvclienttype.code_value as clienttypeValue, ");
             builder.append("c.client_classification_cv_id as classificationId, ");
             builder.append("cvclassification.code_value as classificationValue, ");
-
             builder.append("c.submittedon_date as submittedOnDate, ");
             builder.append("sbu.username as submittedByUsername, ");
             builder.append("sbu.firstname as submittedByFirstname, ");
@@ -475,6 +522,10 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("left join m_appuser clu on clu.id = c.closedon_userid ");
             builder.append("left join m_code_value cv on cv.id = c.gender_cv_id ");
             builder.append("left join m_code_value cvclienttype on cvclienttype.id = c.client_type_cv_id ");
+            builder.append("left join m_code_value cvmarital on cvmarital.id = c.marital_cv_id ");
+            builder.append("left join m_code_value cvreligion on cvreligion.id = c.religion_cv_id ");
+            builder.append("left join m_code_value cvdependent on cvdependent.id = c.dependent_cv_id ");
+            builder.append("left join m_code_value cveducation on cveducation.id = c.education_cv_id ");
             builder.append("left join m_code_value cvclassification on cvclassification.id = c.client_classification_cv_id ");
             builder.append("left join m_code_value cvSubStatus on cvSubStatus.id = c.sub_status ");
 
@@ -510,13 +561,33 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String lastname = rs.getString("lastname");
             final String fullname = rs.getString("fullname");
             final String displayName = rs.getString("displayName");
+            final String fathername = rs.getString("fathername");
+            final String emailAddress = rs.getString("emailAddress");
+            final String code = rs.getString("code");
             final String externalId = rs.getString("externalId");
             final String mobileNo = rs.getString("mobileNo");
             final LocalDate dateOfBirth = JdbcSupport.getLocalDate(rs, "dateOfBirth");
             final Long genderId = JdbcSupport.getLong(rs, "genderId");
             final String genderValue = rs.getString("genderValue");
             final CodeValueData gender = CodeValueData.instance(genderId, genderValue);
-
+            
+            final Long maritalId = JdbcSupport.getLong(rs,"maritalId");
+            final String maritalValue = rs.getString("maritalValue");
+            final CodeValueData marital = CodeValueData.instance(maritalId, maritalValue);
+            
+            final Long religionId = JdbcSupport.getLong(rs, "religionId");
+            final String religionValue = rs.getString("religionValue");
+            final CodeValueData religion = CodeValueData.instance(religionId, religionValue);
+            
+            final Long dependentId = JdbcSupport.getLong(rs, "dependentId");
+            final String dependentValue = rs.getString("dependentValue");
+            final CodeValueData dependent = CodeValueData.instance(dependentId, dependentValue);
+            
+            final Long educationId = JdbcSupport.getLong(rs, "educationId");
+            final String educationValue = rs.getString("educationValue");
+            final CodeValueData education = CodeValueData.instance(educationId, educationValue);
+            
+            
             final Long clienttypeId = JdbcSupport.getLong(rs, "clienttypeId");
             final String clienttypeValue = rs.getString("clienttypeValue");
             final CodeValueData clienttype = CodeValueData.instance(clienttypeId, clienttypeValue);
@@ -553,7 +624,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                     closedByUsername, closedByFirstname, closedByLastname);
 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
-                    firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, dateOfBirth, gender, activationDate,
+                    firstname, middlename, lastname, fullname, displayName,fathername,emailAddress, code,externalId, mobileNo, dateOfBirth, gender,marital,religion,dependent,education, activationDate,
                     imageId, staffId, staffName, timeline, savingsProductId, savingsProductName, savingsAccountId, clienttype,
                     classification);
 
@@ -641,11 +712,14 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final String lastname = rs.getString("lastname");
             final String fullname = rs.getString("fullname");
             final String displayName = rs.getString("displayName");
+            final String fathername = rs.getString("fathername");
+            final String emailAddress = rs.getString("emailAddress");
+            final String code = rs.getString("code");
 
             final Long officeId = rs.getLong("officeId");
             final String officeName = rs.getString("officeName");
 
-            return ClientData.clientIdentifier(id, accountNo, firstname, middlename, lastname, fullname, displayName, officeId, officeName);
+            return ClientData.clientIdentifier(id, accountNo, firstname, middlename, lastname, fullname, displayName,fathername, emailAddress,code,officeId, officeName);
         }
     }
 
@@ -662,7 +736,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final List<CodeValueData> narrations = new ArrayList<>(this.codeValueReadPlatformService.retrieveCodeValuesByCode(clientNarrations));
         final Collection<CodeValueData> clientTypeOptions = null;
         final Collection<CodeValueData> clientClassificationOptions = null;
-        return ClientData.template(null, null, null, null, narrations, null, null, clientTypeOptions, clientClassificationOptions);
+        return ClientData.template(null, null, null, null, narrations, null, null, null,null,null,null, clientTypeOptions, clientClassificationOptions);
     }
 
 }

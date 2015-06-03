@@ -191,7 +191,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 clientParentGroup = this.groupRepository.findOne(groupId);
                 if (clientParentGroup == null) { throw new GroupNotFoundException(groupId); }
             }
-
+           
+           
+            
             Staff staff = null;
             final Long staffId = command.longValueOfParameterNamed(ClientApiConstants.staffIdParamName);
             if (staffId != null) {
@@ -203,7 +205,29 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             if (genderId != null) {
                 gender = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.GENDER, genderId);
             }
+            
+            CodeValue marital = null;
+            final Long maritalId = command.longValueOfParameterNamed(ClientApiConstants.maritalIdParamName);
+            if (maritalId != null) {
+            	marital = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.MARITAL, maritalId);
+            	
+            }
+            CodeValue religion = null;
+            final Long religionId = command.longValueOfParameterNamed(ClientApiConstants.religionIdParamName);
+            if (religionId != null){
+            	religion = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.RELIGION, religionId);
+            }
 
+            CodeValue dependent = null;
+            final Long dependentId = command.longValueOfParameterNamed(ClientApiConstants.dependentIdParamName);
+            if (dependentId != null){
+            	dependent = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.DEPENDENT, dependentId);
+            }
+            CodeValue education = null;
+            final Long educationId = command.longValueOfParameterNamed(ClientApiConstants.educationIdParamName);
+            if (educationId != null){
+            	education = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.EDUCATION, educationId);
+            }
             CodeValue clientType = null;
             final Long clientTypeId = command.longValueOfParameterNamed(ClientApiConstants.clientTypeIdParamName);
             if (clientTypeId != null) {
@@ -226,7 +250,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
             }
 
-            final Client newClient = Client.createNew(currentUser, clientOffice, clientParentGroup, staff, savingsProduct, gender,
+            final Client newClient = Client.createNew(currentUser, clientOffice, clientParentGroup, staff, savingsProduct, gender,marital,religion,dependent,education,
                     clientType, clientClassification, command);
             boolean rollbackTransaction = false;
             if (newClient.isActive()) {
@@ -321,6 +345,39 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 }
                 clientForUpdate.updateGender(newCodeVal);
             }
+            
+            if (changes.containsKey(ClientApiConstants.maritalIdParamName)) {
+                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.maritalIdParamName);
+                CodeValue newCodeVal = null;
+                if (newValue != null) {
+                    newCodeVal = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.MARITAL, newValue);
+                }
+                clientForUpdate.updateGender(newCodeVal);
+            }
+            if (changes.containsKey(ClientApiConstants.religionIdParamName)) {
+                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.religionIdParamName);
+                CodeValue newCodeVal = null;
+                if (newValue != null) {
+                    newCodeVal = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.RELIGION, newValue);
+                }
+                clientForUpdate.updateReligion(newCodeVal);
+            }
+            if (changes.containsKey(ClientApiConstants.dependentIdParamName)) {
+                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.dependentIdParamName);
+                CodeValue newCodeVal = null;
+                if (newValue != null) {
+                    newCodeVal = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.DEPENDENT, newValue);
+                }
+                clientForUpdate.updateReligion(newCodeVal);
+            }
+            if (changes.containsKey(ClientApiConstants.educationIdParamName)) {
+                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.educationIdParamName);
+                CodeValue newCodeVal = null;
+                if (newValue != null) {
+                    newCodeVal = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.EDUCATION, newValue);
+                }
+                clientForUpdate.updateReligion(newCodeVal);
+            }
 
             if (changes.containsKey(ClientApiConstants.clientTypeIdParamName)) {
                 final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.clientTypeIdParamName);
@@ -371,9 +428,10 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final Locale locale = command.extractLocale();
             final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
             final LocalDate activationDate = command.localDateValueOfParameterNamed("activationDate");
+            final String code = command.stringValueOfParameterNamed("code");
 
             final AppUser currentUser = this.context.authenticatedUser();
-            client.activate(currentUser, fmt, activationDate);
+            client.activate(currentUser, fmt, activationDate,code);
             CommandProcessingResult result = openSavingsAccount(client, fmt);
             this.clientRepository.saveAndFlush(client);
 

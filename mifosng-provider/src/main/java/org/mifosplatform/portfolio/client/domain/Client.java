@@ -99,7 +99,16 @@ public final class Client extends AbstractPersistable<Long> {
 
     @Column(name = "fullname", length = 100)
     private String fullname;
-
+    
+    @Column(name ="fathername", length = 100)
+    private String fathername;
+    
+    @Column(name ="emailaddress", length = 50)
+    private String emailAddress;
+    
+    @Column(name="code", length = 50)
+    private String code;
+    
     @Column(name = "display_name", length = 100, nullable = false)
     private String displayName;
 
@@ -109,14 +118,30 @@ public final class Client extends AbstractPersistable<Long> {
     @Column(name = "external_id", length = 100, nullable = true, unique = true)
     private String externalId;
 
-    @Column(name = "date_of_birth", nullable = true)
+    @Column(name = "date_of_birth", nullable = true , unique =true)
     @Temporal(TemporalType.DATE)
     private Date dateOfBirth;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gender_cv_id", nullable = true)
     private CodeValue gender;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "marital_cv_id", nullable = true)
+    private CodeValue marital;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "religion_cv_id", nullable = true)
+    private CodeValue religion;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dependent_cv_id", nullable = true)
+    private CodeValue dependent;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "education_cv_id", nullable = true)
+    private CodeValue education;
+    
     @ManyToOne
     @JoinColumn(name = "staff_id")
     private Staff staff;
@@ -210,19 +235,22 @@ public final class Client extends AbstractPersistable<Long> {
     private CodeValue clientClassification;
 
     public static Client createNew(final AppUser currentUser, final Office clientOffice, final Group clientParentGroup, final Staff staff,
-            final SavingsProduct savingsProduct, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification,
+            final SavingsProduct savingsProduct, final CodeValue gender, final CodeValue marital,final CodeValue religion,final CodeValue dependent,final CodeValue education, final CodeValue clientType, final CodeValue clientClassification,
             final JsonCommand command) {
 
         final String accountNo = command.stringValueOfParameterNamed(ClientApiConstants.accountNoParamName);
         final String externalId = command.stringValueOfParameterNamed(ClientApiConstants.externalIdParamName);
         final String mobileNo = command.stringValueOfParameterNamed(ClientApiConstants.mobileNoParamName);
-
+        
         final String firstname = command.stringValueOfParameterNamed(ClientApiConstants.firstnameParamName);
         final String middlename = command.stringValueOfParameterNamed(ClientApiConstants.middlenameParamName);
         final String lastname = command.stringValueOfParameterNamed(ClientApiConstants.lastnameParamName);
         final String fullname = command.stringValueOfParameterNamed(ClientApiConstants.fullnameParamName);
-
+        final String fathername = command.stringValueOfParameterNamed(ClientApiConstants.fathernameParamName);
+        final String emailAddress = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
+        final String code = command.stringValueOfParameterNamed(ClientApiConstants.codeParamName);
         final LocalDate dataOfBirth = command.localDateValueOfParameterNamed(ClientApiConstants.dateOfBirthParamName);
+        
 
         ClientStatus status = ClientStatus.PENDING;
         boolean active = false;
@@ -246,9 +274,9 @@ public final class Client extends AbstractPersistable<Long> {
             submittedOnDate = command.localDateValueOfParameterNamed(ClientApiConstants.submittedOnDateParamName);
         }
         final SavingsAccount account = null;
-        return new Client(currentUser, status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname,
+        return new Client(currentUser, status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname,fathername,emailAddress,code,
                 activationDate, officeJoiningDate, externalId, mobileNo, staff, submittedOnDate, savingsProduct, account, dataOfBirth,
-                gender, clientType, clientClassification);
+                gender,marital,religion,dependent,education, clientType, clientClassification);
     }
 
     protected Client() {
@@ -257,9 +285,11 @@ public final class Client extends AbstractPersistable<Long> {
 
     private Client(final AppUser currentUser, final ClientStatus status, final Office office, final Group clientParentGroup,
             final String accountNo, final String firstname, final String middlename, final String lastname, final String fullname,
+            final String fathername,
+            final String emailAddress,final String code,
             final LocalDate activationDate, final LocalDate officeJoiningDate, final String externalId, final String mobileNo,
             final Staff staff, final LocalDate submittedOnDate, final SavingsProduct savingsProduct, final SavingsAccount savingsAccount,
-            final LocalDate dateOfBirth, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification) {
+            final LocalDate dateOfBirth, final CodeValue gender, final CodeValue marital,final CodeValue religion,final CodeValue dependent,final CodeValue education, final CodeValue clientType, final CodeValue clientClassification) {
 
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();
@@ -315,6 +345,22 @@ public final class Client extends AbstractPersistable<Long> {
         } else {
             this.fullname = null;
         }
+        if (StringUtils.isNotBlank(fathername)) {
+            this.fathername = fathername.trim();
+        } else {
+            this.fathername = null;
+        }
+        if (StringUtils.isNotBlank(emailAddress)){
+        	this.emailAddress = emailAddress.trim();
+        	
+        }else{
+        	this.emailAddress = null;
+        }
+        if (StringUtils.isNotBlank(code)){
+        	this.code = code.trim();
+        }else{
+        	this.code = null;
+        }
 
         if (clientParentGroup != null) {
             this.groups = new HashSet<>();
@@ -328,10 +374,29 @@ public final class Client extends AbstractPersistable<Long> {
         if (gender != null) {
             this.gender = gender;
         }
+        
+        if (marital !=null){
+        	this.marital = marital;
+        	
+        }
+        if (religion !=null){
+        	this.religion = religion;
+        }
+        if (dependent !=null){
+        	this.dependent = dependent;
+        }
+        if(education != null){
+        	this.education = education;
+        }
+        
         if (dateOfBirth != null) {
             this.dateOfBirth = dateOfBirth.toDateTimeAtStartOfDay().toDate();
+            
         }
+        this.marital = marital;
         this.clientType = clientType;
+        this.dependent = dependent;
+        this.education = education;
         this.clientClassification = clientClassification;
 
         deriveDisplayName();
@@ -368,7 +433,7 @@ public final class Client extends AbstractPersistable<Long> {
         this.accountNumberRequiresAutoGeneration = false;
     }
 
-    public void activate(final AppUser currentUser, final DateTimeFormatter formatter, final LocalDate activationLocalDate) {
+    public void activate(final AppUser currentUser, final DateTimeFormatter formatter, final LocalDate activationLocalDate, final String code) {
 
         if (isActive()) {
             final String defaultUserMessage = "Cannot activate client. Client is already active.";
@@ -382,6 +447,7 @@ public final class Client extends AbstractPersistable<Long> {
         }
 
         this.activationDate = activationLocalDate.toDate();
+        this.code = code;
         this.activatedBy = currentUser;
         this.officeJoiningDate = this.activationDate;
         this.status = ClientStatus.ACTIVE.getValue();
@@ -476,6 +542,22 @@ public final class Client extends AbstractPersistable<Long> {
             actualChanges.put(ClientApiConstants.fullnameParamName, newValue);
             this.fullname = newValue;
         }
+        if (command.isChangeInStringParameterNamed(ClientApiConstants.fathernameParamName, this.fathername)) {
+            final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.fathernameParamName);
+            actualChanges.put(ClientApiConstants.fathernameParamName, newValue);
+            this.fathername = newValue;
+        }
+        
+        if (command.isChangeInStringParameterNamed(ClientApiConstants.emailAddressParamName, this.emailAddress)){
+        	final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
+        	actualChanges.put(ClientApiConstants.emailAddressParamName, newValue);
+        	
+        }
+        if (command.isChangeInStringParameterNamed(ClientApiConstants.codeParamName, this.code)){
+        	final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.codeParamName);
+        	actualChanges.put(ClientApiConstants.codeParamName, newValue);
+        	
+        }
 
         if (command.isChangeInLongParameterNamed(ClientApiConstants.staffIdParamName, staffId())) {
             final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.staffIdParamName);
@@ -485,6 +567,24 @@ public final class Client extends AbstractPersistable<Long> {
         if (command.isChangeInLongParameterNamed(ClientApiConstants.genderIdParamName, genderId())) {
             final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.genderIdParamName);
             actualChanges.put(ClientApiConstants.genderIdParamName, newValue);
+        }
+        
+        if (command.isChangeInLongParameterNamed(ClientApiConstants.maritalIdParamName, maritalId())){
+        	final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.maritalIdParamName);
+        	actualChanges.put(ClientApiConstants.maritalIdParamName, newValue);
+        	
+        }
+        if (command.isChangeInLongParameterNamed(ClientApiConstants.religionIdParamName, religionId())){
+        	final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.religionIdParamName);
+        	actualChanges.put(ClientApiConstants.religionIdParamName, newValue);
+        }
+        if (command.isChangeInLongParameterNamed(ClientApiConstants.dependentIdParamName, dependentId())){
+        	final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.dependentIdParamName);
+        	actualChanges.put(ClientApiConstants.dependentIdParamName,newValue);
+        }
+        if (command.isChangeInLongParameterNamed(ClientApiConstants.educationIdParamName, dependentId())){
+        	final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.educationIdParamName);
+        	actualChanges.put(ClientApiConstants.educationIdParamName,newValue);
         }
 
         if (command.isChangeInLongParameterNamed(ClientApiConstants.savingsProductIdParamName, savingsProductId())) {
@@ -809,7 +909,35 @@ public final class Client extends AbstractPersistable<Long> {
         }
         return genderId;
     }
-
+    
+    public Long maritalId(){
+    	Long maritalId = null;
+    	if (this.marital !=null){
+    		maritalId = this.marital.getId();
+    		
+    	}
+    	return maritalId;
+    }
+    
+    public Long religionId(){
+    	Long religionId = null;
+    	if (this.religion !=null){
+    		
+    		religionId = this.religion.getId();
+    	}
+		return religionId;
+    }
+    
+    public Long dependentId(){
+    	Long dependentId = null;
+    	if (this.dependent != null){
+    		dependentId = this.dependent.getId();
+    	}
+    	
+    	return dependentId;
+    }
+    
+    
     public Long clientTypeId() {
         Long clientTypeId = null;
         if (this.clientType != null) {
@@ -833,7 +961,7 @@ public final class Client extends AbstractPersistable<Long> {
     public CodeValue gender() {
         return this.gender;
     }
-
+    
     public CodeValue clientType() {
         return this.clientType;
     }
@@ -853,6 +981,35 @@ public final class Client extends AbstractPersistable<Long> {
     public void updateGender(CodeValue gender) {
         this.gender = gender;
     }
+
+    public CodeValue marital(){
+    	return this.marital;
+    }
+    
+    public void updateMarital(CodeValue marital){
+    	this.marital = marital;
+    }
+    
+    public CodeValue religion(){
+    	return this.religion;
+    }
+    
+    public void updateReligion(CodeValue religion){
+    	this.religion = religion;
+    }
+    public CodeValue dependent(){
+    	return this.dependent;
+    }
+    public void updateDependent(CodeValue dependent){
+    	this.dependent = dependent;
+    }
+    public CodeValue education(){
+    	return this.education;
+    }
+    public void updateEducation(CodeValue education){
+    	this.education = education;
+    }
+    
 
     public Date dateOfBirth() {
         return this.dateOfBirth;

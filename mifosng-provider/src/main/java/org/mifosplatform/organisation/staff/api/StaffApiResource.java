@@ -49,7 +49,7 @@ public class StaffApiResource {
      * {@link StaffData}.
      */
     private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "firstname", "lastname", "displayName",
-            "officeId", "officeName", "isLoanOfficer", "externalId", "mobileNo", "allowedOffices", "isActive", "joiningDate"));
+            "officeId", "officeName", "isLoanOfficer","isDsa", "externalId", "mobileNo", "allowedOffices", "isActive", "joiningDate"));
 
     private final String resourceNameForPermissions = "STAFF";
 
@@ -80,15 +80,16 @@ public class StaffApiResource {
             @QueryParam("officeId") final Long officeId,
             @DefaultValue("false") @QueryParam("staffInOfficeHierarchy") final boolean staffInOfficeHierarchy,
             @DefaultValue("false") @QueryParam("loanOfficersOnly") final boolean loanOfficersOnly,
+            @DefaultValue("false") @QueryParam("dSaOnly") final boolean dSaOnly,
             @DefaultValue("active") @QueryParam("status") final String status) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         final Collection<StaffData> staff;
         if (staffInOfficeHierarchy) {
-            staff = this.readPlatformService.retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(officeId, loanOfficersOnly);
+            staff = this.readPlatformService.retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(officeId, loanOfficersOnly,dSaOnly);
         } else {
-            staff = this.readPlatformService.retrieveAllStaff(sqlSearch, officeId, loanOfficersOnly, status);
+            staff = this.readPlatformService.retrieveAllStaff(sqlSearch, officeId, loanOfficersOnly,dSaOnly, status);
         }
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());

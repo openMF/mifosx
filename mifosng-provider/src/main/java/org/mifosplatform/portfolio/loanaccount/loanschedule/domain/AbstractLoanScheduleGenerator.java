@@ -315,7 +315,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                                 outstandingBalanceAsPerRest = updateBalanceForInterestCalculation(disburseDetailMap,
                                         detail.getTransactionDate(), outstandingBalanceAsPerRest, true);
 
-                                // handle cumulative fields
+                                // handle cumulative fieldsme@ishankhanna.in
                                 loanTermInDays += periodDays;
                                 totalRepaymentExpected = totalRepaymentExpected.add(totalInstallmentDue.getAmount());
                                 totalCumulativeInterest = totalCumulativeInterest.plus(interestForThisinstallment);
@@ -1599,6 +1599,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
 
         Money cumulative = Money.zero(monetaryCurrency);
 
+        //We need to implement the condition!
+
         for (final LoanCharge loanCharge : loanCharges) {
             if (loanCharge.isFeeCharge()) {
                 if (loanCharge.isInstalmentFee() && isInstallmentChargeApplicable) {
@@ -1613,6 +1615,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                             cumulative, loanCharge);
                 } else if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)) {
                     cumulative = cumulative.plus(loanCharge.amount());
+                }else if (loanCharge.isTotalPrincipalOutstanding() && loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodEnd, periodEnd ) && loanCharge.getChargeCalculation().isPercentageOfPrincipal() && loanCharge.getChargeCalculation().isPercentageBased()) {
+                    cumulative =  cumulative.plus(loanCharge.chargeAmount());
                 }
             }
         }

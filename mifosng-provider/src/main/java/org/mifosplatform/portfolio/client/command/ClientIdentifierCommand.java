@@ -6,8 +6,10 @@
 package org.mifosplatform.portfolio.client.command;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
@@ -18,12 +20,20 @@ import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidation
 public class ClientIdentifierCommand {
 
     private final Long documentTypeId;
+    private final Long proofTypeId;
     private final String documentKey;
+    private final LocalDate validity;
+    private final String locale;
+    private final String dateFormat;
     private final String description;
 
-    public ClientIdentifierCommand(final Long documentTypeId, final String documentKey, final String description) {
+    public ClientIdentifierCommand(final Long documentTypeId,final Long proofTypeId, final String documentKey, final LocalDate validity,final String locale, final String dateFormat,final String description) {
         this.documentTypeId = documentTypeId;
+        this.proofTypeId = proofTypeId;
         this.documentKey = documentKey;
+        this.validity = validity;
+        this.locale = locale;
+        this.dateFormat = dateFormat;
         this.description = description;
     }
 
@@ -38,6 +48,19 @@ public class ClientIdentifierCommand {
     public String getDescription() {
         return this.description;
     }
+    
+    public LocalDate getValidity() {
+		return this.validity;
+	}
+    
+    public String getlocale(){
+    	return this.locale;
+    }
+    
+    public Long getproofTypeId(){
+    	return this.proofTypeId;
+    }
+ 
 
     public void validateForCreate() {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();

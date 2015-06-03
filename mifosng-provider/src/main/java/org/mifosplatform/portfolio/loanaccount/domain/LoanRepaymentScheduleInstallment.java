@@ -175,6 +175,7 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
         return Money.of(currency, this.principal);
     }
 
+
     public Money getPrincipalCompleted(final MonetaryCurrency currency) {
         return Money.of(currency, this.principalCompleted);
     }
@@ -187,6 +188,12 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
         final Money principalAccountedFor = getPrincipalCompleted(currency).plus(getPrincipalWrittenOff(currency));
         return getPrincipal(currency).minus(principalAccountedFor);
     }
+    public Money getTotalPrincipalOutstanding(final MonetaryCurrency currency) {
+        final Money principalAccountedFor = getPrincipalWrittenOff(currency).plus(getPrincipalCompleted(currency));
+        return getPrincipal(currency).minus(principalAccountedFor);
+    }
+
+
 
     public Money getInterestCharged(final MonetaryCurrency currency) {
         return Money.of(currency, this.interestCharged);
@@ -279,6 +286,7 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
                 .plus(getPenaltyChargesOutstanding(currency));
     }
 
+
     public void updateLoan(final Loan loan) {
         this.loan = loan;
     }
@@ -290,6 +298,7 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
     public boolean isObligationsMet() {
         return this.obligationsMet;
     }
+
 
     public boolean isNotFullyPaidOff() {
         return !this.obligationsMet;
@@ -304,6 +313,7 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
     }
 
     public void resetDerivedComponents() {
+
         this.principalCompleted = null;
         this.principalWrittenOff = null;
         this.interestPaid = null;

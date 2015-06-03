@@ -20,6 +20,8 @@ public class BulkTransferLoanOfficerData {
     @SuppressWarnings("unused")
     private final Long fromLoanOfficerId;
     @SuppressWarnings("unused")
+    private final Long fromDsaOfficerId;
+    @SuppressWarnings("unused")
     private final LocalDate assignmentDate;
 
     // template
@@ -28,28 +30,30 @@ public class BulkTransferLoanOfficerData {
     @SuppressWarnings("unused")
     private final Collection<StaffData> loanOfficerOptions;
     @SuppressWarnings("unused")
+    private final Collection<StaffData> dSaOptions;
+    @SuppressWarnings("unused")
     private final StaffAccountSummaryCollectionData accountSummaryCollection;
 
-    public static BulkTransferLoanOfficerData templateForBulk(final Long officeId, final Long fromLoanOfficerId,
-            final LocalDate assignmentDate, final Collection<OfficeData> officeOptions, final Collection<StaffData> loanOfficerOptions,
-            final StaffAccountSummaryCollectionData accountSummaryCollection) {
-        return new BulkTransferLoanOfficerData(officeId, fromLoanOfficerId, assignmentDate, officeOptions, loanOfficerOptions,
+    public static BulkTransferLoanOfficerData templateForBulk(final Long officeId, final Long fromLoanOfficerId,final Long fromDsaOfficerId,final LocalDate assignmentDate, final Collection<OfficeData> officeOptions, final Collection<StaffData> loanOfficerOptions,final Collection<StaffData> dSaOptions,final StaffAccountSummaryCollectionData accountSummaryCollection) {
+        return new BulkTransferLoanOfficerData(officeId, fromLoanOfficerId,fromDsaOfficerId, assignmentDate, officeOptions, loanOfficerOptions,dSaOptions,
                 accountSummaryCollection);
     }
 
-    public static BulkTransferLoanOfficerData template(final Long fromLoanOfficerId, final Collection<StaffData> loanOfficerOptions,
+    public static BulkTransferLoanOfficerData template(final Long fromLoanOfficerId,final Long fromDsaOfficerId, final Collection<StaffData> loanOfficerOptions,final Collection<StaffData> dSaOptions,
             final LocalDate assignmentDate) {
-        return new BulkTransferLoanOfficerData(null, fromLoanOfficerId, assignmentDate, null, loanOfficerOptions, null);
+        return new BulkTransferLoanOfficerData(null, fromLoanOfficerId,fromDsaOfficerId, assignmentDate, null, loanOfficerOptions,dSaOptions, null);
     }
 
-    private BulkTransferLoanOfficerData(final Long officeId, final Long fromLoanOfficerId, final LocalDate assignmentDate,
-            final Collection<OfficeData> officeOptions, final Collection<StaffData> loanOfficerOptions,
+    private BulkTransferLoanOfficerData(final Long officeId, final Long fromLoanOfficerId,final Long fromDsaOfficerId, final LocalDate assignmentDate,
+            final Collection<OfficeData> officeOptions, final Collection<StaffData> loanOfficerOptions,final Collection<StaffData> dSaOptions,
             final StaffAccountSummaryCollectionData accountSummaryCollection) {
         this.officeId = officeId;
         this.fromLoanOfficerId = fromLoanOfficerId;
+        this.fromDsaOfficerId = fromDsaOfficerId;
         this.assignmentDate = assignmentDate;
         this.officeOptions = officeOptions;
         this.loanOfficerOptions = loanOfficerOptions;
+        this.dSaOptions = dSaOptions;
         this.accountSummaryCollection = accountSummaryCollection;
     }
 }

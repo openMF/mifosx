@@ -46,6 +46,9 @@ public class Staff extends AbstractPersistable<Long> {
 
     @Column(name = "is_loan_officer ", nullable = false)
     private boolean loanOfficer;
+    
+    @Column(name= "is_dsa", nullable=false)
+    private boolean Dsa;
 
     @Column(name = "organisational_role_enum", nullable = true)
     private Integer organisationalRoleType;
@@ -81,6 +84,10 @@ public class Staff extends AbstractPersistable<Long> {
 
         final String isLoanOfficerParamName = "isLoanOfficer";
         final boolean isLoanOfficer = command.booleanPrimitiveValueOfParameterNamed(isLoanOfficerParamName);
+        
+        final String isDsaParamName = "isDsa";
+        final boolean isDsa = command.booleanPrimitiveValueOfParameterNamed(isDsaParamName);
+
 
         final String isActiveParamName = "isActive";
         final Boolean isActive = command.booleanObjectValueOfParameterNamed(isActiveParamName);
@@ -92,7 +99,7 @@ public class Staff extends AbstractPersistable<Long> {
             joiningDate = command.localDateValueOfParameterNamed(joiningDateParamName);
         }
 
-        return new Staff(staffOffice, firstname, lastname, externalId, mobileNo, isLoanOfficer, isActive, joiningDate);
+        return new Staff(staffOffice, firstname, lastname, externalId, mobileNo, isLoanOfficer,isDsa, isActive, joiningDate);
     }
 
     protected Staff() {
@@ -100,13 +107,14 @@ public class Staff extends AbstractPersistable<Long> {
     }
 
     private Staff(final Office staffOffice, final String firstname, final String lastname, final String externalId, final String mobileNo,
-            final boolean isLoanOfficer, final Boolean isActive, final LocalDate joiningDate) {
+            final boolean isLoanOfficer,final boolean isDsa, final Boolean isActive, final LocalDate joiningDate) {
         this.office = staffOffice;
         this.firstname = StringUtils.defaultIfEmpty(firstname, null);
         this.lastname = StringUtils.defaultIfEmpty(lastname, null);
         this.externalId = StringUtils.defaultIfEmpty(externalId, null);
         this.mobileNo = StringUtils.defaultIfEmpty(mobileNo, null);
         this.loanOfficer = isLoanOfficer;
+        this.Dsa = isDsa;
         this.active = (isActive == null) ? true : isActive;
         deriveDisplayName(firstname);
         if (joiningDate != null) {
@@ -178,6 +186,12 @@ public class Staff extends AbstractPersistable<Long> {
             actualChanges.put(isLoanOfficerParamName, newValue);
             this.loanOfficer = newValue;
         }
+        final String isDsaParamName = "isDsa";
+        if (command.isChangeInBooleanParameterNamed(isDsaParamName, this.Dsa)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(isDsaParamName);
+            actualChanges.put(isDsaParamName, newValue);
+            this.Dsa = newValue;
+        }
 
         final String isActiveParamName = "isActive";
         if (command.isChangeInBooleanParameterNamed(isActiveParamName, this.active)) {
@@ -203,6 +217,9 @@ public class Staff extends AbstractPersistable<Long> {
 
     public boolean isLoanOfficer() {
         return this.loanOfficer;
+    }
+    public boolean isDsa(){
+    	return this.Dsa;
     }
 
     public boolean isNotActive() {

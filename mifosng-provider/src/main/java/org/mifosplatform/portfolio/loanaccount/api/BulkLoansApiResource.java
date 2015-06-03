@@ -45,8 +45,8 @@ import org.springframework.stereotype.Component;
 @Scope("singleton")
 public class BulkLoansApiResource {
 
-    private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("officeId", "fromLoanOfficerId",
-            "assignmentDate", "officeOptions", "loanOfficerOptions", "accountSummaryCollection"));
+    private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("officeId", "fromLoanOfficerId","fromDsaOfficerId",
+            "assignmentDate", "officeOptions", "loanOfficerOptions","dSaOptions", "accountSummaryCollection"));
 
     private final String resourceNameForPermissions = "LOAN";
 
@@ -78,7 +78,7 @@ public class BulkLoansApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String loanReassignmentTemplate(@QueryParam("officeId") final Long officeId,
-            @QueryParam("fromLoanOfficerId") final Long loanOfficerId, @Context final UriInfo uriInfo) {
+            @QueryParam("fromLoanOfficerId") final Long loanOfficerId, @Context final UriInfo uriInfo, final Long dsaOfficerId) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
@@ -95,8 +95,8 @@ public class BulkLoansApiResource {
             staffAccountSummaryCollectionData = this.bulkLoansReadPlatformService.retrieveLoanOfficerAccountSummary(loanOfficerId);
         }
 
-        final BulkTransferLoanOfficerData loanReassignmentData = BulkTransferLoanOfficerData.templateForBulk(officeId, loanOfficerId,
-                new LocalDate(), offices, loanOfficers, staffAccountSummaryCollectionData);
+        final BulkTransferLoanOfficerData loanReassignmentData = BulkTransferLoanOfficerData.templateForBulk(officeId, loanOfficerId,dsaOfficerId,
+                  new LocalDate(), offices, loanOfficers, loanOfficers, staffAccountSummaryCollectionData);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, loanReassignmentData, this.RESPONSE_DATA_PARAMETERS);

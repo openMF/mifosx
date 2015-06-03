@@ -535,7 +535,10 @@ public class Loan extends AbstractPersistable<Long> {
             chargeAmt = loanCharge.getPercentage();
             if (loanCharge.isInstalmentFee()) {
                 totalChargeAmt = calculatePerInstallmentChargeAmount(loanCharge);
-            } else if (loanCharge.isOverdueInstallmentCharge()) {
+            }if(loanCharge.isTotalPrincipalOutstanding()){
+               totalChargeAmt = calculatePerTotalPrincipalOutstanding(loanCharge);
+            }
+            else if (loanCharge.isOverdueInstallmentCharge()) {
                 totalChargeAmt = loanCharge.amountOutstanding();
             }
         } else {
@@ -582,11 +585,11 @@ public class Loan extends AbstractPersistable<Long> {
      * Creates a loanTransaction for "Apply Charge Event" with transaction date
      * set to "suppliedTransactionDate". The newly created transaction is also
      * added to the Loan on which this method is called.
-     * 
+     *
      * If "suppliedTransactionDate" is not passed Id, the transaction date is
      * set to the loans due date if the due date is lesser than todays date. If
      * not, the transaction date is set to todays date
-     * 
+     *
      * @param loanCharge
      * @param suppliedTransactionDate
      * @return
@@ -719,7 +722,7 @@ public class Loan extends AbstractPersistable<Long> {
              * TODO Vishwas Currently we do not allow removing a loan charge
              * after a loan is approved (hence there is no need to adjust any
              * loan transactions).
-             * 
+             *
              * Consider removing this block of code or logically completing it
              * for the future by getting the list of affected Transactions
              ***/
@@ -777,7 +780,7 @@ public class Loan extends AbstractPersistable<Long> {
              * TODO Vishwas Currently we do not allow waiving updating loan
              * charge after a loan is approved (hence there is no need to adjust
              * any loan transactions).
-             * 
+             *
              * Consider removing this block of code or logically completing it
              * for the future by getting the list of affected Transactions
              ***/
@@ -812,6 +815,9 @@ public class Loan extends AbstractPersistable<Long> {
             case PERCENT_OF_INTEREST:
                 amount = getTotalInterest();
             break;
+            case PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING:
+            	amount = getLoanSummary().getTotalPrincipalOutstanding();
+            	break;
             default:
             break;
         }
@@ -828,6 +834,17 @@ public class Loan extends AbstractPersistable<Long> {
     private BigDecimal calculatePerInstallmentChargeAmount(final LoanCharge loanCharge) {
         return calculatePerInstallmentChargeAmount(loanCharge.getChargeCalculation(), loanCharge.getPercentage());
     }
+
+    private BigDecimal calculatePerTotalPrincipalOutstanding(final LoanCharge loanCharge){
+        return  calculatePerTotalPrincipalOutstanding(loanCharge.getChargeCalculation(), loanCharge.getPercentage());
+    }
+
+    public BigDecimal calculatePerTotalPrincipalOutstanding(final ChargeCalculationType calculationType, final BigDecimal percentage){
+        //Money amount = Money.zero(getCurrency());
+       BigDecimal  amount = percentage.multiply(this.getLoanSummary().getTotalPrincipalOutstanding()).divide(new BigDecimal(100));
+        return amount;
+    }
+
 
     public BigDecimal calculatePerInstallmentChargeAmount(final ChargeCalculationType calculationType, final BigDecimal percentage) {
         Money amount = Money.zero(getCurrency());
@@ -860,6 +877,10 @@ public class Loan extends AbstractPersistable<Long> {
             break;
             case PERCENT_OF_INTEREST:
                 percentOf = installment.getInterestCharged(getCurrency());
+                break;
+            case PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING:
+                percentOf = Money.of(getCurrency(),installment.getLoan().getTotalPrincipalOutstanding());
+
             break;
             default:
             break;
@@ -1149,10 +1170,15 @@ public class Loan extends AbstractPersistable<Long> {
             final Money recoveredAmount = calculateTotalRecoveredPayments();
             this.totalRecovered = recoveredAmount.getAmountDefaultedToNullIfZero();
 
-            final Money principal = this.loanRepaymentScheduleDetail.getPrincipal();
-            this.summary.updateSummary(loanCurrency(), principal, this.repaymentScheduleInstallments, this.loanSummaryWrapper,
-                    isDisbursed());
-            updateLoanOutstandingBalaces();
+
+                final Money principal = this.loanRepaymentScheduleDetail.getPrincipal();
+                this.summary.updateSummary(loanCurrency(), principal, this.repaymentScheduleInstallments, this.loanSummaryWrapper,
+                        isDisbursed());
+                updateLoanOutstandingBalaces();
+            
+
+
+
         }
     }
 
@@ -3435,6 +3461,7 @@ public class Loan extends AbstractPersistable<Long> {
         return !isDisbursed();
     }
 
+
     public boolean isDisbursed() {
         return hasDisbursementTransaction();
     }
@@ -3487,6 +3514,7 @@ public class Loan extends AbstractPersistable<Long> {
         }
         return hasRepaymentTransaction;
     }
+    //private boolean has
 
     public boolean isSubmittedOnDateAfter(final LocalDate compareDate) {
         return this.submittedOnDate == null ? false : new LocalDate(this.submittedOnDate).isAfter(compareDate);
@@ -4577,6 +4605,10 @@ public class Loan extends AbstractPersistable<Long> {
 
     public BigDecimal getApprovedPrincipal() {
         return this.approvedPrincipal;
+    }
+
+    public BigDecimal getTotalPrincipalOutstanding(){
+        return  this.summary.getTotalPrincipalOutstanding();
     }
 
     public BigDecimal getTotalOverpaid() {

@@ -326,7 +326,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             for (final ParameterDefinitionEntry paramDefEntry : paramsDefinition.getParameterDefinitions()) {
                 final String paramName = paramDefEntry.getName();
                 if (!((paramName.equals("tenantUrl")) || (paramName.equals("userhierarchy") || (paramName.equals("username")) || (paramName
-                        .equals("password") || (paramName.equals("userid")))))) {
+                        .equals("password"))))) {
                     logger.info("paramName:" + paramName);
                     final String pValue = queryParams.get(paramName);
                     if (StringUtils.isBlank(pValue)) { throw new PlatformDataIntegrityException("error.msg.reporting.error",
@@ -361,10 +361,6 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             final String userhierarchy = currentUser.getOffice().getHierarchy();
             logger.info("db URL:" + tenantUrl + "      userhierarchy:" + userhierarchy);
             rptParamValues.put("userhierarchy", userhierarchy);
-			
-            final String userid = currentUser.getId().toString();
-            logger.info("db URL:" + tenantUrl + "      userid:" + userid);
-            rptParamValues.put("userid", userid);
 
             final MifosPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
 

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.serialization.AbstractFromApiJsonDeserializer;
 import org.mifosplatform.infrastructure.core.serialization.FromApiJsonDeserializer;
@@ -33,7 +34,7 @@ public final class ClientIdentifierCommandFromApiJsonDeserializer extends Abstra
     /**
      * The parameters supported for this command.
      */
-    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("documentTypeId", "documentKey", "description"));
+    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("documentTypeId", "proofTypeId","documentKey", "validity","locale", "dateFormat", "description"));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -52,9 +53,12 @@ public final class ClientIdentifierCommandFromApiJsonDeserializer extends Abstra
 
         final JsonElement element = this.fromApiJsonHelper.parse(json);
         final Long documentTypeId = this.fromApiJsonHelper.extractLongNamed("documentTypeId", element);
+        final Long proofTypeId = this.fromApiJsonHelper.extractLongNamed("proofTypeId", element);
         final String documentKey = this.fromApiJsonHelper.extractStringNamed("documentKey", element);
+        final String locale = this.fromApiJsonHelper.extractStringNamed("locale", element);
+        final String dateFormat = this.fromApiJsonHelper.extractStringNamed("dateFormat",element);
         final String documentDescription = this.fromApiJsonHelper.extractStringNamed("documentDescription", element);
-
-        return new ClientIdentifierCommand(documentTypeId, documentKey, documentDescription);
+        	final LocalDate validity = this.fromApiJsonHelper.extractLocalDateNamed("validity", element);
+        	return new ClientIdentifierCommand(documentTypeId,proofTypeId, documentKey, validity,locale,dateFormat, documentDescription);
     }
 }
