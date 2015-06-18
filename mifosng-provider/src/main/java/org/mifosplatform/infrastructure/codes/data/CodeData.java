@@ -17,15 +17,18 @@ public class CodeData implements Serializable {
     private final String name;
     @SuppressWarnings("unused")
     private final boolean systemDefined;
+    @SuppressWarnings("unused")
+    private final Long parentId;
 
-    public static CodeData instance(final Long id, final String name, final boolean systemDefined) {
-        return new CodeData(id, name, systemDefined);
+    public static CodeData instance(final Long id, final String name, final boolean systemDefined, final Long parentId) {
+        return new CodeData(id, name, systemDefined, parentId);
     }
 
-    private CodeData(final Long id, final String name, final boolean systemDefined) {
+    private CodeData(final Long id, final String name, final boolean systemDefined, final Long parentId) {
         this.id = id;
         this.name = name;
         this.systemDefined = systemDefined;
+        this.parentId = parentId;
     }
 
     public Long getCodeId() {

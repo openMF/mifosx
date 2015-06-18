@@ -35,4 +35,6 @@ public interface CodeValueReadPlatformService {
     Collection<CodeValueData> retrieveAllCodeValues(final Long codeId);
 
     CodeValueData retrieveCodeValue(final Long codeValueId);
+
+	Collection<CodeValueData> retrieveCodeValueTemplate(final Long parentId);
 }

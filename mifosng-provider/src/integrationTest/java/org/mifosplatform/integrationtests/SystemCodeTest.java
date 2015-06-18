@@ -53,8 +53,10 @@ public class SystemCodeTest {
     // scenario 57, 58, 59, 60
     public void testCreateCode() {
         final String codeName = "Client Marital Status";
+        
+        final Integer parentId = null;
 
-        final Integer createResponseId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, codeName,
+        final Integer createResponseId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, codeName, parentId ,
                 CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
 
         // verify code created
@@ -69,7 +71,7 @@ public class SystemCodeTest {
 
         // update code
         final HashMap updateChangeResponse = (HashMap) CodeHelper.updateCode(this.requestSpec, this.responseSpec, createResponseId,
-                codeName + "(CHANGE)", "changes");
+                codeName + "(CHANGE)", parentId, "changes");
 
         assertEquals("Verify code name updated", codeName + "(CHANGE)", updateChangeResponse.get(CodeHelper.CODE_NAME_ATTRIBUTE_NAME));
 
@@ -94,9 +96,11 @@ public class SystemCodeTest {
     // scenario 57, 60
     public void testPreventCreateDuplicateCode() {
         final String codeName = "Client Marital Status";
+        
+        final Integer parentId = null;
 
         // create code
-        final Integer createResponseId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, codeName,
+        final Integer createResponseId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, codeName, parentId,
                 CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
 
         // verify code created
@@ -109,7 +113,7 @@ public class SystemCodeTest {
         assertEquals("Verify system defined is false", false, newCodeAttributes.get(CodeHelper.CODE_SYSTEM_DEFINED_ATTRIBUTE_NAME));
 
         // try to create duplicate-- should fail
-        final List<HashMap> error = (List) CodeHelper.createCode(this.requestSpec, this.generalResponseSpec, codeName,
+        final List<HashMap> error = (List) CodeHelper.createCode(this.requestSpec, this.generalResponseSpec, codeName, parentId,
                 CommonConstants.RESPONSE_ERROR);
 
         assertEquals("Verify duplication error", "error.msg.code.duplicate.name", error.get(0).get("userMessageGlobalisationCode"));
@@ -149,7 +153,7 @@ public class SystemCodeTest {
 
         final List<HashMap> updateError = (List) CodeHelper.updateCode(this.requestSpec, this.generalResponseSpec,
                 (Integer) systemDefinedCode.get(CodeHelper.CODE_ID_ATTRIBUTE_NAME),
-                systemDefinedCode.get(CodeHelper.CODE_NAME_ATTRIBUTE_NAME) + "CHANGE", CommonConstants.RESPONSE_ERROR);
+                systemDefinedCode.get(CodeHelper.CODE_NAME_ATTRIBUTE_NAME) + "CHANGE", null, CommonConstants.RESPONSE_ERROR);
 
         assertEquals("Cannot update system-defined code", "error.msg.code.systemdefined",
                 updateError.get(0).get("userMessageGlobalisationCode"));
@@ -170,18 +174,20 @@ public class SystemCodeTest {
 
         final String codeDescription1 = "Description11";
         final String codeDescription2 = "Description22";
+        
+        final Integer parentId = null;
 
         // create code
-        final Integer createCodeResponseId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, codeName,
+        final Integer createCodeResponseId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, codeName, parentId ,
                 CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
 
         // create first code value
         final Integer createCodeValueResponseId1 = (Integer) CodeHelper.createCodeValue(this.requestSpec, this.responseSpec,
-                createCodeResponseId, codeValue1, codeDescription1, codeValue1Position, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
+                createCodeResponseId, codeValue1, codeDescription1, codeValue1Position, parentId, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
 
         // create second code value
         final Integer createCodeValueResponseId2 = (Integer) CodeHelper.createCodeValue(this.requestSpec, this.responseSpec,
-                createCodeResponseId, codeValue2, codeDescription2, codeValue1Position, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
+                createCodeResponseId, codeValue2, codeDescription2, codeValue1Position, parentId, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
 
         // verify two code values created
 
@@ -224,7 +230,7 @@ public class SystemCodeTest {
 
         // update code value 1
         final HashMap codeValueChanges = (HashMap) CodeHelper.updateCodeValue(this.requestSpec, this.responseSpec, createCodeResponseId,
-                createCodeValueResponseId1, codeValue1 + "CHANGE", codeDescription1 + "CHANGE", 4, "changes");
+                createCodeValueResponseId1, codeValue1 + "CHANGE", codeDescription1 + "CHANGE", 4, parentId, "changes");
 
         assertEquals("Verify changed code value name", codeValueChanges.get("name"), codeValue1 + "CHANGE");
 
@@ -265,6 +271,131 @@ public class SystemCodeTest {
     @Test
     public void testCodeValuesAssignedToTable() {
 
+    }
+    
+    @Test
+    public void testCreateCodeWithDependencyColumn(){
+
+        final String codeName = "CountryListTest";
+        Integer parentId = null;
+        
+        final Integer createResponseParentId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, codeName, parentId ,
+                CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
+        if(createResponseParentId != null){
+        	parentId = createResponseParentId;
+        }
+        
+        final String dependentcodeName = "StateListTest";
+ 
+        final Integer createResponseId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, dependentcodeName, parentId,
+                CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
+
+        // verify code created
+
+       final HashMap newCodeAttributes = (HashMap) CodeHelper.getCodeById(this.requestSpec, this.responseSpec, createResponseId, "");
+
+        Assert.assertNotNull(newCodeAttributes);
+        assertEquals("Verify value of codeId", createResponseId, newCodeAttributes.get(CodeHelper.CODE_ID_ATTRIBUTE_NAME));
+
+        assertEquals("Verify code name", dependentcodeName, newCodeAttributes.get(CodeHelper.CODE_NAME_ATTRIBUTE_NAME));
+        assertEquals("Verify system defined is false", false, newCodeAttributes.get(CodeHelper.CODE_SYSTEM_DEFINED_ATTRIBUTE_NAME));
+        assertEquals("Verify value of parentId", parentId, newCodeAttributes.get(CodeHelper.CODE_PARENT_ID_ATTRIBUTE_NAME));
+
+        // update code
+        final HashMap updateChangeResponse = (HashMap) CodeHelper.updateCode(this.requestSpec, this.responseSpec, createResponseId,
+        		dependentcodeName+ "(CHANGE)", parentId, "changes");
+
+        assertEquals("Verify dependent code name updated", dependentcodeName + "(CHANGE)", updateChangeResponse.get(CodeHelper.CODE_NAME_ATTRIBUTE_NAME));
+
+        // delete code
+       final Integer deleteResponseId = (Integer) CodeHelper.deleteCodeById(this.requestSpec, this.responseSpec, createResponseId,
+                CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
+        assertEquals("Verify code deleted", createResponseId, deleteResponseId);
+
+        // verify code deleted
+           final HashMap deletedCodeValues = (HashMap) CodeHelper
+                .getCodeById(this.requestSpec, this.generalResponseSpec, deleteResponseId, "");
+
+        Assert.assertNotNull(deletedCodeValues);
+        assertNull("Verify value of codeId", deletedCodeValues.get(CodeHelper.CODE_ID_ATTRIBUTE_NAME));
+
+        assertNull("Verify code name", deletedCodeValues.get(CodeHelper.CODE_NAME_ATTRIBUTE_NAME));
+        assertNull("Verify system defined is false", deletedCodeValues.get(CodeHelper.CODE_SYSTEM_DEFINED_ATTRIBUTE_NAME));
+    
+    }
+    
+    @Test
+    public void testCreateCodeValueWithDepenedenyColumn(){
+    	
+    	final String codeName = Utils.randomNameGenerator("CountryListTest", 5);
+        Integer parentId = null;
+        
+        final Integer createCodeResponseParentId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, codeName, parentId ,
+                CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
+        
+        final String codeValue1 = "India_Country";
+        final String codeValue2 = "USA_Country";
+
+        final int codeValue1Position = 1;
+        final int codeValue2Position = 1;
+
+        final String codeDescription1 = "Descrip11";
+        final String codeDescription2 = "Descrip22";
+        
+        // create first code value
+        final Integer createCodeValueResponseId1 = (Integer) CodeHelper.createCodeValue(this.requestSpec, this.responseSpec,
+        		createCodeResponseParentId, codeValue1, codeDescription1, codeValue1Position, parentId, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
+
+        // create second code value
+        final Integer createCodeValueResponseId2 = (Integer) CodeHelper.createCodeValue(this.requestSpec, this.responseSpec,
+        		createCodeResponseParentId, codeValue2, codeDescription2, codeValue2Position, parentId, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
+
+        // verify two code values created
+
+        final List<HashMap> codeValuesList1 = (List) CodeHelper.getCodeValuesForCode(this.requestSpec, this.responseSpec,
+        		createCodeResponseParentId, "");
+
+        assertEquals("Number of code values returned matches number created", 2, codeValuesList1.size());
+
+       
+        final String dependentcodeName = Utils.randomNameGenerator("StateListTest", 5);
+        
+        
+ 
+        final Integer createResponseId = (Integer) CodeHelper.createCode(this.requestSpec, this.responseSpec, dependentcodeName, createCodeResponseParentId,
+                CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
+        
+        // verify code created
+        final HashMap newCodeAttributes = (HashMap) CodeHelper.getCodeById(this.requestSpec, this.responseSpec, createResponseId, "");
+
+        Assert.assertNotNull(newCodeAttributes);
+        
+        final String codeValue3 = "Kerala";
+        final String codeValue4 = "LV";
+
+        final int codeValue3Position = 1;
+        final int codeValue4Position = 1;
+
+        final String codeDescription3 = "Description1";
+        final String codeDescription4 = "Description2";
+        
+        // create first code value
+        final Integer createCodeValueResponseId3 = (Integer) CodeHelper.createCodeValue(this.requestSpec, this.responseSpec,
+        		createResponseId, codeValue3, codeDescription3, codeValue3Position,  createCodeValueResponseId1, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
+
+        // create second code value
+        final Integer createCodeValueResponseId4 = (Integer) CodeHelper.createCodeValue(this.requestSpec, this.responseSpec,
+        		createResponseId, codeValue4, codeDescription4, codeValue4Position, createCodeValueResponseId2, CodeHelper.SUBRESPONSE_ID_ATTRIBUTE_NAME);
+        
+        // verify two code values created
+
+        final List<HashMap> codeValuesList2 = (List) CodeHelper.getCodeValuesForCode(this.requestSpec, this.responseSpec,
+        		createResponseId, "");
+
+        assertEquals("Number of code values returned matches number created", 2, codeValuesList2.size());
+        
+        
+    	
     }
 
 }

@@ -91,6 +91,20 @@ public class CodeValuesApiResource {
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, codeValue, this.RESPONSE_DATA_PARAMETERS);
     }
+    
+    @GET
+    @Path("template")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retriveTemplate(@Context final UriInfo uriInfo, @PathParam("codeId") final Long codeId){
+    	
+    	this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
+    	
+    	final Collection<CodeValueData> codeValue = this.readPlatformService.retrieveCodeValueTemplate(codeId);
+    	
+    	final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        return this.toApiJsonSerializer.serialize(settings, codeValue, this.RESPONSE_DATA_PARAMETERS);
+    }
 
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })

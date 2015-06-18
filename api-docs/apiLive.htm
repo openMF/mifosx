@@ -14836,7 +14836,10 @@ GET https://DomainName/api/v1/hooks/template
 						Codes are mostly <b>system defined</b> which means the code itself
 						comes out of the box and cannot be modified however its code values
 						can be. e.g. 'Customer Identifier', it defaults to a code value of
-						'Passport' but could be 'Drivers License, National Id' etc
+						'Passport' but could be 'Drivers License, National Id' etc. We can 
+						also create <b>dependencies</b> between code and code values by selecting
+						the parent code name. e.g. 'State', is dependent on the country, if
+						we select India as a country, only Indian states should pre-populate.
 					<p />
 				</div>
 			</div>
@@ -14848,6 +14851,9 @@ GET https://DomainName/api/v1/hooks/template
 					<h4>Create a Code</h4>
 					<p>Creates a code. Codes created through api are always 'user
 						defined' and so system defined is marked as false.</p>
+						
+					Note: The 'parentId' is an Id of parent code name and it is optional parameter.
+					
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
@@ -14858,7 +14864,8 @@ POST codes
 Content-Type: application/json
 Request Body:
 {
-	"name": "MyNewCode"
+	"name": "MyNewCode",
+	"parentId": "2"
 }
 					</code>
 					<code class="method-response">
@@ -14887,17 +14894,26 @@ GET https://DomainName/api/v1/codes
     {
         "id": 1,
         "name": "Customer Identifier",
-        "systemDefined": true
+        "systemDefined": true,
+        "parentId": 2
     },
     {
         "id": 2,
         "name": "Gender",
-        "systemDefined": true
+        "systemDefined": true,
+        "parentId": 2
     },
     {
         "id": 3,
-        "name": "Education",
-        "systemDefined": true
+        "name": "Country",
+        "systemDefined": true,
+        "parentId": 2
+    },
+	{
+        "id": 4,
+        "name": "State",
+        "systemDefined": true,
+        "parentId": 3
     }
 ]
 					</code>
@@ -14921,7 +14937,8 @@ GET https://DomainName/api/v1/codes/{codeId}
 {
     "id": 1,
     "name": "Customer Identifier",
-    "systemDefined": true
+    "systemDefined": true,
+    "parentId": 2
 }
 					</code>
 				</div>
@@ -14933,6 +14950,7 @@ GET https://DomainName/api/v1/codes/{codeId}
 				<div class="method-description">
 					<h4>Update a Code</h4>
 					<p>Updates the details of a code if it is not system defined.</p>
+					Note : parent Id is optional parameter.
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
@@ -14943,7 +14961,8 @@ PUT codes/4
 Content-Type: application/json
 Request Body:
 {
-	"name": "MyNewCode(changed)"
+	"name": "MyNewCode(changed)",
+        "parentId": 4
 }
 					</code>
 					<code class="method-response">
@@ -14991,7 +15010,10 @@ Content-Type: application/json
 						Codes are mostly <b>system defined</b> which means the code itself
 						comes out of the box and cannot be modified however its code values
 						can be. e.g. 'Customer Identifier', it defaults to a code value of
-						'Passport' but could be 'Drivers License, National Id' etc
+						'Passport' but could be 'Drivers License, National Id' etc. We can 
+						also create <b>dependencies</b> between code and code values by selecting
+						the parent code name. e.g. 'State', is dependent on the country, if
+						we select India as a country, only Indian states should pre-populate.
 					<p />
 				</div>
 			</div>
@@ -15001,6 +15023,7 @@ Content-Type: application/json
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Create a Code Value</h4>
+					Note : parent Id is an optional parameter.
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">
@@ -15013,7 +15036,8 @@ Request Body:
 {
 	"name":"Ration Card",
 	"description: "Ration card information",
-	"position":"1"
+	"position":"1",
+	"parentId": 2
 }
 					</code>
 					<code class="method-response">
@@ -15043,31 +15067,36 @@ GET https://DomainName/api/v1/codes/{codeId}/codevalues
     "id": 1,
     "name": "Passport",
     "description: "Passport information",
-    "position": 0
+    "position": 0,
+    "parentId": 2
   },
   {
     "id": 2,
     "name": "Id",
     "description: "ID information",
-    "position": 0
+    "position": 0,
+    "parentId": 3
   },
   {
     "id": 3,
     "name": "Drivers License",
     "description: "Drivers License information",
-    "position": 0
+    "position": 0,
+    "parentId": 4
   },
   {
     "id": 4,
     "name": "Any Other Id Type",
     "description: "Any Other Id Type information",
-    "position": 0
+    "position": 0,
+    "parentId": 5
   },
   {
     "id": 5,
     "name": "Ration Card",
     "description: "Ration Card information",
-    "position": 1
+    "position": 1,
+    "parentId": 6
   }
 ]
 					</code>
@@ -15092,7 +15121,38 @@ GET https://DomainName/api/v1/codes/{codeId}/codevalues/{codevalueId}
   "id": 1,
   "name": "Passport",
   "description: "Passport information",
-  "position": 0
+  "position": 0,
+  "parentId": 2
+}
+					</code>
+				</div>
+			</div>
+			
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve a Code Value Template</h4>
+					<p>Returns the details of a Code Value Template</p>
+					<p>Example Requests:</p>
+					<div class=apiClick>codes/1/codevalues/template</div>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+GET https://DomainName/api/v1/codes/{parentcodeId}/codevalues/template
+					</code>
+					<code class="method-response">
+{
+  "id": 1,
+  "name": "India",
+  "description: "India",
+  "position": 0,
+  "parentId": 0
+},
+{
+  "id": 2,
+  "name": "USA",
+  "description: "USA",
+  "position": 1,
+  "parentId": 0
 }
 					</code>
 				</div>
@@ -15116,7 +15176,8 @@ Request Body:
 {
 	"name": "Indian Passport",
 	"description": "Indian Passport information",
-	"position":2
+	"position":2,
+        "parentId": 5
 }
 					</code>
 					<code class="method-response">
@@ -15126,7 +15187,8 @@ Request Body:
   {
     "name": "Indian Passport",
     "description": "Indian Passport information",
-    "position": 2
+    "position": 2,
+    "parentId": 5
   }
 }
 					</code>

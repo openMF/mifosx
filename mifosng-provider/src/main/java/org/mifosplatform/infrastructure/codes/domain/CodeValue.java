@@ -37,20 +37,24 @@ public class CodeValue extends AbstractPersistable<Long> {
     @ManyToOne
     @JoinColumn(name = "code_id", nullable = false)
     private Code code;
+    
+    @Column(name="parent_id")
+    private Long parentId;
 
-    public static CodeValue createNew(final Code code, final String label, final int position, final String description) {
-        return new CodeValue(code, label, position, description);
+    public static CodeValue createNew(final Code code, final String label, final int position, final String description, final Long parentId) {
+        return new CodeValue(code, label, position, description, parentId);
     }
 
     protected CodeValue() {
         //
     }
 
-    private CodeValue(final Code code, final String label, final int position, final String description) {
+    private CodeValue(final Code code, final String label, final int position, final String description, final Long parentId) {
         this.code = code;
         this.label = StringUtils.defaultIfEmpty(label, null);
         this.position = position;
         this.description = description;
+        this.parentId = parentId;
     }
 
     public String label() {
@@ -66,10 +70,11 @@ public class CodeValue extends AbstractPersistable<Long> {
         final String label = command.stringValueOfParameterNamed(CODEVALUE_JSON_INPUT_PARAMS.NAME.getValue());
         Integer position = command.integerValueSansLocaleOfParameterNamed(CODEVALUE_JSON_INPUT_PARAMS.POSITION.getValue());
         String description = command.stringValueOfParameterNamed(CODEVALUE_JSON_INPUT_PARAMS.DESCRIPTION.getValue());
+        Long parentId = command.longValueOfParameterNamed(CODEVALUE_JSON_INPUT_PARAMS.PARENT_ID.getValue());
         if (position == null) {
             position = new Integer(0);
         }
-        return new CodeValue(code, label, position.intValue(),description);
+        return new CodeValue(code, label, position.intValue(),description, parentId);
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -95,6 +100,12 @@ public class CodeValue extends AbstractPersistable<Long> {
             final Integer newValue = command.integerValueSansLocaleOfParameterNamed(positionParamName);
             actualChanges.put(positionParamName, newValue);
             this.position = newValue.intValue();
+        }
+        final String parentIdParamName = CODEVALUE_JSON_INPUT_PARAMS.PARENT_ID.getValue();
+        if(command.isChangeInLongParameterNamed(parentIdParamName, this.parentId)){
+        	final Long newValue = command.longValueOfParameterNamed(parentIdParamName);
+        	actualChanges.put(parentIdParamName, newValue);
+        	this.parentId = newValue.longValue();
         }
 
         return actualChanges;
