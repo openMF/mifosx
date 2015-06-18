@@ -14,6 +14,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -61,17 +63,17 @@ public class GLAccount extends AbstractPersistable<Long> {
 
     @Column(name = "description", nullable = true, length = 500)
     private String description;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tag_id")
-    private CodeValue tagId;
+    
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "acc_gl_accounttags", joinColumns = @JoinColumn(name = "gl_account_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private List<CodeValue> tagId;
 
     protected GLAccount() {
         //
     }
 
     private GLAccount(final GLAccount parent, final String name, final String glCode, final boolean disabled,
-            final boolean manualEntriesAllowed, final Integer type, final Integer usage, final String description, final CodeValue tagId) {
+            final boolean manualEntriesAllowed, final Integer type, final Integer usage, final String description, final List<CodeValue> tagId) {
         this.name = StringUtils.defaultIfEmpty(name, null);
         this.glCode = StringUtils.defaultIfEmpty(glCode, null);
         this.disabled = BooleanUtils.toBooleanDefaultIfNull(disabled, false);
@@ -83,7 +85,7 @@ public class GLAccount extends AbstractPersistable<Long> {
         this.tagId = tagId;
     }
 
-    public static GLAccount fromJson(final GLAccount parent, final JsonCommand command, final CodeValue glAccountTagType) {
+    public static GLAccount fromJson(final GLAccount parent, final JsonCommand command, final List<CodeValue> glAccountTagType) {
         final String name = command.stringValueOfParameterNamed(GLAccountJsonInputParams.NAME.getValue());
         final String glCode = command.stringValueOfParameterNamed(GLAccountJsonInputParams.GL_CODE.getValue());
         final boolean disabled = command.booleanPrimitiveValueOfParameterNamed(GLAccountJsonInputParams.DISABLED.getValue());
@@ -104,9 +106,7 @@ public class GLAccount extends AbstractPersistable<Long> {
         handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.NAME.getValue(), this.name);
         handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.PARENT_ID.getValue(), 0L);
         handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.TYPE.getValue(), this.type, true);
-        handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.USAGE.getValue(), this.usage, true);
-        handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.TAGID.getValue(),
-                this.tagId == null ? 0L : this.tagId.getId());
+        handlePropertyUpdate(command, actualChanges, GLAccountJsonInputParams.USAGE.getValue(), this.usage, true);   
         return actualChanges;
     }
 
@@ -149,8 +149,9 @@ public class GLAccount extends AbstractPersistable<Long> {
                 this.name = newValue;
             }
         }
+        
     }
-
+    
     private void handlePropertyUpdate(final JsonCommand command, final Map<String, Object> actualChanges, final String paramName,
             final Long propertyToBeUpdated) {
         if (command.isChangeInLongParameterNamed(paramName, propertyToBeUpdated)) {
@@ -226,7 +227,7 @@ public class GLAccount extends AbstractPersistable<Long> {
         return GLAccountUsage.DETAIL.getValue().equals(this.usage);
     }
 
-    public void updateTagId(final CodeValue tagID) {
+    public void updateTagId(final List<CodeValue> tagID) {
         this.tagId = tagID;
     }
 
