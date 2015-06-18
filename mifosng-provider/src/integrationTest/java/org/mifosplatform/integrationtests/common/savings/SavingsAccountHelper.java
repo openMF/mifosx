@@ -204,7 +204,7 @@ public class SavingsAccountHelper {
     }
 
     private String getApproveSavingsAsJsonOnDate(final String approvalDate) {
-        final HashMap<String, String> map = new HashMap<>();
+        final HashMap<String, String> map = new HashMap<String, String>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         map.put("approvedOnDate", approvalDate);
@@ -237,7 +237,7 @@ public class SavingsAccountHelper {
     }
 
     private String getActivatedSavingsAsJSON() {
-        final HashMap<String, String> map = new HashMap<>();
+        final HashMap<String, String> map = new HashMap<String, String>();
         map.put("locale", CommonConstants.locale);
         map.put("dateFormat", CommonConstants.dateFormat);
         map.put("activatedOnDate", TRANSACTION_DATE);

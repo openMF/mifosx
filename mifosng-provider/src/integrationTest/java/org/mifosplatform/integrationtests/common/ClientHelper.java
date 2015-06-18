@@ -80,12 +80,12 @@ public class ClientHelper {
     }
 
     public static String getTestClientAsJSON(final String dateOfJoining, final String officeId) {
-        final HashMap<String, String> map = new HashMap<>();
+        final HashMap<String, String> map = new HashMap<String, String>();
         map.put("officeId", officeId);
         map.put("firstname", Utils.randomNameGenerator("Client_FirstName_", 5));
         map.put("lastname", Utils.randomNameGenerator("Client_LastName_", 4));
         map.put("externalId", randomIDGenerator("ID_", 7));
-        map.put("dateFormat", "dd MMMM yyyy");
+        map.put("dateFormat", "dd MMMM yyyy");        
         map.put("locale", "en");
         map.put("active", "true");
         map.put("activationDate", dateOfJoining);
@@ -141,6 +141,11 @@ public class ClientHelper {
     private static String randomIDGenerator(final String prefix, final int lenOfRandomSuffix) {
         return Utils.randomStringGenerator(prefix, lenOfRandomSuffix, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     }
+    
+    private static String randomMobileNoGenerator(final String prefix, final int lenOfRandomSuffix) {
+        return Utils.randomStringGenerator(prefix, lenOfRandomSuffix, "0123456789");
+    }
+   
 
     private String getCloseClientAsJSON() {
         final HashMap<String, String> map = new HashMap<>();

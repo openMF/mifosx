@@ -106,11 +106,11 @@ public class LoanProductTestBuilder {
     private JsonObject allowAttributeOverrides = null;
 
     public String build(final String chargeId) {
-        final HashMap<String, Object> map = new HashMap<>();
+        final HashMap<String, Object> map = new HashMap<String, Object>();
 
         if (chargeId != null) {
-            List<HashMap<String, String>> charges = new ArrayList<>();
-            HashMap<String, String> chargeMap = new HashMap<>();
+            List<HashMap<String, String>> charges = new ArrayList<HashMap<String, String>>();
+            HashMap<String, String> chargeMap = new HashMap<String, String>();
             chargeMap.put("id", chargeId);
             charges.add(chargeMap);
             map.put("charges", charges);

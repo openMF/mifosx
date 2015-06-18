@@ -110,7 +110,7 @@ public class CenterDomain implements Comparable<CenterDomain> {
             String activationDate, String submittedDate, String name, String externalId, Integer staffId, Integer officeID,
             String officeName, String hierarchy, final int[] groupMembers) {
         // String ids = String.valueOf(id);
-        final HashMap map = new HashMap<>();
+        final HashMap map = new HashMap();
         if (id != null) map.put("id", id);
         if (statusId != null) map.put("statusId", statusId);
         if (statusCode != null) map.put("statusCode", statusCode);

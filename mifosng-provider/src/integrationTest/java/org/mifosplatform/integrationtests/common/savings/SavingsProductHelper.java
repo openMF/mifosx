@@ -75,7 +75,7 @@ public class SavingsProductHelper {
     private String enforceMinRequiredBalance = "false";
 
     public String build() {
-        final HashMap<String, String> map = new HashMap<>();
+        final HashMap<String, String> map = new HashMap<String, String>();
 
         map.put("name", this.nameOfSavingsProduct);
         map.put("shortName", this.shortName);

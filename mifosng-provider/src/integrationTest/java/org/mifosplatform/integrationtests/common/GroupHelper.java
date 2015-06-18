@@ -90,7 +90,7 @@ public class GroupHelper {
 
 
     public static String getTestGroupAsJSON(final boolean active, final String activationDate) {
-        final HashMap<String, String> map = new HashMap<>();
+        final HashMap<String, String> map = new HashMap<String, String>();
         map.put("officeId", "1");
         map.put("name", randomNameGenerator("Group_Name_", 5));
         map.put("externalId", randomIDGenerator("ID_", 7));
