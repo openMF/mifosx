@@ -33111,15 +33111,18 @@ Request Body:
 							<td><div class="mifosXHeading2">Scoped fields</div></td>
 						</tr>
 						<tr class=alt>
-							<td rowspan="3"><a href="#clients">Client</a></td>
+							<td rowspan="4"><a href="#clients">Client</a></td>
 							<td>Display Name</td>
 						</td>
 						<tr class=alt>
 							<td>Account Number</td>
 						</tr>
 						<tr class=alt>
-							<td>External Id</td>
+						    <td>Mobile  Number</td>
 						</tr>
+						<tr class=alt>
+							<td>External Id</td>
+						</tr>							
 						<tr>
 							<td><a href="#loans">Loan</a></td>
 							<td>Account Number</td>
@@ -33127,6 +33130,10 @@ Request Body:
 						<tr class=alt>
 							<td><a href="#client_identifiers">Client Identifiers</a></td>
 							<td>Document Key</td>
+						</td>
+						<tr class=alt>
+							<td><a href="#savingsaccounts">Savings</a></td>
+							<td>Account Number</td>
 						</td>
 						<tr>
 							<td rowspan=2><a href="#groups">Group</a></td>
@@ -33138,6 +33145,21 @@ Request Body:
 						<tr class=alt>
 							<td></td>
 							<td>External Id</td>
+						</td>
+						<tr>
+							<td rowspan=2><a href="#centers">Centers</a></td>
+							<td>Name</td>
+						</td>
+						<tr class=alt>
+							<td>Account Number</td>
+						</tr>
+						<tr class=alt>
+							<td></td>
+							<td>External Id</td>
+						</td>
+						<tr class=alt>
+							<td></td>
+							<td> Id</td>
 						</td>
 					</table>
 				</div>
@@ -33152,6 +33174,9 @@ Request Body:
 					<br>
 					<div class=apiClick>search?query=Petra&resource=clients,groups</div>
 					<br>
+					<div class=apiClick>search?query=Petra&resource=clients,groups&exactMatch=false</div>
+                    <br>
+                    <div class=apiClick>search?query=Petra&resource=clients,groups&exactMatch=true</div>					
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
 							<td><div class="mifosXHeading2">Parameters</div></td>
@@ -33166,6 +33191,17 @@ Request Body:
 								String which is searched on scoped resources
 							</td>
 						</tr>
+						<tr class=alt>
+							<td>
+								exactMatch
+								<br><i>(mandatory)</i>
+							</td>
+							<td class=fielddesc>
+								exactMatch is boolean type by default it value is false .if the value of exactMatch is false it will perform like search
+                                and if it value will be true then it perform exact search.
+                                if query is written in "  " the it value becomes true  and if query is not written in " " exactmatch value is false 								
+							</td>
+						</tr>						
 						<tr>
 							<td>
 								resource
@@ -33220,8 +33256,67 @@ GET https://DomainName/api/v1/search?query=000000111
     "parentName": "aaaa aaaaa",
     "parentType": "client"
   }
+]          
+</code>
+</div>
+ <div class="method-example">
+                <code class="method-declaration">
+GET https://DomainName/api/v1/search?query=38&exactMatch=false	
+                </code>
+				<code class="method-response">
+[
+    {
+        "entityId": 38,
+        "entityAccountNo": "000000038",
+        "entityExternalId": "ID_DFPGVPG",
+        "entityName": "Group_Name_UZO42",
+        "entityType": "GROUP",
+        "parentId": 1,
+        "parentName": "Head Office",
+        "entityStatus": {
+            "id": 300,
+            "code": "groupingStatusType.active",
+            "value": "Active"
+        }
+    },
+    {
+        "entityId": 138,
+        "entityAccountNo": "000000138",
+        "entityExternalId": "ID_KPMABZI",
+        "entityName": "Center_Name_P94N2",
+        "entityType": "CENTER",
+        "parentId": 1,
+        "parentName": "Head Office",
+        "entityStatus": {
+            "id": 300,
+            "code": "groupingStatusType.active",
+            "value": "Active"
+        }
+    }
 ]
-					</code>
+</code>
+</div>   <div class="method-example">
+        <code class="method-declaration">
+GET https://DomainName/api/v1/search?query=38&exactMatch=true
+        </code>
+		<code class="method-response">
+[ 
+   {
+        "entityId": 38,
+        "entityAccountNo": "000000038",
+        "entityExternalId": "ID_DFPGVPG",
+        "entityName": "Group_Name_UZO42",
+        "entityType": "GROUP",
+        "parentId": 1,
+        "parentName": "Head Office",
+        "entityStatus": {
+            "id": 300,
+            "code": "groupingStatusType.active",
+            "value": "Active"
+        }
+    }
+]
+        </code>				
 				</div>
 			</div>
 			<a id="advance_search" name="advance_search" class="old-syle-anchor">&nbsp;</a>
