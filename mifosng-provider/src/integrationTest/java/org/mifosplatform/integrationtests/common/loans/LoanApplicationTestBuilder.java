@@ -258,4 +258,9 @@ public class LoanApplicationTestBuilder {
         this.repaymentsStartingFromDate = firstRepaymentDate;
         return this;
     }
+    
+    public LoanApplicationTestBuilder withFixedEmiAmount(final String installmentAmount){
+    	this.fixedEmiAmount = installmentAmount;
+    	return this;
+    }
 }
