@@ -1039,7 +1039,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                                     || (excludePastUndisbursed && (data.isDisbursed() || !data.disbursementDate().isBefore(LocalDate.now())))) {
                                 principal = principal.add(data.amount());
                                 final LoanSchedulePeriodData periodData = LoanSchedulePeriodData.disbursementOnlyPeriod(
-                                        data.disbursementDate(), data.amount(), BigDecimal.ZERO, data.isDisbursed());
+                                        data.disbursementDate(), data.amount(), BigDecimal.ZERO.setScale(6), data.isDisbursed());
                                 periods.add(periodData);
                                 this.outstandingLoanPrincipalBalance = this.outstandingLoanPrincipalBalance.add(data.amount());
                             }
