@@ -17,6 +17,7 @@ public class CodeData implements Serializable {
     private final String name;
     @SuppressWarnings("unused")
     private final boolean systemDefined;
+    
 
     public static CodeData instance(final Long id, final String name, final boolean systemDefined) {
         return new CodeData(id, name, systemDefined);
@@ -26,9 +27,14 @@ public class CodeData implements Serializable {
         this.id = id;
         this.name = name;
         this.systemDefined = systemDefined;
+      
     }
 
     public Long getCodeId() {
         return this.id;
+    }
+    
+    public String getCodeName() {
+    	return this.name;
     }
 }
