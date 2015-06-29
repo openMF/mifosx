@@ -76,6 +76,7 @@ public class CodesApiResource {
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, codes, this.RESPONSE_DATA_PARAMETERS);
     }
+    
 
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })

@@ -34,19 +34,25 @@ public class Code extends AbstractPersistable<Long> {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "code", orphanRemoval = true)
     private Set<CodeValue> values;
+    
+    @Column(name = "parent_id")
+    private Long parentId;
 
     public static Code fromJson(final JsonCommand command) {
         final String name = command.stringValueOfParameterNamed("name");
-        return new Code(name);
+        final Long parentId = command.longValueOfParameterNamed("parentId");
+        return new Code(name, parentId);
     }
 
     protected Code() {
         this.systemDefined = false;
+        this.parentId = null;
     }
 
-    private Code(final String name) {
+    private Code(final String name, final Long parentId) {
         this.name = name;
         this.systemDefined = false;
+        this.parentId = parentId;
     }
 
     public String name() {
@@ -64,14 +70,21 @@ public class Code extends AbstractPersistable<Long> {
         final Map<String, Object> actualChanges = new LinkedHashMap<>(1);
 
         final String firstnameParamName = "name";
+        final String parentIdParamName = "parentId";
         if (command.isChangeInStringParameterNamed(firstnameParamName, this.name)) {
             final String newValue = command.stringValueOfParameterNamed(firstnameParamName);
             actualChanges.put(firstnameParamName, newValue);
             this.name = StringUtils.defaultIfEmpty(newValue, null);
         }
+        if (command.isChangeInLongParameterNamed(parentIdParamName, this.parentId)) {
+            final Long newValue = command.longValueOfParameterNamed(parentIdParamName);
+            actualChanges.put(parentIdParamName, newValue);
+            this.parentId = newValue != null ? newValue : null;
+        }
 
         return actualChanges;
     }
+    
 
     public boolean remove(final CodeValue codeValueToDelete) {
         return this.values.remove(codeValueToDelete);

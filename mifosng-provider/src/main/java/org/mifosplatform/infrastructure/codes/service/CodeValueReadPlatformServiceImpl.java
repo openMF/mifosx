@@ -11,6 +11,7 @@ import java.util.Collection;
 
 import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.codes.exception.CodeValueNotFoundException;
+import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class CodeValueReadPlatformServiceImpl implements CodeValueReadPlatformSe
     private static final class CodeValueDataMapper implements RowMapper<CodeValueData> {
 
         public String schema() {
-            return " cv.id as id, cv.code_value as value, cv.code_id as codeId, cv.code_description as description, cv.order_position as position"
+            return " cv.id as id, cv.code_value as value, cv.code_id as codeId, cv.code_description as description, cv.parent_id as parentId, cv.order_position as position"
                     + " from m_code_value as cv join m_code c on cv.code_id = c.id ";
         }
 
@@ -46,7 +47,8 @@ public class CodeValueReadPlatformServiceImpl implements CodeValueReadPlatformSe
             final String value = rs.getString("value");
             final Integer position = rs.getInt("position");
             final String description = rs.getString("description");
-            return CodeValueData.instance(id, value, position, description);
+            final Long parentId = JdbcSupport.getLong(rs, "parentId");
+            return CodeValueData.instance(id, value, position, description, parentId);
         }
     }
 
@@ -88,4 +90,19 @@ public class CodeValueReadPlatformServiceImpl implements CodeValueReadPlatformSe
         }
 
     }
+
+	@Override
+	public Collection<CodeValueData> retrieveCodeValueTemplate(final Long codeId) {
+		try{
+			this.context.authenticatedUser();
+			
+			 final CodeValueDataMapper rm = new CodeValueDataMapper();
+			 final String sql = "select " + rm.schema() + "where cv.code_id = ? order by position";
+			 
+			 return this.jdbcTemplate.query(sql, rm, new Object[] { codeId });
+			
+		}catch(final EmptyResultDataAccessException e){
+			throw new CodeValueNotFoundException(codeId);
+		}
+	}
 }

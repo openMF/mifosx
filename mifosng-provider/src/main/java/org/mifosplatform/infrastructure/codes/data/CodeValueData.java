@@ -21,32 +21,39 @@ public class CodeValueData implements Serializable {
 
     @SuppressWarnings("unused")
     private final String description;
+    
+    @SuppressWarnings("unused")
+    private final Long parentId;
 
     public static CodeValueData instance(final Long id, final String name, final Integer position) {
         String description = null;
-        return new CodeValueData(id, name, position, description);
+        Long parentId = null;
+        return new CodeValueData(id, name, position, description, parentId);
     }
 
     public static CodeValueData instance(final Long id, final String name, final String description) {
         Integer position = null;
-        return new CodeValueData(id, name, position, description);
+        final Long parentId = null;
+        return new CodeValueData(id, name, position, description, parentId);
     }
 
     public static CodeValueData instance(final Long id, final String name) {
         String description = null;
         Integer position = null;
-        return new CodeValueData(id, name, position, description);
+        Long parentId = null;
+        return new CodeValueData(id, name, position, description, parentId);
     }
 
-    public static CodeValueData instance(final Long id, final String name, final Integer position, final String description) {
-        return new CodeValueData(id, name, position, description);
+    public static CodeValueData instance(final Long id, final String name, final Integer position, final String description, final Long parentId) {
+        return new CodeValueData(id, name, position, description, parentId);
     }
 
-    private CodeValueData(final Long id, final String name, final Integer position, final String description) {
+    private CodeValueData(final Long id, final String name, final Integer position, final String description, final Long parentId) {
         this.id = id;
         this.name = name;
         this.position = position;
         this.description = description;
+        this.parentId = parentId;
     }
 
     public Long getId() {
