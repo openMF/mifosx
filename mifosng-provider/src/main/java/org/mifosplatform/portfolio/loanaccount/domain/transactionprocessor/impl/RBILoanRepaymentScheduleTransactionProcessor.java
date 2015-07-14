@@ -97,7 +97,9 @@ public class RBILoanRepaymentScheduleTransactionProcessor extends AbstractLoanRe
                     loanTransaction.getTransactionDate(), installments);
 
             for (final LoanRepaymentScheduleInstallment installment : installments) {
-                if (installment.isInterestDue(currency)
+                if ((installment.isInterestDue(currency)
+                        || installment.getFeeChargesCharged(currency).minus(installment.getFeeChargesPaid(currency)).isGreaterThanZero() 
+                        || installment.getPenaltyChargesCharged(currency).minus(installment.getPenaltyChargesPaid(currency)).isGreaterThanZero())
                         && (installment.isOverdueOn(loanTransaction.getTransactionDate()) || installment.getInstallmentNumber().equals(
                                 currentInstallmentBasedOnTransactionDate.getInstallmentNumber()))) {
                     penaltyChargesPortion = currentInstallment.payPenaltyChargesComponent(transactionDate, transactionAmountRemaining);
