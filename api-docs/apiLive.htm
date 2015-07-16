@@ -28162,7 +28162,10 @@ No Request Body:
 						you can create, read, update and delete entries for each
 						'plugged-in' table. The API checks for permission and for 'data
 						scoping' (only data within the users' office hierarchy can be
-						managed by the user).</p>
+						managed by the user). We can also capture the metadata of columns 
+						for configuring the alias column name or the column should be visible 
+						only when column value is equal to some value. we can also create the 
+						dependency between the columns. </p>
 					<p>The Mifos X Reference App uses a JQuery plug-in called
 						stretchydatatables (which in turn uses this datatables resource)
 						to provide a pretty flexible CRUD (Create, Read, Update, Delete)
@@ -28221,6 +28224,48 @@ No Request Body:
                         <tr>
                             <td class=fielddesc>Allows to create multiple entries in the Data Table. Optional, defaults to <tt>false</tt>.
                                 If this property is not provided Data Table will allow only one entry.
+                            </td>
+                        </tr>
+						<tr class=alt>
+                            <td><em>Optional - </em>displayName</td>
+                        </tr>
+                        <tr>
+                            <td class=fielddesc>Allows to specify alias name for this column in the Data Table. Optional, defaults to <tt>null</tt>.
+                            </td>
+                        </tr>
+						<tr class=alt>
+                            <td><em>Optional - </em>dependsOn</td>
+                        </tr>
+                        <tr>
+                            <td class=fielddesc>Allows to create dependencies between the columns in the Data Table. Optional, defaults to <tt>null</tt>.
+                            </td>
+                        </tr>
+						<tr class=alt>
+                            <td><em>Optional - </em>displayPosition</td>
+                        </tr>
+                        <tr>
+                            <td class=fielddesc>Allows to specify order of the column in the Data Table.
+                            </td>
+                        </tr>
+						<tr class=alt>
+                            <td><em>Optional - </em>visible</td>
+                        </tr>
+                        <tr>
+                            <td class=fielddesc>Allows to specify the column should be visible or not in the Data Table. Optional, defaults to <tt>true</tt>.
+                            </td>
+                        </tr>
+						<tr class=alt>
+                            <td><em>Optional - </em>visibilityCriteria</td>
+                        </tr>
+                        <tr>
+                            <td class=fielddesc>Allows to specify the column should be visible only when column value is equal to some specific value in the Data Table.
+                            </td>
+                        </tr>
+						<tr class=alt>
+                            <td><em>Optional - </em>mandatoryIfVisible</td>
+                        </tr>
+                        <tr>
+                            <td class=fielddesc>Allows to set the column as mandatory only if the column is visible in the Data Table.. Optional, defaults to <tt>false</tt>.
                             </td>
                         </tr>
                     </table>
@@ -28288,7 +28333,14 @@ Request Body:
         {
             "name": "Gender",
             "type": "Dropdown",
-            "code": "Gender"
+            "code": "Gender",
+            "displayName": "null",
+            "dependsOn": "null",
+            "displayPosition": 0,
+            "visible": true,
+            "visibilityCriteria": [],
+            "mandatoryIfVisible": false
+			
         },
         {
             "name": "Some Decimal",
@@ -28298,13 +28350,48 @@ Request Body:
         {
             "name": "Birth Date",
             "type": "Date"
+            "displayName": "Date of Birth",
+            "dependsOn": "null",
+            "displayPosition": 1,
+            "visible": true,
+            "visibilityCriteria": [
+            	{
+            		"columnName": "Some Decimal",
+            		"value": "1"
+            	}
+            ],
+            "mandatoryIfVisible": false,
         },
         {
             "name": "Question 2",
             "type": "String",
             "length": 100,
             "mandatory": false
-        }
+        },
+        {
+            "name": "Country",
+            "type": "Dropdown",
+            "code": "Country"
+            "displayName": "null",
+            "dependsOn": "null",
+            "displayPosition": 2,
+            "visible": true,
+            "visibilityCriteria": [],
+            "mandatoryIfVisible": false
+			
+        },
+        {
+            "name": "State",
+            "type": "Dropdown",
+            "code": "State"
+            "displayName": "null",
+            "dependsOn": "Country",
+            "displayPosition": 3,
+            "visible": true,
+            "visibilityCriteria": [],
+            "mandatoryIfVisible": false
+			
+        },
     ]
 }
 					</code>
@@ -28394,7 +28481,13 @@ GET https://DomainName/api/v1/datatables
         "columnDisplayType": "INTEGER",
         "isColumnNullable": true,
         "isColumnPrimaryKey": false,
-        "columnValues": []
+        "displayName": "null",
+        "dependsOn": "null",
+        "displayPosition": 1,
+        "visible": true,
+        "columnValues": [],
+        "visibilityCriteria": [],
+        "mandatoryIfVisible": false
       },
       {
         "columnName": "Some Decimal",
@@ -28403,7 +28496,13 @@ GET https://DomainName/api/v1/datatables
         "columnDisplayType": "DECIMAL",
         "isColumnNullable": true,
         "isColumnPrimaryKey": false,
-        "columnValues": []
+        "displayName": "null",
+        "dependsOn": "null",
+        "displayPosition": 5,
+        "visible": true,
+        "columnValues": [],
+        "visibilityCriteria": [],
+        "mandatoryIfVisible": false
       },
       {
         "columnName": "Birth Date",
@@ -28412,7 +28511,18 @@ GET https://DomainName/api/v1/datatables
         "columnDisplayType": "DATE",
         "isColumnNullable": true,
         "isColumnPrimaryKey": false,
-        "columnValues": []
+        "displayName": "Date of Birth",
+        "dependsOn": "null",
+        "displayPosition": 1,
+        "visible": true,
+        "columnValues": [],
+        "visibilityCriteria": [
+          {
+	         "columnName": "Some Decimal",
+	         "value": "1"
+          }
+        ],
+        "mandatoryIfVisible": false
       }
     ]
   }
@@ -28454,7 +28564,13 @@ GET https://DomainName/api/v1/datatables/{datatable}
         "columnDisplayType": "INTEGER",
         "isColumnNullable": true,
         "isColumnPrimaryKey": false,
-        "columnValues": []
+        "displayName": "Gender",
+        "dependsOn": "null",
+        "displayPosition": 3,
+        "visible": true,
+        "columnValues": [],
+        "visibilityCriteria": [],
+        "mandatoryIfVisible": false
       },
       {
         "columnName": "Some Decimal",
@@ -28463,7 +28579,13 @@ GET https://DomainName/api/v1/datatables/{datatable}
         "columnDisplayType": "DECIMAL",
         "isColumnNullable": true,
         "isColumnPrimaryKey": false,
-        "columnValues": []
+        "displayName": "null",
+        "dependsOn": "null",
+        "displayPosition": 0,
+        "visible": true,
+        "columnValues": [],
+        "visibilityCriteria": [],
+        "mandatoryIfVisible": false
       },
       {
         "columnName": "Birth Date",
@@ -28472,7 +28594,18 @@ GET https://DomainName/api/v1/datatables/{datatable}
         "columnDisplayType": "DATE",
         "isColumnNullable": true,
         "isColumnPrimaryKey": false,
-        "columnValues": []
+        "displayName": "Date of Birth",
+        "dependsOn": "null",
+        "displayPosition": 1,
+        "visible": true,
+        "columnValues": [],
+        "visibilityCriteria": [
+            {
+            	"columnName": "Some Decimal",
+            	"value": "1"
+            }
+        ],
+        "mandatoryIfVisible": false
       }
    ]
 }
@@ -28872,7 +29005,18 @@ GET https://DomainName/api/v1/datatables/{datatable}/{apptableId}?genericResultS
             "columnDisplayType": "STRING",
             "isColumnNullable": true,
             "isColumnPrimaryKey": false,
-            "columnValues": []
+            "displayName": "Business",
+            "dependsOn": "null",
+            "displayPosition": 1,
+            "visible": true,
+            "columnValues": [],
+            "visibilityCriteria":  [
+                {
+                    "columnName": "Next Visit",
+                    "value": "01-jan-2014"
+                }
+            ],
+            "mandatoryIfVisible": false
         },
         {
             "columnName": "Years in Business",
@@ -28881,7 +29025,13 @@ GET https://DomainName/api/v1/datatables/{datatable}/{apptableId}?genericResultS
             "columnDisplayType": "INTEGER",
             "isColumnNullable": true,
             "isColumnPrimaryKey": false,
-            "columnValues": []
+            "displayName": "null",
+            "dependsOn": "null",
+            "displayPosition": 2,
+            "visible": true,
+            "columnValues": [],
+            "visibilityCriteria": [],
+            "mandatoryIfVisible": false
         },
         {
             "columnName": "Gender_cd",
@@ -28890,6 +29040,10 @@ GET https://DomainName/api/v1/datatables/{datatable}/{apptableId}?genericResultS
             "columnDisplayType": "CODELOOKUP",
             "isColumnNullable": true,
             "isColumnPrimaryKey": false,
+            "displayName": "null",
+            "dependsOn": "null",
+            "displayPosition": 0,
+            "visible": true,
             "columnValues": [
                 {
                     "id": 5,
@@ -28899,7 +29053,9 @@ GET https://DomainName/api/v1/datatables/{datatable}/{apptableId}?genericResultS
                     "id": 6,
                     "value": "option.Female"
                 }
-            ]
+            ],
+            "visibilityCriteria": [],
+            "mandatoryIfVisible": false
         },
         {
             "columnName": "Education_cv",
@@ -28908,6 +29064,10 @@ GET https://DomainName/api/v1/datatables/{datatable}/{apptableId}?genericResultS
             "columnDisplayType": "CODEVALUE",
             "isColumnNullable": true,
             "isColumnPrimaryKey": false,
+            "displayName": "null",
+            "dependsOn": "null",
+            "displayPosition": 2,
+            "visible": true,
             "columnValues": [
                 {
                     "id": 9,
@@ -28921,7 +29081,9 @@ GET https://DomainName/api/v1/datatables/{datatable}/{apptableId}?genericResultS
                     "id": 11,
                     "value": "University"
                 }
-            ]
+            ],
+            "visibilityCriteria": [],
+            "mandatoryIfVisible": false
         },
         {
             "columnName": "Next Visit",
@@ -28930,7 +29092,13 @@ GET https://DomainName/api/v1/datatables/{datatable}/{apptableId}?genericResultS
             "columnDisplayType": "DATE",
             "isColumnNullable": true,
             "isColumnPrimaryKey": false,
-            "columnValues": []
+            "displayName": "null",
+            "dependsOn": "null",
+            "displayPosition": 0,
+            "visible": true,
+            "columnValues": [],
+            "visibilityCriteria": [],
+            "mandatoryIfVisible": false
         },
         {
             "columnName": "Highest Rate Paid",
@@ -28939,7 +29107,13 @@ GET https://DomainName/api/v1/datatables/{datatable}/{apptableId}?genericResultS
             "columnDisplayType": "DECIMAL",
             "isColumnNullable": true,
             "isColumnPrimaryKey": false,
-            "columnValues": []
+            "columnValues": [],
+            "displayName": "null",
+            "dependsOn": "null",
+            "displayPosition": 0,
+            "visible": true,
+            "visibilityCriteria": [],
+            "mandatoryIfVisible": false
         },
         {
             "columnName": "Comment",
@@ -28948,7 +29122,13 @@ GET https://DomainName/api/v1/datatables/{datatable}/{apptableId}?genericResultS
             "columnDisplayType": "TEXT",
             "isColumnNullable": true,
             "isColumnPrimaryKey": false,
-            "columnValues": []
+            "columnValues": [],
+            "displayName": "null",
+            "dependsOn": "null",
+            "displayPosition": 0,
+            "visible": true,
+            "visibilityCriteria": [],
+            "mandatoryIfVisible": false
         }
     ],
     "data": [

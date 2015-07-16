@@ -13,12 +13,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
 import org.apache.commons.lang.StringUtils;
+import org.mifosplatform.infrastructure.codes.data.CodeData;
+import org.mifosplatform.infrastructure.codes.service.CodeReadPlatformService;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.mifosplatform.infrastructure.dataqueries.exception.DataTableDependentColumnNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -37,7 +41,7 @@ public class DatatableCommandFromApiJsonDeserializer {
     private final Set<String> supportedParametersForCreate = new HashSet<>(Arrays.asList("datatableName", "apptableName", "multiRow",
             "columns"));
     private final Set<String> supportedParametersForCreateColumns = new HashSet<>(Arrays.asList("name", "type", "length",
-            "mandatory", "code"));
+            "mandatory", "code", "displayName", "displayPosition", "visible", "dependsOn", "visibilityCriteria", "mandatoryIfVisible"));
     private final Set<String> supportedParametersForUpdate = new HashSet<>(Arrays.asList("apptableName", "changeColumns",
             "addColumns", "dropColumns"));
     private final Set<String> supportedParametersForAddColumns = new HashSet<>(Arrays.asList("name", "type", "length", "mandatory",
@@ -48,12 +52,15 @@ public class DatatableCommandFromApiJsonDeserializer {
     private final Object[] supportedColumnTypes = { "string", "number", "boolean", "decimal", "date", "datetime", "text", "dropdown" };
     private final Object[] supportedApptableNames = { "m_loan", "m_savings_account", "m_client", "m_group", "m_center", "m_office",
             "m_savings_product", "m_product_loan" };
+    private final Set<String> supportedParametersForVisibilityCriteria = new HashSet<>(Arrays.asList("columnName", "value"));
 
     private final FromJsonHelper fromApiJsonHelper;
+    private final CodeReadPlatformService codeReadPlatformService;
 
     @Autowired
-    public DatatableCommandFromApiJsonDeserializer(final FromJsonHelper fromApiJsonHelper) {
+    public DatatableCommandFromApiJsonDeserializer(final FromJsonHelper fromApiJsonHelper, final CodeReadPlatformService codeReadPlatformService) {
         this.fromApiJsonHelper = fromApiJsonHelper;
+        this.codeReadPlatformService = codeReadPlatformService;
     }
 
     private void validateType(final DataValidatorBuilder baseDataValidator, final JsonElement column) {
@@ -99,6 +106,8 @@ public class DatatableCommandFromApiJsonDeserializer {
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("datatable");
+        
+        Boolean columnFound = false;
 
         final JsonElement element = this.fromApiJsonHelper.parse(json);
 
@@ -129,13 +138,68 @@ public class DatatableCommandFromApiJsonDeserializer {
 
                 final Boolean mandatory = this.fromApiJsonHelper.extractBooleanNamed("mandatory", column);
                 baseDataValidator.reset().parameter("mandatory").value(mandatory).ignoreIfNull().notBlank().isOneOfTheseValues(true, false);
+                
+                final String displayName = this.fromApiJsonHelper.extractStringNamed("displayName", column);
+                baseDataValidator.reset().parameter("displayName").value(displayName).ignoreIfNull().matchesRegularExpression(DATATABLE_COLUMN_NAME_REGEX_PATTERN);
+                
+                final Long displayPosition = this.fromApiJsonHelper.extractLongNamed("displayPosition", column);
+                baseDataValidator.reset().parameter("displayPosition").value(displayPosition).ignoreIfNull();
+                
+                final Boolean visible = this.fromApiJsonHelper.extractBooleanNamed("visible", column);
+                baseDataValidator.reset().parameter("visible").value(visible).ignoreIfNull().notBlank().isOneOfTheseValues(true, false);
+                
+                final Long dependsOn = this.fromApiJsonHelper.extractLongNamed("dependsOn", column);
+                baseDataValidator.reset().parameter("dependsOn").value(dependsOn).ignoreIfNull().integerGreaterThanZero();
+                
+                if(dependsOn != null){
+                	CodeData dependsColumn = this.codeReadPlatformService.retrieveCode(dependsOn);
+                	columnFound = validateDataTableColumnExists(columns,dependsColumn.getCodeName());
+                	if(!columnFound){
+                     	throw new DataTableDependentColumnNotFoundException();
+                    }
+                }
+                
+                final JsonArray visibilityCriteria = this.fromApiJsonHelper.extractJsonArrayNamed("visibilityCriteria", column);
+                baseDataValidator.reset().parameter("visibilityCriteria").value(visibilityCriteria).ignoreIfNull();
+                
+                if(visibilityCriteria != null){
+                	for(final JsonElement criteria : visibilityCriteria){
+                		this.fromApiJsonHelper.checkForUnsupportedParameters(criteria.getAsJsonObject(), this.supportedParametersForVisibilityCriteria);
+                		Boolean visibilityCriteriaColumnFound = false;
+                		final String columnName = this.fromApiJsonHelper.extractStringNamed("columnName", criteria);
+                        baseDataValidator.reset().parameter("columnName").value(columnName).ignoreIfNull();
+                        
+                        final String value = this.fromApiJsonHelper.extractStringNamed("value", criteria);
+                        baseDataValidator.reset().parameter("value").value(value).ignoreIfNull();
+                        visibilityCriteriaColumnFound = validateDataTableColumnExists(columns, columnName);
+	                    if(!visibilityCriteriaColumnFound){
+	                    	throw new DataTableDependentColumnNotFoundException();
+	                    }
+                        
+                	}
+                }
+                
+                final Boolean mandatoryIfVisible = this.fromApiJsonHelper.extractBooleanNamed("mandatoryIfVisible", column);
+                baseDataValidator.reset().parameter("mandatoryIfVisible").value(mandatoryIfVisible).ignoreIfNull().notBlank().isOneOfTheseValues(true, false);
             }
+           
         }
-
+ 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
-    public void validateForUpdate(final String json) {
+    public boolean validateDataTableColumnExists(final JsonArray columnNames, String dependsOn) {
+    	boolean columnFound = false;
+    	for(final JsonElement columnName : columnNames){
+    		final String name = this.fromApiJsonHelper.extractStringNamed("name", columnName);
+    		if(name != null && name.equalsIgnoreCase(dependsOn)){
+    			columnFound = true;
+    		}
+    	}
+    	return columnFound;
+    }
+	
+	public void validateForUpdate(final String json) {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
         // Because all parameters are optional, a check to see if at least one
         // parameter

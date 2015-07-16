@@ -62,7 +62,7 @@ public class ReadSurveyServiceImpl implements ReadSurveyService {
             final List<ResultsetColumnHeaderData> columnHeaderData = this.genericDataService
                     .fillResultsetColumnHeaders(registeredDatatableName);
 
-            surveyDataTables.add(SurveyDataTableData.create(DatatableData.create(appTableName, registeredDatatableName, columnHeaderData),
+            surveyDataTables.add(SurveyDataTableData.create(DatatableData.create(null, appTableName, registeredDatatableName, columnHeaderData),
                     enabled));
         }
 
@@ -101,7 +101,7 @@ public class ReadSurveyServiceImpl implements ReadSurveyService {
             final List<ResultsetColumnHeaderData> columnHeaderData = this.genericDataService
                     .fillResultsetColumnHeaders(registeredDatatableName);
 
-            datatableData = SurveyDataTableData.create(DatatableData.create(appTableName, registeredDatatableName, columnHeaderData),
+            datatableData = SurveyDataTableData.create(DatatableData.create(null, appTableName, registeredDatatableName, columnHeaderData),
                     enabled);
 
         }

@@ -12,6 +12,7 @@ import java.util.List;
  */
 public class DatatableData {
 
+	private final Integer id;
     @SuppressWarnings("unused")
     private final String applicationTableName;
     @SuppressWarnings("unused")
@@ -20,16 +21,21 @@ public class DatatableData {
     private final List<ResultsetColumnHeaderData> columnHeaderData;
 
 
-    public static DatatableData create(final String applicationTableName, final String registeredTableName,
+    public static DatatableData create(final Integer id, final String applicationTableName, final String registeredTableName,
             final List<ResultsetColumnHeaderData> columnHeaderData) {
-        return new DatatableData(applicationTableName, registeredTableName, columnHeaderData);
+        return new DatatableData(id, applicationTableName, registeredTableName, columnHeaderData);
     }
 
-    private DatatableData(final String applicationTableName, final String registeredTableName,
+    private DatatableData(final Integer id, final String applicationTableName, final String registeredTableName,
             final List<ResultsetColumnHeaderData> columnHeaderData) {
+    	this.id = id;
         this.applicationTableName = applicationTableName;
         this.registeredTableName = registeredTableName;
         this.columnHeaderData = columnHeaderData;
 
     }
+    
+    public Integer getId() {
+		return this.id;
+	}
 }
