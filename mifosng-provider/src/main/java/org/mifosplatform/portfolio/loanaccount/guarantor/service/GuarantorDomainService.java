@@ -17,6 +17,6 @@ public interface GuarantorDomainService {
 
     void assignGuarantor(GuarantorFundingDetails guarantorFundingDetails, LocalDate transactionDate);
 
-    void transaferFundsFromGuarantor(Loan loan);
+    void transaferFundsFromGuarantor(Loan loan, LocalDate guarantorRecoveryDate);
 
 }
