@@ -201,12 +201,12 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
      * releases guarantor)
      */
     @Override
-    public void transaferFundsFromGuarantor(final Loan loan) {
+    public void transaferFundsFromGuarantor(final Loan loan, LocalDate guarantorRecoveryDate) {
         if (loan.getGuaranteeAmount().compareTo(BigDecimal.ZERO) != 1) { return; }
         final List<Guarantor> existGuarantorList = this.guarantorRepository.findByLoan(loan);
         final boolean isRegularTransaction = true;
         final boolean isExceptionForBalanceCheck = true;
-        LocalDate transactionDate = LocalDate.now();
+        LocalDate transactionDate;
         PortfolioAccountType fromAccountType = PortfolioAccountType.SAVINGS;
         PortfolioAccountType toAccountType = PortfolioAccountType.LOAN;
         final Long toAccountId = loan.getId();
@@ -224,6 +224,11 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
 
         final String txnExternalId = null;
         final SavingsAccount toSavingsAccount = null;
+        if (guarantorRecoveryDate != null) {
+            transactionDate = guarantorRecoveryDate;
+        } else {
+            transactionDate = new LocalDate();
+        }
 
         Long loanId = loan.getId();
 
@@ -378,16 +383,16 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
             BigDecimal amountForRelease = loanTransaction.getPrincipalPortion();
             BigDecimal totalGuaranteeAmount = loan.getGuaranteeAmount();
             BigDecimal principal = loan.getPrincpal().getAmount();
-            if((amountForRelease!=null)&&(totalGuaranteeAmount!=null))
-            {
-                amountForRelease = amountForRelease.multiply(totalGuaranteeAmount).divide(principal,this.roundingMode);
+            if ((amountForRelease != null) && (totalGuaranteeAmount != null)) {
+                amountForRelease = amountForRelease.multiply(totalGuaranteeAmount).divide(principal, this.roundingMode);
                 List<DepositAccountOnHoldTransaction> accountOnHoldTransactions = new ArrayList<>();
 
                 BigDecimal amountLeft = calculateAndRelaseGuarantorFunds(externalGuarantorList, guarantorGuarantee, amountForRelease,
-                    loanTransaction, accountOnHoldTransactions);
+                        loanTransaction, accountOnHoldTransactions);
 
                 if (amountLeft.compareTo(BigDecimal.ZERO) == 1) {
-                    calculateAndRelaseGuarantorFunds(selfGuarantorList, selfGuarantee, amountLeft, loanTransaction, accountOnHoldTransactions);
+                    calculateAndRelaseGuarantorFunds(selfGuarantorList, selfGuarantee, amountLeft, loanTransaction,
+                            accountOnHoldTransactions);
                     externalGuarantorList.addAll(selfGuarantorList);
                 }
 

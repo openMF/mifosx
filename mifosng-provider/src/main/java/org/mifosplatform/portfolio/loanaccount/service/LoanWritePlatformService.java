@@ -82,7 +82,7 @@ public interface LoanWritePlatformService {
 
     void recalculateInterest();
 
-    CommandProcessingResult recoverFromGuarantor(Long loanId);
+    CommandProcessingResult recoverFromGuarantor(Long loanId, LocalDate guarantorRecoveryDate);
 
     void applyMeetingDateChanges(Calendar calendar, Collection<CalendarInstance> loanCalendarInstances);
 

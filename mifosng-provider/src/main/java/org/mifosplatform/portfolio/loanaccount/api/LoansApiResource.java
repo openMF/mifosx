@@ -656,7 +656,7 @@ public class LoansApiResource {
             final CommandWrapper commandRequest = builder.unassignLoanOfficer(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "recoverGuarantees")) {
-            final CommandWrapper commandRequest = new CommandWrapperBuilder().recoverFromGuarantor(loanId).build();
+            final CommandWrapper commandRequest = builder.recoverFromGuarantor(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 
