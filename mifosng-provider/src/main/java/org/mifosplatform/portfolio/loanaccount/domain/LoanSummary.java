@@ -319,4 +319,8 @@ public final class LoanSummary {
     public BigDecimal getTotalPenaltyChargesWaived() {
         return this.totalPenaltyChargesWaived;
     }
+    
+    public void setTotalPrincipalDisbursed(BigDecimal totalPrincipalDisbursed){
+        this.totalPrincipalDisbursed = totalPrincipalDisbursed;
+    }
 }
