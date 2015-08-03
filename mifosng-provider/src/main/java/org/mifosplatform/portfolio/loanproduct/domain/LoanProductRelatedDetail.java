@@ -108,6 +108,8 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
     @Column(name = "interest_recalculation_enabled")
     private boolean isInterestRecalculationEnabled;
+    
+    
 
     public static LoanProductRelatedDetail createFrom(final MonetaryCurrency currency, final BigDecimal principal,
             final BigDecimal nominalInterestRatePerPeriod, final PeriodFrequencyType interestRatePeriodFrequencyType,
@@ -192,6 +194,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
     public Integer graceOnInterestPayment() {
         return this.graceOnInterestPayment;
     }
+    
 
     @Override
     public Integer graceOnPrincipalPayment() {
@@ -397,7 +400,8 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
             actualChanges.put("locale", localeAsInput);
             this.graceOnPrincipalPayment = newValue;
         }
-
+        
+   
         final String graceOnInterestPaymentParamName = "graceOnInterestPayment";
         if (command.isChangeInIntegerParameterNamed(graceOnInterestPaymentParamName, this.graceOnInterestPayment)) {
             final Integer newValue = command.integerValueOfParameterNamed(graceOnInterestPaymentParamName);
@@ -530,6 +534,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
     public void setGraceOnInterestPayment(Integer graceOnInterestPayment) {
         this.graceOnInterestPayment = graceOnInterestPayment;
     }
+
 
     public Integer getGraceOnArrearsAgeing() {
         return graceOnArrearsAgeing;

@@ -11,4 +11,6 @@ public interface PlatformEmailService {
 
     void sendToUserAccount(EmailDetail emailDetail, String unencodedPassword);
 
+	void sendToClientAccount(EmailDetail emailDetail, String unencodedPassword);
+
 }

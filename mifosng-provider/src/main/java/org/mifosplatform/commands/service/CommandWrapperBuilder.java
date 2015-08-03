@@ -183,6 +183,20 @@ public class CommandWrapperBuilder {
         this.href = "/staff/" + staffId;
         return this;
     }
+    public CommandWrapperBuilder createDsa(){
+    	this.actionName = "CREATE";
+    	this.entityName = "DSA";
+    	this.entityId = null;
+    	this.href = "/dsa/template";
+    	return this;
+    }
+    public CommandWrapperBuilder updateDsa(final Long dsaId){
+    	this.actionName = "UPDATE";
+    	this.entityName = "DSA";
+    	this.entityId = dsaId;
+    	this.href = "/dsa/" + dsaId;
+    	return this;
+    }
 
     public CommandWrapperBuilder createGuarantor(final Long loanId) {
         this.actionName = "CREATE";
@@ -405,6 +419,31 @@ public class CommandWrapperBuilder {
         this.clientId = clientId;
         this.href = "/clients/" + clientId + "/identifiers/" + clientIdentifierId;
         return this;
+    }
+    
+    public CommandWrapperBuilder createClientAddress(final Long clientId){
+    	this.actionName = "CREATE";
+    	this.entityName = "CLIENTADDRESS";
+    	this.entityId = null;
+    	this.clientId = clientId;
+    	this.href = "/clients/"+ clientId + "/addresses/template";
+    	return this;
+    }
+    public CommandWrapperBuilder updateClientAddress(final Long clientId, final Long clientAddressId){
+    	this.actionName = "UPDATE";
+    	this.entityName = "CLIENTADDRESS";
+    	this.entityId = clientAddressId;
+    	this.clientId = clientId;
+    	this.href = "/clients/" + clientId + "/addresses/" + clientAddressId;
+    	return this;
+    }
+    public CommandWrapperBuilder deleteClientAddress(final Long clientId, final Long clientAddressId){
+    	this.actionName = "DELETE";
+    	this.entityName = "CLIENTADDRESS";
+    	this.entityId = clientAddressId;
+    	this.clientId = clientId;
+    	this.href = "/clients/" + clientId + "/addresses" + clientAddressId;
+    	return this;
     }
 
     public CommandWrapperBuilder createClient() {

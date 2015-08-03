@@ -43,6 +43,7 @@ import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSeria
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+import org.mifosplatform.organisation.dsa.data.DsaData;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.portfolio.account.PortfolioAccountType;
@@ -105,8 +106,8 @@ import com.google.gson.JsonElement;
 public class LoansApiResource {
 
     private final Set<String> LOAN_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "accountNo", "status", "externalId", "clientId",
-            "group", "loanProductId", "loanProductName", "loanProductDescription", "fundId", "fundName", "loanPurposeId",
-            "loanPurposeName", "loanOfficerId", "loanOfficerName", "currency", "principal", "totalOverpaid", "inArrearsTolerance",
+            "group", "loanProductId", "loanProductName", "loanProductDescription","loanProductmarkedInterestRate","fundId", "fundName", "loanPurposeId",
+            "loanPurposeName", "loanOfficerId", "loanOfficerName","loanDsaId","loanDsaName" ,"currency", "principal", "totalOverpaid", "inArrearsTolerance",
             "termFrequency", "termPeriodFrequencyType", "numberOfRepayments", "repaymentEvery", "interestRatePerPeriod",
             "annualInterestRate", "repaymentFrequencyType", "transactionProcessingStrategyId", "transactionProcessingStrategyName",
             "interestRateFrequencyType", "amortizationType", "interestType", "interestCalculationPeriodType",
@@ -226,6 +227,7 @@ public class LoansApiResource {
     public String template(@QueryParam("clientId") final Long clientId, @QueryParam("groupId") final Long groupId,
             @QueryParam("productId") final Long productId, @QueryParam("templateType") final String templateType,
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
+            @DefaultValue("false")@QueryParam("dsaInSelectedOfficeOnly") final boolean dsaInSelectedOfficeOnly,
             @DefaultValue("false") @QueryParam("activeOnly") final boolean onlyActive, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
@@ -235,10 +237,12 @@ public class LoansApiResource {
 
         // options
         Collection<StaffData> allowedLoanOfficers = null;
+        Collection<DsaData>allowedDsaOfficers = null;
         Collection<CodeValueData> loanCollateralOptions = null;
         Collection<CalendarData> calendarOptions = null;
         LoanAccountData newLoanAccount = null;
         Long officeId = null;
+        
 
         if (productId != null) {
             newLoanAccount = this.loanReadPlatformService.retrieveLoanProductDetailsTemplate(productId, clientId, groupId);
@@ -299,6 +303,7 @@ public class LoansApiResource {
             }
 
             allowedLoanOfficers = this.loanReadPlatformService.retrieveAllowedLoanOfficers(officeId, staffInSelectedOfficeOnly);
+            allowedDsaOfficers = this.loanReadPlatformService.retrieveAllowedDsaOfficers(officeId,dsaInSelectedOfficeOnly);
 
             Collection<PortfolioAccountData> accountLinkingOptions = null;
             if (clientId != null) {
@@ -316,7 +321,7 @@ public class LoansApiResource {
 
             // add product options, allowed loan officers and calendar options
             // (calendar options will be null in individual loan)
-            newLoanAccount = LoanAccountData.associationsAndTemplate(newLoanAccount, productOptions, allowedLoanOfficers, calendarOptions,
+            newLoanAccount = LoanAccountData.associationsAndTemplate(newLoanAccount, productOptions, allowedLoanOfficers,allowedDsaOfficers, calendarOptions,
                     accountLinkingOptions);
         }
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
@@ -471,6 +476,7 @@ public class LoansApiResource {
         Collection<EnumOptionData> interestCalculationPeriodTypeOptions = null;
         Collection<FundData> fundOptions = null;
         Collection<StaffData> allowedLoanOfficers = null;
+        Collection<DsaData> allowedDsaOfficers = null;
         Collection<ChargeData> chargeOptions = null;
         ChargeData chargeTemplate = null;
         Collection<CodeValueData> loanPurposeOptions = null;
@@ -500,6 +506,7 @@ public class LoansApiResource {
 
             allowedLoanOfficers = this.loanReadPlatformService.retrieveAllowedLoanOfficers(loanBasicDetails.officeId(),
                     staffInSelectedOfficeOnly);
+            allowedDsaOfficers = this.loanReadPlatformService.retrieveAllowedDsaOfficers(loanBasicDetails.officeId(),staffInSelectedOfficeOnly);
 
             loanPurposeOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanPurpose");
             loanCollateralOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanCollateral");
@@ -531,7 +538,7 @@ public class LoansApiResource {
         final LoanAccountData loanAccount = LoanAccountData.associationsAndTemplate(loanBasicDetails, repaymentSchedule, loanRepayments,
                 charges, collateral, guarantors, meeting, productOptions, loanTermFrequencyTypeOptions, repaymentFrequencyTypeOptions,
                 null, null, repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
-                interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, allowedLoanOfficers, loanPurposeOptions,
+                interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, allowedLoanOfficers,allowedDsaOfficers, loanPurposeOptions,
                 loanCollateralOptions, calendarOptions, notes, accountLinkingOptions, linkedAccount, disbursementData, emiAmountVariations,
                 overdueCharges, paidInAdvanceTemplate);
 

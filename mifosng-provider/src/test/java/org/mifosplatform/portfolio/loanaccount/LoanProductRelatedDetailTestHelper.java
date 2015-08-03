@@ -134,6 +134,7 @@ public class LoanProductRelatedDetailTestHelper {
         final Integer graceOnInterestPayment = Integer.valueOf(0);
         final Integer graceOnInterestCharged = Integer.valueOf(0);
         final Integer graceOnArrearsAgeing = Integer.valueOf(0);
+        
 
         final Integer daysInMonthType = DaysInMonthType.ACTUAL.getValue();
         final Integer daysInYearType = DaysInYearType.ACTUAL.getValue();
@@ -141,7 +142,7 @@ public class LoanProductRelatedDetailTestHelper {
 
         return new LoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod, interestPeriodFrequencyType,
                 defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
-                defaultNumberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, amortizationMethod,
+                defaultNumberOfRepayments, graceOnPrincipalPayment,graceOnInterestPayment, graceOnInterestCharged, amortizationMethod,
                 inArrearsTolerance, graceOnArrearsAgeing, daysInMonthType, daysInYearType, isInterestRecalculationEnabled);
     }
 }

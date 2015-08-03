@@ -46,6 +46,7 @@ public class Staff extends AbstractPersistable<Long> {
 
     @Column(name = "is_loan_officer ", nullable = false)
     private boolean loanOfficer;
+    
 
     @Column(name = "organisational_role_enum", nullable = true)
     private Integer organisationalRoleType;
@@ -81,6 +82,7 @@ public class Staff extends AbstractPersistable<Long> {
 
         final String isLoanOfficerParamName = "isLoanOfficer";
         final boolean isLoanOfficer = command.booleanPrimitiveValueOfParameterNamed(isLoanOfficerParamName);
+        
 
         final String isActiveParamName = "isActive";
         final Boolean isActive = command.booleanObjectValueOfParameterNamed(isActiveParamName);
@@ -178,6 +180,7 @@ public class Staff extends AbstractPersistable<Long> {
             actualChanges.put(isLoanOfficerParamName, newValue);
             this.loanOfficer = newValue;
         }
+    
 
         final String isActiveParamName = "isActive";
         if (command.isChangeInBooleanParameterNamed(isActiveParamName, this.active)) {
@@ -204,7 +207,7 @@ public class Staff extends AbstractPersistable<Long> {
     public boolean isLoanOfficer() {
         return this.loanOfficer;
     }
-
+  
     public boolean isNotActive() {
         return !isActive();
     }

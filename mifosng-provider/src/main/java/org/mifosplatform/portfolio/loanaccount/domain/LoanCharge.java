@@ -155,7 +155,17 @@ public class LoanCharge extends AbstractPersistable<Long> {
                 } else {
                     amountPercentageAppliedTo = loan.getTotalInterest();
                 }
+                
             break;
+            case PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING:
+            	if (command.hasParameter("principalOutstanding")){
+            		amountPercentageAppliedTo = command.bigDecimalValueOfParameterNamed("principalOutstanding");
+            	}else{
+            		amountPercentageAppliedTo = loan.getSummary().getTotalPrincipalOutstanding();
+            	}
+            	
+            	
+            	break;
             default:
             break;
         }
@@ -173,6 +183,8 @@ public class LoanCharge extends AbstractPersistable<Long> {
         return new LoanCharge(loan, chargeDefinition, amountPercentageAppliedTo, amount, chargeTime, chargeCalculation, dueDate,
                 chargePaymentMode, null, loanCharge);
     }
+    
+    
 
     /*
      * loanPrincipal is required for charges that are percentage based
@@ -226,6 +238,7 @@ public class LoanCharge extends AbstractPersistable<Long> {
             chargeAmount = amount;
         }
 
+       // BigDecimal percentPrincipal= amount.multiply(loanPrincipal).divide(new BigDecimal(100));
         this.chargePaymentMode = chargeDefinition.getChargePaymentMode();
         if (chargePaymentMode != null) {
             this.chargePaymentMode = chargePaymentMode.getValue();
@@ -263,6 +276,7 @@ public class LoanCharge extends AbstractPersistable<Long> {
                 this.amountWaived = null;
                 this.amountWrittenOff = null;
             break;
+            case PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING:
             case PERCENT_OF_AMOUNT:
             case PERCENT_OF_AMOUNT_AND_INTEREST:
             case PERCENT_OF_INTEREST:
@@ -284,7 +298,11 @@ public class LoanCharge extends AbstractPersistable<Long> {
         }
     }
 
-    public void markAsFullyPaid() {
+    public BigDecimal getAmountPercentageAppliedTo() {
+		return this.amountPercentageAppliedTo;
+	}
+
+	public void markAsFullyPaid() {
         this.amountPaid = this.amount;
         this.amountOutstanding = BigDecimal.ZERO;
         this.paid = true;
@@ -362,9 +380,11 @@ public class LoanCharge extends AbstractPersistable<Long> {
                         this.amount = amount;
                     }
                 break;
+                case PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING:
                 case PERCENT_OF_AMOUNT:
                 case PERCENT_OF_AMOUNT_AND_INTEREST:
                 case PERCENT_OF_INTEREST:
+               
                     this.percentage = amount;
                     this.amountPercentageAppliedTo = loanPrincipal;
                     if (loanCharge.compareTo(BigDecimal.ZERO) == 0) {
@@ -394,6 +414,10 @@ public class LoanCharge extends AbstractPersistable<Long> {
                 case PERCENT_OF_INTEREST:
                     amountPercentageAppliedTo = this.loan.getTotalInterest();
                 break;
+                case PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING:
+                	amountPercentageAppliedTo = this.loan.getSummary().getTotalPrincipalOutstanding();
+                	break;
+                	
                 default:
                 break;
             }
@@ -436,6 +460,7 @@ public class LoanCharge extends AbstractPersistable<Long> {
                     this.amountOutstanding = calculateOutstanding();
                 break;
                 case PERCENT_OF_AMOUNT:
+                case PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING:
                 case PERCENT_OF_AMOUNT_AND_INTEREST:
                 case PERCENT_OF_INTEREST:
                     this.percentage = newValue;
@@ -499,6 +524,14 @@ public class LoanCharge extends AbstractPersistable<Long> {
     public boolean isOverdueInstallmentCharge() {
         return ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.OVERDUE_INSTALLMENT);
     }
+    
+    public boolean isForClosureFee(){
+    	return ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.FORCLOSURE_FEE);
+    }
+
+    public boolean isTotalPrincipalOutstanding(){
+        return ChargeCalculationType.fromInt(this.chargeCalculation).equals(ChargeCalculationType.PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING);
+    }
 
     private static boolean isGreaterThanZero(final BigDecimal value) {
         return value.compareTo(BigDecimal.ZERO) == 1;
@@ -561,7 +594,7 @@ public class LoanCharge extends AbstractPersistable<Long> {
 
     /**
      * @param percentageOf
-     * @returns a minimum cap or maximum cap set on charges if the criteria fits
+     * @returns a minimum cap or maximum cap set on charges if the criteria fit s
      *          else it returns the percentageOf if the amount is within min and
      *          max cap
      */

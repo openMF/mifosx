@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<alvor effortLevel="2">
+<hotspots>
+<hotspot argumentIndex="1" argumentTypes="*" className="java.sql.Connection" methodName="prepareStatement"/>
+<hotspot argumentIndex="1" argumentTypes="*" className="java.sql.Connection" methodName="prepareCall"/>
+<hotspot argumentIndex="1" argumentTypes="*" className="java.sql.Statement" methodName="execute"/>
+<hotspot argumentIndex="1" argumentTypes="*" className="java.sql.Statement" methodName="executeQuery"/>
+</hotspots>
+<dataSources/>
+</alvor>

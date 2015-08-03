@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS `m_calendar_instance`;
 DROP TABLE IF EXISTS `m_charge`;
 DROP TABLE IF EXISTS `m_client`;
 DROP TABLE IF EXISTS `m_client_identifier`;
+DROP TABLE IF EXISTS `m_client_address`;
 DROP TABLE IF EXISTS `m_code`;
 DROP TABLE IF EXISTS `m_code_value`;
 DROP TABLE IF EXISTS `m_currency`;
@@ -49,6 +50,7 @@ DROP TABLE IF EXISTS `m_savings_account`;
 DROP TABLE IF EXISTS `m_savings_account_transaction`;
 DROP TABLE IF EXISTS `m_savings_product`;
 DROP TABLE IF EXISTS `m_staff`;
+DROP TABLE IF EXISTS `m_dsa`;
 DROP TABLE IF EXISTS `ref_loan_transaction_processing_strategy`;
 DROP TABLE IF EXISTS `x_registered_table`;
 

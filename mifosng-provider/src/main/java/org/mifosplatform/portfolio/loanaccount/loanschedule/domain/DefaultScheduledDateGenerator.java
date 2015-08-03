@@ -89,7 +89,7 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
         LocalDate dueRepaymentPeriodDate = startDate;
         switch (frequency) {
             case DAYS:
-                dueRepaymentPeriodDate = startDate.plusDays(repaidEvery);
+                dueRepaymentPeriodDate = startDate.plusDays(repaidEvery).minusDays(1);
             break;
             case WEEKS:
                 dueRepaymentPeriodDate = startDate.plusWeeks(repaidEvery);

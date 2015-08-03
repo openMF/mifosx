@@ -141,6 +141,7 @@ public final class LoanSummary {
         return this.totalPrincipalOutstanding;
     }
 
+
     public BigDecimal getTotalInterestOutstanding() {
         return this.totalInterestOutstanding;
     }

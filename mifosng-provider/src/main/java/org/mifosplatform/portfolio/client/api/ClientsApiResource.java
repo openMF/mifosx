@@ -28,6 +28,8 @@ import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
+import org.mifosplatform.infrastructure.codes.data.CodeValueData;
+import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.exception.UnrecognizedQueryParamException;
@@ -37,14 +39,17 @@ import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.accountdetails.data.AccountSummaryCollectionData;
 import org.mifosplatform.portfolio.accountdetails.service.AccountDetailsReadPlatformService;
+import org.mifosplatform.portfolio.client.data.ClientAddressData;
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
+import org.mifosplatform.portfolio.client.service.ClientAddressReadPlatformService;
 import org.mifosplatform.infrastructure.core.service.SearchParameters;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountData;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 @Path("/clients")
 @Component
@@ -59,6 +64,7 @@ public class ClientsApiResource {
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final AccountDetailsReadPlatformService accountDetailsReadPlatformService;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    private final ClientAddressReadPlatformService clientAddressReadPlatformService;
 
     @Autowired
     public ClientsApiResource(final PlatformSecurityContext context, final ClientReadPlatformService readPlatformService,
@@ -67,7 +73,8 @@ public class ClientsApiResource {
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final AccountDetailsReadPlatformService accountDetailsReadPlatformService,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService, 
+            final ClientAddressReadPlatformService clientAddressReadPlatformService) {
         this.context = context;
         this.clientReadPlatformService = readPlatformService;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -76,6 +83,7 @@ public class ClientsApiResource {
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.accountDetailsReadPlatformService = accountDetailsReadPlatformService;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
+        this.clientAddressReadPlatformService = clientAddressReadPlatformService;
     }
 
     @GET
@@ -136,11 +144,17 @@ public class ClientsApiResource {
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly) {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        
+        
 
-        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        //final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
         ClientData clientData = this.clientReadPlatformService.retrieveOne(clientId);
-        if (settings.isTemplate()) {
+        
+        
+        
+        final Boolean template = ApiParameterHelper.template(uriInfo.getQueryParameters());
+        if (template) {
             final ClientData templateData = this.clientReadPlatformService.retrieveTemplate(clientData.officeId(),
                     staffInSelectedOfficeOnly);
             clientData = ClientData.templateOnTop(clientData, templateData);
@@ -148,9 +162,38 @@ public class ClientsApiResource {
             if (savingAccountOptions != null && savingAccountOptions.size() > 0) {
                 clientData = ClientData.templateWithSavingAccountOptions(clientData, savingAccountOptions);
             }
+            
         }
-
-        return this.toApiJsonSerializer.serialize(settings, clientData, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
+        Collection<ClientAddressData> addresses = null;
+        
+        final Set<String> madatoryResponseParameters = new HashSet<>();
+        final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
+        
+        if(!associationParameters.isEmpty()){
+        	
+        	if(associationParameters.contains("all")){
+        		associationParameters.addAll(Arrays.asList("addresses"));
+        		
+        	}
+        	
+        	ApiParameterHelper.excludeAssociationsForResponseIfProvided(uriInfo.getQueryParameters(), associationParameters);
+        	
+        	if(associationParameters.contains("addresses")){
+        		madatoryResponseParameters.add("addresses");
+        		addresses = this.clientAddressReadPlatformService.retrieveClientAddresses(clientId);
+        		if(CollectionUtils.isEmpty(addresses)){
+        			addresses = null;
+        		}
+        	}
+        }
+        
+        
+        final ClientData clientAssociate = ClientData.associations(clientData,addresses);
+        
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(), madatoryResponseParameters);
+        
+        
+        return this.toApiJsonSerializer.serialize(settings, clientAssociate, ClientApiConstants.CLIENT_RESPONSE_DATA_PARAMETERS);
     }
 
     @POST

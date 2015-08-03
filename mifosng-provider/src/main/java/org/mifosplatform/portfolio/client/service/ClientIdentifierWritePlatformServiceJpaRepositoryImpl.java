@@ -63,6 +63,8 @@ public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements Cl
         clientIdentifierCommand.validateForCreate();
 
         final String documentKey = clientIdentifierCommand.getDocumentKey();
+        String proofTypeLabel = null;
+        Long proofTypeId = null;
         String documentTypeLabel = null;
         Long documentTypeId = null;
         try {
@@ -72,8 +74,11 @@ public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements Cl
                     .getDocumentTypeId());
             documentTypeId = documentType.getId();
             documentTypeLabel = documentType.label();
-
-            final ClientIdentifier clientIdentifier = ClientIdentifier.fromJson(client, documentType, command);
+            final CodeValue proofType = this.codeValueRepository.findOneWithNotFoundDetection(clientIdentifierCommand.getproofTypeId());
+            proofTypeId = proofType.getId();
+            proofTypeLabel = proofType.label();
+            
+            final ClientIdentifier clientIdentifier = ClientIdentifier.fromJson(client, documentType,proofType, command);
 
             this.clientIdentifierRepository.save(clientIdentifier);
 
@@ -98,6 +103,8 @@ public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements Cl
                 .commandFromApiJson(command.json());
         clientIdentifierCommand.validateForUpdate();
 
+        String proofTypeLabel = null;
+        Long proofTypeId = clientIdentifierCommand.getproofTypeId();
         String documentTypeLabel = null;
         String documentKey = null;
         Long documentTypeId = clientIdentifierCommand.getDocumentTypeId();
@@ -116,7 +123,7 @@ public class ClientIdentifierWritePlatformServiceJpaRepositoryImpl implements Cl
 
                 documentTypeId = documentType.getId();
                 documentTypeLabel = documentType.label();
-                clientIdentifierForUpdate.update(documentType);
+                clientIdentifierForUpdate.update(documentType, documentType);
             }
 
             if (changes.containsKey("documentTypeId") && changes.containsKey("documentKey")) {

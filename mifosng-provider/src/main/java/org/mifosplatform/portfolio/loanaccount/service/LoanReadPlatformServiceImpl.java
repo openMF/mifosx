@@ -33,6 +33,8 @@ import org.mifosplatform.infrastructure.core.service.PaginationHelper;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.core.service.SearchParameters;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+import org.mifosplatform.organisation.dsa.data.DsaData;
+import org.mifosplatform.organisation.dsa.service.DsaReadPlatformService;
 import org.mifosplatform.organisation.holiday.domain.Holiday;
 import org.mifosplatform.organisation.holiday.domain.HolidayRepository;
 import org.mifosplatform.organisation.holiday.domain.HolidayStatusType;
@@ -131,6 +133,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     private final CodeValueReadPlatformService codeValueReadPlatformService;
     private final CalendarReadPlatformService calendarReadPlatformService;
     private final StaffReadPlatformService staffReadPlatformService;
+    private final DsaReadPlatformService dsaReadPlatformService;
     private final PaginationHelper<LoanAccountData> paginationHelper = new PaginationHelper<>();
     private final LoanMapper loaanLoanMapper = new LoanMapper();
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -143,6 +146,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
     private final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory;
 
+
     @Autowired
     public LoanReadPlatformServiceImpl(final PlatformSecurityContext context, final LoanRepository loanRepository,
             final LoanTransactionRepository loanTransactionRepository,
@@ -152,6 +156,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final FundReadPlatformService fundReadPlatformService, final ChargeReadPlatformService chargeReadPlatformService,
             final CodeValueReadPlatformService codeValueReadPlatformService, final RoutingDataSource dataSource,
             final CalendarReadPlatformService calendarReadPlatformService, final StaffReadPlatformService staffReadPlatformService,
+            final DsaReadPlatformService dsaReadPlatformService,
             final LoanScheduleGeneratorFactory loanScheduleFactory, final CalendarInstanceRepository calendarInstanceRepository,
             final HolidayRepository holidayRepository, final ConfigurationDomainService configurationDomainService,
             final WorkingDaysRepositoryWrapper workingDaysRepository, PaymentTypeReadPlatformService paymentTypeReadPlatformService,
@@ -169,6 +174,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         this.codeValueReadPlatformService = codeValueReadPlatformService;
         this.calendarReadPlatformService = calendarReadPlatformService;
         this.staffReadPlatformService = staffReadPlatformService;
+        this.dsaReadPlatformService = dsaReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.loanScheduleFactory = loanScheduleFactory;
@@ -541,6 +547,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             return "l.id as id, l.account_no as accountNo, l.external_id as externalId, l.fund_id as fundId, f.name as fundName,"
                     + " l.loan_type_enum as loanType, l.loanpurpose_cv_id as loanPurposeId, cv.code_value as loanPurposeName,"
                     + " lp.id as loanProductId, lp.name as loanProductName, lp.description as loanProductDescription,"
+                    + " lp.marked_interest as loanProductmarkedInterestRate,"
                     + " lp.allow_multiple_disbursals as multiDisburseLoan,"
                     + " lp.can_define_fixed_emi_amount as canDefineInstallmentAmount,"
                     + " c.id as clientId, c.display_name as clientName, c.office_id as clientOfficeId,"
@@ -564,7 +571,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " l.loan_status_id as lifeCycleStatusId, l.loan_transaction_strategy_id as transactionStrategyId, "
                     + " lps.name as transactionStrategyName, "
                     + " l.currency_code as currencyCode, l.currency_digits as currencyDigits, l.currency_multiplesof as inMultiplesOf, rc.`name` as currencyName, rc.display_symbol as currencyDisplaySymbol, rc.internationalized_name_code as currencyNameCode, "
-                    + " l.loan_officer_id as loanOfficerId, s.display_name as loanOfficerName, "
+                    + " l.loan_officer_id as loanOfficerId, s.display_name as loanOfficerName, l.dsa_officer_id as dsaOfficerId, d.display_name as dsaOfficerName,"
                     + " l.principal_disbursed_derived as principalDisbursed,"
                     + " l.principal_repaid_derived as principalPaid,"
                     + " l.principal_writtenoff_derived as principalWrittenOff,"
@@ -612,7 +619,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " lir.compounding_freqency_date as compoundingFrequencyDate, "
                     + " l.create_standing_instruction_at_disbursement as createStandingInstructionAtDisbursement "
                     + " from m_loan l" //
-                    + " join m_product_loan lp on lp.id = l.product_id" //
+                    + " join m_product_loan lp on lp.id = l.product_id" //         
                     + " left join m_loan_recalculation_details lir on lir.loan_id = l.id "
                     + " join m_currency rc on rc.`code` = l.currency_code" //
                     + " left join m_client c on c.id = l.client_id" //
@@ -620,6 +627,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " left join m_loan_arrears_aging la on la.loan_id = l.id" //
                     + " left join m_fund f on f.id = l.fund_id" //
                     + " left join m_staff s on s.id = l.loan_officer_id" //
+                    + " left join m_dsa d on d.id = l.dsa_officer_id" //
                     + " left join m_appuser sbu on sbu.id = l.submittedon_userid"
                     + " left join m_appuser rbu on rbu.id = l.rejectedon_userid"
                     + " left join m_appuser wbu on wbu.id = l.withdrawnon_userid"
@@ -667,6 +675,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
             final Long loanOfficerId = JdbcSupport.getLong(rs, "loanOfficerId");
             final String loanOfficerName = rs.getString("loanOfficerName");
+            
+            final Long dsaOfficerId = JdbcSupport.getLong(rs,"dsaOfficerId");
+            final String dsaOfficerName = rs.getString("dsaOfficerName");
 
             final Long loanPurposeId = JdbcSupport.getLong(rs, "loanPurposeId");
             final String loanPurposeName = rs.getString("loanPurposeName");
@@ -674,6 +685,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final Long loanProductId = JdbcSupport.getLong(rs, "loanProductId");
             final String loanProductName = rs.getString("loanProductName");
             final String loanProductDescription = rs.getString("loanProductDescription");
+            final BigDecimal loanProductmarkedInterestRate = rs.getBigDecimal("loanProductmarkedInterestRate");
+            
             final Boolean multiDisburseLoan = rs.getBoolean("multiDisburseLoan");
             final Boolean canDefineInstallmentAmount = rs.getBoolean("canDefineInstallmentAmount");
             final BigDecimal outstandingLoanBalance = rs.getBigDecimal("outstandingLoanBalance");
@@ -730,6 +743,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final Integer repaymentEvery = JdbcSupport.getInteger(rs, "repaymentEvery");
             final BigDecimal interestRatePerPeriod = rs.getBigDecimal("interestRatePerPeriod");
             final BigDecimal annualInterestRate = rs.getBigDecimal("annualInterestRate");
+            
+            
 
             final Integer graceOnPrincipalPayment = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnPrincipalPayment");
             final Integer graceOnInterestPayment = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnInterestPayment");
@@ -883,8 +898,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             }
 
             return LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientName, clientOfficeId, groupData,
-                    loanType, loanProductId, loanProductName, loanProductDescription, fundId, fundName, loanPurposeId, loanPurposeName,
-                    loanOfficerId, loanOfficerName, currencyData, proposedPrincipal, principal, approvedPrincipal, totalOverpaid,
+                    loanType, loanProductId, loanProductName, loanProductDescription,loanProductmarkedInterestRate, fundId, fundName, loanPurposeId, loanPurposeName,
+                    loanOfficerId, loanOfficerName,dsaOfficerId,dsaOfficerName, currencyData, proposedPrincipal, principal, approvedPrincipal, totalOverpaid,
                     inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments, repaymentEvery, repaymentFrequencyType,
                     repaymentFrequencyNthDayType, repaymentFrequencyDayOfWeekType, transactionStrategyId, transactionStrategyName,
                     amortizationType, interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType,
@@ -1414,6 +1429,24 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         }
 
         return allowedLoanOfficers;
+    }
+    
+    @Override
+    public Collection<DsaData> retrieveAllowedDsaOfficers(final Long selectedOfficeId, final boolean dsaInSelectedOfficeOnly){
+    	if (selectedOfficeId == null){return null;}
+    	
+    	Collection<DsaData> allowedDsaOfficers = null;
+    	
+    	if(dsaInSelectedOfficeOnly){
+    		//only bringing dsa in selected branch/office
+    		allowedDsaOfficers = this.dsaReadPlatformService.retrieveAllDsaOfficersInOfficeById(selectedOfficeId);
+    		
+    	}else {
+    		final boolean restrictToDsaOfficersOnly = true;
+    		allowedDsaOfficers = this.dsaReadPlatformService.retrieveAllDsaInOfficeAndItsParentOfficeHierarchy(selectedOfficeId, restrictToDsaOfficersOnly);
+    	}
+    	
+    	return allowedDsaOfficers;
     }
 
     @Override

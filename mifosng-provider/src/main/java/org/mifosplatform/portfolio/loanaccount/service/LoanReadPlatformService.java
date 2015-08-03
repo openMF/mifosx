@@ -11,6 +11,7 @@ import java.util.Date;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.core.service.SearchParameters;
+import org.mifosplatform.organisation.dsa.data.DsaData;
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.portfolio.calendar.data.CalendarData;
 import org.mifosplatform.portfolio.loanaccount.data.DisbursementData;
@@ -65,6 +66,8 @@ public interface LoanReadPlatformService {
     Page<LoanAccountData> retrieveAll(SearchParameters searchParameters);
 
     Collection<StaffData> retrieveAllowedLoanOfficers(Long selectedOfficeId, boolean staffInSelectedOfficeOnly);
+    
+    Collection<DsaData> retrieveAllowedDsaOfficers(Long selectedOfficeId, boolean dsaInSelectedOfficeOnly);
 
     /*
      * musoni-specific at present - will find overdue scheduled installments

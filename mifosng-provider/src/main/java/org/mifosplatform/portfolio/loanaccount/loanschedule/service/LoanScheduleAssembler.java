@@ -14,7 +14,9 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DurationFieldType;
 import org.joda.time.LocalDate;
+import org.joda.time.Period;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.organisation.holiday.domain.Holiday;
@@ -149,6 +151,7 @@ public class LoanScheduleAssembler {
 
         final Integer amortizationType = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("amortizationType", element);
         final AmortizationMethod amortizationMethod = AmortizationMethod.fromInt(amortizationType);
+        
 
         // interest terms
         final Integer interestType = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("interestType", element);
@@ -297,7 +300,7 @@ public class LoanScheduleAssembler {
         return LoanApplicationTerms.assembleFrom(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments,
                 repaymentEvery, repaymentPeriodFrequencyType, nthDay, weekDayType, amortizationMethod, interestMethod,
                 interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod,
-                principalMoney, expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate,
+                principalMoney,expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate,
                 graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsToleranceMoney,
                 loanProduct.isMultiDisburseLoan(), emiAmount, disbursementDatas, maxOutstandingBalance, loanVariationTermsData,
                 graceOnArrearsAgeing, daysInMonthType, daysInYearType, isInterestRecalculationEnabled, recalculationFrequencyType,
@@ -529,7 +532,10 @@ public class LoanScheduleAssembler {
             // (disbursement date + minimum between disbursal and first
             // repayment )
             if (repaymentPeriodFrequencyType.isDaily()) {
-                dateBasedOnRepaymentFrequency = expectedDisbursementDate.plusDays(repaymentEvery);
+            	
+            	//Duration(repaymentEvery);
+                dateBasedOnRepaymentFrequency = expectedDisbursementDate.plusDays(repaymentEvery).minusDays(1);
+                
             } else if (repaymentPeriodFrequencyType.isWeekly()) {
                 dateBasedOnRepaymentFrequency = expectedDisbursementDate.plusWeeks(repaymentEvery);
             } else if (repaymentPeriodFrequencyType.isMonthly()) {

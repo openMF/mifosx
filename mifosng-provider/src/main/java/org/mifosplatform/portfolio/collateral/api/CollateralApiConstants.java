@@ -11,12 +11,15 @@ import java.util.Set;
 public class CollateralApiConstants {
 
     public static final String COLLATERAL_CODE_NAME = "LoanCollateral";
+    public static final String TW_MAKE_TYPE = "MakeType";
+    public static final String GOLD_FINENESS_TYPE = "GoldFineness";
+    public static final String JEWELLERY_KIND_TYPE = "Jewellery";
 
     /***
      * Enum of all parameters passed in while creating/updating a collateral
      ***/
     public static enum COLLATERAL_JSON_INPUT_PARAMS {
-        LOAN_ID("loanId"), COLLATERAL_ID("collateralId"), COLLATERAL_TYPE_ID("collateralTypeId"), VALUE("value"), DESCRIPTION("description");
+        LOAN_ID("loanId"), COLLATERAL_ID("collateralId"), COLLATERAL_TYPE_ID("collateralTypeId"),GOLD_FINENESS_TYPE_ID("goldfineTypeId"),JEWELLERY_KIND_TYPE_ID("jewelleryTypeId"),TW_MAKE_TYPE ("maketwoTypeId"),GROSS_WEIGHT("gross"),IMPURITY_WEIGHT("impurity"),NET_WEIGHT("net"),STONE_WT("stone"), VALUE("value"),ACTUALCOST("actualcost"), DESCRIPTION("description");
 
         private final String value;
 

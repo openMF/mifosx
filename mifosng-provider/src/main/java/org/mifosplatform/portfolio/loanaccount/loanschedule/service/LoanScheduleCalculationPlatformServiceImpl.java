@@ -92,7 +92,7 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
     public LoanScheduleModel calculateLoanSchedule(final JsonQuery query, Boolean validateParams) {
 
         /***
-         * TODO: Vishwas, this is probably not required, test and remove the
+         * TODO:  this is probably not required, test and remove the
          * same
          **/
         final Long productId = this.fromJsonHelper.extractLongNamed("productId", query.parsedJson());

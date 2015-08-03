@@ -200,6 +200,7 @@ public final class LoanApplicationTerms {
         final InterestCalculationPeriodMethod interestCalculationPeriodMethod = loanProductRelatedDetail
                 .getInterestCalculationPeriodMethod();
         final Money principalMoney = loanProductRelatedDetail.getPrincipal();
+        
 
         //
         final Integer graceOnPrincipalPayment = loanProductRelatedDetail.graceOnPrincipalPayment();
@@ -214,7 +215,7 @@ public final class LoanApplicationTerms {
         return new LoanApplicationTerms(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments,
                 repaymentEvery, repaymentPeriodFrequencyType, nthDay.getValue(), dayOfWeek, amortizationMethod, interestMethod,
                 interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod,
-                principalMoney, expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate,
+                principalMoney, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate,expectedDisbursementDate,
                 graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsTolerance,
                 multiDisburseLoan, emiAmount, disbursementDatas, maxOutstandingBalance, emiAmountVariations,
                 loanProductRelatedDetail.getGraceOnDueDate(), daysInMonthType, daysInYearType, isInterestRecalculationEnabled,
@@ -246,6 +247,7 @@ public final class LoanApplicationTerms {
         final InterestCalculationPeriodMethod interestCalculationPeriodMethod = loanProductRelatedDetail
                 .getInterestCalculationPeriodMethod();
         final Money principalMoney = loanProductRelatedDetail.getPrincipal();
+      
 
         //
         final Integer graceOnPrincipalPayment = loanProductRelatedDetail.graceOnPrincipalPayment();
@@ -333,6 +335,7 @@ public final class LoanApplicationTerms {
         this.expectedDisbursementDate = expectedDisbursementDate;
         this.repaymentsStartingFromDate = repaymentsStartingFromDate;
         this.calculatedRepaymentsStartingFromDate = calculatedRepaymentsStartingFromDate;
+        
 
         this.principalGrace = principalGrace;
         this.interestPaymentGrace = interestPaymentGrace;
@@ -483,7 +486,7 @@ public final class LoanApplicationTerms {
         // with periodic interest for default month and year for
         // equal installment
         final BigDecimal periodicInterestRateForRepaymentPeriod = periodicInterestRate(calculator, mc, daysInPeriod,
-                DaysInMonthType.DAYS_30, DaysInYearType.DAYS_365);
+                DaysInMonthType.ACTUAL, DaysInYearType.DAYS_360);
         Money totalPmtForThisInstallment = calculateTotalDueForEqualInstallmentRepaymentPeriod(periodicInterestRateForRepaymentPeriod,
                 outstandingBalance, periodsElapsed);
         return totalPmtForThisInstallment;
@@ -1215,4 +1218,5 @@ public final class LoanApplicationTerms {
     public BigDecimal getActualFixedEmiAmount() {
         return this.actualFixedEmiAmount;
     }
+   
 }

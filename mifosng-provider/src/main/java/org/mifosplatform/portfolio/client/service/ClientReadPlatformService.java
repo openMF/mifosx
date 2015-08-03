@@ -24,7 +24,11 @@ public interface ClientReadPlatformService {
     Collection<ClientData> retrieveAllForLookupByOfficeId(Long officeId);
 
     ClientData retrieveClientByIdentifier(Long identifierTypeId, String identifierKey);
-
+    
+    ClientData retrieveClientByAddress(Long addressTypeId, String address_line);
+    
+    ClientData retrieveClientByIsBoth(Long addressTypeId, Boolean isBoth);
+    
     Collection<ClientData> retrieveClientMembersOfGroup(Long groupId);
 
     Collection<ClientData> retrieveActiveClientMembersOfGroup(Long groupId);
@@ -32,4 +36,6 @@ public interface ClientReadPlatformService {
     Collection<ClientData> retrieveActiveClientMembersOfCenter(final Long centerId);
 
     ClientData retrieveAllNarrations(String clientNarrations);
+
+	
 }

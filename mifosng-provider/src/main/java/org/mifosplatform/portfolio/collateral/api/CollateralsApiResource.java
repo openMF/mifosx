@@ -44,8 +44,8 @@ import org.springframework.stereotype.Component;
 @Scope("singleton")
 public class CollateralsApiResource {
 
-    private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "type", "value", "description",
-            "allowedCollateralTypes", "currency"));
+    private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "type","goldfine","jewellery","maketwo","gross","impurity", "net","stone","value","actualcost", "description",
+            "allowedCollateralTypes","allowedMakeTwoTypes", "currency"));
 
     private final String resourceNameForPermission = "COLLATERAL";
 
@@ -80,7 +80,13 @@ public class CollateralsApiResource {
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermission);
 
         final Collection<CodeValueData> codeValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanCollateral");
-        final CollateralData collateralData = CollateralData.template(codeValues);
+        final Collection<CodeValueData> goldfineValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("GoldFineness");
+        final Collection<CodeValueData> jewelleryValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("Jewellery");
+        final Collection<CodeValueData> maketwoValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("MakeType");
+        
+        
+        final CollateralData collateralData = CollateralData.template(codeValues,goldfineValues,jewelleryValues,maketwoValues);
+        
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.apiJsonSerializerService.serialize(settings, collateralData, RESPONSE_DATA_PARAMETERS);
@@ -113,7 +119,14 @@ public class CollateralsApiResource {
         if (settings.isTemplate()) {
             final Collection<CodeValueData> codeValues = this.codeValueReadPlatformService
                     .retrieveCodeValuesByCode(CollateralApiConstants.COLLATERAL_CODE_NAME);
-            CollateralData = CollateralData.template(CollateralData, codeValues);
+            final Collection<CodeValueData> goldfineValues = this.codeValueReadPlatformService
+            		.retrieveCodeValuesByCode(CollateralApiConstants.GOLD_FINENESS_TYPE);
+            final Collection<CodeValueData> jewelleryValues = this.codeValueReadPlatformService
+            		.retrieveCodeValuesByCode(CollateralApiConstants.JEWELLERY_KIND_TYPE);
+            final Collection<CodeValueData> maketwoValues = this.codeValueReadPlatformService
+            		.retrieveCodeValuesByCode(CollateralApiConstants.TW_MAKE_TYPE);
+            
+            CollateralData = CollateralData.template(CollateralData, codeValues,goldfineValues,jewelleryValues, maketwoValues);
         }
 
         return this.apiJsonSerializerService.serialize(settings, CollateralData, RESPONSE_DATA_PARAMETERS);

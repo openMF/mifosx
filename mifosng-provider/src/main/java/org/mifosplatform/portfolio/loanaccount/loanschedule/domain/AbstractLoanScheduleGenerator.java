@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
@@ -60,6 +62,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                 scheduleTillDate);
     }
 
+    
     private LoanScheduleModel generate(final MathContext mc, final LoanApplicationTerms loanApplicationTerms,
             final Set<LoanCharge> loanCharges, final HolidayDetailDTO holidayDetailDTO, final Collection<RecalculationDetail> transactions,
             final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor, final LocalDate scheduleTillDate) {
@@ -319,7 +322,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                                 outstandingBalanceAsPerRest = updateBalanceForInterestCalculation(disburseDetailMap,
                                         detail.getTransactionDate(), outstandingBalanceAsPerRest, true);
 
-                                // handle cumulative fields
+                                // handle cumulative fieldsme@ishankhanna.in
                                 loanTermInDays += periodDays;
                                 totalRepaymentExpected = totalRepaymentExpected.add(totalInstallmentDue.getAmount());
                                 totalCumulativeInterest = totalCumulativeInterest.plus(interestForThisinstallment);
@@ -745,8 +748,15 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             if (periodNumber < loanApplicationTerms.getPrincipalGrace() + 1) {
                 periodNumber = loanApplicationTerms.getPrincipalGrace() + 1;
             }
+            
+            DateTimeZone INDIA = DateTimeZone.forID("Asia/Kolkata");
+            DateTime act = actualRepaymentDate.toDateTime(null, INDIA);
+            DateTime end = nextPeriodDate.toDateTime(null, INDIA);
+            
+           
+            
             Money emiAmount = loanApplicationTerms.pmtForInstallment(this.paymentPeriodsInOneYearCalculator,
-                    Days.daysBetween(actualRepaymentDate, nextPeriodDate).getDays(), outstandingBalance, periodNumber, mc);
+                    Days.daysBetween(act, end).getDays(), outstandingBalance, periodNumber, mc);
             loanApplicationTerms.setFixedEmiAmount(emiAmount.getAmount());
             isAmountChanged = true;
         }
@@ -1645,6 +1655,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
 
         Money cumulative = Money.zero(monetaryCurrency);
 
+        //We need to implement the condition!
+
         for (final LoanCharge loanCharge : loanCharges) {
             if (loanCharge.isFeeCharge()) {
                 if (loanCharge.isInstalmentFee() && isInstallmentChargeApplicable) {
@@ -1659,6 +1671,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                             cumulative, loanCharge);
                 } else if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)) {
                     cumulative = cumulative.plus(loanCharge.amount());
+                }else if (loanCharge.isTotalPrincipalOutstanding() && loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodEnd, periodEnd ) && loanCharge.getChargeCalculation().isPercentageOfPrincipal() && loanCharge.getChargeCalculation().isPercentageBased()) {
+                    cumulative =  cumulative.plus(loanCharge.chargeAmount());
                 }
             }
         }

@@ -38,6 +38,7 @@
 										  org.mifosplatform.portfolio.loanaccount.*,
 										  org.mifosplatform.portfolio.savingsaccount.*,
 										  org.mifosplatform.portfolio.*,
+										  org.mifosplatform.portfolio.client.handler,
 										  org.mifosplatform.useradministration.*,
 										  org.mifosplatform.mix.*,
 										  org.mifosplatform.template.*,
@@ -65,6 +66,7 @@
 	<jpa:repositories base-package="org.mifosplatform.useradministration.domain" />
 	<jpa:repositories base-package="org.mifosplatform.organisation.*.domain" />
 	<jpa:repositories base-package="org.mifosplatform.portfolio.*" />
+	<jpa:repositories base-package="org.mifosplatform.portfolio.client.handler" />
 	<jpa:repositories base-package="org.mifosplatform.mix.domain" />
 	<jpa:repositories base-package="org.mifosplatform.scheduledjobs.domain" />
 	<jpa:repositories base-package="org.mifosplatform.template.domain" />

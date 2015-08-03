@@ -155,7 +155,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + "lp.nominal_interest_rate_per_period as interestRatePerPeriod, lp.min_nominal_interest_rate_per_period as minInterestRatePerPeriod, lp.max_nominal_interest_rate_per_period as maxInterestRatePerPeriod, lp.interest_period_frequency_enum as interestRatePerPeriodFreq, "
                     + "lp.annual_nominal_interest_rate as annualInterestRate, lp.interest_method_enum as interestMethod, lp.interest_calculated_in_period_enum as interestCalculationInPeriodMethod,"
                     + "lp.repay_every as repaidEvery, lp.repayment_period_frequency_enum as repaymentPeriodFrequency, lp.number_of_repayments as numberOfRepayments, lp.min_number_of_repayments as minNumberOfRepayments, lp.max_number_of_repayments as maxNumberOfRepayments, "
-                    + "lp.grace_on_principal_periods as graceOnPrincipalPayment, lp.grace_on_interest_periods as graceOnInterestPayment, lp.grace_interest_free_periods as graceOnInterestCharged,lp.grace_on_arrears_ageing as graceOnArrearsAgeing,lp.overdue_days_for_npa as overdueDaysForNPA, "
+                    + "lp.grace_on_principal_periods as graceOnPrincipalPayment, lp.grace_on_interest_periods as graceOnInterestPayment,lp.marked_interest as markedInterestRate, lp.grace_interest_free_periods as graceOnInterestCharged,lp.grace_on_arrears_ageing as graceOnArrearsAgeing,lp.overdue_days_for_npa as overdueDaysForNPA, "
                     + "lp.min_days_between_disbursal_and_first_repayment As minimumDaysBetweenDisbursalAndFirstRepayment, "
                     + "lp.amortization_method_enum as amortizationMethod, lp.arrearstolerance_amount as tolerance, "
                     + "lp.accounting_type as accountingType, lp.include_in_borrower_cycle as includeInBorrowerCycle,lp.use_borrower_cycle as useBorrowerCycle, lp.start_date as startDate, lp.close_date as closeDate,  "
@@ -217,9 +217,11 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final Integer minNumberOfRepayments = JdbcSupport.getInteger(rs, "minNumberOfRepayments");
             final Integer maxNumberOfRepayments = JdbcSupport.getInteger(rs, "maxNumberOfRepayments");
             final Integer repaymentEvery = JdbcSupport.getInteger(rs, "repaidEvery");
+            final BigDecimal markedInterestRate = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "markedInterestRate");
 
             final Integer graceOnPrincipalPayment = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnPrincipalPayment");
             final Integer graceOnInterestPayment = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnInterestPayment");
+            
             final Integer graceOnInterestCharged = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnInterestCharged");
             final Integer graceOnArrearsAgeing = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnArrearsAgeing");
             final Integer overdueDaysForNPA = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "overdueDaysForNPA");
@@ -351,7 +353,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final boolean accountMovesOutOfNPAOnlyOnArrearsCompletion = rs.getBoolean("accountMovesOutOfNPAOnlyOnArrearsCompletion");
 
             return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
-                    numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
+                    numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments,repaymentEvery, markedInterestRate, interestRatePerPeriod,
                     minInterestRatePerPeriod, maxInterestRatePerPeriod, annualInterestRate, repaymentFrequencyType,
                     interestRateFrequencyType, amortizationType, interestType, interestCalculationPeriodType, fundId, fundName,
                     transactionStrategyId, transactionStrategyName, graceOnPrincipalPayment, graceOnInterestPayment,

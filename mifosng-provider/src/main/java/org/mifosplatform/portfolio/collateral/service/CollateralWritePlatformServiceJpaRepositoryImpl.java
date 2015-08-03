@@ -73,7 +73,14 @@ public class CollateralWritePlatformServiceJpaRepositoryImpl implements Collater
 
             final CodeValue collateralType = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
                     CollateralApiConstants.COLLATERAL_CODE_NAME, collateralCommand.getCollateralTypeId());
-            final LoanCollateral collateral = LoanCollateral.fromJson(loan, collateralType, command);
+            final CodeValue goldfineType = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
+            		CollateralApiConstants.GOLD_FINENESS_TYPE, collateralCommand.getgoldfineTypeId());
+            final CodeValue jewelleryType = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
+            		CollateralApiConstants.JEWELLERY_KIND_TYPE,collateralCommand.getjewelleryTypeId());
+            final CodeValue maketwoType = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(
+            		CollateralApiConstants.TW_MAKE_TYPE,collateralCommand.getMakeTwoTypeId());
+            		
+			final LoanCollateral collateral = LoanCollateral.fromJson(loan, collateralType,goldfineType,jewelleryType,maketwoType, command);
 
             /**
              * Collaterals may be added only when the loan associated with them
@@ -109,6 +116,7 @@ public class CollateralWritePlatformServiceJpaRepositoryImpl implements Collater
             if (loan == null) { throw new LoanNotFoundException(loanId); }
 
             CodeValue collateralType = null;
+            CodeValue goldfineType = null;
 
             final LoanCollateral collateralForUpdate = this.collateralRepository.findOne(collateralId);
             if (collateralForUpdate == null) { throw new CollateralNotFoundException(loanId, collateralId); }
