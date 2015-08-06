@@ -48,7 +48,7 @@ public final class LoanProductDataValidator {
     /**
      * The parameters supported for this command.
      */
-    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("locale", "dateFormat", "name", "description", "fundId",
+    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("locale", "dateFormat", "name", "description","markedInterestRate", "fundId",
             "currencyCode", "digitsAfterDecimal", "inMultiplesOf", "principal", "minPrincipal", "maxPrincipal", "repaymentEvery",
             "numberOfRepayments", "minNumberOfRepayments", "maxNumberOfRepayments", "repaymentFrequencyType", "interestRatePerPeriod",
             "minInterestRatePerPeriod", "maxInterestRatePerPeriod", "interestRateFrequencyType", "amortizationType", "interestType",
@@ -114,11 +114,18 @@ public final class LoanProductDataValidator {
         final String description = this.fromApiJsonHelper.extractStringNamed("description", element);
         baseDataValidator.reset().parameter("description").value(description).notExceedingLengthOf(500);
 
+        
         if (this.fromApiJsonHelper.parameterExists("fundId", element)) {
             final Long fundId = this.fromApiJsonHelper.extractLongNamed("fundId", element);
             baseDataValidator.reset().parameter("fundId").value(fundId).ignoreIfNull().integerGreaterThanZero();
         }
+        if (this.fromApiJsonHelper.parameterExists("markedInterestRate", element)){
+        	final BigDecimal markedInterestRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("markedInterestRate", element);
+        	baseDataValidator.reset().parameter("markedInterestRate").value(markedInterestRate).positiveAmount();
+        }
 
+        
+  
         if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.minimumDaysBetweenDisbursalAndFirstRepayment, element)) {
             final Long minimumDaysBetweenDisbursalAndFirstRepayment = this.fromApiJsonHelper.extractLongNamed(
                     LoanProductConstants.minimumDaysBetweenDisbursalAndFirstRepayment, element);

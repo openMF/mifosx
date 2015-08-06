@@ -46,6 +46,7 @@ public class LoanProductData {
     private final String description;
     private final Long fundId;
     private final String fundName;
+    private final BigDecimal markedInterestRate;
     private final boolean includeInBorrowerCycle;
     private final boolean useBorrowerCycle;
     private final LocalDate startDate;
@@ -66,7 +67,6 @@ public class LoanProductData {
     private final BigDecimal interestRatePerPeriod;
     private final BigDecimal minInterestRatePerPeriod;
     private final BigDecimal maxInterestRatePerPeriod;
-    private final BigDecimal markedInterestRate;
     private final EnumOptionData interestRateFrequencyType;
     private final BigDecimal annualInterestRate;
 

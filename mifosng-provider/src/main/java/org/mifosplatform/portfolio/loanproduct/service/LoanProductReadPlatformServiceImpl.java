@@ -193,6 +193,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final String name = rs.getString("name");
             final String shortName = rs.getString("shortName");
             final String description = rs.getString("description");
+            final BigDecimal markedInterestRate = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "markedInterestRate");
             final Long fundId = JdbcSupport.getLong(rs, "fundId");
             final String fundName = rs.getString("fundName");
             final Long transactionStrategyId = JdbcSupport.getLong(rs, "transactionStrategyId");
@@ -217,7 +218,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final Integer minNumberOfRepayments = JdbcSupport.getInteger(rs, "minNumberOfRepayments");
             final Integer maxNumberOfRepayments = JdbcSupport.getInteger(rs, "maxNumberOfRepayments");
             final Integer repaymentEvery = JdbcSupport.getInteger(rs, "repaidEvery");
-            final BigDecimal markedInterestRate = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "markedInterestRate");
+            
 
             final Integer graceOnPrincipalPayment = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnPrincipalPayment");
             final Integer graceOnInterestPayment = JdbcSupport.getIntegerDefaultToNullIfZero(rs, "graceOnInterestPayment");

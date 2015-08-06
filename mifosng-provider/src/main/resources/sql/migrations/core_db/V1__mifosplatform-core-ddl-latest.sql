@@ -37,6 +37,7 @@ DROP TABLE IF EXISTS `m_loan_repayment_schedule`;
 DROP TABLE IF EXISTS `m_loan_transaction`;
 DROP TABLE IF EXISTS `m_note`;
 DROP TABLE IF EXISTS `m_office`;
+DROP TABLE IF EXISTS `m_addresses`;
 DROP TABLE IF EXISTS `m_office_transaction`;
 DROP TABLE IF EXISTS `m_organisation_currency`;
 DROP TABLE IF EXISTS `m_permission`;

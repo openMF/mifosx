@@ -505,6 +505,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final boolean accountMovesOutOfNPAOnlyOnArrearsCompletion, final boolean canDefineEmiAmount,
             final Integer installmentAmountInMultiplesOf, final LoanProductConfigurableAttributes loanProductConfigurableAttributes) {
         this.fund = fund;
+        this.markedInterestRate = markedInterestRate;
         this.transactionProcessingStrategy = transactionProcessingStrategy;
         this.name = name.trim();
         this.shortName = shortName.trim();

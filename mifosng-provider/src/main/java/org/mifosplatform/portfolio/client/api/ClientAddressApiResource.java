@@ -109,7 +109,7 @@ public class ClientAddressApiResource {
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         final Collection<CodeValueData> codeValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("Address Type");
-        final Collection<CodeValueData> stateValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("State");
+        final Collection<CodeValueData> stateValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("State UT");
         
         final ClientAddressData clientAddressData = ClientAddressData.template(codeValues,stateValues);
         
@@ -160,7 +160,7 @@ public class ClientAddressApiResource {
         if (settings.isTemplate()) {
         	
         	final Collection<CodeValueData> codeValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("Address Type");
-        	final Collection<CodeValueData> proofValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("State");
+        	final Collection<CodeValueData> proofValues = this.codeValueReadPlatformService.retrieveCodeValuesByCode("State UT");
             clientAddressData = ClientAddressData.template(clientAddressData, codeValues, proofValues);
             
         
