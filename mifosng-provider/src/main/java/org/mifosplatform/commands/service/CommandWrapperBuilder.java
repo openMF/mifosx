@@ -2393,5 +2393,14 @@ public class CommandWrapperBuilder {
         this.href = "/" + PaymentTypeApiResourceConstants.RESOURCE_NAME + paymentTypeId;
         return this;
     }
+    
+    public CommandWrapperBuilder updateExternalServiceProperties(final Long externalServiceId) {
+        this.actionName = "UPDATE";
+        this.entityName = "EXTERNALSERVICES";
+        this.entityId = externalServiceId;
+
+        this.href = "/externalservices/" + externalServiceId;
+        return this;
+    }
 
 }
