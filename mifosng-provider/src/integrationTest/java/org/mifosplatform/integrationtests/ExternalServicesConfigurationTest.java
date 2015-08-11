@@ -35,7 +35,9 @@ public class ExternalServicesConfigurationTest {
 	 
 	 @Test
 	 public void testExternalServicesConfiguration(){
-		 this.externalServicesConfigurationHelper = new ExternalServicesConfigurationHelper(this.requestSpec, this.responseSpec);	 
+		 this.externalServicesConfigurationHelper = new ExternalServicesConfigurationHelper(this.requestSpec, this.responseSpec);	
+		 
+		 //Checking for S3
 		 String configName = "s3_access_key";
 		 ArrayList<HashMap> externalServicesConfig = this.externalServicesConfigurationHelper.getExternalServicesConfigurationByServiceName(requestSpec, responseSpec,
 				 "S3");
@@ -55,6 +57,29 @@ public class ExternalServicesConfigurationTest {
 			 
 			 
 		 }
+		 
+		 //Checking for SMTP:
+		 
+		 configName = "username";
+		 externalServicesConfig = this.externalServicesConfigurationHelper.getExternalServicesConfigurationByServiceName(requestSpec, responseSpec,
+				 "SMTP");
+		 Assert.assertNotNull(externalServicesConfig);
+		 for (Integer  configIndex= 0; configIndex < (externalServicesConfig.size()); configIndex++) {
+			 String name = (String)externalServicesConfig.get(configIndex).get("name");
+			 String value = null;
+			 if(name.equals(configName)){
+				 value = (String)externalServicesConfig.get(configIndex).get("value");
+				 String newValue = "test";
+				 System.out.println(name + ":" + value);
+				 HashMap arrayListValue = this.externalServicesConfigurationHelper.updateValueForExternaServicesConfiguration(requestSpec, responseSpec, "SMTP", name, newValue);
+				 Assert.assertNotNull(arrayListValue.get("value"));
+				 HashMap arrayListValue1 =this.externalServicesConfigurationHelper.updateValueForExternaServicesConfiguration(requestSpec, responseSpec, "SMTP", name, value);
+				 Assert.assertNotNull(arrayListValue1.get("value"));
+			 }
+			 
+			 
+		 }
+		 
 		 
 	 }
 

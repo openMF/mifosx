@@ -57,7 +57,11 @@ public class ExternalServicesProperties {
     	final String valueParamName = EXTERNALSERVICEPROPERTIES_JSON_INPUT_PARAMS.VALUE.getValue();
         if (command.isChangeInStringParameterNamed(paramName, this.value)) {
             final String newValue = command.stringValueOfParameterNamed(paramName);
-            actualChanges.put(valueParamName, newValue);
+            if(paramName.equals(EXTERNALSERVICEPROPERTIES_JSON_INPUT_PARAMS.PASSWORD.getValue()) && newValue.equals("XXXX")){
+            	// If Param Name is Password and ParamValue is XXXX that means the password has not been changed.
+            } else {
+            	actualChanges.put(valueParamName, newValue);
+            }
             this.value = StringUtils.defaultIfEmpty(newValue, null);
         }
     	
