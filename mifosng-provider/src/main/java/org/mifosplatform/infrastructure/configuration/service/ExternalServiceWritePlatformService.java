@@ -5,6 +5,6 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 
 public interface ExternalServiceWritePlatformService {
 	
-	CommandProcessingResult updateExternalServicesProperties(Long externalServiceId, JsonCommand command);
+	CommandProcessingResult updateExternalServicesProperties(String externalServiceName, JsonCommand command);
 
 }

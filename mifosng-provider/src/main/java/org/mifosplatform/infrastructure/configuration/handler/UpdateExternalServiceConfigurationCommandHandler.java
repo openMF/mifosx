@@ -23,7 +23,7 @@ public class UpdateExternalServiceConfigurationCommandHandler implements NewComm
 	@Transactional
     @Override
     public CommandProcessingResult processCommand(final JsonCommand command) {
-		return this.writePlatformService.updateExternalServicesProperties(command.entityId(), command);
+		return this.writePlatformService.updateExternalServicesProperties(command.getTransactionId(), command);
 	}
 
 }

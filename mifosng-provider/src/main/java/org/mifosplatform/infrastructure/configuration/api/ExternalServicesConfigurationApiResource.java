@@ -73,8 +73,8 @@ public class ExternalServicesConfigurationApiResource {
 	    @Consumes({ MediaType.APPLICATION_JSON })
 	    @Produces({ MediaType.APPLICATION_JSON })
 	 public String updateExternalServiceProperties(@PathParam("servicename") final String serviceName, final String apiRequestBodyAsJson){
-		 ExternalServicesData external = this.externalServiceReadPlatformService.getExternalServiceDetailsByServiceName(serviceName);
-		 final CommandWrapper commandRequest = new CommandWrapperBuilder().updateExternalServiceProperties( new Long(external.getId())).withJson(apiRequestBodyAsJson).build();
+		 //ExternalServicesData external = this.externalServiceReadPlatformService.getExternalServiceDetailsByServiceName(serviceName);
+		 final CommandWrapper commandRequest = new CommandWrapperBuilder().updateExternalServiceProperties( serviceName).withJson(apiRequestBodyAsJson).build();
 		 final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 		 return this.toApiJsonSerializer.serialize(result);
 		 

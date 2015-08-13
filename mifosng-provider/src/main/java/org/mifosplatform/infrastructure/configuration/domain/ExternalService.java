@@ -52,19 +52,7 @@ public class ExternalService extends AbstractPersistable<Long> {
         return this.name;
     }
 
-    public Map<String, Object> update(final JsonCommand command) {
-
-        final Map<String, Object> actualChanges = new LinkedHashMap<>(1);
-
-        final String firstnameParamName = "name";
-        if (command.isChangeInStringParameterNamed(firstnameParamName, this.name)) {
-            final String newValue = command.stringValueOfParameterNamed(firstnameParamName);
-            actualChanges.put(firstnameParamName, newValue);
-            this.name = StringUtils.defaultIfEmpty(newValue, null);
-        }
-
-        return actualChanges;
-    }
+   
 
    
 }

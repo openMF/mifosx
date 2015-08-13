@@ -2394,12 +2394,12 @@ public class CommandWrapperBuilder {
         return this;
     }
     
-    public CommandWrapperBuilder updateExternalServiceProperties(final Long externalServiceId) {
+    public CommandWrapperBuilder updateExternalServiceProperties(final String externalServiceName) {
         this.actionName = "UPDATE";
         this.entityName = "EXTERNALSERVICES";
-        this.entityId = externalServiceId;
+        this.transactionId = externalServiceName;
 
-        this.href = "/externalservices/" + externalServiceId;
+        this.href = "/externalservices/" + externalServiceName;
         return this;
     }
 

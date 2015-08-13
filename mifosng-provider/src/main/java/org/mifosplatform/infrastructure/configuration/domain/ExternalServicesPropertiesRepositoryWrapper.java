@@ -14,10 +14,10 @@ public class ExternalServicesPropertiesRepositoryWrapper {
 		this.repository = repository;
 	}
 	
-	public ExternalServicesProperties findOneByIdAndName(Long id, String name){
+	public ExternalServicesProperties findOneByIdAndName(Long id, String name, String externalServiceName){
 		final ExternalServicesProperties externalServicesProperties = this.repository.findOneByExternalServicePropertiesPK(new ExternalServicePropertiesPK(id, name));
 		if(externalServicesProperties == null)
-			throw new ExternalServiceConfigurationNotFoundException(id, name);
+			throw new ExternalServiceConfigurationNotFoundException(externalServiceName, name);
 		return externalServicesProperties;
 	}
 }

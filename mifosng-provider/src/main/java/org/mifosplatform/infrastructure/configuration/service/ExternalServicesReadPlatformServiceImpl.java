@@ -49,11 +49,11 @@ public class ExternalServicesReadPlatformServiceImpl implements ExternalServices
 		@Override
 		public ExternalServicesData extractData(ResultSet rs) throws SQLException, DataAccessException {
 			// TODO Auto-generated method stub
-			int id = 0;
+			Long id = (long) 0;
 			String name = null;
 			while (rs.next()) {
                 name = rs.getString("name");
-                id = rs.getInt("id");
+                id = rs.getLong("id");
             }
 			
 			return new ExternalServicesData(id, name);

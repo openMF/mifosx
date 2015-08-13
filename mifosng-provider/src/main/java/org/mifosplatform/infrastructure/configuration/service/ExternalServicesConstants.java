@@ -54,5 +54,66 @@ public class ExternalServicesConstants {
             return this.value;
         }
     }
+    
+    public static enum SMTP_JSON_INPUT_PARAMS {
+        USERNAME("username"), PASSWORD("password"), HOST("host"), PORT("port"), USETLS("useTLS") ;
+
+        private final String value;
+
+        private SMTP_JSON_INPUT_PARAMS(final String value) {
+            this.value = value;
+        }
+
+        private static final Set<String> values = new HashSet<>();
+        static {
+            for (final SMTP_JSON_INPUT_PARAMS type : SMTP_JSON_INPUT_PARAMS.values()) {
+                values.add(type.value);
+            }
+        }
+
+        public static Set<String> getAllValues() {
+            return values;
+        }
+
+        @Override
+        public String toString() {
+            return name().toString().replaceAll("_", " ");
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+    }
+    
+    public static enum S3_JSON_INPUT_PARAMS {
+        S3_ACCESS_KEY("s3_access_key"), S3_BUCKET_NAME("s3_bucket_name"),
+        S3_SECRET_KEY("s3_secret_key");
+
+        private final String value;
+
+        private S3_JSON_INPUT_PARAMS(final String value) {
+            this.value = value;
+        }
+
+        private static final Set<String> values = new HashSet<>();
+        static {
+            for (final S3_JSON_INPUT_PARAMS type : S3_JSON_INPUT_PARAMS.values()) {
+                values.add(type.value);
+            }
+        }
+
+        public static Set<String> getAllValues() {
+            return values;
+        }
+
+        @Override
+        public String toString() {
+            return name().toString().replaceAll("_", " ");
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+    }
 
 }

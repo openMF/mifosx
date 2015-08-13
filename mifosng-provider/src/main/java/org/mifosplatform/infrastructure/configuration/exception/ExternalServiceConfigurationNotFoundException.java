@@ -5,10 +5,10 @@ import org.mifosplatform.infrastructure.core.exception.AbstractPlatformResourceN
 public class ExternalServiceConfigurationNotFoundException extends AbstractPlatformResourceNotFoundException {
 
 	 public ExternalServiceConfigurationNotFoundException(final String serviceName) {
-	        super("error.msg.configuration.property.invalid", "Service Name`" + serviceName + "` does not exist", serviceName);
+	        super("error.msg.externalservice.servicename.invalid", "Service Name`" + serviceName + "` does not exist", serviceName);
 	    }
 	 
-	 public ExternalServiceConfigurationNotFoundException(final Long id, final String name) {
-	        super("error.msg.configuration.property.invalid", "Service Id`" + id + "` does not exist with the following named parameter`" + name + "`" , name);
+	 public ExternalServiceConfigurationNotFoundException(final String externalServiceName, final String name) {
+	        super("error.msg.externalservice.property.invalid", "Parameter`" + name + "` does not exist for the ServiceName `" + externalServiceName + "`" , name, externalServiceName);
 	    }
 }
