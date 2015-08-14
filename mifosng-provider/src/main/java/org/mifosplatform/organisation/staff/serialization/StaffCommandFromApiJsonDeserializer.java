@@ -8,6 +8,7 @@ package org.mifosplatform.organisation.staff.serialization;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,10 @@ import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.portfolio.client.api.ClientApiConstants;
+import org.mifosplatform.portfolio.client.api.ClientsApiResource;
+import org.mifosplatform.portfolio.client.data.ClientData;
+import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
+import org.mifosplatform.portfolio.client.service.ClientReadPlatformServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,13 +39,18 @@ public final class StaffCommandFromApiJsonDeserializer {
      * The parameters supported for this command.
      */
     private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("firstname", "lastname", "officeId", "externalId",
-            "mobileNo", "isLoanOfficer", "isActive", "joiningDate", "dateFormat", "locale"));
+            "mobileNo", "isLoanOfficer", "isActive", "joiningDate", "dateFormat", "locale", "forceStatus"));
 
     private final FromJsonHelper fromApiJsonHelper;
+    
+    private final ClientReadPlatformService clientReadPlatformService;
+
 
     @Autowired
-    public StaffCommandFromApiJsonDeserializer(final FromJsonHelper fromApiJsonHelper) {
+    public StaffCommandFromApiJsonDeserializer(final FromJsonHelper fromApiJsonHelper,
+            final ClientReadPlatformService clientReadPlatformService) {
         this.fromApiJsonHelper = fromApiJsonHelper;
+        this.clientReadPlatformService = clientReadPlatformService;
     }
 
     public void validateForCreate(final String json) {
@@ -98,6 +108,10 @@ public final class StaffCommandFromApiJsonDeserializer {
     }
 
     public void validateForUpdate(final String json) {
+        validateForUpdate(json, null); 
+    }
+    
+    public void validateForUpdate(final String json,Long staffId) {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
@@ -134,6 +148,17 @@ public final class StaffCommandFromApiJsonDeserializer {
 
         if (this.fromApiJsonHelper.parameterExists("isActive", element)) {
             final Boolean activeFlag = this.fromApiJsonHelper.extractBooleanNamed("isActive", element);
+            //Need to add here check to see if any clients and loans are assigned to this staff if staff is being set to inactive --LJB
+            final Boolean forceStatus = this.fromApiJsonHelper.extractBooleanNamed("forceStatus", element);
+            if ((activeFlag == false && forceStatus == null) || 
+                (activeFlag == false && forceStatus != true)) {
+                List<ClientData> clientData = (List<ClientData>) clientReadPlatformService.retrieveAllForLookup("staff_id = "+ staffId);
+                if (clientData != null && !clientData.isEmpty()) {
+                    //Need to figure out how to return an error message
+                    baseDataValidator.reset().parameter("isactive").failWithCode("staff.is.assigned");
+                    
+                }
+            }
             baseDataValidator.reset().parameter("isActive").value(activeFlag).notNull();
         }
                 
