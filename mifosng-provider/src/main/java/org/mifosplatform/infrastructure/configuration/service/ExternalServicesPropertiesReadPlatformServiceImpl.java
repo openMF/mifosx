@@ -98,7 +98,7 @@ public class ExternalServicesPropertiesReadPlatformServiceImpl implements Extern
     @Override
     public S3CredentialsData getS3Credentials() {
         final ResultSetExtractor<S3CredentialsData> resultSetExtractor = new S3CredentialsDataExtractor();
-        final String sql = "SELECT esp.name, esp.value FROM c_external_service_properties esp where esp.name in('s3_bucket_name','s3_access_key','s3_secret_key') and esp.external_service_id = (select id FROM c_external_service es where es.name= '" + ExternalServicesConstants.S3_SERVICE_NAME + "' )";
+        final String sql = "SELECT esp.name, esp.value FROM c_external_service_properties esp inner join c_external_service es on esp.external_service_id = es.id where es.name = '" + ExternalServicesConstants.S3_SERVICE_NAME + "'";
         final S3CredentialsData s3CredentialsData = this.jdbcTemplate.query(sql, resultSetExtractor, new Object[] {});
         return s3CredentialsData;
     }
@@ -107,7 +107,7 @@ public class ExternalServicesPropertiesReadPlatformServiceImpl implements Extern
 	public SMTPCredentialsData getSMTPCredentials() {
 		// TODO Auto-generated method stub
 		final ResultSetExtractor<SMTPCredentialsData> resultSetExtractor = new SMTPCredentialsDataExtractor();
-        final String sql = "SELECT esp.name, esp.value FROM c_external_service_properties esp where esp.external_service_id = (select id FROM c_external_service es where es.name= '" + ExternalServicesConstants.SMTP_SERVICE_NAME + "' )";
+        final String sql = "SELECT esp.name, esp.value FROM c_external_service_properties esp inner join c_external_service es on esp.external_service_id = es.id where es.name = '" + ExternalServicesConstants.SMTP_SERVICE_NAME + "'";
         final SMTPCredentialsData smtpCredentialsData = this.jdbcTemplate.query(sql, resultSetExtractor, new Object[] {});
         return smtpCredentialsData;
 	}
@@ -127,7 +127,7 @@ public class ExternalServicesPropertiesReadPlatformServiceImpl implements Extern
 				 throw new ExternalServiceConfigurationNotFoundException(serviceName);
 		 }
 		 final ExternalServiceMapper mapper = new ExternalServiceMapper();
-		 final String sql = "SELECT esp.name as name, esp.value as value FROM c_external_service_properties esp where esp.external_service_id = (select id FROM c_external_service es where es.name= '" + serviceNameToUse + "' )";
+		 final String sql = "SELECT esp.name, esp.value FROM c_external_service_properties esp inner join c_external_service es on esp.external_service_id = es.id where es.name = '" + serviceNameToUse + "'";
 		 return this.jdbcTemplate.query(sql, mapper, new Object[] {  });
 		 
 		 

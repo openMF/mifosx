@@ -25,8 +25,7 @@ public class ExternalServicesConstants {
     public static final String SMTP_USE_TLS = "useTLS";
     
     public static enum EXTERNALSERVICEPROPERTIES_JSON_INPUT_PARAMS {
-        EXTERNAL_SERVICE_ID("external_service_id"), NAME("name"), VALUE("value"), S3_ACCESS_KEY("s3_access_key"), S3_BUCKET_NAME("s3_bucket_name"),
-        S3_SECRET_KEY("s3_secret_key"), USERNAME("username"), PASSWORD("password"), HOST("host"), PORT("port"), USETLS("useTLS") ;
+        EXTERNAL_SERVICE_ID("external_service_id"), NAME("name"), VALUE("value");
 
         private final String value;
 

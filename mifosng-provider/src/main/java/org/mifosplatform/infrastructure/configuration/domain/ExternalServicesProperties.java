@@ -15,6 +15,7 @@ import javax.persistence.Table;
 import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.infrastructure.configuration.data.ExternalServicesPropertiesData;
 import org.mifosplatform.infrastructure.configuration.service.ExternalServicesConstants.EXTERNALSERVICEPROPERTIES_JSON_INPUT_PARAMS;
+import org.mifosplatform.infrastructure.configuration.service.ExternalServicesConstants.SMTP_JSON_INPUT_PARAMS;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.springframework.data.annotation.Id;
 
@@ -57,7 +58,7 @@ public class ExternalServicesProperties {
     	final String valueParamName = EXTERNALSERVICEPROPERTIES_JSON_INPUT_PARAMS.VALUE.getValue();
         if (command.isChangeInStringParameterNamed(paramName, this.value)) {
             final String newValue = command.stringValueOfParameterNamed(paramName);
-            if(paramName.equals(EXTERNALSERVICEPROPERTIES_JSON_INPUT_PARAMS.PASSWORD.getValue()) && newValue.equals("XXXX")){
+            if(paramName.equals(SMTP_JSON_INPUT_PARAMS.PASSWORD.getValue()) && newValue.equals("XXXX")){
             	// If Param Name is Password and ParamValue is XXXX that means the password has not been changed.
             } else {
             	actualChanges.put(valueParamName, newValue);

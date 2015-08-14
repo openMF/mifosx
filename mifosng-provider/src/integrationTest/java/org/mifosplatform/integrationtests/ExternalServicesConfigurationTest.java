@@ -51,8 +51,10 @@ public class ExternalServicesConfigurationTest {
 				 System.out.println(name + ":" + value);
 				 HashMap arrayListValue = this.externalServicesConfigurationHelper.updateValueForExternaServicesConfiguration(requestSpec, responseSpec, "S3", name, newValue);
 				 Assert.assertNotNull(arrayListValue.get("value"));
+				 Assert.assertEquals(arrayListValue.get("value"), newValue);
 				 HashMap arrayListValue1 =this.externalServicesConfigurationHelper.updateValueForExternaServicesConfiguration(requestSpec, responseSpec, "S3", name, value);
 				 Assert.assertNotNull(arrayListValue1.get("value"));
+				 Assert.assertEquals(arrayListValue1.get("value"), value);
 			 }
 			 
 			 
@@ -73,8 +75,10 @@ public class ExternalServicesConfigurationTest {
 				 System.out.println(name + ":" + value);
 				 HashMap arrayListValue = this.externalServicesConfigurationHelper.updateValueForExternaServicesConfiguration(requestSpec, responseSpec, "SMTP", name, newValue);
 				 Assert.assertNotNull(arrayListValue.get("value"));
+				 Assert.assertEquals(arrayListValue.get("value"), newValue);
 				 HashMap arrayListValue1 =this.externalServicesConfigurationHelper.updateValueForExternaServicesConfiguration(requestSpec, responseSpec, "SMTP", name, value);
 				 Assert.assertNotNull(arrayListValue1.get("value"));
+				 Assert.assertEquals(arrayListValue1.get("value"), value);
 			 }
 			 
 			 
