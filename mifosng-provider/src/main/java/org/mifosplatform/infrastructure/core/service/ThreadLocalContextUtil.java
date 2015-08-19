@@ -20,6 +20,8 @@ public class ThreadLocalContextUtil {
     private static final ThreadLocal<MifosPlatformTenant> tenantcontext = new ThreadLocal<>();
     
     private static final ThreadLocal<String> authTokenContext = new ThreadLocal<>();
+    
+    private static final ThreadLocal<Boolean> reportRequest = new ThreadLocal<>();
 
     public static void setTenant(final MifosPlatformTenant tenant) {
         Assert.notNull(tenant, "tenant cannot be null");
@@ -52,6 +54,20 @@ public class ThreadLocalContextUtil {
 
     public static String getAuthToken() {
         return authTokenContext.get();
+    }
+    /**
+     * Returns isReportTxn.
+     * @return isReportTxn
+     */
+    public static Boolean isReportRequest() {
+        return reportRequest.get();
+    }
+    /**
+     * sets the isReport value.
+     * @param isReportTxn
+     */
+    public static void setReportRequest(final Boolean isReportRequest) {
+        reportRequest.set(isReportRequest);
     }
 
 }

@@ -53,7 +53,7 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 
     private static boolean firstRequestProcessed = false;
     private final static Logger logger = LoggerFactory.getLogger(TenantAwareBasicAuthenticationFilter.class);
-    
+
     private final BasicAuthTenantDetailsService basicAuthTenantDetailsService;
     private final ToApiJsonSerializer<PlatformRequestLog> toApiJsonSerializer;
     private final ConfigurationDomainService configurationDomainService;
@@ -91,6 +91,7 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
             } else {
 
                 String tenantIdentifier = request.getHeader(this.tenantRequestHeader);
+
                 if (org.apache.commons.lang.StringUtils.isBlank(tenantIdentifier)) {
                     tenantIdentifier = request.getParameter("tenantIdentifier");
                 }
@@ -102,6 +103,16 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
                 // check tenants database for tenantId
                 final MifosPlatformTenant tenant = this.basicAuthTenantDetailsService.loadTenantById(tenantIdentifier);
 
+                String pathInfo = request.getRequestURI();
+
+                // logic should include check against the report tag of tenant
+                // -enity and request URI to acces the report DataBase
+                if (pathInfo != null && pathInfo.contains("report") && tenant.getReportId()!= null) {
+                    ThreadLocalContextUtil.setReportRequest(Boolean.TRUE);
+                } else {
+                    ThreadLocalContextUtil.setReportRequest(Boolean.FALSE);
+                }
+
                 ThreadLocalContextUtil.setTenant(tenant);
                 String authToken = request.getHeader("Authorization");
 
@@ -110,9 +121,9 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
                 }
 
                 if (!firstRequestProcessed) {
-                	final String baseUrl = request.getRequestURL().toString().replace(request.getPathInfo(), "/");
-                	System.setProperty("baseUrl", baseUrl);
-                	
+                    final String baseUrl = request.getRequestURL().toString().replace(request.getPathInfo(), "/");
+                    System.setProperty("baseUrl", baseUrl);
+
                     final boolean ehcacheEnabled = this.configurationDomainService.isEhcacheEnabled();
                     if (ehcacheEnabled) {
                         this.cacheWritePlatformService.switchToCache(CacheType.SINGLE_NODE);
@@ -122,7 +133,7 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
                     TenantAwareBasicAuthenticationFilter.firstRequestProcessed = true;
                 }
             }
-            
+
             super.doFilter(req, res, chain);
         } catch (final InvalidTenantIdentiferException e) {
             // deal with exception at low level
