@@ -267,4 +267,62 @@ public class ClientHelper {
         return response;
     }
 
+    public static Integer addChargesForClient(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,final Integer clientId, final String request) {
+        System.out.println("--------------------------------- ADD CHARGES FOR Client --------------------------------");
+        final String ADD_CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/charges?" + Utils.TENANT_IDENTIFIER;
+        final HashMap response = Utils.performServerPost(requestSpec, responseSpec, ADD_CHARGES_URL, request, "");
+        return (Integer) response.get("resourceId");
+    }
+    
+    public static Integer payChargesForClients(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,final Integer clientId, final Integer clientChargeId, final String json) {
+        System.out.println("--------------------------------- PAY CHARGES FOR CLIENT --------------------------------");
+        final String CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/charges/" + clientChargeId + "?command=paycharge&"
+                + Utils.TENANT_IDENTIFIER;
+            final HashMap response = Utils.performServerPost(requestSpec, responseSpec, CHARGES_URL, json, "");
+            return (Integer) response.get("resourceId");
+       
+    }
+    
+    public static Integer waiveChargesForClients(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,final Integer clientId, final Integer clientChargeId, final String json) {
+        System.out.println("--------------------------------- WAIVE CHARGES FOR CLIENT --------------------------------");
+        final String CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/charges/" + clientChargeId + "?command=waive&"
+                + Utils.TENANT_IDENTIFIER;
+
+        final HashMap response = Utils.performServerPost(requestSpec, responseSpec, CHARGES_URL, json, "");
+        return (Integer) response.get("resourceId");
+    }
+    public static String getSpecifiedDueDateChargesClientAsJSON(final String chargeId, final String dueDate) {
+        final HashMap<String, String> map = new HashMap<>();
+        map.put("locale", "en_GB");
+        map.put("dateFormat", "dd MMMM yyyy");
+        map.put("dueDate", dueDate);
+        map.put("chargeId", chargeId);
+        map.put("amount", "200");
+        String json = new Gson().toJson(map);
+        System.out.println(json);
+        return json;
+    }
+    
+    public static String getPayChargeJSON(final String date,String amount) {
+        final HashMap<String, String> map = new HashMap<>();
+        map.put("locale", "en_GB");
+        map.put("dateFormat", "dd MMMM yyyy");
+        map.put("transactionDate", date);
+        map.put("amount", amount);
+        String json = new Gson().toJson(map);
+        System.out.println(json);
+        return json;
+    }
+    
+    public static String getWaiveChargeJSON(final String amount,String clientChargeId) {
+        final HashMap<String, String> map = new HashMap<>();
+        map.put("locale", "en_GB");
+        map.put("amount", amount);
+        map.put("clientChargeId", clientChargeId);
+        String json = new Gson().toJson(map);
+        System.out.println(json);
+        return json;
+    }
+    
+   
 }
