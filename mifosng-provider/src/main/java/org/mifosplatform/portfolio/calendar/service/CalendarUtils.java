@@ -111,13 +111,11 @@ public class CalendarUtils {
     private static Collection<LocalDate> convertToLocalDateList(final DateList dates) {
 
         final Collection<LocalDate> recurringDates = new ArrayList<>();
-
         for (@SuppressWarnings("rawtypes")
         final Iterator iterator = dates.iterator(); iterator.hasNext();) {
             final Date date = (Date) iterator.next();
             recurringDates.add(new LocalDate(date));
         }
-
         return recurringDates;
     }
 
@@ -217,7 +215,6 @@ public class CalendarUtils {
     }
 
     public static boolean isValidRedurringDate(final String recurringRule, final LocalDate seedDate, final LocalDate date) {
-
         final Recur recur = CalendarUtils.getICalRecur(recurringRule);
         if (recur == null) { return false; }
 
@@ -225,7 +222,6 @@ public class CalendarUtils {
     }
 
     public static boolean isValidRecurringDate(final Recur recur, final LocalDate seedDate, final LocalDate date) {
-
         final Collection<LocalDate> recurDate = getRecurringDates(recur, seedDate, date, date.plusDays(1), 1);
         return (recurDate == null || recurDate.isEmpty()) ? false : true;
     }
@@ -341,20 +337,20 @@ public class CalendarUtils {
             final LocalDate oldRepaymentDate, final Integer loanRepaymentInterval, final String frequency, final WorkingDays workingDays) {
         final Recur recur = CalendarUtils.getICalRecur(recurringRule);
         if (recur == null) { return null; }
-        if (isValidRecurringDate(recur, seedDate, oldRepaymentDate)) { return oldRepaymentDate; }
+        //Even if this check is on Still the oldRepaymentdate is being return if--kindly comment on this
+        //if (isValidRecurringDate(recur, seedDate, oldRepaymentDate)) { return oldRepaymentDate; }
         return getNextRepaymentMeetingDate(recurringRule, seedDate, oldRepaymentDate, loanRepaymentInterval, frequency, workingDays);
     }
 
     public static LocalDate getNextRepaymentMeetingDate(final String recurringRule, final LocalDate seedDate,
             final LocalDate repaymentDate, final Integer loanRepaymentInterval, final String frequency, final WorkingDays workingDays) {
-
         final Recur recur = CalendarUtils.getICalRecur(recurringRule);
         if (recur == null) { return null; }
         LocalDate tmpDate = repaymentDate;
-        if (isValidRecurringDate(recur, seedDate, repaymentDate)) {
+        /*if (isValidRecurringDate(recur, seedDate, repaymentDate)) {
             tmpDate = repaymentDate.plusDays(1);
         }
-        /*
+*/        /*
          * Recurring dates should follow loanRepaymentInterval.
          * 
          * e.g. The weekly meeting will have interval of 1, if the loan product

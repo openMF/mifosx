@@ -7,6 +7,7 @@ package org.mifosplatform.integrationtests.common;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.mifosplatform.integrationtests.common.system.CodeHelper;
@@ -59,8 +60,7 @@ public class ClientHelper {
             final ResponseSpecification responseSpec, final Integer clientType, String jsonAttributeToGetBack) {
         final String activationDate = "04 March 2011";
         final String officeId = "1";
-        System.out
-                .println("---------------------------------CREATING A CLIENT BASED ON ACCOUNT PREFERENCE---------------------------------------------");
+        System.out.println("---------------------------------CREATING A CLIENT BASED ON ACCOUNT PREFERENCE---------------------------------------------");
         return Utils.performServerPost(requestSpec, responseSpec, CREATE_CLIENT_URL,
                 getTestClientWithClientTypeAsJSON(activationDate, officeId, clientType.toString()), jsonAttributeToGetBack);
     }
@@ -274,22 +274,21 @@ public class ClientHelper {
         return (Integer) response.get("resourceId");
     }
     
-    public static Integer payChargesForClients(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,final Integer clientId, final Integer clientChargeId, final String json) {
+    public static String payChargesForClients(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,final Integer clientId, final Integer clientChargeId, final String json) {
         System.out.println("--------------------------------- PAY CHARGES FOR CLIENT --------------------------------");
         final String CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/charges/" + clientChargeId + "?command=paycharge&"
                 + Utils.TENANT_IDENTIFIER;
             final HashMap response = Utils.performServerPost(requestSpec, responseSpec, CHARGES_URL, json, "");
-            return (Integer) response.get("resourceId");
-       
+            return response.get("transactionId")!=null? response.get("transactionId").toString():null;
     }
     
-    public static Integer waiveChargesForClients(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,final Integer clientId, final Integer clientChargeId, final String json) {
+    public static String waiveChargesForClients(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,final Integer clientId, final Integer clientChargeId, final String json) {
         System.out.println("--------------------------------- WAIVE CHARGES FOR CLIENT --------------------------------");
         final String CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/charges/" + clientChargeId + "?command=waive&"
                 + Utils.TENANT_IDENTIFIER;
 
         final HashMap response = Utils.performServerPost(requestSpec, responseSpec, CHARGES_URL, json, "");
-        return (Integer) response.get("resourceId");
+        return response.get("transactionId").toString();
     }
     public static String getSpecifiedDueDateChargesClientAsJSON(final String chargeId, final String dueDate) {
         final HashMap<String, String> map = new HashMap<>();
@@ -323,6 +322,30 @@ public class ClientHelper {
         System.out.println(json);
         return json;
     }
+    
+    public static Integer undoTransaction(final RequestSpecification requestSpec, final ResponseSpecification responseSpec, final String clientId,
+           String clientChargeId) {
+        final String CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/transactions/" + clientChargeId + "?command=undo&"
+                + Utils.TENANT_IDENTIFIER;
+        System.out.println("---------------------------------UNDO TRANSACTION---------------------------------------------");
+        final HashMap response = Utils.performServerPost(requestSpec, responseSpec, CHARGES_URL, "", "");
+        return (Integer) response.get("resourceId");
+
+    }
+    
+    public static Object getClientCharge(final RequestSpecification requestSpec, final ResponseSpecification responseSpec, final String clientId) {
+         final String CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/charges?paid=false&"
+                 + Utils.TENANT_IDENTIFIER;
+         ArrayList list =Utils.performServerGet(requestSpec, responseSpec, CHARGES_URL,"amountOutstanding");
+         return list!=null&&!list.isEmpty()?list.get(0):null;
+    }
+    
+    public static Boolean getClientTransactions(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,final String clientId, final String transactionId) {
+        final String CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/transactions/"+transactionId+"?"+ Utils.TENANT_IDENTIFIER;
+        return Utils.performServerGet(requestSpec, responseSpec, CHARGES_URL,"reversed");
+   }
+ 
+    
     
    
 }
