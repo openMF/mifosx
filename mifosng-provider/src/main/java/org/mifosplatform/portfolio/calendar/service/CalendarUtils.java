@@ -337,7 +337,7 @@ public class CalendarUtils {
             final LocalDate oldRepaymentDate, final Integer loanRepaymentInterval, final String frequency, final WorkingDays workingDays) {
         final Recur recur = CalendarUtils.getICalRecur(recurringRule);
         if (recur == null) { return null; }
-        //Even if this check is on Still the oldRepaymentdate is being return if--kindly comment on this
+        //Even if this check is on Still the oldRepaymentdate is being return--kindly comment on this
         //if (isValidRecurringDate(recur, seedDate, oldRepaymentDate)) { return oldRepaymentDate; }
         return getNextRepaymentMeetingDate(recurringRule, seedDate, oldRepaymentDate, loanRepaymentInterval, frequency, workingDays);
     }

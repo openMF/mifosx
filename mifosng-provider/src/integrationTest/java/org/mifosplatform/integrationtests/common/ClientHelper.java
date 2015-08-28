@@ -325,15 +325,17 @@ public class ClientHelper {
     
     public static Integer undoTransaction(final RequestSpecification requestSpec, final ResponseSpecification responseSpec, final String clientId,
            String clientChargeId) {
+        System.out.println("---------------------------------UNDO TRANSACTION---------------------------------------------");
         final String CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/transactions/" + clientChargeId + "?command=undo&"
                 + Utils.TENANT_IDENTIFIER;
-        System.out.println("---------------------------------UNDO TRANSACTION---------------------------------------------");
+       
         final HashMap response = Utils.performServerPost(requestSpec, responseSpec, CHARGES_URL, "", "");
         return (Integer) response.get("resourceId");
 
     }
     
     public static Object getClientCharge(final RequestSpecification requestSpec, final ResponseSpecification responseSpec, final String clientId) {
+        System.out.println("---------------------------------GET CLIENT CHARGE---------------------------------------------");
          final String CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/charges?paid=false&"
                  + Utils.TENANT_IDENTIFIER;
          ArrayList list =Utils.performServerGet(requestSpec, responseSpec, CHARGES_URL,"amountOutstanding");
@@ -341,6 +343,7 @@ public class ClientHelper {
     }
     
     public static Boolean getClientTransactions(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,final String clientId, final String transactionId) {
+        System.out.println("---------------------------------GET CLIENT CHARGE TRANSACTIONS---------------------------------------------");
         final String CHARGES_URL = "/mifosng-provider/api/v1/clients/" + clientId + "/transactions/"+transactionId+"?"+ Utils.TENANT_IDENTIFIER;
         return Utils.performServerGet(requestSpec, responseSpec, CHARGES_URL,"reversed");
    }
