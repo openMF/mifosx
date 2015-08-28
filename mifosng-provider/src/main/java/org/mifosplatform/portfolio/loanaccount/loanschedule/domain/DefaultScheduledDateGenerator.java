@@ -29,7 +29,6 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
     public LocalDate getLastRepaymentDate(final LoanApplicationTerms loanApplicationTerms, final HolidayDetailDTO holidayDetailDTO) {
 
         final int numberOfRepayments = loanApplicationTerms.getNumberOfRepayments();
-
         LocalDate lastRepaymentDate = loanApplicationTerms.getExpectedDisbursementDate();
         boolean isFirstRepayment = true;
         for (int repaymentPeriod = 1; repaymentPeriod <= numberOfRepayments; repaymentPeriod++) {
@@ -60,7 +59,8 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
                 // repayment
                 LocalDate seedDate = currentCalendar.getStartDateLocalDate();
                 String reccuringString = currentCalendar.getRecurrence();
-                dueRepaymentPeriodDate = CalendarUtils.getNewRepaymentMeetingDate(reccuringString, seedDate, dueRepaymentPeriodDate,
+                // dueRepaymentPeriodDate = null; which is causing the exception in isValidRecurringdates() and resulting in not updating the repayment schedule
+                dueRepaymentPeriodDate = CalendarUtils.getNewRepaymentMeetingDate(reccuringString, seedDate, lastRepaymentDate,
                         loanApplicationTerms.getRepaymentEvery(),
                         CalendarUtils.getMeetingFrequencyFromPeriodFrequencyType(loanApplicationTerms.getLoanTermPeriodFrequencyType()),
                         holidayDetailDTO.getWorkingDays());
