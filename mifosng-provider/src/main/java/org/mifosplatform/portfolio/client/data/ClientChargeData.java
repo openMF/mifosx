@@ -10,6 +10,7 @@ import java.util.Collection;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
+import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.portfolio.charge.data.ChargeData;
 
@@ -52,20 +53,20 @@ public class ClientChargeData {
 
     private final Collection<ChargeData> chargeOptions;
 
-    private final Collection<ClientTransactionData> clientTransactionDatas;
+    private final Page<ClientTransactionData> clientTransactionDatas;
 
     public static ClientChargeData instance(Long id, Long clientId, Long chargeId, String name, EnumOptionData chargeTimeType,
             LocalDate dueDate, EnumOptionData chargeCalculationType, CurrencyData currency, BigDecimal amount, BigDecimal amountPaid,
             BigDecimal amountWaived, BigDecimal amountWrittenOff, BigDecimal amountOutstanding, boolean penalty, Boolean isPaid,
             Boolean isActive, LocalDate inactivationDate, Collection<ChargeData> chargeOptions) {
-        Collection<ClientTransactionData> clientTransactionDatas = null;
+        Page<ClientTransactionData> clientTransactionDatas = null;
         return new ClientChargeData(id, clientId, chargeId, name, chargeTimeType, dueDate, chargeCalculationType, currency, amount,
                 amountPaid, amountWaived, amountWrittenOff, amountOutstanding, penalty, isPaid, isActive, inactivationDate, chargeOptions,
                 clientTransactionDatas);
     }
 
     public static ClientChargeData addAssociations(ClientChargeData clientChargeData,
-            Collection<ClientTransactionData> clientTransactionDatas) {
+            Page<ClientTransactionData> clientTransactionDatas) {
         return new ClientChargeData(clientChargeData.id, clientChargeData.clientId, clientChargeData.chargeId, clientChargeData.name,
                 clientChargeData.chargeTimeType, clientChargeData.dueDate, clientChargeData.chargeCalculationType,
                 clientChargeData.currency, clientChargeData.amount, clientChargeData.amountPaid, clientChargeData.amountWaived,
@@ -91,7 +92,7 @@ public class ClientChargeData {
         final Boolean isPaid = null;
         final Boolean isActive = null;
         final LocalDate inactivationDate = null;
-        final Collection<ClientTransactionData> clientTransactionDatas = null;
+        final Page<ClientTransactionData> clientTransactionDatas = null;
 
         return new ClientChargeData(id, clientId, chargeId, name, chargeTimeType, dueDate, chargeCalculationType, currency, amount,
                 amountPaid, amountWaived, amountWrittenOff, amountOutstanding, penalty, isPaid, isActive, inactivationDate, chargeOptions,
@@ -101,7 +102,7 @@ public class ClientChargeData {
     private ClientChargeData(Long id, Long clientId, Long chargeId, String name, EnumOptionData chargeTimeType, LocalDate dueDate,
             EnumOptionData chargeCalculationType, CurrencyData currency, BigDecimal amount, BigDecimal amountPaid, BigDecimal amountWaived,
             BigDecimal amountWrittenOff, BigDecimal amountOutstanding, boolean penalty, Boolean isPaid, Boolean isActive,
-            LocalDate inactivationDate, Collection<ChargeData> chargeOptions, Collection<ClientTransactionData> clientTransactionDatas) {
+            LocalDate inactivationDate, Collection<ChargeData> chargeOptions, Page<ClientTransactionData> clientTransactionDatas) {
         super();
         this.id = id;
         this.clientId = clientId;

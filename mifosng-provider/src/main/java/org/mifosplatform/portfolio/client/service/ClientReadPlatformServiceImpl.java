@@ -210,6 +210,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             final String sql = "select " + this.clientMapper.schema()
                     + " where ( o.hierarchy like ? or transferToOffice.hierarchy like ?) and c.id = ?";
+           
             final ClientData clientData = this.jdbcTemplate.queryForObject(sql, this.clientMapper, new Object[] { hierarchySearchString,
                     hierarchySearchString, clientId });
 

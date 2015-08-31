@@ -140,10 +140,11 @@ public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements Client
         final ClientChargePaidBy chargePaidBy = ClientChargePaidBy.instance(clientTransaction, clientCharge, amountPaid);
         clientTransaction.getClientChargePaidByCollection().add(chargePaidBy);
 
-        return new CommandProcessingResultBuilder() //
+        return new CommandProcessingResultBuilder()
+        .withTransactionId(clientTransaction.getId().toString())//
                 .withEntityId(clientCharge.getId()) //
                 .withOfficeId(clientCharge.getClient().getOffice().getId()) //
-                .withClientId(clientCharge.getClient().getId()) //
+                .withClientId(clientCharge.getClient().getId())
                 .build();
 
     }
@@ -169,7 +170,8 @@ public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements Client
         final ClientChargePaidBy chargePaidBy = ClientChargePaidBy.instance(clientTransaction, clientCharge, waivedAmount.getAmount());
         clientTransaction.getClientChargePaidByCollection().add(chargePaidBy);
 
-        return new CommandProcessingResultBuilder() //
+        return new CommandProcessingResultBuilder()
+                .withTransactionId(clientTransaction.getId().toString())//
                 .withEntityId(clientCharge.getId()) //
                 .withOfficeId(clientCharge.getClient().getOffice().getId()) //
                 .withClientId(clientCharge.getClient().getId()) //
