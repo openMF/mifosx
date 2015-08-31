@@ -8,7 +8,6 @@ package org.mifosplatform.portfolio.client.service;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
@@ -17,7 +16,6 @@ import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.core.service.PaginationHelper;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
-import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.data.ClientTransactionData;
 import org.mifosplatform.portfolio.client.domain.ClientEnumerations;
 import org.mifosplatform.portfolio.client.domain.ClientTransactionType;
@@ -122,17 +120,16 @@ public class ClientTransactionReadPlatformServiceImpl implements ClientTransacti
     }
 
     @Override
-    public Page<ClientTransactionData> retrieveAllTransactions(Long clientId) {
+    public Page<ClientTransactionData> retrieveAllTransactions(Long clientId,Integer limit,Integer offset) {
         Long chargeId = null;
-        Integer limit=15;
-        Integer offset=0;
         return retrieveAllTransactions(clientId, chargeId,limit,offset);
     }
 
     @Override
     public Page<ClientTransactionData> retrieveAllTransactions(Long clientId, Long chargeId,Integer limit,Integer offset) {
+        System.out.println("clientId:"+clientId+"chargeId:"+chargeId+"offset:"+offset);
         Object[] parameters = new Object[1];
-        String sql = "select SQL_CALC_FOUND_ROWS" + this.clientTransactionMapper.schema() + " where c.id = ? ";
+        String sql = "select SQL_CALC_FOUND_ROWS " + this.clientTransactionMapper.schema() + " where c.id = ? ";
         if (chargeId != null) {
             parameters = new Object[2];
             parameters[1] = chargeId;
@@ -140,8 +137,8 @@ public class ClientTransactionReadPlatformServiceImpl implements ClientTransacti
         }
         parameters[0] = clientId;
         final String sqlCountRows = "SELECT FOUND_ROWS()";
-        sql = sql + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC "+"limit "+limit+" offset"+offset;
-        return this.paginationHelper.fetchPage(this.jdbcTemplate,sqlCountRows, sql,new Object[] {clientId, chargeId},this.clientTransactionMapper);
+        sql = sql + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC "+"limit "+limit+" offset "+offset;
+        return this.paginationHelper.fetchPage(this.jdbcTemplate,sqlCountRows, sql,parameters,this.clientTransactionMapper);
     }
 
     @Override

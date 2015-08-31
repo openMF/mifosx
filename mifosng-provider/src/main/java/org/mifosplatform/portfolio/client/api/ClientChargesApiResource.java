@@ -124,9 +124,7 @@ public class ClientChargesApiResource {
             @Context final UriInfo uriInfo, @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit) {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME);
-
         ClientChargeData clientCharge = this.clientChargeReadPlatformService.retrieveClientCharge(clientId, chargeId);
-
         // extract associations
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
         if (!associationParameters.isEmpty()) {
@@ -137,14 +135,11 @@ public class ClientChargesApiResource {
             if (associationParameters.contains(ClientApiConstants.CLIENT_CHARGE_ASSOCIATIONS_TRANSACTIONS)) {
                 Page<ClientTransactionData> clientTransactionDatas = this.clientTransactionReadPlatformService
                         .retrieveAllTransactions(clientId, chargeId,limit,offset);
-                System.out.println("clientTransactionDatas:"+clientTransactionDatas);
-                if (clientTransactionDatas==null) {
-                    clientTransactionDatas = null;
+                if (clientTransactionDatas!=null) {
+                    clientCharge = ClientChargeData.addAssociations(clientCharge, clientTransactionDatas);
                 }
-                clientCharge = ClientChargeData.addAssociations(clientCharge, clientTransactionDatas);
             }
         }
-
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, clientCharge, ClientApiConstants.CLIENT_CHARGES_RESPONSE_DATA_PARAMETERS);
     }

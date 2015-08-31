@@ -60,11 +60,11 @@ public class ClientTransactionsApiResource {
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAllClientTransactions(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo) {
+    public String retrieveAllClientTransactions(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo,
+            @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit) {
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME);
-
         final Page<ClientTransactionData> clientTransactions = this.clientTransactionReadPlatformService
-                .retrieveAllTransactions(clientId);
+                .retrieveAllTransactions(clientId, limit, offset);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, clientTransactions,
