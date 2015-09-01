@@ -202,6 +202,8 @@ INSERT INTO `schema_version` (`version_rank`, `installed_rank`, `version`, `desc
   Ensure the following libraries are in the [TOMCAT_HOME]/lib folder
   - tomcat-jdbc.jar (You can download the same from http://central.maven.org/maven2/org/apache/tomcat/tomcat-jdbc/7.0.57/tomcat-jdbc-7.0.57.jar)
   - mysql-connector-java-5.1.22 (You will need to download the latest MySQL Connector/J Jar file from http://dev.mysql.com/downloads/connector/j/)
+  
+Make sure all these libraries are readable by tomcat (by making tomcat the owner), if not they won't be deployed upon tomcat restart.
 
 #### 3.3.4 Configure for SSL
 
@@ -290,6 +292,7 @@ INSERT INTO `schema_version` (`version_rank`, `installed_rank`, `version`, `desc
   - The entire ```apps/community-app``` folder. 
   - The entire api-docs folder
 
+
 #### 3.3.7 Startup tomcat
   Startup tomcat:
   - Platform application should be available @ https://[server ip address]:8443/mifosng-provider/api/v1/offices?tenantIdentifier=default&pretty=true
@@ -298,7 +301,9 @@ INSERT INTO `schema_version` (`version_rank`, `installed_rank`, `version`, `desc
   
   *where [server ip address] is the hostname or IP address of your computer. For instance, if you've installed Mifos on your local machine then [server ip address] is localhost*
 
-## How to integrate the web front-end UI with the back-end
+#### Troubleshooting
 
-To be able to use the front-end UI along with the back-end, you simply need to copy the webapp's source code files to the ```apps``` folder. For instance, you could copy the source code files of the community app to ```apps/community-app```. This would enable you to access the commuity app from the following URL:
-*https://[server ip address]:8443/mifosng-provider/apps/community-app?baseApiUrl=https://[server ip address]:8443*
+##### Slow and or failing queries
+
+It may be that tomcat has not enough memory.
+To fix it (under ubuntu, with tomcat7 installed using apt-get), create a file containing ```export CATALINA_OPTS="-Xms512M -Xmx1024M"``` and save it under ```/usr/share/tomcat7/bin/sentenv.sh```. Then restart the server using ```sudo service tomcat7 restart```.
