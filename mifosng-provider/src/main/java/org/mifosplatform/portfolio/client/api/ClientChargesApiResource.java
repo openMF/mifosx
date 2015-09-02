@@ -32,6 +32,7 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
+import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.charge.data.ChargeData;
 import org.mifosplatform.portfolio.charge.service.ChargeReadPlatformService;
@@ -120,12 +121,10 @@ public class ClientChargesApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveClientCharge(@PathParam("clientId") final Long clientId, @PathParam("chargeId") final Long chargeId,
-            @Context final UriInfo uriInfo) {
+            @Context final UriInfo uriInfo, @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit) {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME);
-
         ClientChargeData clientCharge = this.clientChargeReadPlatformService.retrieveClientCharge(clientId, chargeId);
-
         // extract associations
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
         if (!associationParameters.isEmpty()) {
@@ -136,13 +135,11 @@ public class ClientChargesApiResource {
             if (associationParameters.contains(ClientApiConstants.CLIENT_CHARGE_ASSOCIATIONS_TRANSACTIONS)) {
                 Collection<ClientTransactionData> clientTransactionDatas = this.clientTransactionReadPlatformService
                         .retrieveAllTransactions(clientId, chargeId);
-                if (CollectionUtils.isEmpty(clientTransactionDatas)) {
-                    clientTransactionDatas = null;
+                if (clientTransactionDatas!=null) {
+                    clientCharge = ClientChargeData.addAssociations(clientCharge, clientTransactionDatas);
                 }
-                clientCharge = ClientChargeData.addAssociations(clientCharge, clientTransactionDatas);
             }
         }
-
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, clientCharge, ClientApiConstants.CLIENT_CHARGES_RESPONSE_DATA_PARAMETERS);
     }
@@ -195,7 +192,6 @@ public class ClientChargesApiResource {
 
         return json;
     }
-
     @DELETE
     @Path("{chargeId}")
     @Consumes({ MediaType.APPLICATION_JSON })

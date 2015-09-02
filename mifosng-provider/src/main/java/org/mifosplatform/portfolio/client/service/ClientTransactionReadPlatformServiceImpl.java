@@ -13,6 +13,8 @@ import java.util.Collection;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
+import org.mifosplatform.infrastructure.core.service.Page;
+import org.mifosplatform.infrastructure.core.service.PaginationHelper;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.portfolio.client.data.ClientTransactionData;
@@ -29,7 +31,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ClientTransactionReadPlatformServiceImpl implements ClientTransactionReadPlatformService {
-
+    
+    private final PaginationHelper<ClientTransactionData> paginationHelper = new PaginationHelper<>();
     private final JdbcTemplate jdbcTemplate;
     private final ClientTransactionMapper clientTransactionMapper;
 
@@ -37,11 +40,11 @@ public class ClientTransactionReadPlatformServiceImpl implements ClientTransacti
     public ClientTransactionReadPlatformServiceImpl(final RoutingDataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.clientTransactionMapper = new ClientTransactionMapper();
-
     }
 
     private static final class ClientTransactionMapper implements RowMapper<ClientTransactionData> {
-
+        
+       
         private final String schemaSql;
 
         public ClientTransactionMapper() {
@@ -118,15 +121,19 @@ public class ClientTransactionReadPlatformServiceImpl implements ClientTransacti
     }
 
     @Override
-    public Collection<ClientTransactionData> retrieveAllTransactions(Long clientId) {
-        Long chargeId = null;
-        return retrieveAllTransactions(clientId, chargeId);
+    public Page<ClientTransactionData> retrieveAllTransactions(Long clientId,Integer limit,Integer offset) {
+        Object[] parameters = new Object[1];
+        String sql = "select SQL_CALC_FOUND_ROWS " + this.clientTransactionMapper.schema() + " where c.id = ? ";
+        parameters[0] = clientId;
+        final String sqlCountRows = "SELECT FOUND_ROWS()";
+        sql = sql + " order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC "+"limit "+limit+" offset "+offset;
+        return this.paginationHelper.fetchPage(this.jdbcTemplate,sqlCountRows, sql,parameters,this.clientTransactionMapper);
     }
 
     @Override
     public Collection<ClientTransactionData> retrieveAllTransactions(Long clientId, Long chargeId) {
         Object[] parameters = new Object[1];
-        String sql = "select " + this.clientTransactionMapper.schema() + " where c.id = ? ";
+        String sql = "select SQL_CALC_FOUND_ROWS " + this.clientTransactionMapper.schema() + " where c.id = ? ";
         if (chargeId != null) {
             parameters = new Object[2];
             parameters[1] = chargeId;
