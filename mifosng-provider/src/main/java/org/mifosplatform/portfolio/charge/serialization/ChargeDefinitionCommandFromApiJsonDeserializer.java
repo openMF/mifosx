@@ -23,6 +23,7 @@ import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+import org.mifosplatform.portfolio.charge.api.ChargesApiConstants;
 import org.mifosplatform.portfolio.charge.domain.ChargeAppliesTo;
 import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
 import org.mifosplatform.portfolio.charge.domain.ChargePaymentMode;
@@ -39,9 +40,10 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
     /**
      * The parameters supported for this command.
      */
-    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("name", "amount", "locale", "currencyCode",
-            "currencyOptions", "chargeAppliesTo", "chargeTimeType", "chargeCalculationType", "chargeCalculationTypeOptions", "penalty",
-            "active", "chargePaymentMode", "feeOnMonthDay", "feeInterval", "monthDayFormat", "minCap", "maxCap", "feeFrequency"));
+    private final Set<String> supportedParameters = new HashSet<>(
+            Arrays.asList("name", "amount", "locale", "currencyCode", "currencyOptions", "chargeAppliesTo", "chargeTimeType",
+                    "chargeCalculationType", "chargeCalculationTypeOptions", "penalty", "active", "chargePaymentMode", "feeOnMonthDay",
+                    "feeInterval", "monthDayFormat", "minCap", "maxCap", "feeFrequency", ChargesApiConstants.glAccountIdParamName));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -102,7 +104,7 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
                 baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType)
                         .isOneOfTheseValues(ChargeCalculationType.validValuesForLoan());
             }
-
+            
         } else if (appliesTo.isSavingsCharge()) {
             // savings applicable validation
             final Integer chargeTimeType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("chargeTimeType", element);
@@ -116,8 +118,8 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
 
             if (ctt.isWeeklyFee()) {
                 final String monthDay = this.fromApiJsonHelper.extractStringNamed("feeOnMonthDay", element);
-                baseDataValidator.reset().parameter("feeOnMonthDay").value(monthDay)
-                        .mustBeBlankWhenParameterProvidedIs("chargeTimeType", chargeTimeType);
+                baseDataValidator.reset().parameter("feeOnMonthDay").value(monthDay).mustBeBlankWhenParameterProvidedIs("chargeTimeType",
+                        chargeTimeType);
             }
 
             if (ctt.isMonthlyFee()) {
@@ -136,6 +138,27 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
                 baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType)
                         .isOneOfTheseValues(ChargeCalculationType.validValuesForSavings());
             }
+        } else if (appliesTo.isClientCharge()) {
+            // client applicable validation
+            final Integer chargeTimeType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("chargeTimeType", element);
+            baseDataValidator.reset().parameter("chargeTimeType").value(chargeTimeType).notNull();
+            if (chargeTimeType != null) {
+                baseDataValidator.reset().parameter("chargeTimeType").value(chargeTimeType)
+                        .isOneOfTheseValues(ChargeTimeType.validClientValues());
+            }
+
+            if (chargeCalculationType != null) {
+                baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType)
+                        .isOneOfTheseValues(ChargeCalculationType.validValuesForClients());
+            }
+
+            // GL Account can be linked to clients
+            if (this.fromApiJsonHelper.parameterExists(ChargesApiConstants.glAccountIdParamName, element)) {
+                final Long glAccountId = this.fromApiJsonHelper.extractLongNamed(ChargesApiConstants.glAccountIdParamName, element);
+                baseDataValidator.reset().parameter(ChargesApiConstants.glAccountIdParamName).value(glAccountId).notNull()
+                        .longGreaterThanZero();
+            }
+
         }
 
         final String name = this.fromApiJsonHelper.extractStringNamed("name", element);
@@ -217,9 +240,11 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
 
             final Collection<Object> validLoanValues = Arrays.asList(ChargeTimeType.validLoanValues());
             final Collection<Object> validSavingsValues = Arrays.asList(ChargeTimeType.validSavingsValues());
+            final Collection<Object> validClientValues = Arrays.asList(ChargeTimeType.validClientValues());
 
             final Collection<Object> allValidValues = new ArrayList<>(validLoanValues);
             allValidValues.addAll(validSavingsValues);
+            allValidValues.addAll(validClientValues);
 
             baseDataValidator.reset().parameter("chargeTimeType").value(chargeTimeType).notNull()
                     .isOneOfTheseValues(allValidValues.toArray(new Object[allValidValues.size()]));
@@ -238,7 +263,7 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
         if (this.fromApiJsonHelper.parameterExists("chargeCalculationType", element)) {
             final Integer chargeCalculationType = this.fromApiJsonHelper.extractIntegerNamed("chargeCalculationType", element,
                     Locale.getDefault());
-            baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType).notNull().inMinMaxRange(1, 4);
+            baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType).notNull().inMinMaxRange(1, 5);
         }
 
         if (this.fromApiJsonHelper.parameterExists("chargePaymentMode", element)) {
@@ -266,6 +291,12 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
         if (this.fromApiJsonHelper.parameterExists("feeFrequency", element)) {
             final Integer feeFrequency = this.fromApiJsonHelper.extractIntegerNamed("feeFrequency", element, Locale.getDefault());
             baseDataValidator.reset().parameter("feeFrequency").value(feeFrequency).inMinMaxRange(0, 3);
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(ChargesApiConstants.glAccountIdParamName, element)) {
+            final Long glAccountId = this.fromApiJsonHelper.extractLongNamed(ChargesApiConstants.glAccountIdParamName, element);
+            baseDataValidator.reset().parameter(ChargesApiConstants.glAccountIdParamName).value(glAccountId).notNull()
+                    .longGreaterThanZero();
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);

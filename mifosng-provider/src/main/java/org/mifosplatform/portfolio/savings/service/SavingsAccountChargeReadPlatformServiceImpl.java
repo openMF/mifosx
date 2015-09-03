@@ -10,9 +10,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.joda.time.LocalDate;
 import org.joda.time.MonthDay;
+import org.mifosplatform.accounting.glaccount.data.GLAccountData;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
@@ -58,18 +60,12 @@ public class SavingsAccountChargeReadPlatformServiceImpl implements SavingsAccou
     private static final class SavingsAccountChargeMapper implements RowMapper<SavingsAccountChargeData> {
 
         public String schema() {
-            return "sc.id as id, c.id as chargeId, sc.savings_account_id as accountId, c.name as name, "
-                    + "sc.amount as amountDue, "
-                    + "sc.amount_paid_derived as amountPaid, "
-                    + "sc.amount_waived_derived as amountWaived, "
-                    + "sc.amount_writtenoff_derived as amountWrittenOff, "
-                    + "sc.amount_outstanding_derived as amountOutstanding, "
+            return "sc.id as id, c.id as chargeId, sc.savings_account_id as accountId, c.name as name, " + "sc.amount as amountDue, "
+                    + "sc.amount_paid_derived as amountPaid, " + "sc.amount_waived_derived as amountWaived, "
+                    + "sc.amount_writtenoff_derived as amountWrittenOff, " + "sc.amount_outstanding_derived as amountOutstanding, "
                     + "sc.calculation_percentage as percentageOf, sc.calculation_on_amount as amountPercentageAppliedTo, "
-                    + "sc.charge_time_enum as chargeTime, "
-                    + "sc.is_penalty as penalty, "
-                    + "sc.charge_due_date as dueAsOfDate, "
-                    + "sc.fee_on_month as feeOnMonth, "
-                    + "sc.fee_on_day as feeOnDay, sc.fee_interval as feeInterval, "
+                    + "sc.charge_time_enum as chargeTime, " + "sc.is_penalty as penalty, " + "sc.charge_due_date as dueAsOfDate, "
+                    + "sc.fee_on_month as feeOnMonth, " + "sc.fee_on_day as feeOnDay, sc.fee_interval as feeInterval, "
                     + "sc.charge_calculation_enum as chargeCalculation, "
                     + "sc.is_active as isActive, sc.inactivated_on_date as inactivationDate, "
                     + "c.currency_code as currencyCode, oc.name as currencyName, "
@@ -144,13 +140,18 @@ public class SavingsAccountChargeReadPlatformServiceImpl implements SavingsAccou
                 .retrieveSavingsCalculationTypes();
         final List<EnumOptionData> savingsChargeTimeTypeOptions = this.chargeDropdownReadPlatformService
                 .retrieveSavingsCollectionTimeTypes();
+        final List<EnumOptionData> clientChargeCalculationTypeOptions = null;
+        final List<EnumOptionData> clientChargeTimeTypeOptions = null;
 
         final List<EnumOptionData> feeFrequencyOptions = this.dropdownReadPlatformService.retrievePeriodFrequencyTypeOptions();
+        // this field is applicable only for client charges
+        final Map<String, List<GLAccountData>> incomeOrLiabilityAccountOptions = null;
 
         // TODO AA : revisit for merge conflict - Not sure method signature
         return ChargeData.template(null, allowedChargeCalculationTypeOptions, null, allowedChargeTimeOptions, null,
                 loansChargeCalculationTypeOptions, loansChargeTimeTypeOptions, savingsChargeCalculationTypeOptions,
-                savingsChargeTimeTypeOptions, feeFrequencyOptions);
+                savingsChargeTimeTypeOptions, clientChargeCalculationTypeOptions, clientChargeTimeTypeOptions, feeFrequencyOptions,
+                incomeOrLiabilityAccountOptions);
     }
 
     @Override
@@ -227,8 +228,7 @@ public class SavingsAccountChargeReadPlatformServiceImpl implements SavingsAccou
 
     @Override
     public Collection<SavingsAccountAnnualFeeData> retrieveChargesWithDue() {
-        final String sql = "select "
-                + this.chargeDueMapper.schema()
+        final String sql = "select " + this.chargeDueMapper.schema()
                 + " where sac.charge_due_date is not null and sac.charge_due_date <= NOW() and sac.waived = 0 and sac.is_paid_derived=0 and sac.is_active=1 and sa.status_enum = "
                 + SavingsAccountStatusType.ACTIVE.getValue() + " order by sac.charge_due_date ";
 

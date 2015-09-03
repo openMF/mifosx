@@ -5,6 +5,8 @@
  */
 package org.mifosplatform.portfolio.loanaccount;
 
+import java.lang.reflect.Field;
+import java.math.RoundingMode;
 import java.util.List;
 
 import org.joda.time.LocalDate;
@@ -12,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
+import org.mifosplatform.organisation.monetary.domain.MoneyHelper;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.impl.RBILoanRepaymentScheduleTransactionProcessor;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -29,8 +32,11 @@ public class AdhikarLoanRepaymentScheduleTransactionProcessorTest {
     private List<LoanRepaymentScheduleInstallment> installments;
 
     @Before
-    public void setUpForEachTestCase() {
+    public void setUpForEachTestCase() throws Exception {
 
+        Field field = MoneyHelper.class.getDeclaredField("roundingMode");
+        field.setAccessible(true);
+        field.set(null, RoundingMode.HALF_EVEN);
         this.installments = LoanScheduleTestDataHelper.createSimpleLoanSchedule(this.july2nd, this.usDollars);
 
         this.processor = new RBILoanRepaymentScheduleTransactionProcessor();
