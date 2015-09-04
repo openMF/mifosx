@@ -23,7 +23,11 @@ import org.mifosplatform.infrastructure.entityaccess.service.MifosEntityAccessUt
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.charge.api.ChargesApiConstants;
 import org.mifosplatform.portfolio.charge.domain.Charge;
+import org.mifosplatform.portfolio.charge.domain.ChargeAppliesTo;
+import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
 import org.mifosplatform.portfolio.charge.domain.ChargeRepository;
+import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
+import org.mifosplatform.portfolio.charge.exception.ChargeCannotBeCreatedException;
 import org.mifosplatform.portfolio.charge.exception.ChargeCannotBeDeletedException;
 import org.mifosplatform.portfolio.charge.exception.ChargeCannotBeUpdatedException;
 import org.mifosplatform.portfolio.charge.exception.ChargeNotFoundException;
@@ -82,8 +86,17 @@ public class ChargeWritePlatformServiceJpaRepositoryImpl implements ChargeWriteP
             if (glAccountId != null) {
                 glAccount = this.gLAccountRepository.findOneWithNotFoundDetection(glAccountId);
             }
+           
+            final Charge charge = Charge.fromJson(command, glAccount) ;
+           
+          //MIFOSX-Modification in the charge definition for TrancheDisbursement.
+            if (ChargeTimeType.TRANCHE_DISBURSEMENT.getValue().equals(charge.getChargeTimeType())) {
+                if (!ChargeCalculationType.FLAT.getValue().equals(charge.getChargeCalculation())
+                        && !ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue().equals(charge.getChargeCalculation())) { 
+                    throw new ChargeCannotBeCreatedException("error.msg.charge.cannot.be.created",
+                        "If Charge Time Type is TRANCHE_DISBURSEMENT then CHARGE_CALCULATION_TYPE must be FLAT or %DISBURSEMENT_AMOUNT"); }
 
-            final Charge charge = Charge.fromJson(command, glAccount);
+            }
             this.chargeRepository.save(charge);
 
             // check if the office specific products are enabled. If yes, then
@@ -141,7 +154,22 @@ public class ChargeWritePlatformServiceJpaRepositoryImpl implements ChargeWriteP
                 }
                 chargeForUpdate.setAccount(newIncomeAccount);
             }
-
+            
+            //MIFOSX-Modification in the charge updating chargeCalculationType.
+           if(changes.containsKey("chargeCalculationType")&&
+                   ChargeTimeType.TRANCHE_DISBURSEMENT.getValue().equals(chargeForUpdate.getChargeTimeType())){
+                final Integer newValue =command.integerValueOfParameterNamed("chargeCalculationType");
+                if(newValue==null||(!ChargeCalculationType.FLAT.getValue().equals(newValue)
+                        &&!ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue().equals(newValue))){
+                    throw new ChargeCannotBeUpdatedException(
+                            "error.msg.charge.chargeCalculation.cannot.be.updated.allowed.values are flat or percentageofdisbursement",
+                            "This charge chargeCalculation cannot be updated with other than flat or percentageofdisbursement for chargeTimeType trancheDisbursement");
+                }
+                
+            }
+                
+                
+                            
             if (!changes.isEmpty()) {
                 this.chargeRepository.save(chargeForUpdate);
             }
@@ -166,10 +194,9 @@ public class ChargeWritePlatformServiceJpaRepositoryImpl implements ChargeWriteP
         final Boolean isChargeExistWithSavings = isAnySavingsAssociateWithThisCharge(chargeId);
 
         // TODO: Change error messages around:
-        if (!loanProducts.isEmpty() || isChargeExistWithLoans
-                || isChargeExistWithSavings) { throw new ChargeCannotBeDeletedException(
-                        "error.msg.charge.cannot.be.deleted.it.is.already.used.in.loan",
-                        "This charge cannot be deleted, it is already used in loan"); }
+        if (!loanProducts.isEmpty() || isChargeExistWithLoans || isChargeExistWithSavings) { throw new ChargeCannotBeDeletedException(
+                "error.msg.charge.cannot.be.deleted.it.is.already.used.in.loan",
+                "This charge cannot be deleted, it is already used in loan"); }
 
         chargeForDelete.delete();
 
