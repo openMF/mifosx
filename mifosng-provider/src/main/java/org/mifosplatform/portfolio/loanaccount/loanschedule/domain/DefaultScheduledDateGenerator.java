@@ -14,14 +14,10 @@ import org.mifosplatform.organisation.holiday.service.HolidayUtil;
 import org.mifosplatform.organisation.workingdays.domain.RepaymentRescheduleType;
 import org.mifosplatform.organisation.workingdays.service.WorkingDaysUtil;
 import org.mifosplatform.portfolio.calendar.domain.Calendar;
-import org.mifosplatform.portfolio.calendar.domain.CalendarHistory;
-import org.mifosplatform.portfolio.calendar.domain.CalendarInstance;
 import org.mifosplatform.portfolio.calendar.service.CalendarUtils;
 import org.mifosplatform.portfolio.common.domain.DayOfWeekType;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 import org.mifosplatform.portfolio.loanaccount.data.HolidayDetailDTO;
-
-import java.util.Set;
 
 public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
 
@@ -29,7 +25,6 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
     public LocalDate getLastRepaymentDate(final LoanApplicationTerms loanApplicationTerms, final HolidayDetailDTO holidayDetailDTO) {
 
         final int numberOfRepayments = loanApplicationTerms.getNumberOfRepayments();
-
         LocalDate lastRepaymentDate = loanApplicationTerms.getExpectedDisbursementDate();
         boolean isFirstRepayment = true;
         for (int repaymentPeriod = 1; repaymentPeriod <= numberOfRepayments; repaymentPeriod++) {
@@ -60,7 +55,8 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
                 // repayment
                 LocalDate seedDate = currentCalendar.getStartDateLocalDate();
                 String reccuringString = currentCalendar.getRecurrence();
-                dueRepaymentPeriodDate = CalendarUtils.getNewRepaymentMeetingDate(reccuringString, seedDate, dueRepaymentPeriodDate,
+                // dueRepaymentPeriodDate = null; which is causing the exception in isValidRecurringdates() and resulting in not updating the repayment schedule
+                dueRepaymentPeriodDate = CalendarUtils.getNewRepaymentMeetingDate(reccuringString, seedDate, lastRepaymentDate,
                         loanApplicationTerms.getRepaymentEvery(),
                         CalendarUtils.getMeetingFrequencyFromPeriodFrequencyType(loanApplicationTerms.getLoanTermPeriodFrequencyType()),
                         holidayDetailDTO.getWorkingDays());
