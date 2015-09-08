@@ -5,8 +5,6 @@
  */
 package org.mifosplatform.portfolio.client.api;
 
-import java.util.Collection;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -27,6 +25,8 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
+import org.mifosplatform.infrastructure.core.service.Page;
+import org.mifosplatform.infrastructure.core.service.SearchParameters;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.client.data.ClientTransactionData;
 import org.mifosplatform.portfolio.client.service.ClientTransactionReadPlatformService;
@@ -59,11 +59,13 @@ public class ClientTransactionsApiResource {
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAllClientTransactions(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo) {
+    public String retrieveAllClientTransactions(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo,
+            @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit) {
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME);
 
-        final Collection<ClientTransactionData> clientTransactions = this.clientTransactionReadPlatformService
-                .retrieveAllTransactions(clientId);
+        SearchParameters searchParameters = SearchParameters.forPagination(offset, limit);
+        final Page<ClientTransactionData> clientTransactions = this.clientTransactionReadPlatformService.retrieveAllTransactions(clientId,
+                searchParameters);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, clientTransactions,
