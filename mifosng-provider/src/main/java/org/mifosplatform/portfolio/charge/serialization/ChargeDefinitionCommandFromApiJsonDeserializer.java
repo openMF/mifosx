@@ -40,10 +40,10 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
     /**
      * The parameters supported for this command.
      */
-    private final Set<String> supportedParameters = new HashSet<>(
-            Arrays.asList("name", "amount", "locale", "currencyCode", "currencyOptions", "chargeAppliesTo", "chargeTimeType",
-                    "chargeCalculationType", "chargeCalculationTypeOptions", "penalty", "active", "chargePaymentMode", "feeOnMonthDay",
-                    "feeInterval", "monthDayFormat", "minCap", "maxCap", "feeFrequency", ChargesApiConstants.glAccountIdParamName));
+    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("name", "amount", "locale", "currencyCode",
+            "currencyOptions", "chargeAppliesTo", "chargeTimeType", "chargeCalculationType", "chargeCalculationTypeOptions", "penalty",
+            "active", "chargePaymentMode", "feeOnMonthDay", "feeInterval", "monthDayFormat", "minCap", "maxCap", "feeFrequency",
+            ChargesApiConstants.glAccountIdParamName));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -91,6 +91,16 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
                 baseDataValidator.reset().parameter("chargeTimeType").value(chargeTimeType)
                         .isOneOfTheseValues(ChargeTimeType.validLoanValues());
             }
+            if (chargeTimeType != null && chargeTimeType.equals(ChargeTimeType.TRANCHE_DISBURSEMENT.getValue())) {
+                baseDataValidator
+                        .reset()
+                        .parameter("chargeCalculationType")
+                        .value(chargeCalculationType)
+                        .isOneOfTheseValues(
+                                new Object[] { ChargeCalculationType.FLAT.getValue(),
+                                        ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue() });
+
+            }
 
             final Integer chargePaymentMode = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("chargePaymentMode", element);
             baseDataValidator.reset().parameter("chargePaymentMode").value(chargePaymentMode).notNull()
@@ -104,7 +114,7 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
                 baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType)
                         .isOneOfTheseValues(ChargeCalculationType.validValuesForLoan());
             }
-            
+
         } else if (appliesTo.isSavingsCharge()) {
             // savings applicable validation
             final Integer chargeTimeType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("chargeTimeType", element);
@@ -118,8 +128,8 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
 
             if (ctt.isWeeklyFee()) {
                 final String monthDay = this.fromApiJsonHelper.extractStringNamed("feeOnMonthDay", element);
-                baseDataValidator.reset().parameter("feeOnMonthDay").value(monthDay).mustBeBlankWhenParameterProvidedIs("chargeTimeType",
-                        chargeTimeType);
+                baseDataValidator.reset().parameter("feeOnMonthDay").value(monthDay)
+                        .mustBeBlankWhenParameterProvidedIs("chargeTimeType", chargeTimeType);
             }
 
             if (ctt.isMonthlyFee()) {
@@ -248,6 +258,7 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
 
             baseDataValidator.reset().parameter("chargeTimeType").value(chargeTimeType).notNull()
                     .isOneOfTheseValues(allValidValues.toArray(new Object[allValidValues.size()]));
+            
         }
 
         if (this.fromApiJsonHelper.parameterExists("feeOnMonthDay", element)) {
@@ -261,9 +272,17 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
         }
 
         if (this.fromApiJsonHelper.parameterExists("chargeCalculationType", element)) {
+            final Integer chargeTimeType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("chargeTimeType", element);
             final Integer chargeCalculationType = this.fromApiJsonHelper.extractIntegerNamed("chargeCalculationType", element,
                     Locale.getDefault());
             baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType).notNull().inMinMaxRange(1, 5);
+            if(chargeTimeType!=null&&ChargeTimeType.TRANCHE_DISBURSEMENT.getValue().equals(chargeTimeType)){
+                baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType).isOneOfTheseValues(new Object[]{ChargeCalculationType.FLAT.getValue(),ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue()});;
+            }
+            if(chargeCalculationType!=null&&(!ChargeCalculationType.FLAT.getValue().equals(chargeCalculationType)&&
+                    !ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue().equals(chargeCalculationType))){
+                baseDataValidator.reset().parameter("chargeTimeType").value(chargeTimeType).isNotOneOfTheseValues(new Object[]{ChargeTimeType.TRANCHE_DISBURSEMENT.getValue()});
+            }
         }
 
         if (this.fromApiJsonHelper.parameterExists("chargePaymentMode", element)) {
