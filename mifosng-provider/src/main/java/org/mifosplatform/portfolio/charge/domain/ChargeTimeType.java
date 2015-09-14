@@ -54,7 +54,7 @@ public enum ChargeTimeType {
     }
 
     public static Object[] validClientValues() {
-        return new Integer[] { ChargeTimeType.SPECIFIED_DUE_DATE.getValue() };
+        return new Integer[] { ChargeTimeType.SPECIFIED_DUE_DATE.getValue(),ChargeTimeType.ANNUAL_FEE.getValue(),ChargeTimeType.MONTHLY_FEE.getValue(),ChargeTimeType.WEEKLY_FEE.getValue() };
     }
 
     public static ChargeTimeType fromInt(final Integer chargeTime) {

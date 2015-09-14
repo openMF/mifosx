@@ -38,6 +38,9 @@ import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientCharge;
 import org.mifosplatform.portfolio.client.domain.ClientChargePaidBy;
 import org.mifosplatform.portfolio.client.domain.ClientChargeRepositoryWrapper;
+import org.mifosplatform.portfolio.client.domain.ClientRecurringCharge;
+import org.mifosplatform.portfolio.client.domain.ClientRecurringChargeRepository;
+import org.mifosplatform.portfolio.client.domain.ClientRecurringChargeRepositoryWrapper;
 import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
 import org.mifosplatform.portfolio.client.domain.ClientTransaction;
 import org.mifosplatform.portfolio.client.domain.ClientTransactionRepository;
@@ -49,12 +52,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements ClientChargeWritePlatformService {
 
     private final static Logger logger = LoggerFactory.getLogger(ClientChargeWritePlatformServiceJpaRepositoryImpl.class);
-
     private final PlatformSecurityContext context;
     private final ChargeRepositoryWrapper chargeRepository;
     private final ClientRepositoryWrapper clientRepository;
@@ -66,6 +69,8 @@ public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements Client
     private final ClientTransactionRepository clientTransactionRepository;
     private final PaymentDetailWritePlatformService paymentDetailWritePlatformService;
     private final JournalEntryWritePlatformService journalEntryWritePlatformService;
+    private final ClientRecurringChargeRepository clientRecurringChargeRepository;
+    private final ClientRecurringChargeRepositoryWrapper clientRecurringChargeRepowrapper;
 
     @Autowired
     public ClientChargeWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -74,7 +79,9 @@ public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements Client
             final ConfigurationDomainService configurationDomainService, final ClientChargeRepositoryWrapper clientChargeRepository,
             final WorkingDaysRepositoryWrapper workingDaysRepository, final ClientTransactionRepository clientTransactionRepository,
             final PaymentDetailWritePlatformService paymentDetailWritePlatformService,
-            final JournalEntryWritePlatformService journalEntryWritePlatformService) {
+            final JournalEntryWritePlatformService journalEntryWritePlatformService,
+            ClientRecurringChargeRepository clientRecurringChargeRepository,
+            ClientRecurringChargeRepositoryWrapper clientRecurringChargeRepowrapper) {
         this.context = context;
         this.chargeRepository = chargeRepository;
         this.clientChargeDataValidator = clientChargeDataValidator;
@@ -86,11 +93,14 @@ public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements Client
         this.clientTransactionRepository = clientTransactionRepository;
         this.paymentDetailWritePlatformService = paymentDetailWritePlatformService;
         this.journalEntryWritePlatformService = journalEntryWritePlatformService;
+        this.clientRecurringChargeRepository = clientRecurringChargeRepository;
+        this.clientRecurringChargeRepowrapper = clientRecurringChargeRepowrapper;
     }
 
     @Override
     public CommandProcessingResult addCharge(Long clientId, JsonCommand command) {
         try {
+
             this.clientChargeDataValidator.validateAdd(command.json());
 
             final Client client = clientRepository.getActiveClientInUserScope(clientId);
@@ -103,13 +113,27 @@ public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements Client
                 final String errorMessage = "Charge with identifier " + charge.getId() + " cannot be applied to a Client";
                 throw new ChargeCannotBeAppliedToException("client", errorMessage, charge.getId());
             }
+            if (charge.isMonthlyFee() || charge.isAnnualFee()||charge.isWeeklyFee()) {
+                final ClientRecurringCharge clientRecurringCharge = ClientRecurringCharge.createNew(client, charge, command);
+                this.clientRecurringChargeRepository.save(clientRecurringCharge);
 
+                final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat());
+                validateActivityDateFallOnAWorkingDay(clientRecurringCharge.getDueLocalDate(),
+                        clientRecurringCharge.getClient().officeId(), ClientApiConstants.dueAsOfDateParamName,
+                        "charge.due.date.is.on.holiday", "charge.due.date.is.a.non.workingday", fmt);
+
+                return new CommandProcessingResultBuilder() //
+                        .withEntityId(clientRecurringCharge.getId()) //
+                        .withOfficeId(clientRecurringCharge.getClient().getOffice().getId()) //
+                        .withClientId(clientRecurringCharge.getClient().getId()) //
+                        .build();
+            }
             final ClientCharge clientCharge = ClientCharge.createNew(client, charge, command);
+            this.clientChargeRepository.save(clientCharge);
 
             final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat());
-            validateDueDateOnWorkingDay(clientCharge, fmt);
-
-            this.clientChargeRepository.save(clientCharge);
+            validateActivityDateFallOnAWorkingDay(clientCharge.getDueLocalDate(), clientCharge.getOfficeId(),
+                    ClientApiConstants.dueAsOfDateParamName, "charge.due.date.is.on.holiday", "charge.due.date.is.a.non.workingday", fmt);
 
             return new CommandProcessingResultBuilder() //
                     .withEntityId(clientCharge.getId()) //
@@ -234,8 +258,7 @@ public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements Client
     /**
      * Validates transaction to ensure that <br>
      * charge is active <br>
-     * transaction date is valid (between client activation and todays date)
-     * <br>
+     * transaction date is valid (between client activation and todays date) <br>
      * charge is not already paid or waived <br>
      * amount is not more than total due
      * 
@@ -330,31 +353,46 @@ public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements Client
      * @return
      */
     @Override
-    public CommandProcessingResult updateCharge(@SuppressWarnings("unused") Long clientId,
-            @SuppressWarnings("unused") JsonCommand command) {
+    public CommandProcessingResult updateCharge(@SuppressWarnings("unused") Long clientId, @SuppressWarnings("unused") JsonCommand command) {
         // functionality not yet supported
         return null;
     }
 
     @Override
     @SuppressWarnings("unused")
-    public CommandProcessingResult inactivateCharge(Long clientId, Long clientChargeId) {
-        // functionality not yet supported
-        return null;
+    public CommandProcessingResult inactivateCharge(Long clientId, Long clientRecurringChargeId) {
+
+        final Client client = this.clientRepository.getActiveClientInUserScope(clientId);
+        final ClientRecurringCharge clientRecurringCharge = this.clientRecurringChargeRepowrapper
+                .findOneWithNotFoundDetection(clientRecurringChargeId);
+        final LocalDate inActivateDate = DateUtils.getLocalDateOfTenant();
+        clientRecurringCharge.inactiavateCharge(inActivateDate);
+        clientRecurringChargeRepository.save(clientRecurringCharge);
+
+        return new CommandProcessingResultBuilder() //
+                .withEntityId(clientRecurringCharge.getId()) //
+                .withOfficeId(clientRecurringCharge.getClient().getOffice().getId()) //
+                .withClientId(client.getId()) //
+                .build();
+    }
+
+    @Override
+    @SuppressWarnings("unused")
+    public CommandProcessingResult activateCharge(Long clientId, Long clientRecurringChargeId) {
+        final ClientRecurringCharge clientRecurringCharge = this.clientRecurringChargeRepowrapper
+                .findOneWithNotFoundDetection(clientRecurringChargeId);
+        clientRecurringCharge.actiavateCharge();
+        clientRecurringChargeRepository.save(clientRecurringCharge);
+
+        return new CommandProcessingResultBuilder() //
+                .withEntityId(clientRecurringCharge.getId()) //
+                .withOfficeId(clientRecurringCharge.getClient().getOffice().getId()) //
+                .withClientId(clientId) //
+                .build();
     }
 
     /**
-     * Ensures that the charge due date is not on a holiday or a non working day
      * 
-     * @param clientCharge
-     * @param fmt
-     */
-    private void validateDueDateOnWorkingDay(final ClientCharge clientCharge, final DateTimeFormatter fmt) {
-        validateActivityDateFallOnAWorkingDay(clientCharge.getDueLocalDate(), clientCharge.getOfficeId(),
-                ClientApiConstants.dueAsOfDateParamName, "charge.due.date.is.on.holiday", "charge.due.date.is.a.non.workingday", fmt);
-    }
-
-    /**
      * Ensures that the charge transaction date (for payments) is not on a
      * holiday or a non working day
      * 
@@ -369,6 +407,8 @@ public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements Client
     }
 
     /**
+     * Ensures that the charge due date is not on a holiday or a non working day
+     * 
      * @param date
      * @param officeId
      * @param jsonPropertyName
@@ -412,9 +452,8 @@ public class ClientChargeWritePlatformServiceJpaRepositoryImpl implements Client
         final Throwable realCause = dve.getMostSpecificCause();
         if (realCause.getMessage().contains("FK_m_client_charge_paid_by_m_client_charge")) {
 
-        throw new PlatformDataIntegrityException("error.msg.client.charge.cannot.be.deleted",
-                "Client charge with id `" + clientChargeId + "` cannot be deleted as transactions have been made on the same",
-                "clientChargeId", clientChargeId); }
+        throw new PlatformDataIntegrityException("error.msg.client.charge.cannot.be.deleted", "Client charge with id `" + clientChargeId
+                + "` cannot be deleted as transactions have been made on the same", "clientChargeId", clientChargeId); }
 
         logger.error(dve.getMessage(), dve);
         throw new PlatformDataIntegrityException("error.msg.client.charges.unknown.data.integrity.issue",

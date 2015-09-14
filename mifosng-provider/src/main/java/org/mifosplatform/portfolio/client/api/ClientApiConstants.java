@@ -15,6 +15,7 @@ public class ClientApiConstants {
 
     public static final String CLIENT_RESOURCE_NAME = "client";
     public static final String CLIENT_CHARGES_RESOURCE_NAME = "CLIENTCHARGE";
+    
 
     // Client Charge Action Names
     public static final String CLIENT_CHARGE_ACTION_CREATE = "CREATE";
@@ -22,6 +23,7 @@ public class ClientApiConstants {
     public static final String CLIENT_CHARGE_ACTION_WAIVE = "WAIVE";
     public static final String CLIENT_CHARGE_ACTION_PAY = "PAY";
     public static final String CLIENT_CHARGE_ACTION_INACTIVATE = "INACTIVATE";
+    public static final String CLIENT_CHARGE_ACTION_ACTIVATE = "ACTIVATE";
 
     // Client charge associations and query parameters
     public static final String CLIENT_CHARGE_QUERY_PARAM_STATUS = "chargeStatus";
@@ -38,6 +40,7 @@ public class ClientApiConstants {
     public static final String CLIENT_CHARGE_COMMAND_WAIVE_CHARGE = "waive";
     public static final String CLIENT_CHARGE_COMMAND_PAY_CHARGE = "paycharge";
     public static final String CLIENT_CHARGE_COMMAND_INACTIVATE_CHARGE = "inactivate";
+    public static final String CLIENT_CHARGE_COMMAND_ACTIVATE_CHARGE = "activate";
     public static final String CLIENT_TRANSACTION_COMMAND_UNDO = "undo";
 
     public static final String CLIENT_CLOSURE_REASON = "ClientClosureReason";
@@ -197,4 +200,7 @@ public class ClientApiConstants {
             transactionAmountParamName, paymentDetailDataParamName, reversedParamName, dateParamName, officeIdParamName,
             officeNameParamName, transactionTypeParamName, transactionCurrencyParamName, externalIdParamName, submittedOnDateParamName));
 
+    public static final Set<String> CLIENT_RECURRING_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList(chargeIdParamName,
+            clientIdParamName, chargeNameParamName, penaltyParamName, chargeTimeTypeParamName, dueAsOfDateParamName,
+            chargeCalculationTypeParamName, currencyParamName,amountParamName));
 }

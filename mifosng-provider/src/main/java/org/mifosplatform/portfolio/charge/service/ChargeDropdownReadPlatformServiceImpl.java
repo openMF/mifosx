@@ -99,6 +99,7 @@ public class ChargeDropdownReadPlatformServiceImpl implements ChargeDropdownRead
 
     @Override
     public List<EnumOptionData> retrieveClientCollectionTimeTypes() {
-        return Arrays.asList(chargeTimeType(ChargeTimeType.SPECIFIED_DUE_DATE));
+        return Arrays.asList(chargeTimeType(ChargeTimeType.SPECIFIED_DUE_DATE),chargeTimeType(ChargeTimeType.ANNUAL_FEE),
+                chargeTimeType(ChargeTimeType.MONTHLY_FEE),chargeTimeType(ChargeTimeType.WEEKLY_FEE));
     }
 }

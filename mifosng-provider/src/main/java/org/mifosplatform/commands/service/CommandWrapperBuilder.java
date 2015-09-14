@@ -2448,6 +2448,24 @@ public class CommandWrapperBuilder {
         this.href = "/clients/" + clientId + "/charges/" + chargeId + "?command=inactivate";
         return this;
     }
+    
+    public CommandWrapperBuilder inactivateClientRecurringCharge(final Long clientId, final Long recurringClientChargeId) {
+        this.actionName = "INACTIVATE";
+        this.entityName = ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME;
+        this.entityId = recurringClientChargeId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "/charges/recurringCharges/" + recurringClientChargeId + "?command=inactivate";
+        return this;
+    }
+    
+    public CommandWrapperBuilder activateClientRecurringCharge(final Long clientId, final Long recurringClientChargeId) {
+        this.actionName = "ACTIVATE";
+        this.entityName = ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME;
+        this.entityId = recurringClientChargeId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "/charges/recurringCharges/" + recurringClientChargeId + "?command=activate";
+        return this;
+    }
 
     public CommandWrapperBuilder undoClientTransaction(final Long clientId, final Long transactionId) {
         this.actionName = ClientApiConstants.CLIENT_TRANSACTION_ACTION_UNDO;

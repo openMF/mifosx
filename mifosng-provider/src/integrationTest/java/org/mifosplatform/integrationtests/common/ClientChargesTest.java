@@ -5,6 +5,10 @@
  */
 package org.mifosplatform.integrationtests.common;
 
+import java.util.HashMap;
+import java.util.Locale;
+
+import org.joda.time.LocalDate;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +32,9 @@ import com.jayway.restassured.specification.ResponseSpecification;
 public class ClientChargesTest {
 
     private ResponseSpecification responseSpec;
+    private ResponseSpecification responseSpecForSchedulerJob;
     private RequestSpecification requestSpec;
+    private SchedulerJobHelper schedulerJobHelper;
 
     @Before
     public void setup() {
@@ -36,9 +42,10 @@ public class ClientChargesTest {
         this.requestSpec = new RequestSpecBuilder().setContentType(ContentType.JSON).build();
         this.requestSpec.header("Authorization", "Basic " + Utils.loginIntoServerAndGetBase64EncodedAuthenticationKey());
         this.responseSpec = new ResponseSpecBuilder().expectStatusCode(200).build();
+        this.schedulerJobHelper = new SchedulerJobHelper(this.requestSpec, this.responseSpec);
     }
 
-    @Test
+    // @Test
     public void clientChargeTest() {
 
         // Creates clientCharge
@@ -81,8 +88,8 @@ public class ClientChargesTest {
          * Revert the paid client charge transaction by passing the
          * clientChargePaidTransactionId and ensure the same is reverted.
          */
-                final Integer undoTrxnId = ClientHelper.revertClientChargeTransaction(this.requestSpec, this.responseSpec,
-                        clientId.toString(), clientChargePaidTransactionId);
+        final Integer undoTrxnId = ClientHelper.revertClientChargeTransaction(this.requestSpec, this.responseSpec, clientId.toString(),
+                clientChargePaidTransactionId);
         Assert.assertNotNull(undoTrxnId);
         isReversedTransaction(clientId.toString(), undoTrxnId.toString());
         /**
@@ -104,8 +111,8 @@ public class ClientChargesTest {
          * waiveOffClientChargeTransactionId and ensured the transaction is
          * reversed.
          */
-        final Integer undoWaiveTrxnId = ClientHelper.revertClientChargeTransaction(this.requestSpec, this.responseSpec, clientId.toString(),
-                waiveOffClientChargeTransactionId);
+        final Integer undoWaiveTrxnId = ClientHelper.revertClientChargeTransaction(this.requestSpec, this.responseSpec,
+                clientId.toString(), waiveOffClientChargeTransactionId);
         Assert.assertNotNull(undoWaiveTrxnId);
         isReversedTransaction(clientId.toString(), undoWaiveTrxnId.toString());
         /**
@@ -134,6 +141,98 @@ public class ClientChargesTest {
         isValidOutstandingAmount(ClientHelper.getClientCharge(requestSpec, responseSpec, clientId.toString(), clientChargeId.toString()),
                 (float) 100.0);
 
+    }
+
+    @Test
+    public void clientRecurringChargeTest() throws InterruptedException {
+
+        // creates client with activation date
+        final Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec, "01 November 2012");
+        Assert.assertNotNull(clientId);
+
+        String month = getMonth(LocalDate.now().getMonthOfYear());
+        StringBuilder date = new StringBuilder(20);
+        date.append(String.valueOf(LocalDate.now().getDayOfMonth())).append(" " + month).append(" " + LocalDate.now().getYear());
+
+        /**
+         * create a charge with charge time type as isWeekly ,isMonthly and is
+         * Annual and add to a client respectively.
+         */
+
+        final Integer weeklyChargeId = ChargesHelper.createCharges(this.requestSpec, this.responseSpec,
+                ChargesHelper.getChargeforWeeklyJSON());
+        Assert.assertNotNull(weeklyChargeId);
+
+        final Integer weeklyClientRecurringChargeId = ClientHelper.addChargesForClient(this.requestSpec, responseSpec, clientId,
+                ClientHelper.getSpecifiedDueDateChargesClientAsJSON(weeklyChargeId.toString(), date.toString()));
+        Assert.assertNotNull(weeklyClientRecurringChargeId);
+
+        final Integer monthlyChargeId = ChargesHelper.createCharges(this.requestSpec, this.responseSpec,
+                ChargesHelper.getChargeforMonthlyJSON());
+        Assert.assertNotNull(monthlyChargeId);
+
+        final Integer monthlyClientRecurringChargeId = ClientHelper.addChargesForClient(this.requestSpec, responseSpec, clientId,
+                ClientHelper.getSpecifiedDueDateChargesClientAsJSON(monthlyChargeId.toString(), date.toString()));
+        Assert.assertNotNull(monthlyClientRecurringChargeId);
+
+        final Integer annualChargeId = ChargesHelper.createCharges(this.requestSpec, this.responseSpec,
+                ChargesHelper.getChargeforAnnualJSON());
+        Assert.assertNotNull(annualChargeId);
+
+        final Integer annualClientRecurringChargeId = ClientHelper.addChargesForClient(this.requestSpec, responseSpec, clientId,
+                ClientHelper.getSpecifiedDueDateChargesClientAsJSON(annualChargeId.toString(), date.toString()));
+        Assert.assertNotNull(annualClientRecurringChargeId);
+
+        String JobName = "Apply Recurring Charge On Client";
+
+        this.schedulerJobHelper.executeJob(JobName);
+
+    }
+
+    private String getMonth(int monthOfYear) {
+        String month = "";
+        switch (monthOfYear) {
+            case 1:
+                month = "January";
+            break;
+            case 2:
+                month = "February";
+            break;
+            case 3:
+                month = "March";
+            break;
+            case 4:
+                month = "April";
+            break;
+            case 5:
+                month = "May";
+            break;
+            case 6:
+                month = "June";
+            break;
+            case 7:
+                month = "July";
+            break;
+            case 8:
+                month = "August";
+            break;
+            case 9:
+                month = "September";
+            break;
+            case 10:
+                month = "October";
+            break;
+            case 11:
+                month = "November";
+            break;
+            case 12:
+                month = "December";
+            break;
+
+            default:
+            break;
+        }
+        return month;
     }
 
     /**

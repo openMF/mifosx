@@ -350,5 +350,29 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         }
 
     }
+    @Transactional
+    @Override
+    @CronTarget(jobName = JobName.APPLY_RECURRING_CHARGE_ON_CLIENT)
+    public void applyClientRecurringCharge() {
+
+        final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+
+        final StringBuilder insertSqlBuilder = new StringBuilder(900);
+        insertSqlBuilder
+                .append("INSERT INTO m_client_charge(client_id,charge_id,is_penalty,charge_time_enum,charge_due_date,charge_calculation_enum,amount,amount_outstanding_derived,is_active,inactivated_on_date)")
+                .append("SELECT crc.client_id,crc.charge_id,crc.is_penalty,crc.charge_time_enum, crc.charge_due_date ,crc.charge_calculation_enum ,")
+                .append("crc.amount,crc.amount,crc.is_active,crc.inactivated_on_date ")
+                .append("from m_client_recurring_charge crc  where crc.charge_due_date=CURDATE() and is_active=1");
+        jdbcTemplate.update(insertSqlBuilder.toString());
+        final StringBuilder updateSqlBuilder = new StringBuilder(900);
+        updateSqlBuilder.append("UPDATE m_client_recurring_charge crc ").append(" SET crc.charge_due_date = ")
+                .append("CASE WHEN crc.charge_time_enum = 7 THEN DATE_ADD(CURDATE(),INTERVAL 1 MONTH)  ")
+                .append(" WHEN crc.charge_time_enum = 11 THEN DATE_ADD(CURDATE(),INTERVAL 7 DAY)")
+                .append("  ELSE DATE_ADD(CURDATE(),INTERVAL 1 YEAR) END  WHERE is_active=1 and crc.charge_due_date=CURDATE()");
+        final int result = jdbcTemplate.update(updateSqlBuilder.toString());
+        
+        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + result);
+
+    }
 
 }

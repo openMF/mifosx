@@ -90,7 +90,7 @@
 <body>
 	<div id="page-wrapper">
 		<div id="flybar">
-			<div id="nav-logo">15.09.2.RELEASE</div>
+			<div id="nav-logo">15.03.1.RELEASE</div>
 			<div class="flybar-nav">
 				<h2 class="flybar-button">Overview</h2>
 				<div class="flybar-menu-overview">
@@ -104,8 +104,6 @@
 	<li><a href="#dates_and_numbers">Updating Dates and Numbers</a></li>
 	<li><a href="#field_descriptions">Field Descriptions</a></li>
 	<li><a href="#authentication_overview">Authentication Overview</a></li>
-	<li><a href="#authentication_basicauth">Authentication HTTP Basic</a></li>
-	<li><a href="#authentication_oauth">Authentication Oauth2</a></li>
 	<li><a href="#errors">Errors</a></li>
 	<li><a href="#batch_api">Batch API</a></li>
 	<li><a href="#fullapi_matrix">Full API Matrix</a></li>
@@ -395,18 +393,18 @@
 							</tr>
 							<tr>
 								<td></td>
-								<td>clients/{clientId}/charges/{clientChargeId}</td>
+								<td>clients/{clientId}</td>
 								<td></td>
-								<td><a href="#clientcharges_retrieve">Retrieve a Client Charge</a></td>
 								<td></td>
-								<td><a href="#delete_clientCharge">Delete a Client Charge</a></td>
+								<td></td>
+								<td><a href="#delete_clientCharge">Delete Client Charge</a></td>
 								<td></td>
 								<td></td>
 							</tr>
 							<tr>
 								<td></td>							
-								<td>clients/{clientId}/charges/{clientChargeId}?command=pay</td>
-								<td><a href="#pay_clientCharge">Pay a Client Charge</a></td>
+								<td>clients/{clientId}/charges/{chargeid}?command=pay</td>
+								<td><a href="#pay_clientCharge">Pay Client Charge</a></td>
 								<td></td>
 								<td></td>
 								<td></td>
@@ -414,17 +412,17 @@
 							</tr>
 							<tr>
 								<td></td>
-								<td>clients/{clientId}/charges/{clientChargeId}?command=waive</td>
-								<td><a href="#waive_clientCharge">Waive a Client Charge</a></td>							
+								<td>clients/{clientId}/charges/{chargeid}?command=waive</td>
+								<td><a href="#waive_clientCharge">Waive Client Charge</a></td>							
 								<td></td>
 								<td></td>
 								<td></td>
 								<td></td>
 							</tr>
 							<tr>
-								<td><a href="#client_transactions">Client Transactions</td>
-								<td>clients/{clientId}/transactions</td>
-								<td><a href="#list_clientTransactions">List Client Transactions</a></td>			
+								<td><a href="#client_recurring_charges">Client Recurring Charges</a></td>
+								<td>clients/{clientId}/charges/recurringCharges</td>
+								<td><a href="#retrieve_client_recurring_Charge">Retrieve All Client Recurring Charges</a></td>							
 								<td></td>
 								<td></td>
 								<td></td>
@@ -432,13 +430,32 @@
 							</tr>
 							<tr>
 								<td></td>
+								<td>clients/{clientId}/charges/recurringCharges/{clientRecurringChargeId}?command=inactivate</td>
+								<td><a href="#inactivate_client_recurring_Charge">Inactivate Client Recurring Charge</a></td>							
+								<td></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td ><a href="#client_transactions">Client Ttransactions</td>
 								<td>clients/{clientId}/transactions/{transactionId}?command=undo</td>
-								<td><a href="#revert_clientCharge">Undo a Client Transaction</a></td>
-								<td><a href="#clienttransactions_retrieve">Retrieve a Client Transaction</a></td>
+								<td><a href="#revert_clientCharge">Revert Client Charge Transaction</a></td>								
+								<td></td>
 								<td></td>
 								<td></td>
 								<td></td>
 							</tr>
+							<tr>
+								<td ></td>
+								<td>clients/{clientId}/transactions</td>
+								<td><a href="#list_clientTransactions">List Client Charge Transactions</a></td>								
+								<td></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+									
 							
 						</table>
 					</div>
@@ -1250,7 +1267,7 @@
 			</div>
 
 			<div class="flybar-nav">
-				<h2 class="flybar-button">Groups</h2>
+				<h2 class="flybar-button">Group & Collection Sheet</h2>
 				<div id="toc-menu-loan" class="flybar-menu">
 					<div class="tocMatrix">
 						<table class=matrixHeading>
@@ -2143,34 +2160,10 @@
 									</table></td>
 							</tr>
 							<tr>
-								<td><a href="#authenticationbasic">Authentication HTTP Basic</a></td>
+								<td><a href="#authentication">Authentication</a></td>
 								<td>authentication</td>
-								<td><a href="#authenticate_request_basic">Verify Authentication</a></td>
+								<td><a href="#authenticate_request">Verify Authentication</a></td>
 								<td></td>
-								<td></td>
-								<td></td>
-							</tr>
-							<tr>
-								<td><a href="#authenticationoauth">Authentication Oauth2</a></td>
-								<td>oauth/token</td>
-								<td><a href="#oauth">OAuth2 Access and refresh Token Request</a></td>
-								<td></td>
-								<td></td>
-								<td></td>
-							</tr>
-							<tr>
-								<td></td>
-								<td></td>
-								<td><a href="#oauth_access_token_req">OAuth2 Access Token Request from refresh token</a></td>
-								<td></td>
-								<td></td>
-								<td></td>
-							</tr>
-							<tr>
-								<td></td>
-								<td>authenticated user</td>
-								<td></td>
-								<td><a href="#userdetails_request">Fetch Authenticated user details</a></td>
 								<td></td>
 								<td></td>
 							</tr>
@@ -3065,38 +3058,17 @@
 				<div class="method-description">
 					<h3>Authentication Overview</h3>
 					<p>
-						Authentication to the API can be configured to be supported via <a
+						Authentication to the API occurs via <a
 							href="http://en.wikipedia.org/wiki/Basic_access_authentication">HTTP
-							Basic Auth</a> or <a href="http://tools.ietf.org/html/rfc6749">OAuth2</a>.
+							Basic Auth</a>.
 					</p>
 
-					<p>
-						Default authentication is using HTTP Basic Auth. Oauth2 can be enabled by using <i>-Psecurity=oauth</i> option on gradle build command , refer
-						the platform setup <a href="https://github.com/openMF/mifosx/wiki/Launching-platform-server-locally-from-the-command-line#choosing-authentication-mechanism"> wiki</a> for additional details. 
-					</p>
 					<p>
 						The platform has been configured to reject plain HTTP requests and
 						to expect all API requests to be made over <a
 							href="http://en.wikipedia.org/wiki/HTTP_Secure">HTTPS</a>. All
 						requests must be authenticated.
 					</p>
-				</div>
-				<div class="method-example">
-
-					</div>
-			</div>
-
-			<a id="authentication_basicauth" name="authentication_basicauth"
-				class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h3>Authentication HTTP Basic</h3>
-					<p>
-						Authentication to the API occurs via <a
-							href="http://en.wikipedia.org/wiki/Basic_access_authentication">HTTP
-							Basic Auth</a>.
-					</p>
-
 				</div>
 				<div class="method-example">
 <code>
@@ -3145,63 +3117,6 @@ function executeAjaxRequest(url, verbType, jsonData, basicAuthKey, successFuncti
 					</div>
 			</div>
 
-			<a id="authentication_oauth" name="authentication_oauth"
-				class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h3>Authentication Oauth2</h3>
-					<p>
-						Authentication to the API occurs via <a href="http://tools.ietf.org/html/rfc6749">OAuth2</a>. 'Resource Owner Password Credentials Grant' type is used.
-					</p>
-
-				</div>
-				<div class="method-example">
-<code>
-// A Javascript/Jquery example of how to login to Mifos X and use its api.
-// Typically, the javascript application would
-// 1) Display a login page to retrieve the username and password.
-// 2) Send the username, password, client_id , grant_type and client_secret to a function
-//    such as getOauthToken below which sets the HTTP bearer Auth key.
-// 3) The HTTP bearer Auth key is used in all subsequent requests
-// (see the function executeAjaxRequest below).
-
-function getOauthToken(username, password) {
-
-	var jqxhr = $.ajax({
-		url : "/mifosng-provider/api/oauth/token?username=" + credentials.username + "&password=" + credentials.password +"&client_id=community-app&grant_type=password&client_secret=123,
-		type : 'POST',
-		contentType : "application/json; charset=utf-8",
-		dataType : 'json',
-		data : "{}",
-		cache : false,
-		success : function(data, textStatus, jqXHR) {
-			authKey = data.access_token;
-		},
-		error : function(jqXHR, textStatus, errorThrown) {
-			//error processing
-		}
-	});
-}
-
-function executeAjaxRequest(url, verbType, jsonData, authKey, successFunction, errorFunction) {
-	var jqxhr = $.ajax({
-		url : url,
-		type : verbType, //POST, GET, PUT or DELETE
-		contentType : "application/json; charset=utf-8",
-		dataType : 'json',
-		data : jsonData,
-		cache : false,
-		beforeSend : function(xhr) {
-			xhr.setRequestHeader("Authorization", "bearer " + authKey);
-		},
-		success : successFunction,
-		error : errorFunction
-	});
-}
-</code>
-					</div>
-			</div>
-			
 			<a id="batch_api" name="batch_api" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
@@ -17164,7 +17079,7 @@ Request Body:
 			products. These are typically <b>Fees</b> or <b>Penalties</b>.
 		</p>
 		<p>A <strong><i>Charge</i></strong> on mifos platform is what we use to model both <b>Fees</b> and <b>Penalties</b>.</p>
-		<p>At present we support defining charges for use with Client accounts and both loan and saving products.</p>
+		<p>At present we support defining charges for use in both loan and saving products.</p>
 		<table class=matrixHeading>
 			<tr class="matrixHeadingBG">
 				<td><div class="mifosXHeading2">Field Descriptions</div></td>
@@ -17179,10 +17094,9 @@ Request Body:
 				<td>chargeAppliesTo</td>
 			</tr>
 			<tr>
-				<td class=fielddesc>Enumeration for indicating whether charge is to be applicable for loans, savings or clients.<br/>
+				<td class=fielddesc>Enumeration for indicating whether charge is to be applicable for loans or savings.<br/>
 					1=Loans,
-					2=Savings,
-					3=Client
+					2=Savings
 				<p>Once a charge definiton has been created, this attribute cannot be changed at any point.</p>
 				</td>
 			</tr>
@@ -17290,13 +17204,6 @@ Request Body:
 			</tr>
             <tr>
             	<td class=fielddesc>This field is Optional Used to indicate the recurring(days,weeks,months and Years) charge due date starting on system calculated date for overdue penalty.<br/></td>
-            </tr>
-            <tr class=alt>
-				<td>incomeAccount</td>
-			</tr>
-            <tr>
-            	<td class=fielddesc>This field is Optional and can be used only when a charge is applied to a Client. It indicates the Income or Liability account which gets 
-            	credited when a payment is made on this charge<br/></td>
             </tr>
 		</table>
 	</div>
@@ -19320,7 +19227,7 @@ Content-Type: application/json
 	    <div class="method-description">
 	        <h3>Fixed Deposit Product:</h3>
 	        <p>This is one of the advanced term deposit product offered by MFI's. The Fixed Deposit Products (aka FD) product offerings are modeled using this API.</p>
-	        <p>The FD products are deposit accounts which are held for a fixed term – like 1 year, 2 years etc.</p>
+	        <p>The FD products are deposit accounts which are held for a fixed term ֠like 1 year, 2 years etc.</p>
 	        <p>When creating fixed deposit accounts, the details from the fixed deposit product are used to auto fill details of the fixed deposit account application process.</p>
 	        <table class=matrixHeading>
 	            <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Field Descriptions</div></td></tr>
@@ -19403,12 +19310,12 @@ Content-Type: application/json
 
 	            <tr class=alt><td>preClosurePenalInterest</td></tr>
 	            <tr>
-	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterestOnTypeId</i> to apply a penalalty on top of  applicable interest rate for Pre-mature closure of accounts. e.g. “1%” means 1% less than the interest rate applicable.</td>
+	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterestOnTypeId</i> to apply a penalalty on top of  applicable interest rate for Pre-mature closure of accounts. e.g. ӱ%Ԡmeans 1% less than the interest rate applicable.</td>
 	            </tr>
 
 	            <tr class=alt><td>preClosurePenalInterestOnTypeId</td></tr>
 	            <tr>
-	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterest</i> to decide what should be the applicable interest rate to which penalalty can be applied on Pre-mature closure of accounts. 1=Whole Term, 2=Till Premature withdrawal e.g. “1%” means 1% less than the interest rate applicable till premature withdrawal.</td>
+	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterest</i> to decide what should be the applicable interest rate to which penalalty can be applied on Pre-mature closure of accounts. 1=Whole Term, 2=Till Premature withdrawal e.g. ӱ%Ԡmeans 1% less than the interest rate applicable till premature withdrawal.</td>
 	            </tr>
 
 				<tr class=alt><td>accountingRule</td></tr>
@@ -19905,12 +19812,12 @@ Content-Type: application/json
 
 	            <tr class=alt><td>preClosurePenalInterest</td></tr>
 	            <tr>
-	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterestOnTypeId</i> to apply a penalalty on top of  applicable interest rate for Pre-mature closure of accounts. e.g. “1%” means 1% less than the interest rate applicable.</td>
+	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterestOnTypeId</i> to apply a penalalty on top of  applicable interest rate for Pre-mature closure of accounts. e.g. ӱ%Ԡmeans 1% less than the interest rate applicable.</td>
 	            </tr>
 
 	            <tr class=alt><td>preClosurePenalInterestOnTypeId</td></tr>
 	            <tr>
-	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterest</i> to decide what should be the applicable interest rate to which penalalty can be applied on Pre-mature closure of accounts. 1=Whole Term, 2=Till Premature withdrawal e.g. “1%” means 1% less than the interest rate applicable till premature withdrawal.</td>
+	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterest</i> to decide what should be the applicable interest rate to which penalalty can be applied on Pre-mature closure of accounts. 1=Whole Term, 2=Till Premature withdrawal e.g. ӱ%Ԡmeans 1% less than the interest rate applicable till premature withdrawal.</td>
 	            </tr>
 
 				<tr class=alt><td>accountingRule</td></tr>
@@ -22596,12 +22503,12 @@ No Request Body:
 
 	            <tr class=alt><td>preClosurePenalInterest</td></tr>
 	            <tr>
-	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterestOnTypeId</i> to apply a penalalty on top of  applicable interest rate for Pre-mature closure of accounts. e.g. “1%” means 1% less than the interest rate applicable.</td>
+	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterestOnTypeId</i> to apply a penalalty on top of  applicable interest rate for Pre-mature closure of accounts. e.g. ӱ%Ԡmeans 1% less than the interest rate applicable.</td>
 	            </tr>
 
 	            <tr class=alt><td>preClosurePenalInterestOnTypeId</td></tr>
 	            <tr>
-	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterest</i> to decide what should be the applicable interest rate to which penalalty can be applied on Pre-mature closure of accounts. 1=Whole Term, 2=Till Premature withdrawal e.g. “1%” means 1% less than the interest rate applicable till premature withdrawal.</td>
+	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterest</i> to decide what should be the applicable interest rate to which penalalty can be applied on Pre-mature closure of accounts. 1=Whole Term, 2=Till Premature withdrawal e.g. ӱ%Ԡmeans 1% less than the interest rate applicable till premature withdrawal.</td>
 	            </tr>
 
 	        </table>
@@ -24059,12 +23966,12 @@ No Request Body:
 
 	            <tr class=alt><td>preClosurePenalInterest</td></tr>
 	            <tr>
-	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterestOnTypeId</i> to apply a penalalty on top of  applicable interest rate for Pre-mature closure of accounts. e.g. “1%” means 1% less than the interest rate applicable.</td>
+	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterestOnTypeId</i> to apply a penalalty on top of  applicable interest rate for Pre-mature closure of accounts. e.g. ӱ%Ԡmeans 1% less than the interest rate applicable.</td>
 	            </tr>
 
 	            <tr class=alt><td>preClosurePenalInterestOnTypeId</td></tr>
 	            <tr>
-	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterest</i> to decide what should be the applicable interest rate to which penalalty can be applied on Pre-mature closure of accounts. 1=Whole Term, 2=Till Premature withdrawal e.g. “1%” means 1% less than the interest rate applicable till premature withdrawal.</td>
+	            	<td class=fielddesc><b>Optional</b>: Must provide when <i>preClosurePenalApplicable</i> is true. Used along with <i>preClosurePenalInterest</i> to decide what should be the applicable interest rate to which penalalty can be applied on Pre-mature closure of accounts. 1=Whole Term, 2=Till Premature withdrawal e.g. ӱ%Ԡmeans 1% less than the interest rate applicable till premature withdrawal.</td>
 	            </tr>
 
 	        </table>
@@ -26655,229 +26562,229 @@ No Request Body:
 	        <code class="method-declaration">GET https://DomainName/api/v1/accounttransfers/templateRefundByTransfer</code>
 	        <code class="method-response">
 {
-   "currency": {
-      "code": "USD",
-      "name": "US Dollar",
-      "decimalPlaces": 0,
-      "inMultiplesOf": 0,
-      "displaySymbol": "$",
-      "nameCode": "currency.USD",
-      "displayLabel": "US Dollar ($)"
-   },
-   "transferAmount": 130,
-   "transferDate": [
-      2014,
-      11,
-      1
-   ],
-   "fromOffice": {
-      "id": 1,
-      "name": "Head Office",
-      "nameDecorated": "Head Office",
-      "externalId": "1",
-      "openingDate": [
-         2009,
-         1,
-         1
-      ],
-      "hierarchy": "."
-   },
-   "fromClient": {
-      "id": 1,
-      "accountNo": "000000001",
-      "status": {
-         "id": 300,
-         "code": "clientStatusType.active",
-         "value": "Active"
-      },
-      "active": true,
-      "activationDate": [
-         2012,
-         2,
-         1
-      ],
-      "firstname": "Daniel",
-      "lastname": "Owusu",
-      "displayName": "Daniel Owusu",
-      "gender": {},
-      "clientType": {},
-      "clientClassification": {},
-      "officeId": 1,
-      "officeName": "Head Office",
-      "timeline": {
-         "submittedOnDate": [
-            2012,
-            2,
-            1
-         ],
-         "submittedByUsername": "mifos",
-         "submittedByFirstname": "App",
-         "submittedByLastname": "Administrator",
-         "activatedOnDate": [
-            2012,
-            2,
-            1
-         ],
-         "activatedByUsername": "mifos",
-         "activatedByFirstname": "App",
-         "activatedByLastname": "Administrator"
-      },
-      "groups": []
-   },
-   "fromAccountType": {
-      "id": 1,
-      "code": "accountType.loan",
-      "value": "Loan Account"
-   },
-   "fromAccount": {
-      "id": 2,
-      "accountNo": "000000002",
-      "clientId": 1,
-      "clientName": "Daniel Owusu",
-      "productId": 1,
-      "productName": "CTRL",
-      "fieldOfficerId": 0,
-      "currency": {
-         "code": "USD",
-         "name": "US Dollar",
-         "decimalPlaces": 0,
-         "inMultiplesOf": 0,
-         "displaySymbol": "$",
-         "nameCode": "currency.USD",
-         "displayLabel": "US Dollar ($)"
-      },
-      "amtForTransfer": 130
-   },
-   "toOffice": {
-      "id": 1,
-      "name": "Head Office",
-      "nameDecorated": "Head Office",
-      "externalId": "1",
-      "openingDate": [
-         2009,
-         1,
-         1
-      ],
-      "hierarchy": "."
-   },
-   "toClient": {
-      "id": 1,
-      "displayName": "Daniel Owusu",
-      "officeId": 1,
-      "officeName": "Head Office"
-   },
-   "toAccountType": {
-      "id": 2,
-      "code": "accountType.savings",
-      "value": "Savings Account"
-   },
-   "toAccount": {
-      "id": 1,
-      "accountNo": "000000001",
-      "clientId": 1,
-      "clientName": "Daniel Owusu",
-      "productId": 1,
-      "productName": "TEST",
-      "fieldOfficerId": 0,
-      "currency": {
-         "code": "USD",
-         "name": "US Dollar",
-         "decimalPlaces": 0,
-         "inMultiplesOf": 0,
-         "displaySymbol": "$",
-         "nameCode": "currency.USD",
-         "displayLabel": "US Dollar ($)"
-      }
-   },
-   "fromOfficeOptions": [
-      {
-         "id": 1,
-         "name": "Head Office",
-         "nameDecorated": "Head Office"
-      }
-   ],
-   "fromClientOptions": [
-      {
-         "id": 1,
-         "displayName": "Daniel Owusu",
-         "officeId": 1,
-         "officeName": "Head Office"
-      }
-   ],
-   "fromAccountTypeOptions": [
-      {
-         "id": 2,
-         "code": "accountType.savings",
-         "value": "Savings Account"
-      },
-      {
-         "id": 1,
-         "code": "accountType.loan",
-         "value": "Loan Account"
-      }
-   ],
-   "fromAccountOptions": [
-      {
-         "id": 2,
-         "accountNo": "000000002",
-         "clientId": 1,
-         "clientName": "Daniel Owusu",
-         "productId": 1,
-         "productName": "CTRL",
-         "fieldOfficerId": 0,
-         "currency": {
-            "code": "USD",
-            "name": "US Dollar",
-            "decimalPlaces": 0,
-            "inMultiplesOf": 0,
-            "displaySymbol": "$",
-            "nameCode": "currency.USD",
-            "displayLabel": "US Dollar ($)"
-         }
-      }
-   ],
-   "toOfficeOptions": [
-      {
-         "id": 1,
-         "name": "Head Office",
-         "nameDecorated": "Head Office"
-      }
-   ],
-   "toClientOptions": [
-      {
-         "id": 1,
-         "displayName": "Daniel Owusu",
-         "officeId": 1,
-         "officeName": "Head Office"
-      }
-   ],
-   "toAccountTypeOptions": [
-      {
-         "id": 2,
-         "code": "accountType.savings",
-         "value": "Savings Account"
-      }
-   ],
-   "toAccountOptions": [
-      {
-         "id": 1,
-         "accountNo": "000000001",
-         "clientId": 1,
-         "clientName": "Daniel Owusu",
-         "productId": 1,
-         "productName": "TEST",
-         "fieldOfficerId": 0,
-         "currency": {
-            "code": "USD",
-            "name": "US Dollar",
-            "decimalPlaces": 0,
-            "inMultiplesOf": 0,
-            "displaySymbol": "$",
-            "nameCode": "currency.USD",
-            "displayLabel": "US Dollar ($)"
-         }
-      }
-   ]
+ "currency": {
+   "code": "USD",
+   "name": "US Dollar",
+   "decimalPlaces": 0,
+   "inMultiplesOf": 0,
+   "displaySymbol": "$",
+   "nameCode": "currency.USD",
+   "displayLabel": "US Dollar ($)"
+ },
+ "transferAmount": 130,
+ "transferDate": [
+   2014,
+   11,
+   1
+ ],
+ "fromOffice": {
+   "id": 1,
+   "name": "Head Office",
+   "nameDecorated": "Head Office",
+   "externalId": "1",
+   "openingDate": [
+    2009,
+    1,
+    1
+   ],
+   "hierarchy": "."
+ },
+ "fromClient": {
+   "id": 1,
+   "accountNo": "000000001",
+   "status": {
+    "id": 300,
+    "code": "clientStatusType.active",
+    "value": "Active"
+   },
+   "active": true,
+   "activationDate": [
+    2012,
+    2,
+    1
+   ],
+   "firstname": "Daniel",
+   "lastname": "Owusu",
+   "displayName": "Daniel Owusu",
+   "gender": {},
+   "clientType": {},
+   "clientClassification": {},
+   "officeId": 1,
+   "officeName": "Head Office",
+   "timeline": {
+    "submittedOnDate": [
+      2012,
+      2,
+      1
+    ],
+    "submittedByUsername": "mifos",
+    "submittedByFirstname": "App",
+    "submittedByLastname": "Administrator",
+    "activatedOnDate": [
+      2012,
+      2,
+      1
+    ],
+    "activatedByUsername": "mifos",
+    "activatedByFirstname": "App",
+    "activatedByLastname": "Administrator"
+   },
+   "groups": []
+ },
+ "fromAccountType": {
+   "id": 1,
+   "code": "accountType.loan",
+   "value": "Loan Account"
+ },
+ "fromAccount": {
+   "id": 2,
+   "accountNo": "000000002",
+   "clientId": 1,
+   "clientName": "Daniel Owusu",
+   "productId": 1,
+   "productName": "CTRL",
+   "fieldOfficerId": 0,
+   "currency": {
+    "code": "USD",
+    "name": "US Dollar",
+    "decimalPlaces": 0,
+    "inMultiplesOf": 0,
+    "displaySymbol": "$",
+    "nameCode": "currency.USD",
+    "displayLabel": "US Dollar ($)"
+   },
+   "amtForTransfer": 130
+ },
+ "toOffice": {
+   "id": 1,
+   "name": "Head Office",
+   "nameDecorated": "Head Office",
+   "externalId": "1",
+   "openingDate": [
+    2009,
+    1,
+    1
+   ],
+   "hierarchy": "."
+ },
+ "toClient": {
+   "id": 1,
+   "displayName": "Daniel Owusu",
+   "officeId": 1,
+   "officeName": "Head Office"
+ },
+ "toAccountType": {
+   "id": 2,
+   "code": "accountType.savings",
+   "value": "Savings Account"
+ },
+ "toAccount": {
+   "id": 1,
+   "accountNo": "000000001",
+   "clientId": 1,
+   "clientName": "Daniel Owusu",
+   "productId": 1,
+   "productName": "TEST",
+   "fieldOfficerId": 0,
+   "currency": {
+    "code": "USD",
+    "name": "US Dollar",
+    "decimalPlaces": 0,
+    "inMultiplesOf": 0,
+    "displaySymbol": "$",
+    "nameCode": "currency.USD",
+    "displayLabel": "US Dollar ($)"
+   }
+ },
+ "fromOfficeOptions": [
+   {
+    "id": 1,
+    "name": "Head Office",
+    "nameDecorated": "Head Office"
+   }
+ ],
+ "fromClientOptions": [
+   {
+    "id": 1,
+    "displayName": "Daniel Owusu",
+    "officeId": 1,
+    "officeName": "Head Office"
+   }
+ ],
+ "fromAccountTypeOptions": [
+   {
+    "id": 2,
+    "code": "accountType.savings",
+    "value": "Savings Account"
+   },
+   {
+    "id": 1,
+    "code": "accountType.loan",
+    "value": "Loan Account"
+   }
+ ],
+ "fromAccountOptions": [
+   {
+    "id": 2,
+    "accountNo": "000000002",
+    "clientId": 1,
+    "clientName": "Daniel Owusu",
+    "productId": 1,
+    "productName": "CTRL",
+    "fieldOfficerId": 0,
+    "currency": {
+      "code": "USD",
+      "name": "US Dollar",
+      "decimalPlaces": 0,
+      "inMultiplesOf": 0,
+      "displaySymbol": "$",
+      "nameCode": "currency.USD",
+      "displayLabel": "US Dollar ($)"
+    }
+   }
+ ],
+ "toOfficeOptions": [
+   {
+    "id": 1,
+    "name": "Head Office",
+    "nameDecorated": "Head Office"
+   }
+ ],
+ "toClientOptions": [
+   {
+    "id": 1,
+    "displayName": "Daniel Owusu",
+    "officeId": 1,
+    "officeName": "Head Office"
+   }
+ ],
+ "toAccountTypeOptions": [
+   {
+    "id": 2,
+    "code": "accountType.savings",
+    "value": "Savings Account"
+   }
+ ],
+ "toAccountOptions": [
+   {
+    "id": 1,
+    "accountNo": "000000001",
+    "clientId": 1,
+    "clientName": "Daniel Owusu",
+    "productId": 1,
+    "productName": "TEST",
+    "fieldOfficerId": 0,
+    "currency": {
+      "code": "USD",
+      "name": "US Dollar",
+      "decimalPlaces": 0,
+      "inMultiplesOf": 0,
+      "displaySymbol": "$",
+      "nameCode": "currency.USD",
+      "displayLabel": "US Dollar ($)"
+    }
+   }
+ ]
 }
 	        </code>
 	    </div>
@@ -30688,12 +30595,12 @@ GET https://DomainName/api/v1/runreports/{reportName}
 			</div>
 
 			<!-- start of authentication api docs -->
-			<a id="authenticationbasic" name="authenticationbasic" class="old-syle-anchor">&nbsp;</a>
+			<a id="authentication" name="authentication" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h3>Authentication HTTP Basic</h3>
+					<h3>Authentication</h3>
 					<p>An API capability that allows client applications to verify
-						authentication details using HTTP Basic Authentication.</p>
+						authentication details.</p>
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
 							<td><div class="mifosXHeading2">Field Descriptions</div></td>
@@ -30712,7 +30619,7 @@ GET https://DomainName/api/v1/runreports/{reportName}
 				</div>
 			</div>
 
-			<a id="authenticate_request_basic" name="authenticate_request_basic" class="old-syle-anchor">&nbsp;</a>
+			<a id="authenticate_request" name="authenticate_request" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Verify authentication</h4>
@@ -30799,269 +30706,6 @@ No Request Body
 				</div>
 			</div>
 
-			<a id="authenticationoauth" name="authenticationoauth" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h3>Authentication Oauth2</h3>
-					<p>An API capability that allows client applications to fetch current user details details using Oauth2.</p>
-					<table class=matrixHeading>
-						<tr class="matrixHeadingBG">
-							<td><div class="mifosXHeading2">Field Descriptions</div></td>
-						</tr>
-						<tr class=alt>
-							<td>accessToken</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>HTTP Auth bearer key. See <a
-								href="#authentication_overview">Authentication Overview</a> for
-								an example of its use.
-							</td>
-						</tr>
-						</tr>
-					</table>
-				</div>
-			</div>
-
-			<a id="oauth" name="oauth" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h3>Authentication via OAuth2</h3>
-					<p>API for requesting OAuth2 access token and refresh token.</p>
-					<table class=matrixHeading>
-						<tr class="matrixHeadingBG">
-							<td><div class="mifosXHeading2">Field Descriptions</div></td>
-						</tr>
-						<tr class=alt>
-							<td>grant_type</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>Mandatory field.
-							Indicates the requested grant type. Supported values:
-							<span>password</span>.
-							</td>
-						</tr>
-						<tr class=alt>
-							<td>client_id</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>Mandatory field.
-							Indicates the client application identity. 
-							</td>
-						</tr>
-						<tr class=alt>
-							<td>client_secret</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>Optional field.
-							Indicates the client application password. 
-							</td>
-						</tr>
-						<tr class=alt>
-							<td>username</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>Mandatory field.
-							Application User(resource) login name. 
-							</td>
-						</tr>
-						<tr class=alt>
-							<td>password</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>Mandatory field.
-							Application User(resource) password. 
-							</td>
-						</tr>
-					</table>
-				</div>
-			</div>
-
-			<a id="oauth_request" name="oauth_request" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>OAuth2 Refresh and Access Token Request</h4>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-POST https://DomainName/api/oauth/token?username={username}&password={password}&client_id={clientId}&grant_type={grant_type}&client_secret={client_secret}
-					</code>
-					<code class="method-request">
-POST api/oauth/token?username=mifos&password=password&client_id=community-app&grant_type=password&client_secret=123
-Content-Type: application/json
-No Request Body
-					</code>
-					<code class="method-response">
-{
-	""access_token": "b771987f-82fc-45ba-b521-bfe280c4e603",
-	"token_type": "bearer",
-	"refresh_token":"a2a89b23-8d22-4d90-8585-8f464db433b0",
-	"expires_in": 3599,
-	"scope": "all"
-}
-					</code>
-				</div>
-			</div>
-			
-			
-			<a id="oauth_access_token_req" name="oauth_access_token_req" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h3>Authentication via OAuth2</h3>
-					<p>API for requesting OAuth2 access tokens through oAuth2 refresh tokens.</p>
-					<table class=matrixHeading>
-						<tr class="matrixHeadingBG">
-							<td><div class="mifosXHeading2">Field Descriptions</div></td>
-						</tr>
-						<tr class=alt>
-							<td>grant_type</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>Mandatory field.
-							Indicates the requested grant type. Supported values:
-							<span>refresh_token</span>.
-							</td>
-						</tr>
-						<tr class=alt>
-							<td>client_id</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>Mandatory field.
-							Indicates the client application identity. 
-							</td>
-						</tr>
-						<tr class=alt>
-							<td>client_secret</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>Optional field.
-							Indicates the client application password. 
-							</td>
-						</tr>
-						<tr class=alt>
-							<td>refresh_token</td>
-						</tr>
-						<tr>
-							<td class=fielddesc>Mandatory field.
-							Application refresh token to generate access token. 
-							</td>
-						</tr>
-					</table>
-				</div>
-			</div>
-
-			<a id="oauth_request_with_refresh" name="oauth_request_with_refresh" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>OAuth2 Token Request through Refresh Token</h4>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-POST https://DomainName/api/oauth/token?refresh_token={refresh_token}&client_id={clientId}&grant_type={grant_type}&client_secret={client_secret}
-					</code>
-					<code class="method-request">
-POST api/oauth/token?client_id=community-app&grant_type=refresh_token&client_secret=123&refresh_token=a2a89b23-8d22-4d90-8585-8f464db433b0
-Content-Type: application/json
-No Request Body
-					</code>
-					<code class="method-response">
-{
-	""access_token": "b771987f-82fc-45ba-b521-bfe280c4e643",
-	"token_type": "bearer",
-	"refresh_token":"a2a89b23-8d22-4d90-8585-8f464db433b0",
-	"expires_in": 3599,
-	"scope": "all"
-}
-					</code>
-				</div>
-			</div>
-
-			<a id="userdetails_request" name="userdetails_request" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>Fetch authenticated user details </h4>
-					<p>checks the Authentication and returns the set roles and permissions allowed.</p>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-POST https://DomainName/api/v1/userdetails?access_token={access_token}
-					</code>
-					<code class="method-request">
-POST userdetails?access_token=bWlmb3M6cGFzc3dvcmQ=
-Content-Type: application/json
-No Request Body
-					</code>
-					<p>Example response of authenticated user user that is not linked with any staff.</p>
-					<code class="method-response">
-{
-    "username": "mifos",
-    "userId": 1,
-    "accessToken": "bWlmb3M6cGFzc3dvcmQ=",
-    "authenticated": true,
-    "officeId": 1,
-    "officeName": "Head Office",
-    "roles": [
-        {
-            "id": 1,
-            "name": "Super user",
-            "description": "This role provides all application permissions."
-        }
-    ],
-    "permissions": [
-        "ALL_FUNCTIONS"
-    ]
-}
-					</code>
-					<p>Example response of authenticated user that is linked with a staff member and role.</p>
-<code class="method-response">
-{
-    "username": "mifos",
-    "userId": 1,
-    "accessToken": "bWlmb3M6cGFzc3dvcmQ=",
-    "authenticated": true,
-    "officeId": 1,
-    "officeName": "Head Office",
-    "staffId": 1,
-    "staffDisplayName": "Director, Program",
-    "organisationalRole": {
-        "id": 100,
-        "code": "staffOrganisationalRoleType.programDirector",
-        "value": "Program Director"
-    },
-    "roles": [
-        {
-            "id": 1,
-            "name": "Super user",
-            "description": "This role provides all application permissions."
-        }
-    ],
-    "permissions": [
-        "ALL_FUNCTIONS"
-    ]
-}
-</code>
-
-
-
-
-
-					<code class="method-request">
-POST api/oauth/token?username=mifos&password=password&client_id=community-app&grant_type=password&client_secret=123
-Content-Type: application/json
-No Request Body
-					</code>
-					<code class="method-response">
-{
-    "developerMessage": "Invalid authentication details were passed in api request.",
-    "developerDocLink": "https://github.com/openMF/mifosx/wiki/HTTP-API-Error-codes",
-    "httpStatusCode": "401",
-    "defaultUserMessage": "Unauthenticated. Please login.",
-    "userMessageGlobalisationCode": "error.msg.not.authenticated",
-    "errors": []
-}
-					</code>
-				</div>
-			</div>
-			
 			<!-- start of users api docs -->
 			<a id="users" name="users" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
@@ -35997,40 +35641,52 @@ Request Body:
           <a id="client_charge" name="client_charge" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h3>Client Charges</h3>
-					<p>It is typical for MFI's to directly associate charges with an implicit Client account. These
-					can be either fees or penalties</p>
-					<p>Client Charges are client specific instances of <a href="#charges">Charges</a>.  Refer <a href="#charges">Charges</a> for documentation of the various properties of a charge, Only additional properties (
-					specific to the context of a Charge being associated with a Client account) are
-					described here</p>
-
+					<h3>Client Charge</h3>
+					<p>Client Charge is a type of charge which is directlly applied on client.One client can have more than one client charge and client charge is created with charge time type as specified due date and calculation type as flat.
 					</p>
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
 							<td><div class="mifosXHeading2">Field Descriptions</div></td>
 						</tr>
 						<tr class=alt>
+							<td>chargeId</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>This ia an unique Id associate with client charge.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>name</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Name given to the client charge.</td>
+						</tr>
+						<tr class=alt>
+							<td>active</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Indicates whether this charge  is to be created as active</b>. If active=true, then <b>activationDate</b> must be provided. If active=false, then the charge is created as <b>pending</b>.
+							</td>
+						</tr>
+						<tr class=alt>
 							<td>amountPaid</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>The total amount which has been paid for this Charge
-						</td>
+							<td class=fielddesc>amount paid as client charge</b>.
+							</td>
 						</tr>
 						<tr class=alt>
 							<td>amountWaived</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>The total amount that has been waived for this Charge
-							</td>
+							<td class=fielddesc>amount waive from client charge</td>
 						</tr>
 						<tr class=alt>
 							<td>amountOutstanding</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>The Total outstanding amount for this Charge
-							</td>
+							<td class=fielddesc>The left over amount to pay .</td>
 						</tr>
-
 						<tr class=alt>
 							<td>dueDate</td>
 						</tr>
@@ -36041,12 +35697,12 @@ Request Body:
 					</table>
 				</div>
 			</div>
-			
-			<a id="client_transaction" name="client_transaction" class="old-syle-anchor">&nbsp;</a>
+
+			 <a id="client_recurring_charges" name="client_recurring_charges" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h3>Client Transaction</h3>
-					<p>Client Transactions refer to transactions made directly againt a Client's internal account. Currently, these transactions are only created as a result of charge payments/waivers. You are allowed to undo a transaction, however you cannot explicitly create one.
+					<h3>Client Recurring Charge</h3>
+					<p>Client Recurring Charge is a type of charge which is directlly applied on client.One client can have more than one client recurring charges and client recurring charge is created with charge time type as isWeekly or isMonthly or isAnnual and charge calculation type as flat.
 					</p>
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
@@ -36056,41 +35712,162 @@ Request Body:
 							<td>id</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>This ia an unique Id associate with a Transaction.
+							<td class=fielddesc>This ia an unique Id associate with client recurring charge.
 							</td>
 						</tr>
 						<tr class=alt>
-							<td>officeId</td>
+							<td>name</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>Identifier of the office in which the transaction was made</td>
+							<td class=fielddesc>Name given to the client charge.</td>
 						</tr>
 						<tr class=alt>
-							<td>reversed</td>
+							<td>active</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>Boolean Flag that indicates if this transaction is reversed.
+							<td class=fielddesc>Indicates whether this charge  is to be created as active</b>. If active=true, then <b>activationDate</b> must be provided. If active=false, then the charge is created as <b>pending</b>.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>isPenalty</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Indicates whether this charge  is to be created as penalty or not</b>
 							</td>
 						</tr>
 						<tr class=alt>
 							<td>amount</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>Transaction amount</b>.
+							<td class=fielddesc>amount as client recurring charge</b>.
 							</td>
 						</tr>
 						<tr class=alt>
-							<td>currency</td>
+							<td>fee Interval</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>Details of the currency involved with the Transaction. Currently defaults
-							to the currency of the Client Charge this transaction pays </td>
+							<td class=fielddesc>it specifies the fee interval of a client recurring charge</b>.
+							</td>
 						</tr>
 						<tr class=alt>
-							<td>date</td>
+							<td>fee On Month Day</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>Effective date of the transaction</td>
+							<td class=fielddesc>it specifies the fee on month day of a client recurring charge</b>.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>Charge Time Type</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>it specifies the charge time type either it is monthly or weekly or annual fee</b>.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>Charge Calculation Type</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>it specifies the charge time tyep either it is monthly or weekly or annual fee</b>.
+							</td>
+						</tr>
+						
+						<tr class=alt>
+							<td>dueDate</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>it specifies the due date</td>
+						</tr>
+						<tr class=alt>
+							<td>inactivationDate</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>it specifies the inactivation date </td>
+						</tr>
+						
+					</table>
+				</div>
+			</div>
+			<a id="inactivate_client_recurring_Charge" name="inactivate_client_recurring_Charge" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Inactivates the Client Recurring Charge of a client</h4>
+					<p>
+						<br>This API exists to inactivate the particular client recurring charge of a client
+											
+					</p>
+										
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">					
+GET https://localhost:8443/mifosng-provider/api/v1/clients/4/charges/recurringCharges/170?command=inactivate
+					</code>
+					<code class="method-request">
+Content-Type: application/json
+REQUEST BODY:
+{
+  clientId:"4"  
+  resourceType:170
+} 
+			</code>
+			<code class="method-response">			
+{
+  "officeId":1,
+  "clientId":4,
+  "resourceId":170
+}
+					</code>
+				</div>
+			</div>
+			
+			<a id="client_transactions" name="client_transactions" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h3>Client Transaction</h3>
+					<p>Client Charge transactions are get created when a client pays/waives off client charge.this client charge transaction shows
+						<br>the unit of amount paid as client charge.
+					</p>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Field Descriptions</div></td>
+						</tr>
+						<tr class=alt>
+							<td>transactionId</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>This ia an unique Id associate with client charge Transaction.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>clientId</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>clientId on which client transaction got created</td>
+						</tr>
+						<tr class=alt>
+							<td>isReverse</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Indicates whether this client charge transaction is reversed or not.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>amountPaid</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>amount paid as client charge</b>.
+							</td>
+						</tr>
+						<tr class=alt>
+							<td>currency code</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>currency type</td>
+						</tr>
+						<tr class=alt>
+							<td>transaction date</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>date on which transaction happened</td>
 						</tr>
 					
 					</table>
@@ -36099,24 +35876,26 @@ Request Body:
 			<a id="list_clientTransactions" name="list_clientTransactions" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h4>List Client Transactions</h4>
-					<p>The <i>list</i> capability of client transaction can support <b>pagination</b>.</p>
-					<h5>Mandatory Arguments</h5>
+					<h4>List client Transactions</h4>
+					
+					<h4>List Transactions</h4>
+					<p>The <i>list</i> capability of client charge transaction can support <b>pagination</b> and <b>sorting</b>.</p>
+					<h5>Optional Arguments</h5>
 					<dl class="argument-list">
 						<dt>offset</dt>
 						<dd>
-							Integer <span>Mandatory</span>, defaults to 0
+							Integer <span>optional</span>, defaults to 0
 						</dd>
 						<dd>Indicates the result from which pagination starts</dd>
 
 						<dt>limit</dt>
 						<dd>
-							Integer <span>Mandatory</span>, defaults to 200
+							Integer <span>optional</span>, defaults to 200
 						</dd>
 						<dd>Restricts the size of results returned. To override the default and return all entries you must explicitly pass a non-positive integer value for limit e.g. limit=0, or limit=-1</dd>
-            		</dl>
+                     </dl>
 					<p>Example Requests:</p>				
-					<div class=apiClick>clients/189/transactions</div>
+					
 					<div class=apiClick>clients/189/transactions?offset=10&limit=50</div>				
 				</div>
 				<div class="method-example">
@@ -36126,8 +35905,11 @@ GET https://DomainName/api/v1/clients/{clientId}/transactions?limit=5&offset=0
 					<code class="method-request">
 GET clients/226/transactions?limit=5&offset=0
 Content-Type: application/json
-No Request Body:
-
+Request Body:
+{
+	chargeId="226"
+	
+}
 			</code>
 			<code class="method-response">
 {
@@ -36162,83 +35944,156 @@ No Request Body:
         2
       ],
       "reversed": false
+    },
+    {
+      "id": 208,
+      "officeId": 1,
+      "officeName": "Head Office",
+      "type": {
+        "id": 1,
+        "code": "clientTransactionType.payCharge",
+        "value": "PAY_CHARGE"
+      },
+      "date": [
+        2015,
+        8,
+        28
+      ],
+      "currency": {
+        "code": "USD",
+        "name": "US Dollar",
+        "decimalPlaces": 2,
+        "displaySymbol": "$",
+        "nameCode": "currency.USD",
+        "displayLabel": "US Dollar ($)"
+      },
+      "amount": 3,
+      "submittedOnDate": [
+        2015,
+        8,
+        28
+      ],
+      "reversed": false
+    },
+    {
+      "id": 207,
+      "officeId": 1,
+      "officeName": "Head Office",
+      "type": {
+        "id": 1,
+        "code": "clientTransactionType.payCharge",
+        "value": "PAY_CHARGE"
+      },
+      "date": [
+        2015,
+        8,
+        28
+      ],
+      "currency": {
+        "code": "USD",
+        "name": "US Dollar",
+        "decimalPlaces": 2,
+        "displaySymbol": "$",
+        "nameCode": "currency.USD",
+        "displayLabel": "US Dollar ($)"
+      },
+      "amount": 5,
+      "submittedOnDate": [
+        2015,
+        8,
+        28
+      ],
+      "reversed": false
+    },
+    {
+      "id": 206,
+      "officeId": 1,
+      "officeName": "Head Office",
+      "type": {
+        "id": 1,
+        "code": "clientTransactionType.payCharge",
+        "value": "PAY_CHARGE"
+      },
+      "date": [
+        2015,
+        8,
+        28
+      ],
+      "currency": {
+        "code": "USD",
+        "name": "US Dollar",
+        "decimalPlaces": 2,
+        "displaySymbol": "$",
+        "nameCode": "currency.USD",
+        "displayLabel": "US Dollar ($)"
+      },
+      "amount": 5,
+      "submittedOnDate": [
+        2015,
+        8,
+        28
+      ],
+      "reversed": false
+    },
+    {
+      "id": 205,
+      "officeId": 1,
+      "officeName": "Head Office",
+      "type": {
+        "id": 1,
+        "code": "clientTransactionType.payCharge",
+        "value": "PAY_CHARGE"
+      },
+      "date": [
+        2015,
+        8,
+        28
+      ],
+      "currency": {
+        "code": "USD",
+        "name": "US Dollar",
+        "decimalPlaces": 2,
+        "displaySymbol": "$",
+        "nameCode": "currency.USD",
+        "displayLabel": "US Dollar ($)"
+      },
+      "amount": 5,
+      "submittedOnDate": [
+        2015,
+        8,
+        28
+      ],
+      "reversed": false
     }
   ]
 }
-</code>
+
+
+  </code>
 				</div>
 			</div>
-
-			<a id="clienttransactions_retrieve" name="clienttransactions_retrieve" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>Retrieve a Client Transaction</h4>
-					<p>Example Requests:</p>
-					<div class=apiClick>clients/1/transactions/1</div>
-					<br>
-					<br>
-					<div class=apiClick>clients/1/transactions/1?fields=id,officeName</div>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-GET https://DomainName/api/v1/clients/{clientId}/transaction/{transactionId}
-					</code>
-					<code class="method-response">
-{
-  "id": 1,
-  "officeId": 1,
-  "officeName": "Head Office",
-  "type": {
-    "id": 1,
-    "code": "clientTransactionType.payCharge",
-    "value": "PAY_CHARGE"
-  },
-  "date": [
-    2015,
-    8,
-    17
-  ],
-  "currency": {
-    "code": "USD",
-    "name": "US Dollar",
-    "decimalPlaces": 2,
-    "displaySymbol": "$",
-    "nameCode": "currency.USD",
-    "displayLabel": "US Dollar ($)"
-  },
-  "amount": 60.000000,
-  "submittedOnDate": [
-    2015,
-    8,
-    19
-  ],
-  "reversed": true
-}
-					</code>
-				</div>
-			</div>
-
 			<a id="add_clientCharge" name="add_clientCharge" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
 					<h4>Add Client Charge</h4>
 					<p>
-						This API associates a Client charge with an implicit Client account
+						It is one among  the charges.It is created chargeTime type as specified due date and calculation type as flat and it can only be applied client.This API enables to add client charge to client.
 					</p>
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
 							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
 						</tr>
 						<tr class=alt>
-							<td>chargeId and dueDate </td>
+							<td>clientId,chargeId and activationDate </td>
 						</tr>
 					</table>
+						<br />
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
 							<td><div class="mifosXHeading2">Optional Fields</div></td>
 						</tr>
 						<tr class=alt>
-							<td>amount</td>
+							<td>externalId, accountNo,genderId, clientTypeId, clientClassificationId</td>
 						</tr>
 					</table>
 				</div>
@@ -36249,14 +36104,8 @@ POST https://DomainName/api/v1/clients/{clientId}/charges
 					<code class="method-request">
 POST clients/226/charges
 Content-Type: application/json
-Request Body:
-{
-    "amount" : "100",
-	"chargeId" : "226",
-	"dateFormat" : "dd MMMM yyyy",
-	"dueDate" : "01 September 2015",
-	"locale" : "en"
-}
+No Request Body:
+
 			</code>
 			<code class="method-response">
 {
@@ -36271,296 +36120,178 @@ Request Body:
 			<div class="method-section">
 				<div class="method-description">
 					<h4>List Client Charges</h4>
-						
-					<p>The <i>list</i> capability of client charges supports <b>pagination</b>.</p>
-					<h5>Optional Arguments</h5>
-					<dl class="argument-list">
-						<dt>offset</dt>
-						<dd>
-							Integer <span>Mandatory</span>, defaults to 0
-						</dd>
-						<dd>Indicates the result from which pagination starts</dd>
-
-						<dt>limit</dt>
-						<dd>
-							Integer <span>Mandatory</span>, defaults to 200
-						</dd>
-						<dd>Restricts the size of results returned. To override the default and return all entries you must explicitly pass a non-positive integer value for limit e.g. limit=0, or limit=-1</dd>
-
-						<dt>pendingPayment</dt>
-						<dd>
-							String <span>optional</span>
-						</dd>
-						<dd> Filters charges that are pending payment (neither paid or waived).</dd>
-          			</dl>
-					<p>Example Requests:</p>				
-					<div class=apiClick>clients/1/charges</div>	
-					<div class=apiClick>clients/1/charges?offset=0&limit=5</div>				
-				</div>
+					<p>
+						A client can be associated with more than one client charge.This API enables to dispaly all the client charges associated with a client
+						<br>in pages.It uses the limit and offset in every page.
+					</p>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>clientId,limit and offset
+							</td>
+						</tr>
+					</table>
+						<br />
+					</div>
 				<div class="method-example">
 					<code class="method-declaration">
-GET https://DomainName/api/v1/clients/{clientId}/charges?limit=5&offset=0
-					</code>
-					<code class="method-request">
-GET clients/1/charges?limit=5&offset=0
+GET https://localhost:8443/mifosng-provider/api/v1/clients/189/charges?limit=5&offset=0
+
+GET clients/189/charges?limit=5&offset=0
 Content-Type: application/json
-No Request Body
-            		</code>
-					<code class="method-response">	
+Request Body:
 {
-  "totalFilteredRecords": 4,
-  "pageItems": [
-    {
-      "id": 5,
-      "clientId": 1,
-      "chargeId": 6,
-      "name": "Client Fees 2",
-      "chargeTimeType": {
-        "id": 2,
-        "code": "chargeTimeType.specifiedDueDate",
-        "value": "Specified due date"
-      },
-      "dueDate": [
-        2015,
-        9,
-        1
-      ],
-      "chargeCalculationType": {
-        "id": 1,
-        "code": "chargeCalculationType.flat",
-        "value": "Flat"
-      },
-      "currency": {
-        "code": "USD",
-        "name": "US Dollar",
-        "decimalPlaces": 2,
-        "displaySymbol": "$",
-        "nameCode": "currency.USD",
-        "displayLabel": "US Dollar ($)"
-      },
-      "amount": 550.000000,
-      "amountPaid": 0.000000,
-      "amountWaived": 0.000000,
-      "amountWrittenOff": 0,
-      "amountOutstanding": 550.000000,
-      "penalty": false,
-      "isActive": true,
-      "isPaid": false,
-      "isWaived": false
-    },
-    {
-      "id": 4,
-      "clientId": 1,
-      "chargeId": 5,
-      "name": "Client Fee 1",
-      "chargeTimeType": {
-        "id": 2,
-        "code": "chargeTimeType.specifiedDueDate",
-        "value": "Specified due date"
-      },
-      "dueDate": [
-        2015,
-        8,
-        31
-      ],
-      "chargeCalculationType": {
-        "id": 1,
-        "code": "chargeCalculationType.flat",
-        "value": "Flat"
-      },
-      "currency": {
-        "code": "USD",
-        "name": "US Dollar",
-        "decimalPlaces": 2,
-        "displaySymbol": "$",
-        "nameCode": "currency.USD",
-        "displayLabel": "US Dollar ($)"
-      },
-      "amount": 120.000000,
-      "amountPaid": 0.000000,
-      "amountWaived": 120.000000,
-      "amountWrittenOff": 0,
-      "amountOutstanding": 120.000000,
-      "penalty": true,
-      "isActive": true,
-      "isPaid": false,
-      "isWaived": true
-    },
-    {
-      "id": 3,
-      "clientId": 1,
-      "chargeId": 5,
-      "name": "Client Fee 1",
-      "chargeTimeType": {
-        "id": 2,
-        "code": "chargeTimeType.specifiedDueDate",
-        "value": "Specified due date"
-      },
-      "dueDate": [
-        2015,
-        8,
-        17
-      ],
-      "chargeCalculationType": {
-        "id": 1,
-        "code": "chargeCalculationType.flat",
-        "value": "Flat"
-      },
-      "currency": {
-        "code": "USD",
-        "name": "US Dollar",
-        "decimalPlaces": 2,
-        "displaySymbol": "$",
-        "nameCode": "currency.USD",
-        "displayLabel": "US Dollar ($)"
-      },
-      "amount": 100.000000,
-      "amountPaid": 0.000000,
-      "amountWaived": 100.000000,
-      "amountWrittenOff": 0,
-      "amountOutstanding": 0.000000,
-      "penalty": true,
-      "isActive": true,
-      "isPaid": false,
-      "isWaived": true
-    },
-    {
+  "clientId":189
+ }
+            </code>
+			<code class="method-response">			
+ {
+    "id": 151,
+    "clientId": 182,
+    "chargeId": 228,
+    "name": "Charge_client_1WA4XRZ1",
+    "chargeTimeType": {
       "id": 2,
-      "clientId": 1,
-      "chargeId": 2,
-      "name": "Recurring savings Charge",
-      "chargeTimeType": {
-        "id": 7,
-        "code": "chargeTimeType.monthlyFee",
-        "value": "Monthly Fee"
-      },
-      "dueDate": [
-        2015,
-        8,
-        17
-      ],
-      "chargeCalculationType": {
-        "id": 1,
-        "code": "chargeCalculationType.flat",
-        "value": "Flat"
-      },
-      "currency": {
-        "code": "USD",
-        "name": "US Dollar",
-        "decimalPlaces": 2,
-        "displaySymbol": "$",
-        "nameCode": "currency.USD",
-        "displayLabel": "US Dollar ($)"
-      },
-      "amount": 100.000000,
-      "amountPaid": 0,
-      "amountWaived": 100.000000,
-      "amountWrittenOff": 0,
-      "amountOutstanding": 0.000000,
-      "penalty": false,
-      "isActive": true,
-      "isPaid": false,
-      "isWaived": true
-    }
-  ]
-}		
- 
+      "code": "chargeTimeType.specifiedDueDate",
+      "value": "Specified due date"
+    },
+    "dueDate": [
+      2011,
+      10,
+      29
+    ],
+    "chargeCalculationType": {
+      "id": 1,
+      "code": "chargeCalculationType.flat",
+      "value": "Flat"
+    },
+    "currency": {
+      "code": "USD",
+      "name": "US Dollar",
+      "decimalPlaces": 2,
+      "displaySymbol": "$",
+      "nameCode": "currency.USD",
+      "displayLabel": "US Dollar ($)"
+    },
+    "amount": 200,
+    "amountPaid": 183,
+    "amountWaived": 0,
+    "amountWrittenOff": 0,
+    "amountOutstanding": 17,
+    "penalty": false,
+    "isActive": true,
+    "isPaid": false
+  },
+  {
+    "id": 160,
+    "clientId": 182,
+    "chargeId": 239,
+    "name": "Charge_client_09UC3HYL",
+    "chargeTimeType": {
+      "id": 2,
+      "code": "chargeTimeType.specifiedDueDate",
+      "value": "Specified due date"
+    },
+    "dueDate": [
+      2015,
+      8,
+      14
+    ],
+    "chargeCalculationType": {
+      "id": 1,
+      "code": "chargeCalculationType.flat",
+      "value": "Flat"
+    },
+    "currency": {
+      "code": "USD",
+      "name": "US Dollar",
+      "decimalPlaces": 2,
+      "displaySymbol": "$",
+      "nameCode": "currency.USD",
+      "displayLabel": "US Dollar ($)"
+    },
+    "amount": 100,
+    "amountPaid": 0,
+    "amountWaived": 0,
+    "amountWrittenOff": 0,
+    "amountOutstanding": 100,
+    "penalty": false,
+    "isActive": true,
+    "isPaid": false
+  },
+  {
+    "id": 163,
+    "clientId": 182,
+    "chargeId": 161,
+    "name": "Charge_client_12J3LSPO",
+    "chargeTimeType": {
+      "id": 2,
+      "code": "chargeTimeType.specifiedDueDate",
+      "value": "Specified due date"
+    },
+    "dueDate": [
+      2015,
+      9,
+      1
+    ],
+    "chargeCalculationType": {
+      "id": 1,
+      "code": "chargeCalculationType.flat",
+      "value": "Flat"
+    },
+    "currency": {
+      "code": "USD",
+      "name": "US Dollar",
+      "decimalPlaces": 2,
+      "displaySymbol": "$",
+      "nameCode": "currency.USD",
+      "displayLabel": "US Dollar ($)"
+    },
+    "amount": 100,
+    "amountPaid": 0,
+    "amountWaived": 0,
+    "amountWrittenOff": 0,
+    "amountOutstanding": 100,
+    "penalty": false,
+    "isActive": true,
+    "isPaid": false
+  }
 					</code>
 				</div>
 			</div>
-					<a id="clientcharges_retrieve" name="clientcharges_retrieve" class="old-syle-anchor">&nbsp;</a>
-			<div class="method-section">
-				<div class="method-description">
-					<h4>Retrieve a Client Charge</h4>
-					<h5>Arguments</h5>
-					<dl class="argument-list">
-						<dt>associations</dt>
-						<dd>
-							optional, <span>Either 'all' or a comma separated list of
-								loan 'associations' (itemised below).</span>
-						</dd>
-						<dd>
-							<br>Associations are just extra pieces of data that you
-							might or might not want to retrieve.<br>
-							<br>
-						</dd>
-						<dd>
-							<b>'all':</b> Gets all association data.
-						</dd>
-						<dd>
-							<b>'transactions':</b> Retrieves all transactions made on this client charge.
-						</dd>
-					</dl>
-					<p>Example Requests:</p>
-					<div class=apiClick>clients/1/charges/1</div>
-					<br>
-					<br>
-					<div class=apiClick>clients/1/charges/1?fields=name,id</div>
-				</div>
-				<div class="method-example">
-					<code class="method-declaration">
-GET https://DomainName/api/v1/clients/{clientId}/charges/{clientChargeId}
-					</code>
-					<code class="method-response">
-{
-  "id": 3,
-  "clientId": 1,
-  "chargeId": 5,
-  "name": "Client Fee 1",
-  "chargeTimeType": {
-    "id": 2,
-    "code": "chargeTimeType.specifiedDueDate",
-    "value": "Specified due date"
-  },
-  "dueDate": [
-    2015,
-    8,
-    17
-  ],
-  "chargeCalculationType": {
-    "id": 1,
-    "code": "chargeCalculationType.flat",
-    "value": "Flat"
-  },
-  "currency": {
-    "code": "USD",
-    "name": "US Dollar",
-    "decimalPlaces": 2,
-    "displaySymbol": "$",
-    "nameCode": "currency.USD",
-    "displayLabel": "US Dollar ($)"
-  },
-  "amount": 100.000000,
-  "amountPaid": 0.000000,
-  "amountWaived": 100.000000,
-  "amountWrittenOff": 0,
-  "amountOutstanding": 0.000000,
-  "penalty": true,
-  "isActive": true,
-  "isPaid": false,
-  "isWaived": true
-}
-					</code>
-				</div>
-			</div>	
+			
 			
         <a id="delete_clientCharge" name="delete_clientCharge" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h4>Delete a Client Charge</h4>
+					<h4>Delete Client Charge</h4>
 					<p>
-					Deletes a Client Charge on which no transactions have taken place (either payments or waivers).				</p>
+						<br>A client can be associated with more than one client charge and this API enables to delete a charge from client.					
+					</p>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>chargeId
+							</td>
+						</tr>
+					</table>					
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">				
-DELETE  https://DomainName/api/v1/clients/{clientId}/charges/{clientChargeId}
-					</code>
-					<code class="method-request">
-POST clients/189/charges/164
+DELETE  https://localhost:8443/mifosng-provider/api/v1/clients/189/charges?command=delete
+
+POST clients/189/charges/164?command=delete
 Content-Type: application/json
 No Request Body
             </code>
 			<code class="method-response">
+			
+
+
 {
   "officeId": 1,
   "clientId": 189,
@@ -36572,9 +36303,9 @@ No Request Body
 			<a id="pay_clientCharge" name="pay_clientCharge" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h4>Pay a Client Charge</h4>
+					<h4>Pay Client Charge</h4>
 					<p>
-						<br>Pay either a part of or the entire due amount for a charge.						
+						<br>Total or Some amount of the client charge can be paid by specifying transaction date and which should not be below or above the specifed due date.						
 					</p>
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
@@ -36582,7 +36313,7 @@ No Request Body
 						</tr>
 						<tr >
 						<td>
-							transactionDate and amount
+							<br>transactionDate and amount<br>
 							</td>
 						</tr>
 					</table>
@@ -36590,10 +36321,10 @@ No Request Body
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">					
-POST https://DomainName/api/v1/clients/{clientId}/charges/{clientChargeId}?command=paycharge
+POST https://localhost:8443/mifosng-provider/api/v1/clients/189/charges/157?command=paycharge
 					</code>
 					<code class="method-request">
-POST clients/189/charges/157?command=payCharge
+POST clients/189/charges/157?command=paycharge
 Content-Type: application/json
 Request Body:
 {
@@ -36602,6 +36333,7 @@ Request Body:
  "locale":"en",
  "dateFormat":"dd MMMM yyyy",
  "transactionDate":"01 September 2015"
+	
 }
 			</code>
 			<code class="method-response">
@@ -36618,26 +36350,40 @@ Request Body:
           <a id="waive_clientCharge" name="waive_clientCharge" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h4>Waive a Client Charge</h4>
+					<h4>Waive Client Charge</h4>
 					<p>
-						<br>This API provides the facility of waiving off the remaining amount on a client charge						
+						<br>This API provieds the facility of waiving off  the client charge of a client.						
 					</p>
-								
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>clientId and chargeId 
+							</td>
+						</tr>
+					</table>
+						<br />					
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">					
-POST https://DomainName/api/v1/clients/{clientId}/charges/{clientChargeId}?command=waive
+POST https://localhost:8443/mifosng-provider/api/v1/clients/189/charges/157?command=waive
 					</code>
 					<code class="method-request">
 POST clients/189/charges/157?command=waive						
 Content-Type: application/json
-No Request Body
+Request Body:
+{
+	"clientId"="189"	
+	"resourceType"="164"
+	
+}
 			</code>
 			<code class="method-response">
 			
 {
  	"clientId":"189",
-	"resourceId":157
+	"resourceType":"164"
 }
 					</code>
 				</div>
@@ -36646,28 +36392,118 @@ No Request Body
            <a id="revert_clientCharge" name="revert_clientCharge" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h4>Undo a Client Transaction</h4>
+					<h4>Revert Client Charge Transaction</h4>
+					<p>
+						<br>This API exists to revert the client transactions which have got created after paying the client charge 
+						<br>or after waiving off the client charge.						
+					</p>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>clientId ,chargeId and transactionId
+							</td>
+						</tr>
+					</table>
+						<br />					
 				</div>
 				<div class="method-example">
 					<code class="method-declaration">					
-POST https://DomainName/api/v1/clients/{clientId}/transactions/{transactionId}?command=undo
+POST https://localhost:8443/mifosng-provider/api/v1/clients/189/charges/157?command=undo
 					</code>
 					<code class="method-request">
-POST clients/189/transactions/222?command=undo					
+POST clients/189/transactions/222					
 Content-Type: application/json
-No Request Body
-					</code>
-					<code class="method-response">
+Request Body:
+{
+clientId="189"
+transactionId=222
+	
+}
+			</code>
+			<code class="method-response">
 			
 {
 "officeId":1,
 "clientId":189,
 "resourceId":222
 }
+
 					</code>
 				</div>
 			</div>			
-<!-- End of Client Transactions -->			
+			
+		 <a id="retrieve_client_recurring_Charge" name="retrieve_client_recurring_Charge" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Retrieve All Client Recurring Charges of a client</h4>
+					<p>
+						<br>This API exists to retrieve all the  client recurring charges of particular client.
+											
+					</p>
+										
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">					
+GET https://localhost:8443/mifosng-provider/api/v1/clients/4/charges/recurringCharges
+					</code>
+					<code class="method-request">
+Content-Type: application/json					
+NO REQUEST BODY
+			</code>
+			<code class="method-response">			
+{
+  "id": 170,
+  "clientId": 4,
+  "chargeId": 180,
+  "name": "Charge_client_0BHU68BR",
+  "active": false,
+  "penalty": false,
+  "currencydata": {
+    "code": "USD",
+    "name": "US Dollar",
+    "decimalPlaces": 2,
+    "displaySymbol": "$",
+    "nameCode": "currency.USD",
+    "displayLabel": "US Dollar ($)"
+  },
+  "amount": 0,
+  "chargeDueDate": [
+    2015,
+    9,
+    1
+  ],
+  "chargeTimeType": {
+    "id": 2,
+    "code": "chargeTimeType.specifiedDueDate",
+    "value": "Specified due date"
+  },
+  "chargeAppliesTo": {
+    "id": 3,
+    "code": "chargeAppliesTo.client",
+    "value": "Client"
+  },
+  "chargeCalculationType": {
+    "id": 1,
+    "code": "chargeCalculationType.flat",
+    "value": "Flat"
+  },
+  "chargePaymentMode": {
+    "id": 0,
+    "code": "chargepaymentmode.regular",
+    "value": "Regular"
+  },
+  "inactivationDate": [
+    2015,
+    9,
+    11
+  ]
+
+}
+					</code>
+				</div>
+			</div>
 			<a id="resources_deletetemplate" name="resources_deletetemplate"
 				class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">

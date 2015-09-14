@@ -38,8 +38,10 @@ import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext
 import org.mifosplatform.portfolio.charge.data.ChargeData;
 import org.mifosplatform.portfolio.charge.service.ChargeReadPlatformService;
 import org.mifosplatform.portfolio.client.data.ClientChargeData;
+import org.mifosplatform.portfolio.client.data.ClientRecurringChargeData;
 import org.mifosplatform.portfolio.client.data.ClientTransactionData;
 import org.mifosplatform.portfolio.client.service.ClientChargeReadPlatformService;
+import org.mifosplatform.portfolio.client.service.ClientRecurringChargeReadPlatformService;
 import org.mifosplatform.portfolio.client.service.ClientTransactionReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -54,16 +56,20 @@ public class ClientChargesApiResource {
     private final ClientChargeReadPlatformService clientChargeReadPlatformService;
     private final ClientTransactionReadPlatformService clientTransactionReadPlatformService;
     private final DefaultToApiJsonSerializer<ClientChargeData> toApiJsonSerializer;
+    private final DefaultToApiJsonSerializer<ClientRecurringChargeData> clientRecurringChargeDatatoApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
+    private final ClientRecurringChargeReadPlatformService clientRecurringChargeReadPlatformService;
 
     @Autowired
     public ClientChargesApiResource(final PlatformSecurityContext context, final ChargeReadPlatformService chargeReadPlatformService,
             final ClientChargeReadPlatformService clientChargeReadPlatformService,
             final DefaultToApiJsonSerializer<ClientChargeData> toApiJsonSerializer,
+            DefaultToApiJsonSerializer<ClientRecurringChargeData> clientRecurringChargeDatatoApiJsonSerializer,
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-            final ClientTransactionReadPlatformService clientTransactionReadPlatformService) {
+            final ClientTransactionReadPlatformService clientTransactionReadPlatformService,
+            ClientRecurringChargeReadPlatformService clientRecurringChargeReadPlatformService) {
         this.context = context;
         this.chargeReadPlatformService = chargeReadPlatformService;
         this.clientChargeReadPlatformService = clientChargeReadPlatformService;
@@ -71,25 +77,27 @@ public class ClientChargesApiResource {
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.clientTransactionReadPlatformService = clientTransactionReadPlatformService;
+        this.clientRecurringChargeReadPlatformService = clientRecurringChargeReadPlatformService;
+        this.clientRecurringChargeDatatoApiJsonSerializer = clientRecurringChargeDatatoApiJsonSerializer;
     }
 
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAllClientCharges(@PathParam("clientId") final Long clientId,
+    public String retrieveAllClientCharges(
+            @PathParam("clientId") final Long clientId,
             @DefaultValue(ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_ALL) @QueryParam(ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS) final String chargeStatus,
             @QueryParam("pendingPayment") final Boolean pendingPayment, @Context final UriInfo uriInfo,
             @QueryParam("limit") final Integer limit, @QueryParam("offset") final Integer offset) {
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         if (!(is(chargeStatus, ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_ALL)
-                || is(chargeStatus, ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_ACTIVE)
-                || is(chargeStatus,
-                        ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_INACTIVE))) { throw new UnrecognizedQueryParamException(
-                                ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS, chargeStatus,
-                                new Object[] { ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_ALL,
-                                        ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_ACTIVE,
-                                        ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_INACTIVE }); }
+                || is(chargeStatus, ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_ACTIVE) || is(chargeStatus,
+                    ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_INACTIVE))) { throw new UnrecognizedQueryParamException(
+                ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS, chargeStatus, new Object[] {
+                        ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_ALL,
+                        ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_ACTIVE,
+                        ClientApiConstants.CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_INACTIVE }); }
         final SearchParameters searchParameters = SearchParameters.forPagination(offset, limit);
 
         final Page<ClientChargeData> clientCharges = this.clientChargeReadPlatformService.retrieveClientCharges(clientId, chargeStatus,
@@ -192,6 +200,44 @@ public class ClientChargesApiResource {
         }
 
         return json;
+    }
+
+    @GET
+    @Path("recurringCharges")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveAllClientRecurringCharges(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo) {
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+        final Collection<ClientRecurringChargeData> clientRecurringCharges = this.clientRecurringChargeReadPlatformService
+                .retrieveClientRecurringCharges(clientId);
+        return this.clientRecurringChargeDatatoApiJsonSerializer.serialize(settings, clientRecurringCharges,
+                ClientApiConstants.CLIENT_RECURRING_CHARGES_RESPONSE_DATA_PARAMETERS);
+    }
+
+    @POST
+    @Path("recurringCharges/{recurringChargeId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String inactivateOrActivateClientRecurringCharge(@PathParam("clientId") final Long clientId,
+            @PathParam("recurringChargeId") final Long recurringChargeId, @QueryParam("command") final String commandParam) {
+        String resultJson = "";
+        if (is(commandParam, ClientApiConstants.CLIENT_CHARGE_COMMAND_INACTIVATE_CHARGE)) {
+            final CommandWrapper commandRequest = new CommandWrapperBuilder().inactivateClientRecurringCharge(clientId, recurringChargeId)
+                    .build();
+            final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            resultJson = this.toApiJsonSerializer.serialize(result);
+
+        } else if (is(commandParam, ClientApiConstants.CLIENT_CHARGE_COMMAND_ACTIVATE_CHARGE)) {
+            final CommandWrapper commandRequest = new CommandWrapperBuilder().activateClientRecurringCharge(clientId, recurringChargeId)
+                    .build();
+            final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            resultJson = this.toApiJsonSerializer.serialize(result);
+        } else {
+            throw new UnrecognizedQueryParamException("command", commandParam, ClientApiConstants.CLIENT_CHARGE_COMMAND_ACTIVATE_CHARGE,
+                    ClientApiConstants.CLIENT_CHARGE_COMMAND_INACTIVATE_CHARGE);
+        }
+        return resultJson;
+
     }
 
     @DELETE

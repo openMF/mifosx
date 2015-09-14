@@ -22,4 +22,6 @@ public interface ScheduledJobRunnerService {
     void updateMaturityDetailsOfDepositAccounts();
 
     void generateRDSchedule();
+
+    void applyClientRecurringCharge();
 }
