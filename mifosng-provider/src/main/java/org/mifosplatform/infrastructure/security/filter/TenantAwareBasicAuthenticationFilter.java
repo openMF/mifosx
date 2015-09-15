@@ -27,6 +27,7 @@ import org.mifosplatform.infrastructure.security.service.BasicAuthTenantDetailsS
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -49,6 +50,7 @@ import org.springframework.stereotype.Service;
  * is returned.
  */
 @Service(value = "basicAuthenticationProcessingFilter")
+@Profile("basicauth")
 public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
     private static boolean firstRequestProcessed = false;

@@ -1337,6 +1337,7 @@ public class CommandWrapperBuilder {
         this.actionName = "UPDATE";
         this.entityName = "CALENDAR";
         this.entityId = calendarId;
+       	this.groupId = supportedEntityId;
         this.href = "/" + supportedEntityType + "/" + supportedEntityId + "/calendars/" + calendarId;
         return this;
     }
@@ -2456,5 +2457,4 @@ public class CommandWrapperBuilder {
         this.href = "/clients/" + clientId + "/transactions/" + transactionId + "?command=undo";
         return this;
     }
-
 }

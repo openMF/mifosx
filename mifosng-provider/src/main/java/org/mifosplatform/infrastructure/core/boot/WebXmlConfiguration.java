@@ -15,6 +15,7 @@ import org.springframework.boot.context.embedded.FilterRegistrationBean;
 import org.springframework.boot.context.embedded.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.filter.DelegatingFilterProxy;
 
 import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
@@ -26,6 +27,7 @@ import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
  *      href="http://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#howto-convert-an-existing-application-to-spring-boot">#howto-convert-an-existing-application-to-spring-boot</a>
  */
 @Configuration
+@Profile("basicauth")
 public class WebXmlConfiguration {
 
     @Autowired
