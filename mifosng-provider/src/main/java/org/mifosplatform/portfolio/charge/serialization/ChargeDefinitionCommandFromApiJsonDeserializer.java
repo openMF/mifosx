@@ -105,6 +105,16 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
                         .isOneOfTheseValues(ChargeCalculationType.validValuesForLoan());
             }
             
+            if(chargeTimeType != null && chargeCalculationType != null){
+                if (chargeTimeType == ChargeTimeType.TRANCHE_DISBURSEMENT.getValue()){
+                	baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType)
+                			.isOneOfTheseValues(ChargeCalculationType.validValuesForTrancheDisbursement());
+                } else {
+                	baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType)
+                			.isNotOneOfTheseValues(ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue());
+                }
+            }
+
         } else if (appliesTo.isSavingsCharge()) {
             // savings applicable validation
             final Integer chargeTimeType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("chargeTimeType", element);

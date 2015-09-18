@@ -5,16 +5,22 @@
  */
 package org.mifosplatform.portfolio.charge.service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.accounting.glaccount.domain.GLAccount;
 import org.mifosplatform.accounting.glaccount.domain.GLAccountRepositoryWrapper;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
+import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.entityaccess.domain.MifosEntityAccessType;
@@ -23,7 +29,9 @@ import org.mifosplatform.infrastructure.entityaccess.service.MifosEntityAccessUt
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.charge.api.ChargesApiConstants;
 import org.mifosplatform.portfolio.charge.domain.Charge;
+import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
 import org.mifosplatform.portfolio.charge.domain.ChargeRepository;
+import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
 import org.mifosplatform.portfolio.charge.exception.ChargeCannotBeDeletedException;
 import org.mifosplatform.portfolio.charge.exception.ChargeCannotBeUpdatedException;
 import org.mifosplatform.portfolio.charge.exception.ChargeNotFoundException;
@@ -130,6 +138,34 @@ public class ChargeWritePlatformServiceJpaRepositoryImpl implements ChargeWriteP
                 if (isChargeExistWithLoans) { throw new ChargeCannotBeUpdatedException(
                         "error.msg.charge.frequency.cannot.be.updated.it.is.used.in.loan",
                         "This charge frequency cannot be updated, it is used in loan"); }
+            } else if (changes.containsKey("chargeTimeType") || changes.containsKey("chargeCalculationType")){
+            	final Integer chargeTimeType = (Integer) (changes.containsKey("chargeTimeType")? changes.get("chargeTimeType"):chargeForUpdate.getChargeTimeType());
+            	final Integer chargeCalculationType = (Integer) (changes.containsKey("chargeCalculationType")? changes.get("chargeCalculationType"):chargeForUpdate.getChargeCalculation());
+            	final List<Object> validValuesForTrancheDisbursement = Arrays.asList(ChargeCalculationType.validValuesForTrancheDisbursement());
+            	boolean isInvalidCombination = false;
+            	String errorCode = null;
+            	String errorMsg = null;
+            	if(chargeTimeType == ChargeTimeType.TRANCHE_DISBURSEMENT.getValue()){
+            		if(!validValuesForTrancheDisbursement.contains(chargeCalculationType)){
+            			isInvalidCombination = true;
+            			errorCode = "validation.msg.charge.chargeCalculationType.is.not.one.of.expected.enumerations";
+            			final String valuesListStr = StringUtils.join(validValuesForTrancheDisbursement, ", "); 
+            			errorMsg = new StringBuilder("The parameter chargeCalculationType must be one of [ ")
+										.append(valuesListStr)
+										.append(" ] .").toString();
+            		}
+            	} else {
+            		if(chargeCalculationType == ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue()){
+            			isInvalidCombination = true;
+            			errorCode = "validation.msg.charge.chargeCalculationType.is.one.of.unwanted.enumerations";
+            			errorMsg = "The parameter chargeCalculationType must be one of [ 5 ] .";
+            		}
+            	}
+            	if(isInvalidCombination){
+        			List<ApiParameterError> errors = new ArrayList<>();
+        			errors.add(ApiParameterError.parameterError(errorCode, errorMsg, "chargeCalculationType", chargeCalculationType));
+        			throw new PlatformApiDataValidationException(errors);
+            	}
             }
 
             // Has account Id been changed ?
