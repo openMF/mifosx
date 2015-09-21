@@ -31,7 +31,9 @@ public class RescheduleLoansApiConstants {
     public static final String rescheduleReasonCommentParamName = "rescheduleReasonComment";
     public static final String submittedOnDateParamName = "submittedOnDate";
     public static final String adjustedDueDateParamName = "adjustedDueDate";
-
+    public static final String multiDisbursementLoan = "multidisbursementLoan";
+    public static final String interestRecalculationEnabled = "interestrecalculationenabled";
+    
     public static final Set<String> CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName, dateFormatParamName,
             graceOnPrincipalParamName, graceOnInterestParamName, extraTermsParamName, rescheduleFromDateParamName,
             newInterestRateParamName, rescheduleReasonIdParamName, rescheduleReasonCommentParamName, submittedOnDateParamName,
