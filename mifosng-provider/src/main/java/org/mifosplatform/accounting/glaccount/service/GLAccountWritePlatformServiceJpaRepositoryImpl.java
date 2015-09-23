@@ -78,14 +78,14 @@ public class GLAccountWritePlatformServiceJpaRepositoryImpl implements GLAccount
             final Long type = command.longValueOfParameterNamed(GLAccountJsonInputParams.TYPE.getValue());
             final GLAccountType accountType = GLAccountType.fromInt(type.intValue());
 
-            List<CodeValue> glTag = new ArrayList<CodeValue>();
+            List<CodeValue> glTags = new ArrayList<CodeValue>();
             if (tags != null) for (String tag : tags) {
-                long tagid = Long.parseLong(tag);
-                glAccountTagType = retrieveTagId(tagid, accountType);
-                glTag.add(glAccountTagType);
+                long tagId = Long.parseLong(tag);
+                glAccountTagType = retrieveTagId(tagId, accountType);
+                glTags.add(glAccountTagType);
             }
 
-            final GLAccount glAccount = GLAccount.fromJson(parentGLAccount, command, glTag);
+            final GLAccount glAccount = GLAccount.fromJson(parentGLAccount, command, glTags);
 
             this.glAccountRepository.saveAndFlush(glAccount);
 

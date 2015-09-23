@@ -64,7 +64,7 @@ public class GLAccount extends AbstractPersistable<Long> {
     @Column(name = "description", nullable = true, length = 500)
     private String description;
     
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "acc_gl_accounttags", joinColumns = @JoinColumn(name = "gl_account_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private List<CodeValue> tagId;
 
