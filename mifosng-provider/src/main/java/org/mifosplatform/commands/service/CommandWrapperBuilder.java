@@ -7,6 +7,7 @@ package org.mifosplatform.commands.service;
 
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.infrastructure.accountnumberformat.service.AccountNumberFormatConstants;
+import org.mifosplatform.portfolio.client.api.ClientApiConstants;
 import org.mifosplatform.portfolio.paymenttype.api.PaymentTypeApiResourceConstants;
 import org.mifosplatform.portfolio.savings.DepositsApiConstants;
 import org.mifosplatform.useradministration.api.PasswordPreferencesApiConstants;
@@ -29,8 +30,8 @@ public class CommandWrapperBuilder {
     private Long templateId;
 
     public CommandWrapper build() {
-        return new CommandWrapper(this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId, this.actionName,
-                this.entityName, this.entityId, this.subentityId, this.href, this.json, this.transactionId, this.productId, this.templateId);
+        return new CommandWrapper(this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId, this.actionName, this.entityName,
+                this.entityId, this.subentityId, this.href, this.json, this.transactionId, this.productId, this.templateId);
     }
 
     public CommandWrapperBuilder withLoanId(final Long withLoanId) {
@@ -1336,6 +1337,7 @@ public class CommandWrapperBuilder {
         this.actionName = "UPDATE";
         this.entityName = "CALENDAR";
         this.entityId = calendarId;
+       	this.groupId = supportedEntityId;
         this.href = "/" + supportedEntityType + "/" + supportedEntityId + "/calendars/" + calendarId;
         return this;
     }
@@ -1813,7 +1815,8 @@ public class CommandWrapperBuilder {
         return this;
     }
 
-    public CommandWrapperBuilder saveOrUpdateAttendance(final Long entityId, final String supportedEntityType, final Long supportedEntityId) {
+    public CommandWrapperBuilder saveOrUpdateAttendance(final Long entityId, final String supportedEntityType,
+            final Long supportedEntityId) {
         this.actionName = "SAVEORUPDATEATTENDANCE";
         this.entityName = "MEETING";
         this.entityId = entityId;
@@ -2394,4 +2397,64 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder updateExternalServiceProperties(final String externalServiceName) {
+        this.actionName = "UPDATE";
+        this.entityName = "EXTERNALSERVICES";
+        this.transactionId = externalServiceName;
+        this.href = "/externalservices/" + externalServiceName;
+        return this;
+    }
+
+    public CommandWrapperBuilder createClientCharge(final Long clientId) {
+        this.actionName = ClientApiConstants.CLIENT_CHARGE_ACTION_CREATE;
+        this.entityName = ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "/charges";
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteClientCharge(final Long clientId, final Long chargeId) {
+        this.actionName = ClientApiConstants.CLIENT_CHARGE_ACTION_DELETE;
+        this.entityName = ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME;
+        this.clientId = clientId;
+        this.entityId = chargeId;
+        this.href = "/clients/" + clientId + "/charges/" + chargeId;
+        return this;
+    }
+
+    public CommandWrapperBuilder waiveClientCharge(final Long clientId, final Long chargeId) {
+        this.actionName = ClientApiConstants.CLIENT_CHARGE_ACTION_WAIVE;
+        this.entityName = ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME;
+        this.entityId = chargeId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "/charges/" + chargeId + "?command=waive";
+        return this;
+    }
+
+    public CommandWrapperBuilder payClientCharge(final Long clientId, final Long chargeId) {
+        this.actionName = ClientApiConstants.CLIENT_CHARGE_ACTION_PAY;
+        this.entityName = ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME;
+        this.entityId = chargeId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "/charges/" + chargeId + "?command=paycharge";
+        return this;
+    }
+
+    public CommandWrapperBuilder inactivateClientCharge(final Long clientId, final Long chargeId) {
+        this.actionName = "INACTIVATE";
+        this.entityName = ClientApiConstants.CLIENT_CHARGES_RESOURCE_NAME;
+        this.entityId = chargeId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "/charges/" + chargeId + "?command=inactivate";
+        return this;
+    }
+
+    public CommandWrapperBuilder undoClientTransaction(final Long clientId, final Long transactionId) {
+        this.actionName = ClientApiConstants.CLIENT_TRANSACTION_ACTION_UNDO;
+        this.entityName = ClientApiConstants.CLIENT_RESOURCE_NAME;
+        this.entityId = transactionId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "/transactions/" + transactionId + "?command=undo";
+        return this;
+    }
 }

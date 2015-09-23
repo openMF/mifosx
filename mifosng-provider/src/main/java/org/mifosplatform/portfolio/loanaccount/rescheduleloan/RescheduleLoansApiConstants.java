@@ -13,6 +13,8 @@ public class RescheduleLoansApiConstants {
 
     public final static String ENTITY_NAME = "RESCHEDULELOAN";
 
+    public static final String LOAN_RESCHEDULE_REASON = "LoanRescheduleReason";
+    
     // general
     public static final String localeParamName = "locale";
     public static final String dateFormatParamName = "dateFormat";
@@ -29,7 +31,9 @@ public class RescheduleLoansApiConstants {
     public static final String rescheduleReasonCommentParamName = "rescheduleReasonComment";
     public static final String submittedOnDateParamName = "submittedOnDate";
     public static final String adjustedDueDateParamName = "adjustedDueDate";
-
+    public static final String resheduleForMultiDisbursementNotSupportedErrorCode = "loan.reschedule.multidisbursement.error.code";
+    public static final String resheduleWithInterestRecalculationNotSupportedErrorCode = "loan.reschedule.interestrecalculation.error.code";
+    
     public static final Set<String> CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName, dateFormatParamName,
             graceOnPrincipalParamName, graceOnInterestParamName, extraTermsParamName, rescheduleFromDateParamName,
             newInterestRateParamName, rescheduleReasonIdParamName, rescheduleReasonCommentParamName, submittedOnDateParamName,

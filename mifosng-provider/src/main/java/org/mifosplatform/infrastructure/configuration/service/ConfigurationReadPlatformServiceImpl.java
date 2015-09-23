@@ -39,48 +39,46 @@ public class ConfigurationReadPlatformServiceImpl implements ConfigurationReadPl
 
         this.context.authenticatedUser();
 
-        String sql = "SELECT c.id, c.name, c.enabled, c.value, c.description FROM c_configuration c ";
+        String sql = "SELECT c.id, c.name, c.enabled, c.value, c.description, c.is_trap_door FROM c_configuration c ";
 
-        if(survey)
-        {
-             sql += " JOIN x_registered_table on x_registered_table.registered_table_name = c.name ";
-             sql += " WHERE x_registered_table.category ="+DataTableApiConstant.CATEGORY_PPI;
+        if (survey) {
+            sql += " JOIN x_registered_table on x_registered_table.registered_table_name = c.name ";
+            sql += " WHERE x_registered_table.category =" + DataTableApiConstant.CATEGORY_PPI;
 
-        }
+        } 
 
         sql += "  order by c.id";
         final List<GlobalConfigurationPropertyData> globalConfiguration = this.jdbcTemplate.query(sql, this.rm, new Object[] {});
 
         return new GlobalConfigurationData(globalConfiguration);
     }
-    
+
     @Override
     public GlobalConfigurationPropertyData retrieveGlobalConfiguration(Long configId) {
 
         this.context.authenticatedUser();
 
-        final String sql = "SELECT c.id, c.name, c.enabled, c.value, c.description FROM "
-        		+ "c_configuration c where c.id=? order by c.id";
-        final GlobalConfigurationPropertyData globalConfiguration = this.jdbcTemplate.queryForObject(sql, this.rm, new Object[] {configId});
+        final String sql = "SELECT c.id, c.name, c.enabled, c.value, c.description, c.is_trap_door FROM "
+                + "c_configuration c where c.id=? order by c.id";
+        final GlobalConfigurationPropertyData globalConfiguration = this.jdbcTemplate.queryForObject(sql, this.rm,
+                new Object[] { configId });
 
         return globalConfiguration;
     }
 
-
-
     private static final class GlobalConfigurationRowMapper implements RowMapper<GlobalConfigurationPropertyData> {
 
-        
         @Override
-        public GlobalConfigurationPropertyData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+        public GlobalConfigurationPropertyData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum)
+                throws SQLException {
 
             final String name = rs.getString("name");
             final boolean enabled = rs.getBoolean("enabled");
             final Long value = rs.getLong("value");
             final String description = rs.getString("description");
             final Long id = rs.getLong("id");
-
-            return new GlobalConfigurationPropertyData(name, enabled, value, id, description);
+            final boolean isTrapDoor = rs.getBoolean("is_trap_door");
+            return new GlobalConfigurationPropertyData(name, enabled, value, id, description, isTrapDoor);
         }
     }
 

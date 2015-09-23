@@ -24,6 +24,7 @@ import org.mifosplatform.useradministration.domain.AppUser;
 import org.mifosplatform.useradministration.domain.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -35,6 +36,7 @@ import com.sun.jersey.core.util.Base64;
 
 @Path("/authentication")
 @Component
+@Profile("basicauth")
 @Scope("singleton")
 public class AuthenticationApiResource {
 

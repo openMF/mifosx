@@ -3,12 +3,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.mifosplatform.infrastructure.configuration.domain;
+package org.mifosplatform.portfolio.client.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface ExternalServiceRepository extends JpaRepository<ExternalService, Long>, JpaSpecificationExecutor<ExternalService> {
+public interface ClientChargeRepository extends JpaRepository<ClientCharge, Long>, JpaSpecificationExecutor<ClientCharge> {
 
-    ExternalService findOneByName(String name);
 }

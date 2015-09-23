@@ -180,4 +180,17 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
         return property.isEnabled();
     }
 
+    @Override
+    public int getRoundingMode() {
+        final String propertyName = "rounding-mode";
+        int defaultValue = 6; // 6 Stands for HALF-EVEN
+        final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
+        if (property.isEnabled()) {
+            int value = property.getValue().intValue();
+            if (value < 0 || value > 6) { return defaultValue; }
+            return value;
+        }
+        return defaultValue;
+    }
+
 }
