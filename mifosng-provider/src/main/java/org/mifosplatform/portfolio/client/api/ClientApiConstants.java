@@ -14,15 +14,44 @@ import org.mifosplatform.portfolio.client.data.ClientData;
 public class ClientApiConstants {
 
     public static final String CLIENT_RESOURCE_NAME = "client";
+    public static final String CLIENT_CHARGES_RESOURCE_NAME = "CLIENTCHARGE";
+
+    // Client Charge Action Names
+    public static final String CLIENT_CHARGE_ACTION_CREATE = "CREATE";
+    public static final String CLIENT_CHARGE_ACTION_DELETE = "DELETE";
+    public static final String CLIENT_CHARGE_ACTION_WAIVE = "WAIVE";
+    public static final String CLIENT_CHARGE_ACTION_PAY = "PAY";
+    public static final String CLIENT_CHARGE_ACTION_INACTIVATE = "INACTIVATE";
+
+    // Client charge associations and query parameters
+    public static final String CLIENT_CHARGE_QUERY_PARAM_STATUS = "chargeStatus";
+    public static final String CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_ALL = "all";
+    public static final String CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_ACTIVE = "active";
+    public static final String CLIENT_CHARGE_QUERY_PARAM_STATUS_VALUE_INACTIVE = "inactive";
+    public static final String CLIENT_CHARGE_ASSOCIATIONS_TRANSACTIONS = "transactions";
+
+    // Client transaction action names
+    public static final String CLIENT_TRANSACTION_ACTION_READ = "READTRANSACTION";
+    public static final String CLIENT_TRANSACTION_ACTION_UNDO = "UNDOTRANSACTION";
+
+    // Commands
+    public static final String CLIENT_CHARGE_COMMAND_WAIVE_CHARGE = "waive";
+    public static final String CLIENT_CHARGE_COMMAND_PAY_CHARGE = "paycharge";
+    public static final String CLIENT_CHARGE_COMMAND_INACTIVATE_CHARGE = "inactivate";
+    public static final String CLIENT_TRANSACTION_COMMAND_UNDO = "undo";
+
     public static final String CLIENT_CLOSURE_REASON = "ClientClosureReason";
     public static final String CLIENT_ACTION_REASON = "ClientActionReason";
     public static final String CLIENT_REJECT_REASON = "ClientRejectReason";
     public static final String CLIENT_WITHDRAW_REASON = "ClientWithdrawReason";
 
+<<<<<<< HEAD
     public static final String DEPENDENT = "Dependents";
     public static final String EDUCATION = "Education";
     public static final String RELIGION = "Religion";
     public static final String MARITAL = "MaritalStatus";
+=======
+>>>>>>> upstream/develop
     public static final String GENDER = "Gender";
     public static final String CLIENT_TYPE = "ClientType";
     public static final String CLIENT_CLASSIFICATION = "ClientClassification";
@@ -52,12 +81,15 @@ public class ClientApiConstants {
     public static final String closureDateParamName = "closureDate";
     public static final String closureReasonIdParamName = "closureReasonId";
 
+<<<<<<< HEAD
     
+=======
+>>>>>>> upstream/develop
     public static final String rejectionDateParamName = "rejectionDate";
-    public static final String rejectionReasonIdParamName ="rejectionReasonId";
+    public static final String rejectionReasonIdParamName = "rejectionReasonId";
     public static final String withdrawalDateParamName = "withdrawalDate";
-    public static final String withdrawalReasonIdParamName ="withdrawalReasonId";
-        
+    public static final String withdrawalReasonIdParamName = "withdrawalReasonId";
+
     public static final String submittedOnDateParamName = "submittedOnDate";
     public static final String savingsProductIdParamName = "savingsProductId";
     public static final String savingsAccountIdParamName = "savingsAccountId";
@@ -76,6 +108,14 @@ public class ClientApiConstants {
     public static final String clientTypeParamName = "clientType";
     public static final String clientClassificationIdParamName = "clientClassificationId";
     public static final String clientClassificationParamName = "clientClassification";
+    // request parameters for payment details
+    public static final String paymentTypeIdParamName = "paymentTypeId";
+    public static final String transactionAccountNumberParamName = "accountNumber";
+    public static final String checkNumberParamName = "checkNumber";
+    public static final String routingCodeParamName = "routingCode";
+    public static final String receiptNumberParamName = "receiptNumber";
+    public static final String bankNumberParamName = "bankNumber";
+
     // response parameters
     public static final String statusParamName = "status";
     public static final String hierarchyParamName = "hierarchy";
@@ -90,6 +130,34 @@ public class ClientApiConstants {
     public static final String imagePresentParamName = "imagePresent";
     public static final String timelineParamName = "timeline";
 
+    // client charges response parameters
+    public static final String chargeIdParamName = "chargeId";
+    public static final String clientIdParamName = "clientId";
+    public static final String chargesParamName = "charges";
+    public static final String chargeNameParamName = "name";
+    public static final String penaltyParamName = "penalty";
+    public static final String chargeTimeTypeParamName = "chargeTimeType";
+    public static final String dueAsOfDateParamName = "dueDate";
+    public static final String transactionDateParamName = "transactionDate";
+    public static final String chargeCalculationTypeParamName = "chargeCalculationType";
+    public static final String currencyParamName = "currency";
+    public static final String amountWaivedParamName = "amountWaived";
+    public static final String amountWrittenOffParamName = "amountWrittenOff";
+    public static final String amountOutstandingParamName = "amountOutstanding";
+    public static final String amountOrPercentageParamName = "amountOrPercentage";
+    public static final String amountParamName = "amount";
+    public static final String amountPaidParamName = "amountPaid";
+    public static final String chargeOptionsParamName = "chargeOptions";
+    public static final String transactionsParamName = "transactions";
+
+    // client transactions response parameters
+    public static final String transactionAmountParamName = "transactionAmount";
+    public static final String paymentDetailDataParamName = "paymentDetailData";
+    public static final String reversedParamName = "reversed";
+    public static final String dateParamName = "date";
+    private static final String transactionTypeParamName = "type";
+    private static final String transactionCurrencyParamName = "currency";
+
     // associations related part of response
     public static final String groupsParamName = "groups";
 
@@ -97,6 +165,7 @@ public class ClientApiConstants {
     public static final String officeOptionsParamName = "officeOptions";
     public static final String staffOptionsParamName = "staffOptions";
 
+<<<<<<< HEAD
     public static final Set<String> CLIENT_CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, groupIdParamName, accountNoParamName, externalIdParamName, mobileNoParamName, firstnameParamName,
             middlenameParamName, lastnameParamName, fullnameParamName,fathernameParamName,emailAddressParamName,codeParamName, officeIdParamName, activeParamName, activationDateParamName,
@@ -108,6 +177,19 @@ public class ClientApiConstants {
             lastnameParamName, fullnameParamName,fathernameParamName,emailAddressParamName, activeParamName, activationDateParamName, staffIdParamName, savingsProductIdParamName,
             dateOfBirthParamName, genderIdParamName,maritalIdParamName,religionIdParamName,dependentIdParamName,educationIdParamName, clientTypeIdParamName, clientClassificationIdParamName,submittedOnDateParamName));
 
+=======
+    public static final Set<String> CLIENT_CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(localeParamName, dateFormatParamName, groupIdParamName, accountNoParamName, externalIdParamName,
+                    mobileNoParamName, firstnameParamName, middlenameParamName, lastnameParamName, fullnameParamName, officeIdParamName,
+                    activeParamName, activationDateParamName, staffIdParamName, submittedOnDateParamName, savingsProductIdParamName,
+                    dateOfBirthParamName, genderIdParamName, clientTypeIdParamName, clientClassificationIdParamName));
+
+    public static final Set<String> CLIENT_UPDATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
+            dateFormatParamName, accountNoParamName, externalIdParamName, mobileNoParamName, firstnameParamName, middlenameParamName,
+
+    lastnameParamName, fullnameParamName, activeParamName, activationDateParamName, staffIdParamName, savingsProductIdParamName,
+            dateOfBirthParamName, genderIdParamName, clientTypeIdParamName, clientClassificationIdParamName, submittedOnDateParamName));
+>>>>>>> upstream/develop
 
     /**
      * These parameters will match the class level parameters of
@@ -119,18 +201,45 @@ public class ClientApiConstants {
             lastnameParamName, fullnameParamName,fathernameParamName, emailAddressParamName,codeParamName,displayNameParamName, mobileNoParamName, officeIdParamName, officeNameParamName,
             transferToOfficeIdParamName, transferToOfficeNameParamName, hierarchyParamName, imageIdParamName, imagePresentParamName,
             staffIdParamName, staffNameParamName, timelineParamName, groupsParamName, officeOptionsParamName, staffOptionsParamName,
+<<<<<<< HEAD
             dateOfBirthParamName, genderParamName,maritalParamName,religionParamName,dependentParamName,educationParamName,clientTypeParamName,clientClassificationParamName));
 
     public static final Set<String> ACTIVATION_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, activationDateParamName,codeParamName));
     public static final Set<String> REACTIVATION_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, reactivationDateParamName));
+=======
+            dateOfBirthParamName, genderParamName, clientTypeParamName, clientClassificationParamName));
 
-    public static final Set<String> CLIENT_CLOSE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
-            dateFormatParamName, closureDateParamName, closureReasonIdParamName));
-	
-    public static final Set<String> CLIENT_REJECT_DATA_PARAMETERS =	new HashSet<>(Arrays.asList(localeParamName,dateFormatParamName,rejectionDateParamName,rejectionReasonIdParamName));
+    public static final Set<String> ACTIVATION_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(localeParamName, dateFormatParamName, activationDateParamName));
+    public static final Set<String> REACTIVATION_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(localeParamName, dateFormatParamName, reactivationDateParamName));
 
-    public static final Set<String> CLIENT_WITHDRAW_DATA_PARAMETERS =	new HashSet<>(Arrays.asList(localeParamName,dateFormatParamName,withdrawalDateParamName,withdrawalReasonIdParamName));
+    public static final Set<String> CLIENT_CLOSE_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(localeParamName, dateFormatParamName, closureDateParamName, closureReasonIdParamName));
+
+    public static final Set<String> CLIENT_REJECT_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(localeParamName, dateFormatParamName, rejectionDateParamName, rejectionReasonIdParamName));
+
+    public static final Set<String> CLIENT_WITHDRAW_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(localeParamName, dateFormatParamName, withdrawalDateParamName, withdrawalReasonIdParamName));
+
+    public static final Set<String> CLIENT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList(chargeIdParamName,
+            clientIdParamName, chargeNameParamName, penaltyParamName, chargeTimeTypeParamName, dueAsOfDateParamName,
+            chargeCalculationTypeParamName, currencyParamName, amountWaivedParamName, amountWrittenOffParamName, amountOutstandingParamName,
+            amountOrPercentageParamName, amountParamName, amountPaidParamName, chargeOptionsParamName, transactionsParamName));
+
+    public static final Set<String> CLIENT_CHARGES_ADD_REQUEST_DATA_PARAMETERS = new HashSet<>(
+            Arrays.asList(chargeIdParamName, amountParamName, dueAsOfDateParamName, dateFormatParamName, localeParamName));
+>>>>>>> upstream/develop
+
+    public static final Set<String> CLIENT_CHARGES_PAY_CHARGE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(amountParamName,
+            transactionDateParamName, dateFormatParamName, localeParamName, paymentTypeIdParamName, transactionAccountNumberParamName,
+            checkNumberParamName, routingCodeParamName, receiptNumberParamName, bankNumberParamName));
+
+    public static final Set<String> CLIENT_TRANSACTION_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList(idParamName,
+            transactionAmountParamName, paymentDetailDataParamName, reversedParamName, dateParamName, officeIdParamName,
+            officeNameParamName, transactionTypeParamName, transactionCurrencyParamName, externalIdParamName, submittedOnDateParamName));
 
 }

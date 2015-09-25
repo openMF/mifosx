@@ -1427,4 +1427,12 @@ public class LoanAccountData {
         return LoanStatus.fromInt(this.status.id().intValue()).isActive();
     }
 
+    public boolean isMultiDisburseLoan() {
+        return multiDisburseLoan ;
+    }
+    
+    public BigDecimal getTotalPaidFeeCharges() {
+        if(this.summary != null) return this.summary.getTotalPaidFeeCharges() ;
+        return BigDecimal.ZERO ;
+    }
 }

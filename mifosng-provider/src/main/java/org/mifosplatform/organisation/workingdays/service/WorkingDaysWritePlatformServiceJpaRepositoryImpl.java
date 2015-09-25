@@ -5,10 +5,9 @@
  */
 package org.mifosplatform.organisation.workingdays.service;
 
-import net.fortuna.ical4j.model.ValidationException;
-import net.fortuna.ical4j.model.property.RRule;
-import org.joda.time.LocalDate;
-import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
+import java.text.ParseException;
+import java.util.Map;
+
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -21,33 +20,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.ParseException;
-import java.util.Map;
+import net.fortuna.ical4j.model.ValidationException;
+import net.fortuna.ical4j.model.property.RRule;
 
 @Service
 public class WorkingDaysWritePlatformServiceJpaRepositoryImpl implements WorkingDaysWritePlatformService {
 
     private final WorkingDaysRepositoryWrapper daysRepositoryWrapper;
-    private final ConfigurationDomainService configurationDomainService;
     private final WorkingDayValidator fromApiJsonDeserializer;
 
     @Autowired
     public WorkingDaysWritePlatformServiceJpaRepositoryImpl(final WorkingDaysRepositoryWrapper daysRepositoryWrapper,
-            final ConfigurationDomainService configurationDomainService, final WorkingDayValidator fromApiJsonDeserializer) {
+            final WorkingDayValidator fromApiJsonDeserializer) {
         this.daysRepositoryWrapper = daysRepositoryWrapper;
-        this.configurationDomainService = configurationDomainService;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
-    }
-
-    @Override
-    public boolean isWorkingDay(LocalDate transactionDate) {
-        final WorkingDays workingDays = this.daysRepositoryWrapper.findOne();
-        return WorkingDaysUtil.isWorkingDay(workingDays, transactionDate);
-    }
-
-    @Override
-    public boolean isTransactionAllowedOnNonWorkingDay() {
-        return this.configurationDomainService.allowTransactionsOnNonWorkingDayEnabled();
     }
 
     @Transactional
@@ -68,8 +54,8 @@ public class WorkingDaysWritePlatformServiceJpaRepositoryImpl implements Working
             return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(workingDays.getId()).with(changes)
                     .build();
         } catch (final ValidationException e) {
-            throw new PlatformDataIntegrityException("error.msg.invalid.recurring.rule", "The Recurring Rule value: " + recurrence
-                    + " is not valid.", "recurrence", recurrence);
+            throw new PlatformDataIntegrityException("error.msg.invalid.recurring.rule",
+                    "The Recurring Rule value: " + recurrence + " is not valid.", "recurrence", recurrence);
         } catch (final IllegalArgumentException | ParseException e) {
             throw new PlatformDataIntegrityException("error.msg.recurring.rule.parsing.error",
                     "Error in passing the Recurring Rule value: " + recurrence, "recurrence", e.getMessage());

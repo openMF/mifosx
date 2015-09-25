@@ -44,22 +44,45 @@ public class LoanApplicationTestBuilder {
     private String maxOutstandingLoanBalance = "36000";
     private String graceOnPrincipalPayment = null;
     private String graceOnInterestPayment = null;
+    @SuppressWarnings("rawtypes")
     private List<HashMap> disbursementData = null;
-    private List<HashMap> charges = new ArrayList<HashMap>();
+    @SuppressWarnings("rawtypes")
+    private List<HashMap> charges = new ArrayList<>();
     private String recalculationRestFrequencyDate = null;
     private String recalculationCompoundingFrequencyDate = null;
     private String repaymentsStartingFromDate = null;
 
+    private String calendarId;
+    private boolean syncDisbursementWithMeeting = false;
+
+    public String build(final String clientID, final String groupID, final String loanProductId, final String savingsID) {
+        final HashMap<String, Object> map = new HashMap<>();
+        map.put("groupId", groupID);
+        map.put("clientId", clientID);
+        if (this.loanType == "jlg") {
+            if (this.calendarId != null) {
+                map.put("calendarId", this.calendarId);
+            }
+            map.put("syncDisbursementWithMeeting", this.syncDisbursementWithMeeting);
+        }
+        return build(map, loanProductId, savingsID);
+    }
+
     public String build(final String ID, final String loanProductId, final String savingsID) {
 
         final HashMap<String, Object> map = new HashMap<>();
-        map.put("dateFormat", "dd MMMM yyyy");
-        map.put("locale", "en_GB");
+
         if (this.loanType == "group") {
             map.put("groupId", ID);
         } else {
             map.put("clientId", ID);
         }
+        return build(map, loanProductId, savingsID);
+    }
+
+    private String build(final HashMap<String, Object> map, final String loanProductId, final String savingsID) {
+        map.put("dateFormat", "dd MMMM yyyy");
+        map.put("locale", "en_GB");
         map.put("productId", loanProductId);
         map.put("principal", this.principal);
         map.put("loanTermFrequency", this.loanTermFrequency);
@@ -105,6 +128,7 @@ public class LoanApplicationTestBuilder {
         if (recalculationCompoundingFrequencyDate != null) {
             map.put("recalculationCompoundingFrequencyDate", recalculationCompoundingFrequencyDate);
         }
+
         System.out.println("Loan Application request : " + map);
         return new Gson().toJson(map);
     }
@@ -256,6 +280,38 @@ public class LoanApplicationTestBuilder {
 
     public LoanApplicationTestBuilder withFirstRepaymentDate(final String firstRepaymentDate) {
         this.repaymentsStartingFromDate = firstRepaymentDate;
+        return this;
+    }
+
+    /**
+     * calendarID parameter is used to sync repayments with group meetings,
+     * especially when using jlg loans
+     *
+     * @param calendarId
+     *            the id of the calender record of the group meeting from
+     *            m_calendar table
+     * @return
+     */
+    public LoanApplicationTestBuilder withCalendarID(String calendarId) {
+        this.calendarId = calendarId;
+        return this;
+    }
+
+    /**
+     * This indicator is used mainly for jlg loans when we want to sync
+     * disbursement with the group meetings (it seems that if we do use this
+     * parameter we should also use calendarID to sync repayment with group
+     * meetings)
+     * 
+     * @return
+     */
+    public LoanApplicationTestBuilder withSyncDisbursementWithMeetin() {
+        this.syncDisbursementWithMeeting = true;
+        return this;
+    }
+
+    public LoanApplicationTestBuilder withFixedEmiAmount(final String installmentAmount) {
+        this.fixedEmiAmount = installmentAmount;
         return this;
     }
 }
