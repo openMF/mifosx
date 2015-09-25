@@ -48,7 +48,7 @@ public interface LoanReadPlatformService {
 
     LoanTransactionData retrieveNewClosureDetails();
 
-    LoanTransactionData retrieveDisbursalTemplate(Long loanId, boolean paymentDetailsRequired);
+    LoanTransactionData retrieveDisbursalTemplate(Long loanId, boolean paymentDetailsRequired, boolean paymentToWhomDetailsRequired);
 
     LoanApprovalData retrieveApprovalTemplate(Long loanId);
 
@@ -67,7 +67,7 @@ public interface LoanReadPlatformService {
     Page<LoanAccountData> retrieveAll(SearchParameters searchParameters);
 
     Collection<StaffData> retrieveAllowedLoanOfficers(Long selectedOfficeId, boolean staffInSelectedOfficeOnly);
-    
+
     Collection<DsaData> retrieveAllowedDsaOfficers(Long selectedOfficeId, boolean dsaInSelectedOfficeOnly);
 
     /*

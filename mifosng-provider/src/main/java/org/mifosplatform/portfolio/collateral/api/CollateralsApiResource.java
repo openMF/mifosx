@@ -44,7 +44,7 @@ import org.springframework.stereotype.Component;
 @Scope("singleton")
 public class CollateralsApiResource {
 
-    private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "type","goldfine","jewellery","maketwo","gross","impurity", "net","stone","value","actualcost", "description",
+    private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "type","goldfine","jewellery","maketwo","jewelcount","gross","impurity", "net","stone","value","actualcost", "description",
             "allowedCollateralTypes","allowedMakeTwoTypes", "currency"));
 
     private final String resourceNameForPermission = "COLLATERAL";

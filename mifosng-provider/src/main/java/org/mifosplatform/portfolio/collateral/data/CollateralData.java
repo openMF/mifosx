@@ -27,6 +27,7 @@ public class CollateralData {
     private BigDecimal impurity;
     private BigDecimal net;
     private BigDecimal stone;
+    private BigDecimal jewelcount;
     private final String description;
     @SuppressWarnings("unused")
     private final Collection<CodeValueData> allowedCollateralTypes;
@@ -35,16 +36,16 @@ public class CollateralData {
     private final Collection<CodeValueData>allowedMakeTwoTypes;
     private final CurrencyData currency;
 
-    public static CollateralData instance(final Long id, final CodeValueData type,final CodeValueData goldfine, final CodeValueData jewellery,final CodeValueData maketwo,final BigDecimal value,final BigDecimal actualcost,final BigDecimal gross,final BigDecimal impurity,final BigDecimal net, final BigDecimal stone, final String description,
+    public static CollateralData instance(final Long id, final CodeValueData type,final CodeValueData goldfine, final CodeValueData jewellery,final CodeValueData maketwo,final BigDecimal value,final BigDecimal actualcost,final BigDecimal gross,final BigDecimal impurity,final BigDecimal net, final BigDecimal stone, final BigDecimal jewelcount,final String description,
             final CurrencyData currencyData) {
-        return new CollateralData(id, type,goldfine,jewellery,maketwo, value,actualcost,gross,impurity,net,stone, description, currencyData);
+        return new CollateralData(id, type,goldfine,jewellery,maketwo, value,actualcost,gross,impurity,net,stone,jewelcount, description, currencyData);
     }
 
     public static CollateralData template(final Collection<CodeValueData> codeValues, final Collection<CodeValueData> goldfineValues, final Collection<CodeValueData> jewelleryValues ,final Collection<CodeValueData> maketwoValues) {
-        return new CollateralData(null, null, null, null, null,null,null,null,null,null,null,null,null, codeValues,goldfineValues,jewelleryValues,maketwoValues);
+        return new CollateralData(null, null, null, null, null,null,null,null,null,null,null,null,null,null, codeValues,goldfineValues,jewelleryValues,maketwoValues);
     }
 
-    private CollateralData(final Long id, final CodeValueData type,final CodeValueData goldfine, final CodeValueData jewellery,final CodeValueData maketwo, final BigDecimal value,final BigDecimal actualcost,final BigDecimal gross,final BigDecimal impurity, final BigDecimal net, final BigDecimal stone, final String description,
+    private CollateralData(final Long id, final CodeValueData type,final CodeValueData goldfine, final CodeValueData jewellery,final CodeValueData maketwo, final BigDecimal value,final BigDecimal actualcost,final BigDecimal gross,final BigDecimal impurity, final BigDecimal net, final BigDecimal stone,final BigDecimal jewelcount, final String description,
             final CurrencyData currencyData ) {
         this.id = id;
         this.type = type;
@@ -57,6 +58,7 @@ public class CollateralData {
         this.impurity = impurity;
         this.net = net;
         this.stone = stone;
+        this.jewelcount = jewelcount;
         this.description = description;
         this.currency = currencyData;
         this.allowedCollateralTypes = null;
@@ -65,7 +67,7 @@ public class CollateralData {
         this.allowedMakeTwoTypes = null;
     }
 
-    private CollateralData(final Long id, final CodeValueData type,final CodeValueData goldfine,final CodeValueData jewellery,final CodeValueData maketwo, final BigDecimal value,final BigDecimal actualcost,final BigDecimal gross, final BigDecimal impurity, final BigDecimal net, final BigDecimal stone,final String description,
+    private CollateralData(final Long id, final CodeValueData type,final CodeValueData goldfine,final CodeValueData jewellery,final CodeValueData maketwo, final BigDecimal value,final BigDecimal actualcost,final BigDecimal gross, final BigDecimal impurity, final BigDecimal net, final BigDecimal stone,final BigDecimal jewelcount,final String description,
             final CurrencyData currencyData,final Collection<CodeValueData> allowedCollateralTypes,final Collection<CodeValueData> allowedGoldfineTypes, final Collection<CodeValueData>allowedJewelleryTypes, final Collection<CodeValueData>allowedMakeTwoTypes) {
         this.id = id;
         this.type = type;
@@ -78,6 +80,7 @@ public class CollateralData {
         this.impurity = impurity;
         this.net = net;
         this.stone = stone;
+        this.jewelcount = jewelcount;
         this.description = description;
         this.currency = currencyData;
         this.allowedCollateralTypes = allowedCollateralTypes;
@@ -87,7 +90,7 @@ public class CollateralData {
     }
 
     public CollateralData template(final CollateralData collateralData, final Collection<CodeValueData> codeValues,final Collection<CodeValueData> goldfineValues, final Collection<CodeValueData> jewelleryValues, final Collection<CodeValueData> maketwoValues) {
-        return new CollateralData(collateralData.id, collateralData.type,collateralData.goldfine, collateralData.jewellery,collateralData.maketwo,collateralData.value,collateralData.actualcost, collateralData.gross,collateralData.impurity, collateralData.net,collateralData.stone,collateralData.description,
+        return new CollateralData(collateralData.id, collateralData.type,collateralData.goldfine, collateralData.jewellery,collateralData.maketwo,collateralData.value,collateralData.actualcost, collateralData.gross,collateralData.impurity, collateralData.net,collateralData.stone,collateralData.jewelcount,collateralData.description,
                 collateralData.currency, codeValues,goldfineValues, jewelleryValues, maketwoValues );
     }
 

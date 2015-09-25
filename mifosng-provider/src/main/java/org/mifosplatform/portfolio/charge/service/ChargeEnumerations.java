@@ -56,11 +56,6 @@ public class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeTimeType.INSTALMENT_FEE.getValue().longValue(),
                         ChargeTimeType.INSTALMENT_FEE.getCode(), "Installment Fee");
             break;
-            case FORCLOSURE_FEE:
-            	optionData = new EnumOptionData(ChargeTimeType.FORCLOSURE_FEE.getValue().longValue(),
-            			ChargeTimeType.FORCLOSURE_FEE.getCode(), "ForClosure Fee");
-            	
-            break;
             case OVERDUE_INSTALLMENT:
                 optionData = new EnumOptionData(ChargeTimeType.OVERDUE_INSTALLMENT.getValue().longValue(),
                         ChargeTimeType.OVERDUE_INSTALLMENT.getCode(), "Overdue Fees");
@@ -128,17 +123,16 @@ public class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_INTEREST.getValue().longValue(),
                         ChargeCalculationType.PERCENT_OF_INTEREST.getCode(), "% Interest");
             break;
-<<<<<<< HEAD
-            case PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING:
-            	optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING.getValue().longValue(),
-            			ChargeCalculationType.PERCENT_OF_TOTAL_PRINCIPAL_OUTSTANDING.getCode(), "% Outstanding Principal");
+
+            case PERCENT_OF_OUTSTANDING_PRINCIPAL:
+            	optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_OUTSTANDING_PRINCIPAL.getValue().longValue(),
+            			ChargeCalculationType.PERCENT_OF_OUTSTANDING_PRINCIPAL.getCode(), "% Loan Outstanding Principal");
             	break;
-=======
+            	
             case PERCENT_OF_DISBURSEMENT_AMOUNT:
             	optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue().longValue(),
             	        ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getCode(), "% Disbursement Amount");
             break;
->>>>>>> upstream/develop
             default:
                 optionData = new EnumOptionData(ChargeCalculationType.INVALID.getValue().longValue(),
                         ChargeCalculationType.INVALID.getCode(), "Invalid");

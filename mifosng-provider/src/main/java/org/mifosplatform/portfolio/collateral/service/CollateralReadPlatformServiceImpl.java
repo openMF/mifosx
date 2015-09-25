@@ -44,7 +44,7 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
     private static final class CollateralMapper implements RowMapper<CollateralData> {
 
         private final StringBuilder sqlBuilder = new StringBuilder(
-                "lc.id as id, lc.description as description, lc.value as value,lc.actualcost as actualcost, lc.gross as gross, lc.impurity as impurity, lc.net as net, lc.stone as stone,cv.id as typeId, gf.id as goldfineId,jw.id as jewelleryId, tw.id as maketwoId ,cv.code_value as typeName,gf.code_value as goldfineName,jw.code_value as jewelleryName,tw.code_value as maketwoName, oc.code as currencyCode, ")
+                "lc.id as id, lc.description as description, lc.value as value,lc.actualcost as actualcost, lc.gross as gross, lc.impurity as impurity, lc.net as net, lc.stone as stone,lc.jewel_count as jewelcount,cv.id as typeId, gf.id as goldfineId,jw.id as jewelleryId, tw.id as maketwoId ,cv.code_value as typeName,gf.code_value as goldfineName,jw.code_value as jewelleryName,tw.code_value as maketwoName, oc.code as currencyCode, ")
                 .append(" oc.name as currencyName,oc.decimal_places as currencyDecimalPlaces, oc.currency_multiplesof as inMultiplesOf, oc.display_symbol as currencyDisplaySymbol, oc.internationalized_name_code as currencyNameCode")
                 .append(" FROM m_loan_collateral lc") //
                 .append(" JOIN m_code_value cv on lc.type_cv_id = cv.id")//
@@ -70,6 +70,7 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
             final BigDecimal impurity = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "impurity");
             final BigDecimal net = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "net");
             final BigDecimal stone = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "stone");
+            final BigDecimal jewelcount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "jewelcount");
             final String typeName = rs.getString("typeName");
             final Long goldfineId = rs.getLong("goldfineId");
             final String goldfineName = rs.getString("goldfineName");
@@ -93,7 +94,7 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
             final CurrencyData currencyData = new CurrencyData(currencyCode, currencyName, currencyDecimalPlaces, inMultiplesOf,
                     currencyDisplaySymbol, currencyNameCode);
 
-            return CollateralData.instance(id, type,goldfine,jewellery,maketwo, value,actualcost, gross,impurity,net,stone,description, currencyData);
+            return CollateralData.instance(id, type,goldfine,jewellery,maketwo, value,actualcost, gross,impurity,net,stone,jewelcount,description, currencyData);
         }
     }
 

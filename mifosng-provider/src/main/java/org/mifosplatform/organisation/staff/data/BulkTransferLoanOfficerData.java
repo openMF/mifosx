@@ -27,12 +27,13 @@ public class BulkTransferLoanOfficerData {
     private final Collection<OfficeData> officeOptions;
     @SuppressWarnings("unused")
     private final Collection<StaffData> loanOfficerOptions;
-
     @SuppressWarnings("unused")
     private final StaffAccountSummaryCollectionData accountSummaryCollection;
 
-    public static BulkTransferLoanOfficerData templateForBulk(final Long officeId, final Long fromLoanOfficerId,final LocalDate assignmentDate, final Collection<OfficeData> officeOptions, final Collection<StaffData> loanOfficerOptions,final Collection<StaffData> dSaOptions,final StaffAccountSummaryCollectionData accountSummaryCollection) {
-        return new BulkTransferLoanOfficerData(officeId, fromLoanOfficerId ,assignmentDate, officeOptions, loanOfficerOptions,
+    public static BulkTransferLoanOfficerData templateForBulk(final Long officeId, final Long fromLoanOfficerId,
+            final LocalDate assignmentDate, final Collection<OfficeData> officeOptions, final Collection<StaffData> loanOfficerOptions,
+            final StaffAccountSummaryCollectionData accountSummaryCollection) {
+        return new BulkTransferLoanOfficerData(officeId, fromLoanOfficerId, assignmentDate, officeOptions, loanOfficerOptions,
                 accountSummaryCollection);
     }
 

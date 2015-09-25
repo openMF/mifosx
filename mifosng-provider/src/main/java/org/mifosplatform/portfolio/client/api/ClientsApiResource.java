@@ -43,11 +43,8 @@ import org.mifosplatform.portfolio.accountdetails.service.AccountDetailsReadPlat
 import org.mifosplatform.portfolio.client.data.ClientAddressData;
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
-<<<<<<< HEAD
 import org.mifosplatform.portfolio.client.service.ClientAddressReadPlatformService;
 import org.mifosplatform.infrastructure.core.service.SearchParameters;
-=======
->>>>>>> upstream/develop
 import org.mifosplatform.portfolio.savings.data.SavingsAccountData;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;

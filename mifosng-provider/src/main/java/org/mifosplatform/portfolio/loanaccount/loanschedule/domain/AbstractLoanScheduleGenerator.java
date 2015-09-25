@@ -9,14 +9,13 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.*;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
+import org.mifosplatform.organisation.staff.data.StaffAccountSummaryCollectionData.LoanAccountSummary;
 import org.mifosplatform.organisation.workingdays.domain.RepaymentRescheduleType;
 import org.mifosplatform.portfolio.calendar.domain.Calendar;
 import org.mifosplatform.portfolio.calendar.domain.CalendarInstance;
@@ -40,6 +39,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
 
     private final ScheduledDateGenerator scheduledDateGenerator = new DefaultScheduledDateGenerator();
     private final PaymentPeriodsInOneYearCalculator paymentPeriodsInOneYearCalculator = new DefaultPaymentPeriodsInOneYearCalculator();
+	
 
     @Override
     public LoanScheduleModel generate(final MathContext mc, final LoanApplicationTerms loanApplicationTerms,
@@ -51,7 +51,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                 scheduleTillDate);
     }
 
-    
     private LoanScheduleModel generate(final MathContext mc, final LoanApplicationTerms loanApplicationTerms,
             final Set<LoanCharge> loanCharges, final HolidayDetailDTO holidayDetailDTO, final Collection<RecalculationDetail> transactions,
             final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor, final LocalDate scheduleTillDate) {
@@ -318,7 +317,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                                 outstandingBalanceAsPerRest = updateBalanceForInterestCalculation(disburseDetailMap,
                                         detail.getTransactionDate(), outstandingBalanceAsPerRest, true);
 
-                                // handle cumulative fieldsme@ishankhanna.in
+                                // handle cumulative fields
                                 loanTermInDays += periodDays;
                                 totalRepaymentExpected = totalRepaymentExpected.add(totalInstallmentDue.getAmount());
                                 totalCumulativeInterest = totalCumulativeInterest.plus(interestForThisinstallment);
@@ -753,15 +752,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             if (periodNumber < loanApplicationTerms.getPrincipalGrace() + 1) {
                 periodNumber = loanApplicationTerms.getPrincipalGrace() + 1;
             }
-            
-            DateTimeZone INDIA = DateTimeZone.forID("Asia/Kolkata");
-            DateTime act = actualRepaymentDate.toDateTime(null, INDIA);
-            DateTime end = nextPeriodDate.toDateTime(null, INDIA);
-            
-           
-            
             Money emiAmount = loanApplicationTerms.pmtForInstallment(this.paymentPeriodsInOneYearCalculator,
-                    Days.daysBetween(act, end).getDays(), outstandingBalance, periodNumber, mc);
+                    Days.daysBetween(actualRepaymentDate, nextPeriodDate).getDays(), outstandingBalance, periodNumber, mc);
             loanApplicationTerms.setFixedEmiAmount(emiAmount.getAmount());
             isAmountChanged = true;
         }
@@ -1668,8 +1660,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
 
         Money cumulative = Money.zero(monetaryCurrency);
 
-        //We need to implement the condition!
-
         for (final LoanCharge loanCharge : loanCharges) {
             if (!loanCharge.isDueAtDisbursement() && loanCharge.isFeeCharge()) {
                 if (loanCharge.isInstalmentFee() && isInstallmentChargeApplicable) {
@@ -1684,8 +1674,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                             cumulative, loanCharge);
                 } else if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)) {
                     cumulative = cumulative.plus(loanCharge.amount());
-                }else if (loanCharge.isTotalPrincipalOutstanding() && loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodEnd, periodEnd ) && loanCharge.getChargeCalculation().isPercentageOfPrincipal() && loanCharge.getChargeCalculation().isPercentageBased()) {
-                    cumulative =  cumulative.plus(loanCharge.chargeAmount());
                 }
             }
         }
@@ -1700,15 +1688,31 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             amount = amount.add(principalDisbursed.getAmount()).add(totalInterestChargedForFullLoanTerm.getAmount());
         } else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
             amount = amount.add(totalInterestChargedForFullLoanTerm.getAmount());
-        } else {
+        }else if(loanCharge.getChargeCalculation().isPercentageOfOutstandingPrincipal()){
+        	 
+        	
+        	 BigDecimal totalPrincipalpaid = loanCharge.getLoanSummary().getTotalPrincipalRepaid();
+        	amount = amount.add(principalDisbursed.minus(totalPrincipalpaid).getAmount());
+        	
+        }
+        
+        else {
             amount = amount.add(principalDisbursed.getAmount());
         }
         BigDecimal loanChargeAmt = amount.multiply(loanCharge.getPercentage()).divide(BigDecimal.valueOf(100));
         cumulative = cumulative.plus(loanChargeAmt);
         return cumulative;
     }
+    
+   
+  
 
-    private Money calculateInstallmentCharge(final PrincipalInterest principalInterestForThisPeriod, int numberOfRepayments,
+	
+
+
+	
+
+	private Money calculateInstallmentCharge(final PrincipalInterest principalInterestForThisPeriod, int numberOfRepayments,
             Money cumulative, final LoanCharge loanCharge) {
         if (loanCharge.getChargeCalculation().isPercentageBased()) {
             BigDecimal amount = BigDecimal.ZERO;

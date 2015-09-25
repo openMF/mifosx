@@ -106,10 +106,10 @@ import com.google.gson.JsonElement;
 public class LoansApiResource {
 
     private final Set<String> LOAN_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "accountNo", "status", "externalId", "clientId",
-            "group", "loanProductId", "loanProductName", "loanProductDescription","loanProductmarkedInterestRate","fundId", "fundName", "loanPurposeId",
-            "loanPurposeName", "loanOfficerId", "loanOfficerName","loanDsaId","loanDsaName" ,"currency", "principal", "totalOverpaid", "inArrearsTolerance",
+            "group", "loanProductId", "loanProductName", "loanProductDescription", "fundId", "fundName", "loanPurposeId",
+            "loanPurposeName", "loanOfficerId", "loanOfficerName","loanDsaId", "loanDsaName", "currency", "principal", "totalOverpaid", "inArrearsTolerance",
             "termFrequency", "termPeriodFrequencyType", "numberOfRepayments", "repaymentEvery", "interestRatePerPeriod",
-            "annualInterestRate", "repaymentFrequencyType", "transactionProcessingStrategyId", "transactionProcessingStrategyName",
+            "annualInterestRate", "flatInterestRatePerPeriod","annualFlatInterestRate","repaymentFrequencyType", "transactionProcessingStrategyId", "transactionProcessingStrategyName",
             "interestRateFrequencyType", "amortizationType", "interestType", "interestCalculationPeriodType",
             "expectedFirstRepaymentOnDate", "graceOnPrincipalPayment", "graceOnInterestPayment", "graceOnInterestCharged",
             "interestChargedFromDate", "timeline", "totalFeeChargesAtDisbursement", "summary", "repaymentSchedule", "transactions",
@@ -227,7 +227,7 @@ public class LoansApiResource {
     public String template(@QueryParam("clientId") final Long clientId, @QueryParam("groupId") final Long groupId,
             @QueryParam("productId") final Long productId, @QueryParam("templateType") final String templateType,
             @DefaultValue("false") @QueryParam("staffInSelectedOfficeOnly") final boolean staffInSelectedOfficeOnly,
-            @DefaultValue("false")@QueryParam("dsaInSelectedOfficeOnly") final boolean dsaInSelectedOfficeOnly,
+            @DefaultValue("false") @QueryParam("dsaInSelectedOfficerOnly") final boolean dsaInSelectedOfficeOnly,
             @DefaultValue("false") @QueryParam("activeOnly") final boolean onlyActive, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
@@ -237,12 +237,11 @@ public class LoansApiResource {
 
         // options
         Collection<StaffData> allowedLoanOfficers = null;
-        Collection<DsaData>allowedDsaOfficers = null;
+        Collection<DsaData> allowedDsaOfficers = null;
         Collection<CodeValueData> loanCollateralOptions = null;
         Collection<CalendarData> calendarOptions = null;
         LoanAccountData newLoanAccount = null;
         Long officeId = null;
-        
 
         if (productId != null) {
             newLoanAccount = this.loanReadPlatformService.retrieveLoanProductDetailsTemplate(productId, clientId, groupId);
@@ -303,7 +302,7 @@ public class LoansApiResource {
             }
 
             allowedLoanOfficers = this.loanReadPlatformService.retrieveAllowedLoanOfficers(officeId, staffInSelectedOfficeOnly);
-            allowedDsaOfficers = this.loanReadPlatformService.retrieveAllowedDsaOfficers(officeId,dsaInSelectedOfficeOnly);
+            allowedDsaOfficers = this.loanReadPlatformService.retrieveAllowedDsaOfficers(officeId, dsaInSelectedOfficeOnly);
 
             Collection<PortfolioAccountData> accountLinkingOptions = null;
             if (clientId != null) {
@@ -510,7 +509,6 @@ public class LoansApiResource {
 
             allowedLoanOfficers = this.loanReadPlatformService.retrieveAllowedLoanOfficers(loanBasicDetails.officeId(),
                     staffInSelectedOfficeOnly);
-            allowedDsaOfficers = this.loanReadPlatformService.retrieveAllowedDsaOfficers(loanBasicDetails.officeId(),staffInSelectedOfficeOnly);
 
             loanPurposeOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanPurpose");
             loanCollateralOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanCollateral");
@@ -542,7 +540,7 @@ public class LoansApiResource {
         final LoanAccountData loanAccount = LoanAccountData.associationsAndTemplate(loanBasicDetails, repaymentSchedule, loanRepayments,
                 charges, collateral, guarantors, meeting, productOptions, loanTermFrequencyTypeOptions, repaymentFrequencyTypeOptions,
                 null, null, repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
-                interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, allowedLoanOfficers,allowedDsaOfficers, loanPurposeOptions,
+                interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, allowedLoanOfficers, allowedDsaOfficers,loanPurposeOptions,
                 loanCollateralOptions, calendarOptions, notes, accountLinkingOptions, linkedAccount, disbursementData, emiAmountVariations,
                 overdueCharges, paidInAdvanceTemplate);
 

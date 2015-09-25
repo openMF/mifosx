@@ -17,7 +17,7 @@ public class AprCalculator {
         BigDecimal defaultAnnualNominalInterestRate = BigDecimal.ZERO;
         switch (interestPeriodFrequencyType) {
             case DAYS:
-                defaultAnnualNominalInterestRate = interestRatePerPeriod.multiply(BigDecimal.valueOf(360));
+                defaultAnnualNominalInterestRate = interestRatePerPeriod.multiply(BigDecimal.valueOf(365));
             break;
             case WEEKS:
                 defaultAnnualNominalInterestRate = interestRatePerPeriod.multiply(BigDecimal.valueOf(52));

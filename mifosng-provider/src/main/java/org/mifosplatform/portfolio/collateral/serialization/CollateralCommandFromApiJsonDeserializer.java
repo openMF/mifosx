@@ -75,7 +75,9 @@ public final class CollateralCommandFromApiJsonDeserializer extends AbstractFrom
        		 locale);
         final BigDecimal stone = this.fromApiJsonHelper.extractBigDecimalNamed(COLLATERAL_JSON_INPUT_PARAMS.STONE_WT.getValue(), element,
        		 locale);
+        final BigDecimal jewelcount = this.fromApiJsonHelper.extractBigDecimalNamed(COLLATERAL_JSON_INPUT_PARAMS.JEWELLERY_COUNT.getValue(), element,
+        		locale);
 
-        return new CollateralCommand(collateralTypeId,goldfineTypeId,jewelleryTypeId,maketwoTypeId, value,actualcost,gross,impurity,net, stone, description);
+        return new CollateralCommand(collateralTypeId,goldfineTypeId,jewelleryTypeId,maketwoTypeId, value,actualcost,gross,impurity,net, stone,jewelcount, description);
     }
 }

@@ -1,4 +1,4 @@
-ALTER TABLE `m_client` 
+ALTER TABLE `m_client`
 	ADD COLUMN `fathername` varchar(100) DEFAULT NULL,
  	ADD COLUMN `emailaddress` varchar(50) DEFAULT NULL,
   	ADD COLUMN `code` varchar(50) DEFAULT NULL,

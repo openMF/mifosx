@@ -13,9 +13,6 @@ buildscript {
                'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0',
                'org.zeroturnaround:gradle-jrebel-plugin:1.1.2',
                'org.springframework.boot:spring-boot-gradle-plugin:1.1.6.RELEASE' // also change springDataJpaVersion below
-               
-
-               
   }
 }
 
@@ -226,7 +223,6 @@ configurations {
 }
 dependencies {
     driver 'mysql:mysql-connector-java:5.1.16'
-    
 }
 
 URLClassLoader loader = GroovyObject.class.classLoader

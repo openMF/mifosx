@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.paymentdetail.data;
 
+import org.mifosplatform.portfolio.paymenttowhom.data.PaymentToWhomData;
 import org.mifosplatform.portfolio.paymenttype.data.PaymentTypeData;
 
 /**
@@ -17,6 +18,8 @@ public class PaymentDetailData {
     @SuppressWarnings("unused")
     private final PaymentTypeData paymentType;
     @SuppressWarnings("unused")
+    private final PaymentToWhomData paymentToWhom;
+    @SuppressWarnings("unused")
     private final String accountNumber;
     @SuppressWarnings("unused")
     private final String checkNumber;
@@ -27,10 +30,11 @@ public class PaymentDetailData {
     @SuppressWarnings("unused")
     private final String bankNumber;
 
-    public PaymentDetailData(final Long id, final PaymentTypeData paymentType, final String accountNumber, final String checkNumber,
+    public PaymentDetailData(final Long id, final PaymentTypeData paymentType,final PaymentToWhomData paymentToWhom, final String accountNumber, final String checkNumber,
             final String routingCode, final String receiptNumber, final String bankNumber) {
         this.id = id;
         this.paymentType = paymentType;
+        this.paymentToWhom = paymentToWhom;
         this.accountNumber = accountNumber;
         this.checkNumber = checkNumber;
         this.routingCode = routingCode;

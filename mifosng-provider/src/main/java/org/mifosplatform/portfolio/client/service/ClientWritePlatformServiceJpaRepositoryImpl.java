@@ -16,9 +16,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import net.sf.ehcache.transaction.xa.commands.Command;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.mifosplatform.commands.domain.CommandProcessingResultType;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandProcessingService;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
@@ -422,12 +424,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     public CommandProcessingResult activateClient(final Long clientId, final JsonCommand command) {
         try {
             this.fromApiJsonDeserializer.validateActivation(command);
-
             final Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
-            
             validateParentGroupRulesBeforeClientActivation(client);
-            
+            final String otp = command.stringValueOfParameterNamed("code");
+            validateOtpDataBeforeClientActivation(client,otp);
             validateClientDataBeforeClientActivation(client);
+
+
+
 
             final Locale locale = command.extractLocale();
             final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
@@ -673,6 +677,16 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             throw new InvalidClientActivateException("photo.client.account", "should.be.there.before.activation", defaultUserMessage, client.getImage()
                    );
     	}
+    }
+
+    private void validateOtpDataBeforeClientActivation(Client client,final String code){
+
+        if (!client.getOtpCode().equals(code)){
+
+            String defaultUserMessage = "client otp validation failed";
+            throw new InvalidClientActivateException("client.otp.validation.failed", "valid.otp.required.before.activation" , defaultUserMessage, code);
+        }
+
     }
 
     @Override

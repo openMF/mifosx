@@ -83,7 +83,7 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
             if (loanOfficersOnly) {
                 sqlBuilder.append("and s.is_loan_officer is true ");
             }
-           
+
             sqlBuilder.append("where o.id = ? ");
 
             return sqlBuilder.toString();
@@ -197,7 +197,7 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
         return this.jdbcTemplate.query(sql, rm, new Object[] {});
     }
 
-    private String getStaffCriteria(final String sqlSearch, final Long officeId, final boolean loanOfficersOnly,final String status) {
+    private String getStaffCriteria(final String sqlSearch, final Long officeId, final boolean loanOfficersOnly, final String status) {
 
         final StringBuffer extraCriteria = new StringBuffer(200);
 
@@ -210,7 +210,6 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
         if (loanOfficersOnly) {
             extraCriteria.append(" and s.is_loan_officer is true ");
         }
-        
         // Passing status parameter to get ACTIVE (By Default), INACTIVE or ALL
         // (Both active and Inactive) employees
         if (status.equalsIgnoreCase("active")) {
@@ -240,5 +239,4 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
         sql = sql + " order by s.lastname";
         return this.jdbcTemplate.query(sql, this.staffInOfficeHierarchyMapper, new Object[] { officeId });
     }
-	
 }

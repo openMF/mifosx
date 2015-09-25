@@ -446,6 +446,7 @@ public final class Client extends AbstractPersistable<Long> {
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
 
+
         this.activationDate = activationLocalDate.toDate();
         this.code = code;
         this.activatedBy = currentUser;
@@ -764,6 +765,8 @@ public final class Client extends AbstractPersistable<Long> {
     public Image getImage() {
         return this.image;
     }
+
+    public String getOtpCode() {return this.code;}
 
     public String mobileNo() {
         return this.mobileNo;

@@ -68,14 +68,15 @@ public class CollateralAssembler {
                     final BigDecimal impurity = this.fromApiJsonHelper.extractBigDecimalNamed("impurity", collateralItemElement, locale);
                     final BigDecimal net = this.fromApiJsonHelper.extractBigDecimalNamed("net", collateralItemElement, locale);
                     final BigDecimal stone = this.fromApiJsonHelper.extractBigDecimalNamed("stone", collateralItemElement, locale);
+                    final BigDecimal jewelcount = this.fromApiJsonHelper.extractBigDecimalNamed("jewelcount", collateralItemElement, locale);
 
                     if (id == null) {
-                        collateralItems.add(LoanCollateral.from(collateralType,goldfineType,jewelleryType,maketwoType, value,actualcost,gross,impurity,net,stone, description));
+                        collateralItems.add(LoanCollateral.from(collateralType,goldfineType,jewelleryType,maketwoType, value,actualcost,gross,impurity,net,stone,jewelcount, description));
                     } else {
                         final LoanCollateral loanCollateralItem = this.loanCollateralRepository.findOne(id);
                         if (loanCollateralItem == null) { throw new CollateralNotFoundException(id); }
 
-                        loanCollateralItem.assembleFrom(collateralType,goldfineType,jewelleryType,maketwoType, value,actualcost,gross,impurity,net,stone, description);
+                        loanCollateralItem.assembleFrom(collateralType,goldfineType,jewelleryType,maketwoType, value,actualcost,gross,impurity,net,stone,jewelcount, description);
 
                         collateralItems.add(loanCollateralItem);
                     }

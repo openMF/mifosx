@@ -21,10 +21,7 @@ public interface StaffReadPlatformService {
      * returns all staff in offices that are above the provided
      * <code>officeId</code>.
      */
+    Collection<StaffData> retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(Long officeId, boolean loanOfficersOnly);
 
     Collection<StaffData> retrieveAllStaff(String sqlSearch, Long officeId, boolean loanOfficersOnly, String status);
-
-
-	Collection<StaffData> retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(
-			Long officeId, boolean loanOfficersOnly);
 }

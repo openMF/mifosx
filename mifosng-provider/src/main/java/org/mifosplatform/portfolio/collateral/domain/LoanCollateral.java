@@ -69,21 +69,24 @@ public class LoanCollateral extends AbstractPersistable<Long> {
     @Column(name = "stone", scale = 2, precision = 19)
     private BigDecimal stone;
     
+    @Column(name = "jewel_count", scale = 2, precision = 19)
+    private BigDecimal jewelcount;
+    
 
     @Column(name = "description", length = 500)
     private String description;
 
 	//private CodeValue twoType;
 
-    public static LoanCollateral from(final CodeValue collateralType,final CodeValue goldfineType,final CodeValue jewelleryType, final CodeValue maketwoType,final BigDecimal value,final BigDecimal actualcost, final BigDecimal gross,final BigDecimal impurity, final BigDecimal net, final BigDecimal stone, final String description) {
-        return new LoanCollateral(null, collateralType,goldfineType,jewelleryType,maketwoType, value,actualcost,impurity, net, stone,gross, description);
+    public static LoanCollateral from(final CodeValue collateralType,final CodeValue goldfineType,final CodeValue jewelleryType, final CodeValue maketwoType,final BigDecimal value,final BigDecimal actualcost, final BigDecimal gross,final BigDecimal impurity, final BigDecimal net, final BigDecimal stone,final BigDecimal jewelcount, final String description) {
+        return new LoanCollateral(null, collateralType,goldfineType,jewelleryType,maketwoType, value,actualcost,impurity, net, stone,jewelcount,gross, description);
     }
 
     protected LoanCollateral() {
         //
     }
 
-    private LoanCollateral(final Loan loan, final CodeValue collateralType,final CodeValue goldfineType,final CodeValue jewelleryType,final CodeValue maketwoType, final BigDecimal value,final BigDecimal actualcost, final BigDecimal gross,final BigDecimal impurity, final BigDecimal net, final BigDecimal stone,final String description) {
+    private LoanCollateral(final Loan loan, final CodeValue collateralType,final CodeValue goldfineType,final CodeValue jewelleryType,final CodeValue maketwoType, final BigDecimal value,final BigDecimal actualcost, final BigDecimal gross,final BigDecimal impurity, final BigDecimal net, final BigDecimal stone,final BigDecimal jewelcount,final String description) {
         this.loan = loan;
         this.type = collateralType;
         this.goldfine = goldfineType;
@@ -95,10 +98,11 @@ public class LoanCollateral extends AbstractPersistable<Long> {
         this.impurity = impurity;
         this.net = net;
         this.stone = stone;
+        this.jewelcount = jewelcount;
         this.description = StringUtils.defaultIfEmpty(description, null);
     }
 
-    public void assembleFrom(final CodeValue collateralType,final CodeValue goldfineType,final CodeValue jewelleryType, final CodeValue maketwoType,final BigDecimal value,final BigDecimal actualcost,final BigDecimal gross,final BigDecimal impurity, final BigDecimal net, final BigDecimal stone, final String description) {
+    public void assembleFrom(final CodeValue collateralType,final CodeValue goldfineType,final CodeValue jewelleryType, final CodeValue maketwoType,final BigDecimal value,final BigDecimal actualcost,final BigDecimal gross,final BigDecimal impurity, final BigDecimal net, final BigDecimal stone, final BigDecimal jewelcount,final String description) {
         this.type = collateralType;
         this.goldfine = goldfineType;
         this.jewellery = jewelleryType;
@@ -110,6 +114,7 @@ public class LoanCollateral extends AbstractPersistable<Long> {
         this.impurity = impurity;
         this.net = net;
         this.stone = stone;
+        this.jewelcount = jewelcount;
         
     }
 
@@ -125,7 +130,8 @@ public class LoanCollateral extends AbstractPersistable<Long> {
         final BigDecimal impurity = command.bigDecimalValueOfParameterNamed(COLLATERAL_JSON_INPUT_PARAMS.IMPURITY_WEIGHT.getValue());
         final BigDecimal net = command.bigDecimalValueOfParameterNamed(COLLATERAL_JSON_INPUT_PARAMS.NET_WEIGHT.getValue());
         final BigDecimal stone = command.bigDecimalValueOfParameterNamed(COLLATERAL_JSON_INPUT_PARAMS.STONE_WT.getValue());
-        return new LoanCollateral(loan, collateralType,goldfineType,jewelleryType,twoType, value,actualcost,gross,impurity,net,stone, description);
+        final BigDecimal jewelcount = command.bigDecimalValueOfParameterNamed(COLLATERAL_JSON_INPUT_PARAMS.JEWELLERY_COUNT.getValue());
+        return new LoanCollateral(loan, collateralType,goldfineType,jewelleryType,twoType, value,actualcost,gross,impurity,net,stone,jewelcount, description);
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -199,6 +205,12 @@ public class LoanCollateral extends AbstractPersistable<Long> {
         	actualChanges.put(stoneParamName, newValue);
         	this.stone = newValue;
         }
+        final String jewelcountParamName = COLLATERAL_JSON_INPUT_PARAMS.JEWELLERY_COUNT.getValue();
+        if(command.isChangeInBigDecimalParameterNamed(jewelcountParamName, this.jewelcount)){
+        	final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(jewelcountParamName);
+        	actualChanges.put(jewelcountParamName, newValue);
+        	this.jewelcount = newValue;
+        }
 
         return actualChanges;
     }
@@ -208,7 +220,7 @@ public class LoanCollateral extends AbstractPersistable<Long> {
         final CodeValueData goldfineData = this.type.toData();
         final CodeValueData jewelleryData = this.jewellery.toData();
         final CodeValueData maketwoData = this.maketwo.toData();
-        return CollateralData.instance(getId(), typeData,goldfineData,jewelleryData,maketwoData, this.value,this.actualcost,this.gross,this.impurity,this.net,this.stone, this.description, null);
+        return CollateralData.instance(getId(), typeData,goldfineData,jewelleryData,maketwoData, this.value,this.actualcost,this.gross,this.impurity,this.net,this.stone,this.jewelcount, this.description, null);
     }
 
     public void setCollateralType(final CodeValue type) {
@@ -246,6 +258,7 @@ public class LoanCollateral extends AbstractPersistable<Long> {
                 .append(this.impurity, this.impurity)//
                 .append(this.net, this.net)//
                 .append(this.stone, this.stone)//
+                .append(this.jewelcount,this.jewelcount)//
                 .isEquals();
     }
 
@@ -263,6 +276,7 @@ public class LoanCollateral extends AbstractPersistable<Long> {
                 .append(this.impurity)//
                 .append(this.net)//
                 .append(this.stone)//
+                .append(this.jewelcount)//
                 .toHashCode();
     }
 }

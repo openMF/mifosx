@@ -69,7 +69,6 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
         }
 
         for (final LoanRepaymentScheduleInstallment currentInstallment : installments) {
-
             currentInstallment.resetDerivedComponents();
             currentInstallment.updateDerivedFields(currency, disbursementDate);
         }

@@ -47,7 +47,6 @@ public interface LoanProductConstants {
     public static final String interestRatePerPeriod = "interestRatePerPeriod";
     public static final String minInterestRatePerPeriod = "minInterestRatePerPeriod";
     public static final String maxInterestRatePerPeriod = "maxInterestRatePerPeriod";
-    public static final String markedInterestRate = "markedInterestRate";
 
     public static final String numberOfRepayments = "numberOfRepayments";
     public static final String minNumberOfRepayments = "minNumberOfRepayments";

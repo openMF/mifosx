@@ -33,6 +33,8 @@ public class LoanProductRelatedDetailTestHelper {
         final BigDecimal defaultNominalInterestRatePerPeriod = BigDecimal.valueOf(Double.valueOf("2"));
         final PeriodFrequencyType interestPeriodFrequencyType = PeriodFrequencyType.MONTHS;
         final BigDecimal defaultAnnualNominalInterestRate = BigDecimal.valueOf(Double.valueOf("24"));
+        final BigDecimal defaultFlatInterestRatePerPeriod = BigDecimal.valueOf(Double.valueOf("1.083"));
+        final BigDecimal defaultAnnualFlatInterestRate = BigDecimal.valueOf(Double.valueOf("13"));
 
         final InterestMethod interestMethod = InterestMethod.DECLINING_BALANCE;
         final InterestCalculationPeriodMethod interestCalculationPeriodMethod = InterestCalculationPeriodMethod.SAME_AS_REPAYMENT_PERIOD;
@@ -45,7 +47,7 @@ public class LoanProductRelatedDetailTestHelper {
         final BigDecimal inArrearsTolerance = BigDecimal.ZERO;
 
         return createLoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod, interestPeriodFrequencyType,
-                defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
+                defaultAnnualNominalInterestRate,defaultFlatInterestRatePerPeriod,defaultAnnualFlatInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
                 defaultNumberOfRepayments, amortizationMethod, inArrearsTolerance);
     }
 
@@ -57,6 +59,9 @@ public class LoanProductRelatedDetailTestHelper {
         final BigDecimal defaultNominalInterestRatePerPeriod = BigDecimal.valueOf(Double.valueOf("2"));
         final PeriodFrequencyType interestPeriodFrequencyType = PeriodFrequencyType.MONTHS;
         final BigDecimal defaultAnnualNominalInterestRate = BigDecimal.valueOf(Double.valueOf("24"));
+        
+        final BigDecimal defaultFlatInterestRatePerPeriod = BigDecimal.valueOf(Double.valueOf("1.083"));
+        final BigDecimal defaultAnnualFlatInterestRate = BigDecimal.valueOf(Double.valueOf("13"));
 
         final InterestMethod interestMethod = InterestMethod.DECLINING_BALANCE;
         final InterestCalculationPeriodMethod interestCalculationPeriodMethod = InterestCalculationPeriodMethod.SAME_AS_REPAYMENT_PERIOD;
@@ -69,7 +74,7 @@ public class LoanProductRelatedDetailTestHelper {
         final BigDecimal inArrearsTolerance = BigDecimal.ZERO;
 
         return createLoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod, interestPeriodFrequencyType,
-                defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
+                defaultAnnualNominalInterestRate,defaultFlatInterestRatePerPeriod,defaultAnnualFlatInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
                 defaultNumberOfRepayments, amortizationMethod, inArrearsTolerance);
     }
 
@@ -82,6 +87,9 @@ public class LoanProductRelatedDetailTestHelper {
         final BigDecimal defaultNominalInterestRatePerPeriod = BigDecimal.valueOf(Double.valueOf("2"));
         final PeriodFrequencyType interestPeriodFrequencyType = PeriodFrequencyType.MONTHS;
         final BigDecimal defaultAnnualNominalInterestRate = BigDecimal.valueOf(Double.valueOf("24"));
+        
+        final BigDecimal defaultFlatInterestRatePerPeriod = BigDecimal.valueOf(Double.valueOf("1.083"));
+        final BigDecimal defaultAnnualFlatInterestRate = BigDecimal.valueOf(Double.valueOf("13"));
 
         final InterestMethod interestMethod = InterestMethod.FLAT;
         final InterestCalculationPeriodMethod interestCalculationPeriodMethod = InterestCalculationPeriodMethod.SAME_AS_REPAYMENT_PERIOD;
@@ -93,7 +101,7 @@ public class LoanProductRelatedDetailTestHelper {
         final BigDecimal inArrearsTolerance = BigDecimal.ZERO;
 
         return createLoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod, interestPeriodFrequencyType,
-                defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
+                defaultAnnualNominalInterestRate,defaultFlatInterestRatePerPeriod,defaultAnnualFlatInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
                 defaultNumberOfRepayments, amortizationMethod, inArrearsTolerance);
     }
 
@@ -106,6 +114,9 @@ public class LoanProductRelatedDetailTestHelper {
         final BigDecimal defaultNominalInterestRatePerPeriod = BigDecimal.valueOf(Double.valueOf("2"));
         final PeriodFrequencyType interestPeriodFrequencyType = PeriodFrequencyType.MONTHS;
         final BigDecimal defaultAnnualNominalInterestRate = BigDecimal.valueOf(Double.valueOf("24"));
+        
+        final BigDecimal defaultFlatInterestRatePerPeriod = BigDecimal.valueOf(Double.valueOf("1.083"));
+        final BigDecimal defaultAnnualFlatInterestRate = BigDecimal.valueOf(Double.valueOf("13"));
 
         final InterestMethod interestMethod = InterestMethod.FLAT;
         final InterestCalculationPeriodMethod interestCalculationPeriodMethod = InterestCalculationPeriodMethod.SAME_AS_REPAYMENT_PERIOD;
@@ -119,13 +130,14 @@ public class LoanProductRelatedDetailTestHelper {
         final AmortizationMethod amortizationMethod = AmortizationMethod.EQUAL_PRINCIPAL;
 
         return createLoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod, interestPeriodFrequencyType,
-                defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
+                defaultAnnualNominalInterestRate, defaultFlatInterestRatePerPeriod,defaultAnnualFlatInterestRate,interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
                 defaultNumberOfRepayments, amortizationMethod, inArrearsTolerance);
     }
 
     private static LoanProductRelatedDetail createLoanProductRelatedDetail(final MonetaryCurrency currency,
             final BigDecimal defaultPrincipal, final BigDecimal defaultNominalInterestRatePerPeriod,
             final PeriodFrequencyType interestPeriodFrequencyType, final BigDecimal defaultAnnualNominalInterestRate,
+            final BigDecimal defaultFlatInterestRatePerPeriod,final BigDecimal defaultAnnualFlatInterestRate,
             final InterestMethod interestMethod, final InterestCalculationPeriodMethod interestCalculationPeriodMethod,
             final Integer repayEvery, final PeriodFrequencyType repaymentFrequencyType, final Integer defaultNumberOfRepayments,
             final AmortizationMethod amortizationMethod, final BigDecimal inArrearsTolerance) {
@@ -134,15 +146,14 @@ public class LoanProductRelatedDetailTestHelper {
         final Integer graceOnInterestPayment = Integer.valueOf(0);
         final Integer graceOnInterestCharged = Integer.valueOf(0);
         final Integer graceOnArrearsAgeing = Integer.valueOf(0);
-        
 
         final Integer daysInMonthType = DaysInMonthType.ACTUAL.getValue();
         final Integer daysInYearType = DaysInYearType.ACTUAL.getValue();
         final boolean isInterestRecalculationEnabled = false;
 
         return new LoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod, interestPeriodFrequencyType,
-                defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
-                defaultNumberOfRepayments, graceOnPrincipalPayment,graceOnInterestPayment, graceOnInterestCharged, amortizationMethod,
+                defaultAnnualNominalInterestRate,defaultFlatInterestRatePerPeriod,defaultAnnualFlatInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery, repaymentFrequencyType,
+                defaultNumberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, amortizationMethod,
                 inArrearsTolerance, graceOnArrearsAgeing, daysInMonthType, daysInYearType, isInterestRecalculationEnabled);
     }
 }

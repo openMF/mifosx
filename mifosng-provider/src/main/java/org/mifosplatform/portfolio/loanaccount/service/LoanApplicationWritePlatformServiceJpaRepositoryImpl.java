@@ -30,6 +30,7 @@ import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidation
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+import org.mifosplatform.organisation.dsa.domain.Dsa;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.account.domain.AccountAssociationType;
 import org.mifosplatform.portfolio.account.domain.AccountAssociations;
@@ -614,6 +615,13 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 final Long loanOfficerId = command.longValueOfParameterNamed(loanOfficerIdParamName);
                 final Staff newValue = this.loanAssembler.findLoanOfficerByIdIfProvided(loanOfficerId);
                 existingLoanApplication.updateLoanOfficerOnLoanApplication(newValue);
+            }
+            final String dsaOfficerIdParamName = "dsaOfficerId";
+            if (changes.containsKey(dsaOfficerIdParamName)){
+                final Long dsaOfficerId = command.longValueOfParameterNamed(dsaOfficerIdParamName);
+            final Dsa newValue = this.loanAssembler.findDsaOfficerByIdIfProvided(dsaOfficerId);
+                existingLoanApplication.updateDsaOfficerOnLoanApplication(newValue);
+
             }
 
             final String strategyIdParamName = "transactionProcessingStrategyId";

@@ -83,9 +83,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
     @Column(name = "description")
     private String description;
-    
-    @Column(name = "marked_interest")
-    private BigDecimal markedInterestRate;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "m_product_loan_charge", joinColumns = @JoinColumn(name = "product_loan_id"), inverseJoinColumns = @JoinColumn(name = "charge_id"))
@@ -155,8 +152,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
     @Column(name = "instalment_amount_in_multiples_of", nullable = true)
     private Integer installmentAmountInMultiplesOf;
-    
- 
 
     public static LoanProduct assembleFromJson(final Fund fund, final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy,
             final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator) {
@@ -164,7 +159,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
         final String name = command.stringValueOfParameterNamed("name");
         final String shortName = command.stringValueOfParameterNamed(LoanProductConstants.shortName);
         final String description = command.stringValueOfParameterNamed("description");
-        final BigDecimal markedInterestRate = command.bigDecimalValueOfParameterNamed("markedInterestRate");
         final String currencyCode = command.stringValueOfParameterNamed("currencyCode");
         final Integer digitsAfterDecimal = command.integerValueOfParameterNamed("digitsAfterDecimal");
         final Integer inMultiplesOf = command.integerValueOfParameterNamed("inMultiplesOf");
@@ -186,6 +180,10 @@ public class LoanProduct extends AbstractPersistable<Long> {
         final BigDecimal minInterestRatePerPeriod = command.bigDecimalValueOfParameterNamed("minInterestRatePerPeriod");
         final BigDecimal maxInterestRatePerPeriod = command.bigDecimalValueOfParameterNamed("maxInterestRatePerPeriod");
         final BigDecimal annualInterestRate = aprCalculator.calculateFrom(interestFrequencyType, interestRatePerPeriod);
+        
+        final BigDecimal flatInterestRatePerPeriod = command.bigDecimalValueOfParameterNamed("flatInterestRatePerPeriod");
+        final BigDecimal annualFlatInterestRate =aprCalculator.calculateFrom(interestFrequencyType, flatInterestRatePerPeriod);
+        
 
         final Integer repaymentEvery = command.integerValueOfParameterNamed("repaymentEvery");
         final Integer numberOfRepayments = command.integerValueOfParameterNamed("numberOfRepayments");
@@ -268,9 +266,9 @@ public class LoanProduct extends AbstractPersistable<Long> {
         final Integer installmentAmountInMultiplesOf = command
                 .integerValueOfParameterNamed(LoanProductConstants.installmentAmountInMultiplesOfParamName);
 
-        return new LoanProduct(fund, loanTransactionProcessingStrategy, name, shortName, description, markedInterestRate,currency, principal, minPrincipal,
+        return new LoanProduct(fund, loanTransactionProcessingStrategy, name, shortName, description, currency, principal, minPrincipal,
                 maxPrincipal, interestRatePerPeriod, minInterestRatePerPeriod, maxInterestRatePerPeriod, interestFrequencyType,
-                annualInterestRate, interestMethod, interestCalculationPeriodMethod, repaymentEvery, repaymentFrequencyType,
+                annualInterestRate,flatInterestRatePerPeriod,annualFlatInterestRate, interestMethod, interestCalculationPeriodMethod, repaymentEvery, repaymentFrequencyType,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment,
                 graceOnInterestCharged, amortizationMethod, inArrearsTolerance, productCharges, accountingRuleType, includeInBorrowerCycle,
                 startDate, closeDate, externalId, useBorrowerCycle, loanProductBorrowerCycleVariations, multiDisburseLoan, maxTrancheCount,
@@ -484,15 +482,15 @@ public class LoanProduct extends AbstractPersistable<Long> {
     }
 
     public LoanProduct(final Fund fund, final LoanTransactionProcessingStrategy transactionProcessingStrategy, final String name,
-            final String shortName, final String description,final BigDecimal markedInterestRate, final MonetaryCurrency currency, final BigDecimal defaultPrincipal,
+            final String shortName, final String description, final MonetaryCurrency currency, final BigDecimal defaultPrincipal,
             final BigDecimal defaultMinPrincipal, final BigDecimal defaultMaxPrincipal,
             final BigDecimal defaultNominalInterestRatePerPeriod, final BigDecimal defaultMinNominalInterestRatePerPeriod,
             final BigDecimal defaultMaxNominalInterestRatePerPeriod, final PeriodFrequencyType interestPeriodFrequencyType,
-            final BigDecimal defaultAnnualNominalInterestRate, final InterestMethod interestMethod,
+            final BigDecimal defaultAnnualNominalInterestRate,final BigDecimal defaultFlatInterestRatePerPeriod,final BigDecimal defaultAnnualFlatInterestRate, final InterestMethod interestMethod,
             final InterestCalculationPeriodMethod interestCalculationPeriodMethod, final Integer repayEvery,
             final PeriodFrequencyType repaymentFrequencyType, final Integer defaultNumberOfInstallments,
             final Integer defaultMinNumberOfInstallments, final Integer defaultMaxNumberOfInstallments,
-            final Integer graceOnPrincipalPayment, final Integer graceOnInterestPayment,final Integer graceOnInterestCharged,
+            final Integer graceOnPrincipalPayment, final Integer graceOnInterestPayment, final Integer graceOnInterestCharged,
             final AmortizationMethod amortizationMethod, final BigDecimal inArrearsTolerance, final List<Charge> charges,
             final AccountingRuleType accountingRuleType, final boolean includeInBorrowerCycle, final LocalDate startDate,
             final LocalDate closeDate, final String externalId, final boolean useBorrowerCycle,
@@ -506,7 +504,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final boolean accountMovesOutOfNPAOnlyOnArrearsCompletion, final boolean canDefineEmiAmount,
             final Integer installmentAmountInMultiplesOf, final LoanProductConfigurableAttributes loanProductConfigurableAttributes) {
         this.fund = fund;
-        this.markedInterestRate = markedInterestRate;
         this.transactionProcessingStrategy = transactionProcessingStrategy;
         this.name = name.trim();
         this.shortName = shortName.trim();
@@ -521,7 +518,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
         }
 
         this.loanProductRelatedDetail = new LoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod,
-                interestPeriodFrequencyType, defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery,
+                interestPeriodFrequencyType, defaultAnnualNominalInterestRate, defaultFlatInterestRatePerPeriod,defaultAnnualFlatInterestRate,interestMethod, interestCalculationPeriodMethod, repayEvery,
                 repaymentFrequencyType, defaultNumberOfInstallments, graceOnPrincipalPayment, graceOnInterestPayment,
                 graceOnInterestCharged, amortizationMethod, inArrearsTolerance, graceOnArrearsAgeing, daysInMonthType.getValue(),
                 daysInYearType.getValue(), isInterestRecalculationEnabled);
@@ -654,13 +651,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final String newValue = command.stringValueOfParameterNamed(descriptionParamName);
             actualChanges.put(descriptionParamName, newValue);
             this.description = newValue;
-        }
-        
-        final String markedInterestRateParamName = "markedInterestRate";
-        if(command.isChangeInBigDecimalParameterNamed("markedInterestRate", this.markedInterestRate)){
-        	final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(markedInterestRateParamName);
-        	actualChanges.put(markedInterestRateParamName,newValue);
-        	this.markedInterestRate = newValue;
         }
 
         Long existingFundId = null;

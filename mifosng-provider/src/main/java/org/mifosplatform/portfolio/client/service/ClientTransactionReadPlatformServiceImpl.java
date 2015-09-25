@@ -23,6 +23,7 @@ import org.mifosplatform.portfolio.client.domain.ClientEnumerations;
 import org.mifosplatform.portfolio.client.domain.ClientTransactionType;
 import org.mifosplatform.portfolio.client.exception.ClientTransactionNotFoundException;
 import org.mifosplatform.portfolio.paymentdetail.data.PaymentDetailData;
+import org.mifosplatform.portfolio.paymenttowhom.data.PaymentToWhomData;
 import org.mifosplatform.portfolio.paymenttype.data.PaymentTypeData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -56,18 +57,20 @@ public class ClientTransactionReadPlatformServiceImpl implements ClientTransacti
             sqlBuilder.append("tr.created_date as submittedOnDate, tr.is_reversed as reversed, ");
             sqlBuilder.append("tr.external_id as externalId, o.name as officeName, o.id as officeId, ");
             sqlBuilder.append("c.id as clientId, c.account_no as accountNo, ccpb.client_charge_id as clientChargeId, ");
-            sqlBuilder.append("pd.payment_type_id as paymentType,pd.account_number as accountNumber,pd.check_number as checkNumber, ");
+            sqlBuilder.append("pd.payment_type_id as paymentType,pd.payment_to_whom_id as paymentToWhom,pd.account_number as accountNumber,pd.check_number as checkNumber, ");
             sqlBuilder.append("pd.receipt_number as receiptNumber, pd.bank_number as bankNumber,pd.routing_code as routingCode,  ");
             sqlBuilder.append(
                     "tr.currency_code as currencyCode, curr.decimal_places as currencyDigits, curr.currency_multiplesof as inMultiplesOf, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode,  ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol,  ");
             sqlBuilder.append("pt.value as paymentTypeName  ");
+            sqlBuilder.append("ptm.value as paymentToWhomName ");
             sqlBuilder.append("from m_client c  ");
             sqlBuilder.append("join m_client_transaction tr on tr.client_id = c.id ");
             sqlBuilder.append("join m_currency curr on curr.code = tr.currency_code ");
             sqlBuilder.append("left join m_payment_detail pd on tr.payment_detail_id = pd.id  ");
             sqlBuilder.append("left join m_payment_type pt  on pd.payment_type_id = pt.id ");
+            sqlBuilder.append("left join m_payment_to_whom ptm on pd.payment_to_whom_id = ptm.id");
             sqlBuilder.append("left join m_office o on o.id = tr.office_id ");
             sqlBuilder.append("left join m_client_charge_paid_by ccpb on ccpb.client_transaction_id = tr.id ");
             this.schemaSql = sqlBuilder.toString();
@@ -94,15 +97,18 @@ public class ClientTransactionReadPlatformServiceImpl implements ClientTransacti
             PaymentDetailData paymentDetailData = null;
             if (ClientTransactionType.fromInt(transactionType.getId().intValue()).equals(ClientTransactionType.PAY_CHARGE)) {
                 final Long paymentTypeId = JdbcSupport.getLong(rs, "paymentType");
-                if (paymentTypeId != null) {
+                final Long paymentToWhomId = JdbcSupport.getLong(rs,"paymentToWhom");
+                if (paymentTypeId != null || paymentToWhomId != null) {
                     final String typeName = rs.getString("paymentTypeName");
                     final PaymentTypeData paymentType = PaymentTypeData.instance(paymentTypeId, typeName);
+                    final String paymentToWhomName = rs.getString("paymentToWhomName");
+                    final PaymentToWhomData paymentToWhom = PaymentToWhomData.instance(paymentToWhomId,paymentToWhomName);
                     final String accountNumber = rs.getString("accountNumber");
                     final String checkNumber = rs.getString("checkNumber");
                     final String routingCode = rs.getString("routingCode");
                     final String receiptNumber = rs.getString("receiptNumber");
                     final String bankNumber = rs.getString("bankNumber");
-                    paymentDetailData = new PaymentDetailData(id, paymentType, accountNumber, checkNumber, routingCode, receiptNumber,
+                    paymentDetailData = new PaymentDetailData(id, paymentType,paymentToWhom, accountNumber, checkNumber, routingCode, receiptNumber,
                             bankNumber);
                 }
             }

@@ -45,8 +45,8 @@ import org.springframework.stereotype.Component;
 @Scope("singleton")
 public class BulkLoansApiResource {
 
-    private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("officeId", "fromLoanOfficerId","fromDsaOfficerId",
-            "assignmentDate", "officeOptions", "loanOfficerOptions","dSaOptions", "accountSummaryCollection"));
+    private final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("officeId", "fromLoanOfficerId",
+            "assignmentDate", "officeOptions", "loanOfficerOptions", "accountSummaryCollection"));
 
     private final String resourceNameForPermissions = "LOAN";
 
@@ -96,7 +96,7 @@ public class BulkLoansApiResource {
         }
 
         final BulkTransferLoanOfficerData loanReassignmentData = BulkTransferLoanOfficerData.templateForBulk(officeId, loanOfficerId,
-                  new LocalDate(), offices, loanOfficers, loanOfficers, staffAccountSummaryCollectionData);
+                new LocalDate(), offices, loanOfficers, staffAccountSummaryCollectionData);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, loanReassignmentData, this.RESPONSE_DATA_PARAMETERS);

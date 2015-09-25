@@ -19,7 +19,7 @@ public class CollateralApiConstants {
      * Enum of all parameters passed in while creating/updating a collateral
      ***/
     public static enum COLLATERAL_JSON_INPUT_PARAMS {
-        LOAN_ID("loanId"), COLLATERAL_ID("collateralId"), COLLATERAL_TYPE_ID("collateralTypeId"),GOLD_FINENESS_TYPE_ID("goldfineTypeId"),JEWELLERY_KIND_TYPE_ID("jewelleryTypeId"),TW_MAKE_TYPE ("maketwoTypeId"),GROSS_WEIGHT("gross"),IMPURITY_WEIGHT("impurity"),NET_WEIGHT("net"),STONE_WT("stone"), VALUE("value"),ACTUALCOST("actualcost"), DESCRIPTION("description");
+        LOAN_ID("loanId"), COLLATERAL_ID("collateralId"), COLLATERAL_TYPE_ID("collateralTypeId"),GOLD_FINENESS_TYPE_ID("goldfineTypeId"),JEWELLERY_KIND_TYPE_ID("jewelleryTypeId"),TW_MAKE_TYPE ("maketwoTypeId"),GROSS_WEIGHT("gross"),IMPURITY_WEIGHT("impurity"),NET_WEIGHT("net"),STONE_WT("stone"), VALUE("value"),JEWELLERY_COUNT("jewelcount"),ACTUALCOST("actualcost"), DESCRIPTION("description");
 
         private final String value;
 

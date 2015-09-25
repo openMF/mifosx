@@ -12,6 +12,7 @@ import org.joda.time.LocalDate;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.portfolio.account.data.AccountTransferData;
 import org.mifosplatform.portfolio.paymentdetail.data.PaymentDetailData;
+import org.mifosplatform.portfolio.paymenttowhom.data.PaymentToWhomData;
 import org.mifosplatform.portfolio.paymenttype.data.PaymentTypeData;
 
 /**
@@ -48,14 +49,15 @@ public class LoanTransactionData {
 
     // templates
     final Collection<PaymentTypeData> paymentTypeOptions;
+    final Collection<PaymentToWhomData> paymentToWhomOptions;
 
     public static LoanTransactionData templateOnTop(final LoanTransactionData loanTransactionData,
-            final Collection<PaymentTypeData> paymentTypeOptions) {
+            final Collection<PaymentTypeData> paymentTypeOptions, final Collection<PaymentToWhomData> paymentToWhomOptions) {
         return new LoanTransactionData(loanTransactionData.id, loanTransactionData.officeId, loanTransactionData.officeName,
                 loanTransactionData.type, loanTransactionData.paymentDetailData, loanTransactionData.currency, loanTransactionData.date,
                 loanTransactionData.amount, loanTransactionData.principalPortion, loanTransactionData.interestPortion,
                 loanTransactionData.feeChargesPortion, loanTransactionData.penaltyChargesPortion, loanTransactionData.overpaymentPortion,
-                loanTransactionData.unrecognizedIncomePortion, paymentTypeOptions, loanTransactionData.externalId,
+                loanTransactionData.unrecognizedIncomePortion, paymentTypeOptions,paymentToWhomOptions, loanTransactionData.externalId,
                 loanTransactionData.transfer, loanTransactionData.fixedEmiAmount, loanTransactionData.outstandingLoanBalance,
                 loanTransactionData.manuallyReversed);
 
@@ -68,7 +70,7 @@ public class LoanTransactionData {
             final AccountTransferData transfer, BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance,
             final BigDecimal unrecognizedIncomePortion,final boolean manuallyReversed) {
         this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,
-                feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, null, externalId, transfer,
+                feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, null,null, externalId, transfer,
                 fixedEmiAmount, outstandingLoanBalance,manuallyReversed);
     }
 
@@ -76,10 +78,10 @@ public class LoanTransactionData {
             final PaymentDetailData paymentDetailData, final CurrencyData currency, final LocalDate date, final BigDecimal amount,
             final BigDecimal principalPortion, final BigDecimal interestPortion, final BigDecimal feeChargesPortion,
             final BigDecimal penaltyChargesPortion, final BigDecimal overpaymentPortion, BigDecimal unrecognizedIncomePortion,
-            final Collection<PaymentTypeData> paymentTypeOptions, final String externalId, final AccountTransferData transfer,
+            final Collection<PaymentTypeData> paymentTypeOptions,final Collection<PaymentToWhomData> paymentToWhomOptions, final String externalId, final AccountTransferData transfer,
             final BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance,boolean manuallyReversed) {
         this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,
-                feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, paymentTypeOptions, externalId,
+                feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, paymentTypeOptions,paymentToWhomOptions,externalId,
                 transfer, fixedEmiAmount, outstandingLoanBalance, null,manuallyReversed);
     }
 
@@ -90,7 +92,7 @@ public class LoanTransactionData {
             final String externalId, final AccountTransferData transfer, BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance,
             LocalDate submittedOnDate,final boolean manuallyReversed) {
         this(id, officeId, officeName, transactionType, paymentDetailData, currency, date, amount, principalPortion, interestPortion,
-                feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, null, externalId, transfer,
+                feeChargesPortion, penaltyChargesPortion, overpaymentPortion, unrecognizedIncomePortion, null,null, externalId, transfer,
                 fixedEmiAmount, outstandingLoanBalance, submittedOnDate,manuallyReversed);
     }
 
@@ -98,7 +100,7 @@ public class LoanTransactionData {
             final PaymentDetailData paymentDetailData, final CurrencyData currency, final LocalDate date, final BigDecimal amount,
             final BigDecimal principalPortion, final BigDecimal interestPortion, final BigDecimal feeChargesPortion,
             final BigDecimal penaltyChargesPortion, final BigDecimal overpaymentPortion, final BigDecimal unrecognizedIncomePortion,
-            final Collection<PaymentTypeData> paymentTypeOptions, final String externalId, final AccountTransferData transfer,
+            final Collection<PaymentTypeData> paymentTypeOptions, final Collection<PaymentToWhomData> paymentToWhomOptions,final String externalId, final AccountTransferData transfer,
             final BigDecimal fixedEmiAmount, BigDecimal outstandingLoanBalance, final LocalDate submittedOnDate,final boolean manuallyReversed) {
         this.id = id;
         this.officeId = officeId;
@@ -114,6 +116,7 @@ public class LoanTransactionData {
         this.penaltyChargesPortion = penaltyChargesPortion;
         this.unrecognizedIncomePortion = unrecognizedIncomePortion;
         this.paymentTypeOptions = paymentTypeOptions;
+        this.paymentToWhomOptions = paymentToWhomOptions;
         this.externalId = externalId;
         this.transfer = transfer;
         this.overpaymentPortion = overpaymentPortion;

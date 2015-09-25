@@ -29,9 +29,10 @@ public class CollateralCommand {
     private final BigDecimal impurity;
     private final BigDecimal net;
     private final BigDecimal stone;
+    private final BigDecimal jewelcount;
     private final String description;
 
-    public CollateralCommand(final Long collateralTypeId,final Long goldfineTypeId, final Long jewelleryTypeId,final Long maketwoTypeId,final BigDecimal value,final BigDecimal actualcost,final BigDecimal gross,final BigDecimal impurity,final BigDecimal net, final BigDecimal stone, final String description) {
+    public CollateralCommand(final Long collateralTypeId,final Long goldfineTypeId, final Long jewelleryTypeId,final Long maketwoTypeId,final BigDecimal value,final BigDecimal actualcost,final BigDecimal gross,final BigDecimal impurity,final BigDecimal net, final BigDecimal stone,final BigDecimal jewelcount, final String description) {
         this.collateralTypeId = collateralTypeId;
         this.goldfineTypeId = goldfineTypeId;
         this.jewelleryTypeId = jewelleryTypeId;
@@ -42,6 +43,7 @@ public class CollateralCommand {
         this.impurity = impurity;
         this.net = net;
         this.stone = stone;
+        this.jewelcount = jewelcount;
         this.description = description;
     }
 
@@ -77,6 +79,9 @@ public class CollateralCommand {
     public BigDecimal getStone(){
     	return this.stone;
     }
+    public BigDecimal getJewelCount(){
+    	return this.jewelcount;
+    }
 
     public String getDescription() {
         return this.description;
@@ -99,6 +104,7 @@ public class CollateralCommand {
                 .positiveAmount();
         baseDataValidator.reset().parameter(COLLATERAL_JSON_INPUT_PARAMS.ACTUALCOST.getValue()).value(this.actualcost).ignoreIfNull()
         .positiveAmount();
+        baseDataValidator.reset().parameter(COLLATERAL_JSON_INPUT_PARAMS.JEWELLERY_COUNT.getValue()).value(this.jewelcount).positiveAmount();
         baseDataValidator.reset().parameter(COLLATERAL_JSON_INPUT_PARAMS.DESCRIPTION.getValue()).value(this.description).ignoreIfNull()
                 .notExceedingLengthOf(500);
 

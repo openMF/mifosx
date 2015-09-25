@@ -795,17 +795,18 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         List<Long> transactionIds = new ArrayList<>();
         boolean isAccountTransfer = false;
         for (final SingleRepaymentCommand singleLoanRepaymentCommand : repaymentCommand) {
-            final Loan loan = this.loanAssembler.assembleFrom(singleLoanRepaymentCommand.getLoanId());
-            final PaymentDetail paymentDetail = singleLoanRepaymentCommand.getPaymentDetail();
-            if (paymentDetail != null && paymentDetail.getId() == null) {
-                this.paymentDetailWritePlatformService.persistPaymentDetail(paymentDetail);
+            if (singleLoanRepaymentCommand != null) {
+                final Loan loan = this.loanAssembler.assembleFrom(singleLoanRepaymentCommand.getLoanId());
+                final PaymentDetail paymentDetail = singleLoanRepaymentCommand.getPaymentDetail();
+                if (paymentDetail != null && paymentDetail.getId() == null) {
+                    this.paymentDetailWritePlatformService.persistPaymentDetail(paymentDetail);
+                }
+                final CommandProcessingResultBuilder commandProcessingResultBuilder = new CommandProcessingResultBuilder();
+                LoanTransaction loanTransaction = this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder,
+                        bulkRepaymentCommand.getTransactionDate(), singleLoanRepaymentCommand.getTransactionAmount(), paymentDetail,
+                        bulkRepaymentCommand.getNote(), null, isRecoveryRepayment, isAccountTransfer);
+                transactionIds.add(loanTransaction.getId());
             }
-            final CommandProcessingResultBuilder commandProcessingResultBuilder = new CommandProcessingResultBuilder();
-            LoanTransaction loanTransaction = this.loanAccountDomainService.makeRepayment(loan, commandProcessingResultBuilder,
-                    bulkRepaymentCommand.getTransactionDate(), singleLoanRepaymentCommand.getTransactionAmount(), paymentDetail,
-                    bulkRepaymentCommand.getNote(), null, isRecoveryRepayment, isAccountTransfer);
-            transactionIds.add(loanTransaction.getId());
-
         }
         changes.put("loanTransactions", transactionIds);
         return changes;
