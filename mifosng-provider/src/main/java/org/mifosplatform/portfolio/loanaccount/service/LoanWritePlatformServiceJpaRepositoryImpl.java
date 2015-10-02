@@ -2890,9 +2890,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     }
 
     @Override
-    public CommandProcessingResult recoverFromGuarantor(final Long loanId) {
+    public CommandProcessingResult recoverFromGuarantor(final Long loanId, LocalDate recoverFromGuarantor) {
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
-        this.guarantorDomainService.transaferFundsFromGuarantor(loan);
+        this.guarantorDomainService.transaferFundsFromGuarantor(loan, recoverFromGuarantor);
         return new CommandProcessingResultBuilder().withLoanId(loanId).build();
     }
 
