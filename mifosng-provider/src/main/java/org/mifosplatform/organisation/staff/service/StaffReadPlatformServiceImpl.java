@@ -7,6 +7,7 @@ package org.mifosplatform.organisation.staff.service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.commons.lang.StringUtils;
@@ -17,6 +18,9 @@ import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
+import org.mifosplatform.portfolio.client.domain.ClientStatus;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccountStatusType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -238,5 +242,31 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
         String sql = "select " + this.staffInOfficeHierarchyMapper.schema(loanOfficersOnly);
         sql = sql + " order by s.lastname";
         return this.jdbcTemplate.query(sql, this.staffInOfficeHierarchyMapper, new Object[] { officeId });
+    }
+    
+    @Override
+	public Object[] hasAssociatedItems(final Long staffId){
+        ArrayList<String> params = new ArrayList<String>();        
+        
+        String sql =   "SELECT concat((SELECT IF (EXISTS(SELECT 1 FROM m_group where staff_id = " + staffId + "),'1','0'))," +
+                                     "(SELECT if (EXISTS(select 1 FROM m_client where staff_id  = " + staffId + " AND status_enum    < " + ClientStatus.CLOSED.getValue()           + "),'1','0')), " +
+                                     "(SELECT if (EXISTS(select 1 FROM m_loan   where loan_officer_id  = " + staffId + " AND loan_status_id < " + LoanStatus.WITHDRAWN_BY_CLIENT.getValue()+ "),'1','0')),  " +
+                                     "(SELECT if (EXISTS(select 1 FROM m_savings_account where field_officer_id  = " + staffId + " AND status_enum< " + SavingsAccountStatusType.WITHDRAWN_BY_APPLICANT.getValue() + "),'1','0')))";
+               
+        String result = this.jdbcTemplate.queryForObject(sql, String.class);
+        if (result != null) {
+        	if (result.length() > 0 && result.substring(0, 1).equals("1"))
+        	   params.add("group");
+           	if (result.length() > 1 && result.substring(1, 2).equals("1"))
+           		params.add("client");
+           	if (result.length() > 2 && result.substring(2, 3).equals("1"))
+           		params.add("loan");
+           	if (result.length() > 3 && result.substring(3, 4).equals("1"))
+           		params.add("savings account");
+
+        	   
+        }
+        return params.toArray();
+        
     }
 }
