@@ -202,12 +202,16 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
      * releases guarantor)
      */
     @Override
-    public void transaferFundsFromGuarantor(final Loan loan) {
+    public void transaferFundsFromGuarantor(final Loan loan, LocalDate guarantorRecoveryDate) {
         if (loan.getGuaranteeAmount().compareTo(BigDecimal.ZERO) != 1) { return; }
         final List<Guarantor> existGuarantorList = this.guarantorRepository.findByLoan(loan);
         final boolean isRegularTransaction = true;
         final boolean isExceptionForBalanceCheck = true;
+        if(guarantorRecoveryDate == null){
         LocalDate transactionDate = LocalDate.now();
+        }else{
+        LocalDate transactionDate=guarantorRecoveryDate;
+        }
         PortfolioAccountType fromAccountType = PortfolioAccountType.SAVINGS;
         PortfolioAccountType toAccountType = PortfolioAccountType.LOAN;
         final Long toAccountId = loan.getId();

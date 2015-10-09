@@ -79,7 +79,7 @@ public interface LoanWritePlatformService {
 
     CommandProcessingResult updateDisbursementDateAndAmountForTranche(Long loanId, Long disbursementId, JsonCommand command);
 
-    CommandProcessingResult recoverFromGuarantor(Long loanId);
+    CommandProcessingResult recoverFromGuarantor(Long loanId, LocalDate guarantorRecoveryDate);
 
     void applyMeetingDateChanges(Calendar calendar, Collection<CalendarInstance> loanCalendarInstances);
 
