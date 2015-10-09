@@ -166,6 +166,9 @@ public class LoanScheduleAssembler {
 
         final BigDecimal annualNominalInterestRate = this.aprCalculator.calculateFrom(interestRatePeriodFrequencyType,
                 interestRatePerPeriod);
+        
+        final BigDecimal flatinterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("flatinterestRatePerPeriod", element);
+        final BigDecimal annualFlatInterestRate = this.aprCalculator.calculateFrom(interestRatePeriodFrequencyType, flatinterestRatePerPeriod);
 
         // disbursement details
         final BigDecimal principal = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("principal", element);
@@ -298,7 +301,8 @@ public class LoanScheduleAssembler {
 
         return LoanApplicationTerms.assembleFrom(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments,
                 repaymentEvery, repaymentPeriodFrequencyType, nthDay, weekDayType, amortizationMethod, interestMethod,
-                interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod,
+                interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate,flatinterestRatePerPeriod,annualFlatInterestRate,
+                interestCalculationPeriodMethod,
                 principalMoney, expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate,
                 graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsToleranceMoney,
                 loanProduct.isMultiDisburseLoan(), emiAmount, disbursementDatas, maxOutstandingBalance, loanVariationTermsData,

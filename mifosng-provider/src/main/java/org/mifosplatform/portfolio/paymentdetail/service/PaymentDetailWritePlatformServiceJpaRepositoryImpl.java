@@ -11,6 +11,8 @@ import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.portfolio.paymentdetail.PaymentDetailConstants;
 import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetail;
 import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetailRepository;
+import org.mifosplatform.portfolio.paymenttowhom.domain.PaymentToWhom;
+import org.mifosplatform.portfolio.paymenttowhom.domain.PaymentToWhomRepositoryWrapper;
 import org.mifosplatform.portfolio.paymenttype.domain.PaymentType;
 import org.mifosplatform.portfolio.paymenttype.domain.PaymentTypeRepositoryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,21 +25,26 @@ public class PaymentDetailWritePlatformServiceJpaRepositoryImpl implements Payme
     private final PaymentDetailRepository paymentDetailRepository;
     // private final CodeValueRepositoryWrapper codeValueRepositoryWrapper;
     private final PaymentTypeRepositoryWrapper paymentTyperepositoryWrapper;
+    private final PaymentToWhomRepositoryWrapper paymentToWhomRepositoryWrapper;
 
     @Autowired
     public PaymentDetailWritePlatformServiceJpaRepositoryImpl(final PaymentDetailRepository paymentDetailRepository,
-            final PaymentTypeRepositoryWrapper paymentTyperepositoryWrapper) {
+            final PaymentTypeRepositoryWrapper paymentTyperepositoryWrapper, final PaymentToWhomRepositoryWrapper paymentToWhomRepositoryWrapper) {
         this.paymentDetailRepository = paymentDetailRepository;
         this.paymentTyperepositoryWrapper = paymentTyperepositoryWrapper;
+        this.paymentToWhomRepositoryWrapper = paymentToWhomRepositoryWrapper;
     }
 
     @Override
     public PaymentDetail createPaymentDetail(final JsonCommand command, final Map<String, Object> changes) {
         final Long paymentTypeId = command.longValueOfParameterNamed(PaymentDetailConstants.paymentTypeParamName);
         if (paymentTypeId == null) { return null; }
-
         final PaymentType paymentType = this.paymentTyperepositoryWrapper.findOneWithNotFoundDetection(paymentTypeId);
-        final PaymentDetail paymentDetail = PaymentDetail.generatePaymentDetail(paymentType, command, changes);
+        final Long paymentToWhomId = command.longValueOfParameterNamed(PaymentDetailConstants.paymentToWhomParamName);
+        if (paymentToWhomId == null) {return null; }
+        final PaymentToWhom paymentToWhom = this.paymentToWhomRepositoryWrapper.findOneWithNotFoundDetection(paymentToWhomId);
+
+        final PaymentDetail paymentDetail = PaymentDetail.generatePaymentDetail(paymentType, paymentToWhom,command, changes);
         return paymentDetail;
 
     }

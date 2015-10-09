@@ -44,10 +44,13 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
     private static final class CollateralMapper implements RowMapper<CollateralData> {
 
         private final StringBuilder sqlBuilder = new StringBuilder(
-                "lc.id as id, lc.description as description, lc.value as value, cv.id as typeId, cv.code_value as typeName, oc.code as currencyCode, ")
+                "lc.id as id, lc.description as description, lc.value as value,lc.actualcost as actualcost, lc.gross as gross, lc.impurity as impurity, lc.net as net, lc.stone as stone,lc.jewel_count as jewelcount,cv.id as typeId, gf.id as goldfineId,jw.id as jewelleryId, tw.id as maketwoId ,cv.code_value as typeName,gf.code_value as goldfineName,jw.code_value as jewelleryName,tw.code_value as maketwoName, oc.code as currencyCode, ")
                 .append(" oc.name as currencyName,oc.decimal_places as currencyDecimalPlaces, oc.currency_multiplesof as inMultiplesOf, oc.display_symbol as currencyDisplaySymbol, oc.internationalized_name_code as currencyNameCode")
                 .append(" FROM m_loan_collateral lc") //
                 .append(" JOIN m_code_value cv on lc.type_cv_id = cv.id")//
+                .append(" JOIN m_code_value gf on lc.gold_fine_cv_id = gf.id")//
+                .append(" JOIN m_code_value jw on lc.jewellery_cv_id = jw.id")//
+                .append(" JOIN m_code_value tw on lc.two_cv_id = tw.id")//
                 .append(" JOIN m_loan loan on lc.loan_id = loan.id")//
                 .append(" JOIN m_organisation_currency oc on loan.currency_code = oc.code");
 
@@ -62,9 +65,24 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
             final String description = rs.getString("description");
             final Long typeId = rs.getLong("typeId");
             final BigDecimal value = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "value");
+            final BigDecimal actualcost = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "actualcost");
+            final BigDecimal gross = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "gross");
+            final BigDecimal impurity = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "impurity");
+            final BigDecimal net = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "net");
+            final BigDecimal stone = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "stone");
+            final BigDecimal jewelcount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "jewelcount");
             final String typeName = rs.getString("typeName");
-
+            final Long goldfineId = rs.getLong("goldfineId");
+            final String goldfineName = rs.getString("goldfineName");
+            final Long jewelleryId = rs.getLong("jewelleryId");
+            final String jewelleryName = rs.getString("jewelleryName");
+            final Long maketwoId = rs.getLong("maketwoId");
+            final String maketwoName = rs.getString("maketwoName");
+            
             final CodeValueData type = CodeValueData.instance(typeId, typeName);
+            final CodeValueData goldfine = CodeValueData.instance(goldfineId, goldfineName);
+            final CodeValueData jewellery = CodeValueData.instance(jewelleryId,jewelleryName);
+            final CodeValueData maketwo = CodeValueData.instance(maketwoId, maketwoName);
 
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
@@ -76,7 +94,7 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
             final CurrencyData currencyData = new CurrencyData(currencyCode, currencyName, currencyDecimalPlaces, inMultiplesOf,
                     currencyDisplaySymbol, currencyNameCode);
 
-            return CollateralData.instance(id, type, value, description, currencyData);
+            return CollateralData.instance(id, type,goldfine,jewellery,maketwo, value,actualcost, gross,impurity,net,stone,jewelcount,description, currencyData);
         }
     }
 

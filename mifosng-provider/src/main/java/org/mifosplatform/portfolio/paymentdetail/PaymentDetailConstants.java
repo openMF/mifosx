@@ -13,8 +13,10 @@ public class PaymentDetailConstants {
 
     // Code representing Payment Details
     public static final String paymentTypeCodeName = "PaymentType";
+    public static final String paymentToWhomCodeName = "PaymentToWhom";
 
     // request parameters
+    public static final String paymentToWhomParamName = "paymentToWhomId";
     public static final String paymentTypeParamName = "paymentTypeId";
     public static final String accountNumberParamName = "accountNumber";
     public static final String checkNumberParamName = "checkNumber";
@@ -24,6 +26,7 @@ public class PaymentDetailConstants {
 
     // template related part of response
     public static final String officeOptionsParamName = "paymentTypeOptions";
+    public static final String paymentToWhomOptionParamName = "paymentToWhomOptions";
 
     public static final Set<String> PAYMENT_CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(accountNumberParamName,
             checkNumberParamName, routingCodeParamName, receiptNumberParamName, bankNumberParamName));

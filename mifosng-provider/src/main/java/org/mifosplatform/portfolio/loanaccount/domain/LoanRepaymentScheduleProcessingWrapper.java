@@ -69,7 +69,10 @@ public class LoanRepaymentScheduleProcessingWrapper {
                                     period.getInterestCharged(monetaryCurrency).getAmount());
                         } else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
                             amount = amount.add(period.getInterestCharged(monetaryCurrency).getAmount());
-                        } else {
+                        } else if (loanCharge.getChargeCalculation().isPercentageOfOutstandingPrincipal()){
+                        	
+                        }
+                       else {
                             amount = amount.add(period.getPrincipal(monetaryCurrency).getAmount());
                         }
                         BigDecimal loanChargeAmt = amount.multiply(loanCharge.getPercentage()).divide(BigDecimal.valueOf(100));
@@ -88,7 +91,10 @@ public class LoanRepaymentScheduleProcessingWrapper {
                         amount = amount.add(totalPrincipal.getAmount()).add(totalInterest.getAmount());
                     } else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
                         amount = amount.add(totalInterest.getAmount());
-                    } else {
+                    }else if(loanCharge.getChargeCalculation().isPercentageOfOutstandingPrincipal()){
+                    	amount = amount.add(loanCharge.getAmountPercantageAppliedTo());
+                    }
+                    else {
                         amount = amount.add(totalPrincipal.getAmount());
                     }
                     BigDecimal loanChargeAmt = amount.multiply(loanCharge.getPercentage()).divide(BigDecimal.valueOf(100));

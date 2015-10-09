@@ -17,6 +17,8 @@ import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.portfolio.paymentdetail.PaymentDetailConstants;
 import org.mifosplatform.portfolio.paymentdetail.data.PaymentDetailData;
+import org.mifosplatform.portfolio.paymenttowhom.data.PaymentToWhomData;
+import org.mifosplatform.portfolio.paymenttowhom.domain.PaymentToWhom;
 import org.mifosplatform.portfolio.paymenttype.data.PaymentTypeData;
 import org.mifosplatform.portfolio.paymenttype.domain.PaymentType;
 import org.springframework.data.jpa.domain.AbstractPersistable;
@@ -28,6 +30,10 @@ public final class PaymentDetail extends AbstractPersistable<Long> {
     @ManyToOne
     @JoinColumn(name = "payment_type_id", nullable = false)
     private PaymentType paymentType;
+
+    @ManyToOne
+    @JoinColumn(name = "payment_to_whom_id", nullable = false)
+    private PaymentToWhom paymentToWhom;
 
     @Column(name = "account_number", length = 50)
     private String accountNumber;
@@ -48,7 +54,7 @@ public final class PaymentDetail extends AbstractPersistable<Long> {
 
     }
 
-    public static PaymentDetail generatePaymentDetail(final PaymentType paymentType, final JsonCommand command,
+    public static PaymentDetail generatePaymentDetail(final PaymentType paymentType,final PaymentToWhom paymentToWhom, final JsonCommand command,
             final Map<String, Object> changes) {
         final String accountNumber = command.stringValueOfParameterNamed(PaymentDetailConstants.accountNumberParamName);
         final String checkNumber = command.stringValueOfParameterNamed(PaymentDetailConstants.checkNumberParamName);
@@ -71,19 +77,20 @@ public final class PaymentDetail extends AbstractPersistable<Long> {
         if (StringUtils.isNotBlank(bankNumber)) {
             changes.put(PaymentDetailConstants.bankNumberParamName, bankNumber);
         }
-        final PaymentDetail paymentDetail = new PaymentDetail(paymentType, accountNumber, checkNumber, routingCode, receiptNumber,
+        final PaymentDetail paymentDetail = new PaymentDetail(paymentType,paymentToWhom, accountNumber, checkNumber, routingCode, receiptNumber,
                 bankNumber);
         return paymentDetail;
     }
 
-    public static PaymentDetail instance(final PaymentType paymentType, final String accountNumber, final String checkNumber,
+    public static PaymentDetail instance(final PaymentType paymentType,final PaymentToWhom paymentToWhom, final String accountNumber, final String checkNumber,
             final String routingCode, final String receiptNumber, final String bankNumber) {
-        return new PaymentDetail(paymentType, accountNumber, checkNumber, routingCode, receiptNumber, bankNumber);
+        return new PaymentDetail(paymentType,paymentToWhom,accountNumber, checkNumber, routingCode, receiptNumber, bankNumber);
     }
 
-    private PaymentDetail(final PaymentType paymentType, final String accountNumber, final String checkNumber, final String routingCode,
+    private PaymentDetail(final PaymentType paymentType, final PaymentToWhom paymentToWhom,final String accountNumber, final String checkNumber, final String routingCode,
             final String receiptNumber, final String bankNumber) {
         this.paymentType = paymentType;
+        this.paymentToWhom = paymentToWhom;
         this.accountNumber = accountNumber;
         this.checkNumber = checkNumber;
         this.routingCode = routingCode;
@@ -93,7 +100,8 @@ public final class PaymentDetail extends AbstractPersistable<Long> {
 
     public PaymentDetailData toData() {
         final PaymentTypeData paymentTypeData = this.paymentType.toData();
-        final PaymentDetailData paymentDetailData = new PaymentDetailData(getId(), paymentTypeData, this.accountNumber, this.checkNumber,
+        final PaymentToWhomData paymentToWhomData = this.paymentToWhom.toData();
+        final PaymentDetailData paymentDetailData = new PaymentDetailData(getId(), paymentTypeData,paymentToWhomData, this.accountNumber, this.checkNumber,
                 this.routingCode, this.receiptNumber, this.bankNumber);
         return paymentDetailData;
     }

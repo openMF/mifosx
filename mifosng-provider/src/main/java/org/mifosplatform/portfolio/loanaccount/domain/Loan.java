@@ -52,6 +52,7 @@ import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidation
 import org.mifosplatform.infrastructure.core.serialization.JsonParserHelper;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.security.service.RandomPasswordGenerator;
+import org.mifosplatform.organisation.dsa.domain.Dsa;
 import org.mifosplatform.organisation.holiday.domain.Holiday;
 import org.mifosplatform.organisation.holiday.service.HolidayUtil;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
@@ -86,6 +87,7 @@ import org.mifosplatform.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.mifosplatform.portfolio.loanaccount.data.ScheduleGeneratorDTO;
 import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.LoanRepaymentScheduleTransactionProcessor;
+import org.mifosplatform.portfolio.loanaccount.exception.DsaOfficerAssignmentException;
 import org.mifosplatform.portfolio.loanaccount.exception.ExceedingTrancheCountException;
 import org.mifosplatform.portfolio.loanaccount.exception.InvalidLoanStateTransitionException;
 import org.mifosplatform.portfolio.loanaccount.exception.InvalidLoanTransactionTypeException;
@@ -121,6 +123,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.sun.org.apache.bcel.internal.generic.ISTORE;
 
 @Entity
 @Component
@@ -160,6 +163,10 @@ public class Loan extends AbstractPersistable<Long> {
     @ManyToOne
     @JoinColumn(name = "loan_officer_id", nullable = true)
     private Staff loanOfficer;
+
+    @ManyToOne
+    @JoinColumn(name = "dsa_officer_id", nullable = true)
+    private Dsa dsaOfficer;
 
     @ManyToOne
     @JoinColumn(name = "loanpurpose_cv_id", nullable = true)
@@ -365,7 +372,7 @@ public class Loan extends AbstractPersistable<Long> {
     private BigDecimal guaranteeAmountDerived;
 
     public static Loan newIndividualLoanApplication(final String accountNo, final Client client, final Integer loanType,
-            final LoanProduct loanProduct, final Fund fund, final Staff officer, final CodeValue loanPurpose,
+            final LoanProduct loanProduct, final Fund fund, final Staff officer,final Dsa dsaOfficer, final CodeValue loanPurpose,
             final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges,
             final Set<LoanCollateral> collateral, final BigDecimal fixedEmiAmount, final Set<LoanDisbursementDetails> disbursementDetails,
@@ -373,13 +380,13 @@ public class Loan extends AbstractPersistable<Long> {
         final LoanStatus status = null;
         final Group group = null;
         final Boolean syncDisbursementWithMeeting = null;
-        return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
+        return new Loan(accountNo, client, group, loanType, fund, officer,dsaOfficer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting, fixedEmiAmount,
                 disbursementDetails, maxOutstandingLoanBalance, createStandingInstructionAtDisbursement);
     }
 
     public static Loan newGroupLoanApplication(final String accountNo, final Group group, final Integer loanType,
-            final LoanProduct loanProduct, final Fund fund, final Staff officer, final CodeValue loanPurpose,
+            final LoanProduct loanProduct, final Fund fund, final Staff officer,final Dsa dsaOfficer, final CodeValue loanPurpose,
             final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges,
             final Set<LoanCollateral> collateral, final Boolean syncDisbursementWithMeeting, final BigDecimal fixedEmiAmount,
@@ -387,20 +394,20 @@ public class Loan extends AbstractPersistable<Long> {
             final Boolean createStandingInstructionAtDisbursement) {
         final LoanStatus status = null;
         final Client client = null;
-        return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
+        return new Loan(accountNo, client, group, loanType, fund, officer,dsaOfficer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting, fixedEmiAmount,
                 disbursementDetails, maxOutstandingLoanBalance, createStandingInstructionAtDisbursement);
     }
 
     public static Loan newIndividualLoanApplicationFromGroup(final String accountNo, final Client client, final Group group,
-            final Integer loanType, final LoanProduct loanProduct, final Fund fund, final Staff officer, final CodeValue loanPurpose,
+            final Integer loanType, final LoanProduct loanProduct, final Fund fund, final Staff officer, final Dsa dsaOfficer,final CodeValue loanPurpose,
             final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProductRelatedDetail loanRepaymentScheduleDetail, final Set<LoanCharge> loanCharges,
             final Set<LoanCollateral> collateral, final Boolean syncDisbursementWithMeeting, final BigDecimal fixedEmiAmount,
             final Set<LoanDisbursementDetails> disbursementDetails, final BigDecimal maxOutstandingLoanBalance,
             final Boolean createStandingInstructionAtDisbursement) {
         final LoanStatus status = null;
-        return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
+        return new Loan(accountNo, client, group, loanType, fund, officer, dsaOfficer,loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, status, loanCharges, collateral, syncDisbursementWithMeeting, fixedEmiAmount,
                 disbursementDetails, maxOutstandingLoanBalance, createStandingInstructionAtDisbursement);
     }
@@ -410,7 +417,7 @@ public class Loan extends AbstractPersistable<Long> {
     }
 
     private Loan(final String accountNo, final Client client, final Group group, final Integer loanType, final Fund fund,
-            final Staff loanOfficer, final CodeValue loanPurpose, final LoanTransactionProcessingStrategy transactionProcessingStrategy,
+            final Staff loanOfficer, final Dsa dsaOfficer, final CodeValue loanPurpose, final LoanTransactionProcessingStrategy transactionProcessingStrategy,
             final LoanProduct loanProduct, final LoanProductRelatedDetail loanRepaymentScheduleDetail, final LoanStatus loanStatus,
             final Set<LoanCharge> loanCharges, final Set<LoanCollateral> collateral, final Boolean syncDisbursementWithMeeting,
             final BigDecimal fixedEmiAmount, final Set<LoanDisbursementDetails> disbursementDetails,
@@ -430,6 +437,7 @@ public class Loan extends AbstractPersistable<Long> {
         this.loanType = loanType;
         this.fund = fund;
         this.loanOfficer = loanOfficer;
+        this.dsaOfficer = dsaOfficer;
         this.loanPurpose = loanPurpose;
 
         this.transactionProcessingStrategy = transactionProcessingStrategy;
@@ -550,7 +558,8 @@ public class Loan extends AbstractPersistable<Long> {
             chargeAmt = loanCharge.getPercentage();
             if (loanCharge.isInstalmentFee()) {
                 totalChargeAmt = calculatePerInstallmentChargeAmount(loanCharge);
-            } else if (loanCharge.isOverdueInstallmentCharge()) {
+            }
+            else if (loanCharge.isOverdueInstallmentCharge()) {
                 totalChargeAmt = loanCharge.amountOutstanding();
             }
         } else {
@@ -847,6 +856,10 @@ public class Loan extends AbstractPersistable<Long> {
     public BigDecimal getTotalInterest() {
         return this.loanSummaryWrapper.calculateTotalInterestCharged(this.repaymentScheduleInstallments, getCurrency()).getAmount();
     }
+    public BigDecimal getTotalPrincipalPaid(){
+    	return this.loanSummaryWrapper.calculateTotalPrincipalRepaid(this.repaymentScheduleInstallments, getCurrency()).getAmount();
+    }
+    
 
     private BigDecimal calculatePerInstallmentChargeAmount(final LoanCharge loanCharge) {
         return calculatePerInstallmentChargeAmount(loanCharge.getChargeCalculation(), loanCharge.getPercentage());
@@ -884,6 +897,9 @@ public class Loan extends AbstractPersistable<Long> {
             case PERCENT_OF_INTEREST:
                 percentOf = installment.getInterestCharged(getCurrency());
             break;
+            case PERCENT_OF_OUTSTANDING_PRINCIPAL:
+            	percentOf = installment.getTotalPrincipalOutstanding(getCurrency());
+            break;
             default:
             break;
         }
@@ -905,10 +921,7 @@ public class Loan extends AbstractPersistable<Long> {
         Money unrecognizedIncome = amountWaived.zero();
         Money chargeComponent = amountWaived;
         if (isPeriodicAccrualAccountingEnabledOnLoanProduct()) {
-            Money receivableCharge = Money.zero(getCurrency());
-            if(loanInstallmentNumber !=null){
-                receivableCharge  = accruedCharge.minus(loanCharge.getInstallmentLoanCharge(loanInstallmentNumber).getAmountPaid(getCurrency()));
-            }else{ receivableCharge = accruedCharge.minus(loanCharge.getAmountPaid(getCurrency()));}
+            Money receivableCharge = accruedCharge.minus(loanCharge.getAmountPaid(getCurrency()));
             if (receivableCharge.isLessThanZero()) {
                 receivableCharge = amountWaived.zero();
             }
@@ -924,7 +937,7 @@ public class Loan extends AbstractPersistable<Long> {
             feeChargesWaived = Money.zero(loanCurrency());
         }
 
-        LocalDate transactionDate = DateUtils.getLocalDateOfTenant();
+        LocalDate transactionDate = getDisbursementDate();
         if (loanCharge.isSpecifiedDueDate()) {
             transactionDate = loanCharge.getDueLocalDate();
         }
@@ -1017,6 +1030,17 @@ public class Loan extends AbstractPersistable<Long> {
             throw new LoanOfficerAssignmentException(getId(), loanOfficerId);
         }
         this.loanOfficer = newLoanOfficer;
+    }
+    public void updateDsaOfficerOnLoanApplication(final Dsa newDsaOfficer){
+        if (!isSubmittedAndPendingApproval()){
+            Long dsaOfficerId = null;
+            if(this.dsaOfficer != null){
+                dsaOfficerId = this.dsaOfficer.getId();
+            }
+                throw new DsaOfficerAssignmentException(getId(),dsaOfficerId);
+        }
+
+        this.dsaOfficer = newDsaOfficer;
     }
 
     public void updateTransactionProcessingStrategy(final LoanTransactionProcessingStrategy strategy) {
@@ -1180,7 +1204,7 @@ public class Loan extends AbstractPersistable<Long> {
     }
 
     private void updateLoanSummaryDerivedFields() {
-
+    	
         if (isNotDisbursed()) {
             this.summary.zeroFields();
             this.totalOverpaid = null;
@@ -1203,7 +1227,11 @@ public class Loan extends AbstractPersistable<Long> {
         doPostLoanTransactionChecks(getLastUserTransactionDate(), loanLifecycleStateMachine);
     }
 
-    public Map<String, Object> loanApplicationModification(final JsonCommand command, final Set<LoanCharge> possiblyModifedLoanCharges,
+    
+
+
+
+	public Map<String, Object> loanApplicationModification(final JsonCommand command, final Set<LoanCharge> possiblyModifedLoanCharges,
             final Set<LoanCollateral> possiblyModifedLoanCollateralItems, final AprCalculator aprCalculator, boolean isChargesModified) {
 
         final Map<String, Object> actualChanges = this.loanRepaymentScheduleDetail.updateLoanApplicationAttributes(command, aprCalculator);
@@ -1590,6 +1618,9 @@ public class Loan extends AbstractPersistable<Long> {
             break;
             case PERCENT_OF_INTEREST:
                 amount = installment.getInterestOutstanding(getCurrency());
+            break;
+            case PERCENT_OF_OUTSTANDING_PRINCIPAL:
+            	amount = installment.getTotalPrincipalOutstanding(getCurrency());
             break;
             default:
             break;
@@ -3593,6 +3624,8 @@ public class Loan extends AbstractPersistable<Long> {
     private boolean isNotDisbursed() {
         return !isDisbursed();
     }
+    
+   
 
     public boolean isChargesAdditionAllowed() {
         boolean isDisbursed = false;
@@ -3656,6 +3689,7 @@ public class Loan extends AbstractPersistable<Long> {
         }
         return hasRepaymentTransaction;
     }
+    
 
     public boolean isSubmittedOnDateAfter(final LocalDate compareDate) {
         return this.submittedOnDate == null ? false : new LocalDate(this.submittedOnDate).isAfter(compareDate);
@@ -5189,6 +5223,9 @@ public class Loan extends AbstractPersistable<Long> {
         final PeriodFrequencyType interestRatePeriodFrequencyType = this.loanRepaymentScheduleDetail.getInterestPeriodFrequencyType();
 
         final BigDecimal annualNominalInterestRate = this.loanRepaymentScheduleDetail.getAnnualNominalInterestRate();
+        
+        final BigDecimal flatInterestRatePerPeriod = this.loanRepaymentScheduleDetail.getFlatInterestRatePerPeriod();
+        final BigDecimal annualFlatInterestRate = this.loanRepaymentScheduleDetail.getAnnualFlatInterestRate();
         final Money principalMoney = this.loanRepaymentScheduleDetail.getPrincipal();
 
         final LocalDate expectedDisbursementDate = getExpectedDisbursedOnLocalDate();

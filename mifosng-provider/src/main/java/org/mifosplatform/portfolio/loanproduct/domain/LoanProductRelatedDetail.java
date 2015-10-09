@@ -45,6 +45,10 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
     @Column(name = "nominal_interest_rate_per_period", scale = 6, precision = 19, nullable = false)
     private BigDecimal nominalInterestRatePerPeriod;
+    
+    @Column(name = "flat_interest_rate_per_period", scale = 6, precision = 19, nullable = false)
+    private BigDecimal flatInterestRatePerPeriod;
+   
 
     // FIXME - move away form JPA ordinal use for enums using just integer -
     // requires sql patch for existing users of software.
@@ -54,6 +58,9 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
     @Column(name = "annual_nominal_interest_rate", scale = 6, precision = 19, nullable = false)
     private BigDecimal annualNominalInterestRate;
+    
+    @Column(name = "annual_flat_interest_rate", scale = 6, precision = 19, nullable = false)
+    private BigDecimal annualFlatInterestRate;
 
     // FIXME - move away form JPA ordinal use for enums using just integer -
     // requires sql patch for existing users of software.
@@ -111,7 +118,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
     public static LoanProductRelatedDetail createFrom(final MonetaryCurrency currency, final BigDecimal principal,
             final BigDecimal nominalInterestRatePerPeriod, final PeriodFrequencyType interestRatePeriodFrequencyType,
-            final BigDecimal nominalAnnualInterestRate, final InterestMethod interestMethod,
+            final BigDecimal nominalAnnualInterestRate,final BigDecimal flatInterestRatePerPeriod,final BigDecimal  annualFlatInterestRate, InterestMethod interestMethod,
             final InterestCalculationPeriodMethod interestCalculationPeriodMethod, final Integer repaymentEvery,
             final PeriodFrequencyType repaymentPeriodFrequencyType, final Integer numberOfRepayments,
             final Integer graceOnPrincipalPayment, final Integer graceOnInterestPayment, final Integer graceOnInterestCharged,
@@ -119,7 +126,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
             final Integer daysInMonthType, final Integer daysInYearType, final boolean isInterestRecalculationEnabled) {
 
         return new LoanProductRelatedDetail(currency, principal, nominalInterestRatePerPeriod, interestRatePeriodFrequencyType,
-                nominalAnnualInterestRate, interestMethod, interestCalculationPeriodMethod, repaymentEvery, repaymentPeriodFrequencyType,
+                nominalAnnualInterestRate,flatInterestRatePerPeriod,annualFlatInterestRate, interestMethod, interestCalculationPeriodMethod, repaymentEvery, repaymentPeriodFrequencyType,
                 numberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, amortizationMethod,
                 inArrearsTolerance, graceOnArrearsAgeing, daysInMonthType, daysInYearType, isInterestRecalculationEnabled);
     }
@@ -130,7 +137,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
     public LoanProductRelatedDetail(final MonetaryCurrency currency, final BigDecimal defaultPrincipal,
             final BigDecimal defaultNominalInterestRatePerPeriod, final PeriodFrequencyType interestPeriodFrequencyType,
-            final BigDecimal defaultAnnualNominalInterestRate, final InterestMethod interestMethod,
+            final BigDecimal defaultAnnualNominalInterestRate,final BigDecimal defaultFlatInterestRatePerPeriod,final BigDecimal defaultAnnualFlatInterestRate, final InterestMethod interestMethod,
             final InterestCalculationPeriodMethod interestCalculationPeriodMethod, final Integer repayEvery,
             final PeriodFrequencyType repaymentFrequencyType, final Integer defaultNumberOfRepayments,
             final Integer graceOnPrincipalPayment, final Integer graceOnInterestPayment, final Integer graceOnInterestCharged,
@@ -141,6 +148,8 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
         this.nominalInterestRatePerPeriod = defaultNominalInterestRatePerPeriod;
         this.interestPeriodFrequencyType = interestPeriodFrequencyType;
         this.annualNominalInterestRate = defaultAnnualNominalInterestRate;
+        this.flatInterestRatePerPeriod = defaultFlatInterestRatePerPeriod;
+        this.annualFlatInterestRate = defaultAnnualFlatInterestRate;
         this.interestMethod = interestMethod;
         this.interestCalculationPeriodMethod = interestCalculationPeriodMethod;
         this.repayEvery = repayEvery;
@@ -207,6 +216,10 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
     public BigDecimal getNominalInterestRatePerPeriod() {
         return BigDecimal.valueOf(Double.valueOf(this.nominalInterestRatePerPeriod.stripTrailingZeros().toString()));
     }
+    @Override
+    public BigDecimal getFlatInterestRatePerPeriod(){
+    	return BigDecimal.valueOf(Double.valueOf(this.flatInterestRatePerPeriod.stripTrailingZeros().toString()));
+    }
 
     @Override
     public PeriodFrequencyType getInterestPeriodFrequencyType() {
@@ -216,6 +229,11 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
     @Override
     public BigDecimal getAnnualNominalInterestRate() {
         return BigDecimal.valueOf(Double.valueOf(this.annualNominalInterestRate.stripTrailingZeros().toString()));
+    }
+    
+    @Override
+    public BigDecimal getAnnualFlatInterestRate(){
+    	return BigDecimal.valueOf(Double.valueOf(this.annualFlatInterestRate.stripTrailingZeros().toString()));
     }
 
     @Override
@@ -372,6 +390,15 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
             this.interestPeriodFrequencyType = PeriodFrequencyType.fromInt(newValue);
             updateInterestRateDerivedFields(aprCalculator);
         }
+        final String flatInterestRatePerPeriodParamName = "flatInterestRatePerPeriod";
+        if(command.isChangeInBigDecimalParameterNamed(flatInterestRatePerPeriodParamName, this.flatInterestRatePerPeriod)){
+        final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(flatInterestRatePerPeriodParamName);
+        actualChanges.put(flatInterestRatePerPeriodParamName, newValue);
+        actualChanges.put("locale", localeAsInput);
+        this.flatInterestRatePerPeriod = newValue;
+        updateFlatInterestDerivedFields(aprCalculator);
+        	
+        }
 
         final String interestTypeParamName = "interestType";
         if (command.isChangeInIntegerParameterNamed(interestTypeParamName, this.interestMethod.getValue())) {
@@ -480,6 +507,9 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
     private void updateInterestRateDerivedFields(final AprCalculator aprCalculator) {
         this.annualNominalInterestRate = aprCalculator.calculateFrom(this.interestPeriodFrequencyType, this.nominalInterestRatePerPeriod);
+    }
+    private void updateFlatInterestDerivedFields(final AprCalculator aprCalculator){
+    	this.annualFlatInterestRate = aprCalculator.calculateFrom(this.interestPeriodFrequencyType, this.flatInterestRatePerPeriod);
     }
 
     public boolean hasCurrencyCodeOf(final String currencyCode) {

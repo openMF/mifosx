@@ -50,6 +50,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             "productId", "principal", "loanTermFrequency", "loanTermFrequencyType", "numberOfRepayments", "repaymentEvery",
             "repaymentFrequencyType", "repaymentFrequencyNthDayType", "repaymentFrequencyDayOfWeekType",
             "interestRatePerPeriod",
+            "flatinterestRatePerPeriod",
             "amortizationType",
             "interestType",
             "interestCalculationPeriodType",
@@ -66,6 +67,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             "externalId",
             "fundId",
             "loanOfficerId", // optional
+            "dsaOfficerId",// optional
             "loanPurposeId",
             "inArrearsTolerance",
             "charges",
@@ -170,6 +172,11 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             final Long loanOfficerId = this.fromApiJsonHelper.extractLongNamed(loanOfficerIdParameterName, element);
             baseDataValidator.reset().parameter(loanOfficerIdParameterName).value(loanOfficerId).ignoreIfNull().integerGreaterThanZero();
         }
+        final String dsaOfficerIdParameterName = "dsaOfficerId";
+        if(this.fromApiJsonHelper.parameterExists(dsaOfficerIdParameterName,element)){
+            final Long dsaOfficerId = this.fromApiJsonHelper.extractLongNamed(dsaOfficerIdParameterName,element);
+            baseDataValidator.reset().parameter(dsaOfficerIdParameterName).value(dsaOfficerId).ignoreIfNull().integerGreaterThanZero();
+        }
 
         final String loanPurposeIdParameterName = "loanPurposeId";
         if (this.fromApiJsonHelper.parameterExists(loanPurposeIdParameterName, element)) {
@@ -208,6 +215,11 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                 interestRatePerPeriodParameterName, element);
         baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull()
                 .zeroOrPositiveAmount();
+
+        final String flatInterestRatePerPeriodParameterName = "flatinterestRatePerPeriod";
+        final BigDecimal flatinterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
+                flatInterestRatePerPeriodParameterName,element);
+        baseDataValidator.reset().parameter(flatInterestRatePerPeriodParameterName).value(flatinterestRatePerPeriod).notNull().zeroOrPositiveAmount();
 
         final String interestTypeParameterName = "interestType";
         final Integer interestType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(interestTypeParameterName, element);
@@ -450,6 +462,12 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             atLeastOneParameterPassedForUpdate = true;
             final Long loanOfficerId = this.fromApiJsonHelper.extractLongNamed(loanOfficerIdParameterName, element);
             baseDataValidator.reset().parameter(loanOfficerIdParameterName).value(loanOfficerId).ignoreIfNull().integerGreaterThanZero();
+        }
+        final String dsaOfficerIdParameterName = "dsaOfficerId";
+        if(this.fromApiJsonHelper.parameterExists(dsaOfficerIdParameterName,element)){
+            atLeastOneParameterPassedForUpdate = true;
+            final Long dsaOfficerId = this.fromApiJsonHelper.extractLongNamed(dsaOfficerIdParameterName,element);
+            baseDataValidator.reset().parameter(dsaOfficerIdParameterName).value(dsaOfficerId).ignoreIfNull().integerGreaterThanZero();
         }
 
         final String transactionProcessingStrategyIdParameterName = "transactionProcessingStrategyId";

@@ -95,15 +95,17 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
         private GuarantorFundingMapper guarantorFundingMapper = new GuarantorFundingMapper(guarantorTransactionMapper);
 
         private final StringBuilder sqlBuilder = new StringBuilder(
-                " g.id as id, g.loan_id as loanId, g.client_reln_cv_id clientRelationshipTypeId, g.entity_id as entityId, g.type_enum guarantorType ,g.firstname as firstname, g.lastname as lastname, g.dob as dateOfBirth, g.address_line_1 as addressLine1, g.address_line_2 as addressLine2, g.city as city, g.state as state, g.country as country, g.zip as zip, g.house_phone_number as housePhoneNumber, g.mobile_number as mobilePhoneNumber, g.comment as comment, ")
+                " g.id as id, g.loan_id as loanId, g.client_reln_cv_id clientRelationshipTypeId, g.gnbc_type_cv_id gnbcTypeId, g.entity_id as entityId, g.type_enum guarantorType ,g.firstname as firstname, g.lastname as lastname, g.dob as dateOfBirth, g.address_line_1 as addressLine1, g.address_line_2 as addressLine2, g.city as city, g.state as state, g.country as country, g.zip as zip, g.house_phone_number as housePhoneNumber, g.mobile_number as mobilePhoneNumber, g.comment as comment, ")
                 .append(" g.is_active as guarantorStatus,")//
                 .append(" cv.code_value as typeName, ")//
+                .append(" gnbc.code_value as gnbcTypeName, ")//
                 .append("gfd.amount,")//
                 .append(this.guarantorFundingMapper.schema())//
                 .append(",")//
                 .append(this.guarantorTransactionMapper.schema())//
                 .append(" FROM m_guarantor g") //
                 .append(" left JOIN m_code_value cv on g.client_reln_cv_id = cv.id")//
+                .append(" left JOIN m_code_value gnbc on g.gnbc_type_cv_id = gnbc.id")//
                 .append(" left JOIN m_guarantor_funding_details gfd on g.id = gfd.guarantor_id")//
                 .append(" left JOIN m_portfolio_account_associations aa on gfd.account_associations_id = aa.id and aa.is_active = 1 and aa.association_type_enum = ?")//
                 .append(" left JOIN m_savings_account sa on sa.id = aa.linked_savings_account_id ")//
@@ -124,6 +126,13 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
             if (clientRelationshipTypeId != null) {
                 final String typeName = rs.getString("typeName");
                 clientRelationshipType = CodeValueData.instance(clientRelationshipTypeId, typeName);
+            }
+            final Long gnbcTypeId = JdbcSupport.getLong(rs, "gnbcTypeId");
+            CodeValueData gnbcType = null;
+            
+            if(gnbcTypeId != null){
+            	final String gnbcTypeName = rs.getString("gnbcTypeName");
+            	gnbcType = CodeValueData.instance(gnbcTypeId, gnbcTypeName);
             }
 
             final Integer guarantorTypeId = rs.getInt("guarantorType");
@@ -163,9 +172,9 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
 
            
 
-            return new GuarantorData(id, loanId, clientRelationshipType, entityId, guarantorType, firstname, lastname, dob, addressLine1,
+            return new GuarantorData(id, loanId, clientRelationshipType,gnbcType, entityId, guarantorType, firstname, lastname, dob, addressLine1,
                     addressLine2, city, state, zip, country, mobileNumber, housePhoneNumber, comment, null, null, null, status,
-                    guarantorFundingDetails, null, null, accountLinkingOptions);
+                    guarantorFundingDetails,null, null, null, accountLinkingOptions);
         }
     }
 

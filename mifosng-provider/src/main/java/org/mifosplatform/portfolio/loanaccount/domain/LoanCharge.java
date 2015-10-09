@@ -158,6 +158,15 @@ public class LoanCharge extends AbstractPersistable<Long> {
                     amountPercentageAppliedTo = loan.getTotalInterest();
                 }
             break;
+            case PERCENT_OF_OUTSTANDING_PRINCIPAL:
+            	if (command.hasParameter("totalOutstandingPrincipal")) {
+            		amountPercentageAppliedTo = command.bigDecimalValueOfParameterNamed("totalOutstandingPrincipal");
+            	}else{
+            		amountPercentageAppliedTo = loan.getPrincpal().minus(loan.getTotalPrincipalPaid()).getAmount();
+            	}
+            	
+            break;
+            		
             default:
             break;
         }
@@ -514,7 +523,8 @@ public class LoanCharge extends AbstractPersistable<Long> {
     public boolean isInstalmentFee() {
         return ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.INSTALMENT_FEE);
     }
-
+    
+   
     public boolean isOverdueInstallmentCharge() {
         return ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.OVERDUE_INSTALLMENT);
     }
@@ -961,4 +971,13 @@ public class LoanCharge extends AbstractPersistable<Long> {
     public Loan getLoan() {
         return this.loan;
     }
+    public LoanSummary getLoanSummary(){
+    	return this.loan.getLoanSummary();
+    }
+
+	public BigDecimal getAmountPercantageAppliedTo() {
+		// TODO Auto-generated method stub
+		
+		return this.amountPercentageAppliedTo;
+	}
 }

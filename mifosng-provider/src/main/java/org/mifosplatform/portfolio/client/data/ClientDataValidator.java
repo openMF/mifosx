@@ -23,6 +23,7 @@ import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidation
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.portfolio.client.api.ClientApiConstants;
+import org.mifosplatform.useradministration.domain.PasswordValidationPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +52,7 @@ public final class ClientDataValidator {
 
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(ClientApiConstants.CLIENT_RESOURCE_NAME);
+        
 
         final Long officeId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.officeIdParamName, element);
         baseDataValidator.reset().parameter(ClientApiConstants.officeIdParamName).value(officeId).notNull().integerGreaterThanZero();
@@ -148,7 +150,7 @@ public final class ClientDataValidator {
         if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.dateOfBirthParamName, element)) {
             final LocalDate dateOfBirth = this.fromApiJsonHelper.extractLocalDateNamed(ClientApiConstants.dateOfBirthParamName, element);
             baseDataValidator.reset().parameter(ClientApiConstants.dateOfBirthParamName).value(dateOfBirth).notNull()
-                    .validateDateBefore(DateUtils.getLocalDateOfTenant());
+                    .validateDateBeforeOrEqual(DateUtils.getLocalDateOfTenant().minusYears(18)).validateDateAfter(DateUtils.getLocalDateOfTenant().minusYears(65));
         }
 
         if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.genderIdParamName, element)) {
@@ -204,7 +206,7 @@ public final class ClientDataValidator {
                 .notExceedingLengthOf(50);
 
         final String lastnameParamName = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.lastnameParamName, element);
-        baseDataValidator.reset().parameter(ClientApiConstants.lastnameParamName).value(lastnameParamName).notBlank()
+        baseDataValidator.reset().parameter(ClientApiConstants.lastnameParamName).value(lastnameParamName).ignoreIfNull()
                 .notExceedingLengthOf(50);
     }
 
@@ -404,6 +406,8 @@ public final class ClientDataValidator {
 
         final LocalDate activationDate = this.fromApiJsonHelper.extractLocalDateNamed(ClientApiConstants.activationDateParamName, element);
         baseDataValidator.reset().parameter(ClientApiConstants.activationDateParamName).value(activationDate).notNull();
+        final String code = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.codeParamName, element);
+        baseDataValidator.reset().parameter(ClientApiConstants.codeParamName).value(code).notNull();
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }

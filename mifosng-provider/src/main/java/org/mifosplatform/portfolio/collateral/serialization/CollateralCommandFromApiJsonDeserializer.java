@@ -55,10 +55,29 @@ public final class CollateralCommandFromApiJsonDeserializer extends AbstractFrom
 
         final Long collateralTypeId = this.fromApiJsonHelper.extractLongNamed(COLLATERAL_JSON_INPUT_PARAMS.COLLATERAL_TYPE_ID.getValue(),
                 element);
+
+        final Long goldfineTypeId = this.fromApiJsonHelper.extractLongNamed(COLLATERAL_JSON_INPUT_PARAMS.GOLD_FINENESS_TYPE_ID.getValue(),
+        		element);
+        final Long jewelleryTypeId = this.fromApiJsonHelper.extractLongNamed(COLLATERAL_JSON_INPUT_PARAMS.JEWELLERY_KIND_TYPE_ID.getValue(), 
+        		element);
+        final Long maketwoTypeId = this.fromApiJsonHelper.extractLongNamed(COLLATERAL_JSON_INPUT_PARAMS.TW_MAKE_TYPE.getValue(), 
+        		element);
         final String description = this.fromApiJsonHelper.extractStringNamed(COLLATERAL_JSON_INPUT_PARAMS.DESCRIPTION.getValue(), element);
         final BigDecimal value = this.fromApiJsonHelper.extractBigDecimalNamed(COLLATERAL_JSON_INPUT_PARAMS.VALUE.getValue(), element,
                 locale);
+        final BigDecimal actualcost = this.fromApiJsonHelper.extractBigDecimalNamed(COLLATERAL_JSON_INPUT_PARAMS.ACTUALCOST.getValue(), element,
+                locale);
+        final BigDecimal gross = this.fromApiJsonHelper.extractBigDecimalNamed(COLLATERAL_JSON_INPUT_PARAMS.GROSS_WEIGHT.getValue(), element,
+        		 locale);
+        final BigDecimal impurity = this.fromApiJsonHelper.extractBigDecimalNamed(COLLATERAL_JSON_INPUT_PARAMS.IMPURITY_WEIGHT.getValue(), element,
+       		 locale);
+        final BigDecimal net = this.fromApiJsonHelper.extractBigDecimalNamed(COLLATERAL_JSON_INPUT_PARAMS.NET_WEIGHT.getValue(), element,
+       		 locale);
+        final BigDecimal stone = this.fromApiJsonHelper.extractBigDecimalNamed(COLLATERAL_JSON_INPUT_PARAMS.STONE_WT.getValue(), element,
+       		 locale);
+        final BigDecimal jewelcount = this.fromApiJsonHelper.extractBigDecimalNamed(COLLATERAL_JSON_INPUT_PARAMS.JEWELLERY_COUNT.getValue(), element,
+        		locale);
 
-        return new CollateralCommand(collateralTypeId, value, description);
+        return new CollateralCommand(collateralTypeId,goldfineTypeId,jewelleryTypeId,maketwoTypeId, value,actualcost,gross,impurity,net, stone,jewelcount, description);
     }
 }

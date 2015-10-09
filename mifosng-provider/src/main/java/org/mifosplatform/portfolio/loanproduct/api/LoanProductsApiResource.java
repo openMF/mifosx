@@ -67,7 +67,7 @@ public class LoanProductsApiResource {
             "fundId", "fundName", "includeInBorrowerCycle", "currency", "principal", "minPrincipal", "maxPrincipal", "numberOfRepayments",
             "minNumberOfRepayments", "maxNumberOfRepayments", "repaymentEvery", "repaymentFrequencyType", "graceOnPrincipalPayment",
             "graceOnInterestPayment", "graceOnInterestCharged", "interestRatePerPeriod", "minInterestRatePerPeriod",
-            "maxInterestRatePerPeriod", "interestRateFrequencyType", "annualInterestRate", "amortizationType", "interestType",
+            "maxInterestRatePerPeriod", "interestRateFrequencyType", "annualInterestRate", "flatInterestRatePerPeriod","annualFlatInterestRate","amortizationType", "interestType",
             "interestCalculationPeriodType", "inArrearsTolerance", "transactionProcessingStrategyId", "transactionProcessingStrategyName",
             "charges", "accountingRule", "externalId", "accountingMappings", "paymentChannelToFundSourceMappings", "fundOptions",
             "paymentTypeOptions", "currencyOptions", "repaymentFrequencyTypeOptions", "interestRateFrequencyTypeOptions",

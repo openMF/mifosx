@@ -22,6 +22,7 @@ public class GuarantorData {
     private final Long id;
     private final Long loanId;
     private final CodeValueData clientRelationshipType;
+    private final CodeValueData gncbType;
     private final EnumOptionData guarantorType;
 
     private final String firstname;
@@ -52,52 +53,54 @@ public class GuarantorData {
     @SuppressWarnings("unused")
     private final List<EnumOptionData> guarantorTypeOptions;
     private final Collection<CodeValueData> allowedClientRelationshipTypes;
+    private final Collection<CodeValueData> allowedGncbTypes;
     private final Collection<PortfolioAccountData> accountLinkingOptions;
 
     public static GuarantorData template(final List<EnumOptionData> guarantorTypeOptions,
-            final Collection<CodeValueData> allowedClientRelationshipTypes, Collection<PortfolioAccountData> accountLinkingOptions) {
+            final Collection<CodeValueData> allowedClientRelationshipTypes, Collection<CodeValueData> allowedGncbTypes, Collection<PortfolioAccountData> accountLinkingOptions) {
         final Collection<GuarantorFundingData> guarantorFundingDetails = null;
         final boolean status = false;
-        return new GuarantorData(null, null, null, null, GuarantorEnumerations.guarantorType(GuarantorType.CUSTOMER), null, null, null,
+        return new GuarantorData(null, null, null, null,null, GuarantorEnumerations.guarantorType(GuarantorType.CUSTOMER), null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, status, guarantorFundingDetails,
-                guarantorTypeOptions, allowedClientRelationshipTypes, accountLinkingOptions);
+                guarantorTypeOptions, allowedClientRelationshipTypes, allowedGncbTypes,accountLinkingOptions);
     }
 
     public static GuarantorData templateOnTop(final GuarantorData guarantorData, final List<EnumOptionData> guarantorTypeOptions,
-            final Collection<CodeValueData> allowedClientRelationshipTypes, Collection<PortfolioAccountData> accountLinkingOptions) {
-        return new GuarantorData(guarantorData.id, guarantorData.loanId, guarantorData.clientRelationshipType, guarantorData.entityId,
+            final Collection<CodeValueData> allowedClientRelationshipTypes,final Collection<CodeValueData> allowedGncbTypes, Collection<PortfolioAccountData> accountLinkingOptions) {
+        return new GuarantorData(guarantorData.id, guarantorData.loanId, guarantorData.clientRelationshipType,guarantorData.gncbType, guarantorData.entityId,
                 guarantorData.guarantorType, guarantorData.firstname, guarantorData.lastname, guarantorData.dob,
                 guarantorData.addressLine1, guarantorData.addressLine2, guarantorData.city, guarantorData.state, guarantorData.zip,
                 guarantorData.country, guarantorData.mobileNumber, guarantorData.housePhoneNumber, guarantorData.comment,
                 guarantorData.officeName, guarantorData.joinedDate, guarantorData.externalId, guarantorData.status,
-                guarantorData.guarantorFundingDetails, guarantorTypeOptions, allowedClientRelationshipTypes, accountLinkingOptions);
+                guarantorData.guarantorFundingDetails, guarantorTypeOptions, allowedClientRelationshipTypes,allowedGncbTypes,accountLinkingOptions);
     }
 
     public static GuarantorData mergeClientData(final ClientData clientData, final GuarantorData guarantorData) {
-        return new GuarantorData(guarantorData.id, guarantorData.loanId, guarantorData.clientRelationshipType, guarantorData.entityId,
+        return new GuarantorData(guarantorData.id, guarantorData.loanId, guarantorData.clientRelationshipType,guarantorData.gncbType, guarantorData.entityId,
                 guarantorData.guarantorType, clientData.getFirstname(), clientData.getLastname(), null, null, null, null, null, null, null,
                 null, null, null, clientData.officeName(), clientData.getActivationDate(), clientData.getExternalId(),
-                guarantorData.status, guarantorData.guarantorFundingDetails, null, guarantorData.allowedClientRelationshipTypes,
+                guarantorData.status, guarantorData.guarantorFundingDetails, null, guarantorData.allowedClientRelationshipTypes,guarantorData.allowedGncbTypes,
                 guarantorData.accountLinkingOptions);
     }
 
     public static GuarantorData mergeStaffData(final StaffData staffData, final GuarantorData guarantorData) {
-        return new GuarantorData(guarantorData.id, guarantorData.loanId, guarantorData.clientRelationshipType, guarantorData.entityId,
+        return new GuarantorData(guarantorData.id, guarantorData.loanId, guarantorData.clientRelationshipType,guarantorData.gncbType, guarantorData.entityId,
                 guarantorData.guarantorType, staffData.getFirstname(), staffData.getLastname(), null, null, null, null, null, null, null,
                 null, null, null, staffData.getOfficeName(), null, null, guarantorData.status, guarantorData.guarantorFundingDetails, null,
-                guarantorData.allowedClientRelationshipTypes, guarantorData.accountLinkingOptions);
+                guarantorData.allowedClientRelationshipTypes,guarantorData.allowedGncbTypes, guarantorData.accountLinkingOptions);
     }
 
-    public GuarantorData(final Long id, final Long loanId, final CodeValueData clientRelationshipType, final Long entityId,
+    public GuarantorData(final Long id, final Long loanId, final CodeValueData clientRelationshipType, final CodeValueData gncbType,final Long entityId,
             final EnumOptionData guarantorType, final String firstname, final String lastname, final LocalDate dob,
             final String addressLine1, final String addressLine2, final String city, final String state, final String zip,
             final String country, final String mobileNumber, final String housePhoneNumber, final String comment, final String officeName,
             final LocalDate joinedDate, final String externalId, final boolean status,
             Collection<GuarantorFundingData> guarantorFundingDetails, final List<EnumOptionData> guarantorTypeOptions,
-            final Collection<CodeValueData> allowedClientRelationshipTypes, final Collection<PortfolioAccountData> accountLinkingOptions) {
+            final Collection<CodeValueData> allowedClientRelationshipTypes, final Collection<CodeValueData>allowedGncbTypes,final Collection<PortfolioAccountData> accountLinkingOptions) {
         this.id = id;
         this.loanId = loanId;
         this.clientRelationshipType = clientRelationshipType;
+        this.gncbType = gncbType;
         this.guarantorType = guarantorType;
         this.entityId = entityId;
         this.firstname = firstname;
@@ -119,6 +122,7 @@ public class GuarantorData {
         this.guarantorFundingDetails = guarantorFundingDetails;
         this.guarantorTypeOptions = guarantorTypeOptions;
         this.allowedClientRelationshipTypes = allowedClientRelationshipTypes;
+        this.allowedGncbTypes = allowedGncbTypes;
         this.accountLinkingOptions = accountLinkingOptions;
     }
 

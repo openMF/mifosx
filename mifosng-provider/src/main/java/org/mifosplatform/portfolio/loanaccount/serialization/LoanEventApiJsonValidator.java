@@ -64,7 +64,7 @@ public final class LoanEventApiJsonValidator {
                     "dateFormat", LoanApiConstants.principalDisbursedParameterName, LoanApiConstants.emiAmountParameterName));
         } else {
             disbursementParameters = new HashSet<>(Arrays.asList("actualDisbursementDate", "externalId", "note", "locale",
-                    "dateFormat", "paymentTypeId", "accountNumber", "checkNumber", "routingCode", "receiptNumber", "bankNumber",
+                    "dateFormat", "paymentTypeId","paymentToWhomId" ,"accountNumber", "checkNumber", "routingCode", "receiptNumber", "bankNumber",
                     LoanApiConstants.principalDisbursedParameterName, LoanApiConstants.emiAmountParameterName));
         }
 

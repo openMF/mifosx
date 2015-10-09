@@ -15,6 +15,7 @@ import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
+import org.mifosplatform.organisation.staff.data.StaffAccountSummaryCollectionData.LoanAccountSummary;
 import org.mifosplatform.organisation.workingdays.domain.RepaymentRescheduleType;
 import org.mifosplatform.portfolio.calendar.domain.Calendar;
 import org.mifosplatform.portfolio.calendar.domain.CalendarInstance;
@@ -38,6 +39,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
 
     private final ScheduledDateGenerator scheduledDateGenerator = new DefaultScheduledDateGenerator();
     private final PaymentPeriodsInOneYearCalculator paymentPeriodsInOneYearCalculator = new DefaultPaymentPeriodsInOneYearCalculator();
+	
 
     @Override
     public LoanScheduleModel generate(final MathContext mc, final LoanApplicationTerms loanApplicationTerms,
@@ -1686,15 +1688,31 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             amount = amount.add(principalDisbursed.getAmount()).add(totalInterestChargedForFullLoanTerm.getAmount());
         } else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
             amount = amount.add(totalInterestChargedForFullLoanTerm.getAmount());
-        } else {
+        }else if(loanCharge.getChargeCalculation().isPercentageOfOutstandingPrincipal()){
+        	 
+        	
+        	 BigDecimal totalPrincipalpaid = loanCharge.getLoanSummary().getTotalPrincipalRepaid();
+        	amount = amount.add(principalDisbursed.minus(totalPrincipalpaid).getAmount());
+        	
+        }
+        
+        else {
             amount = amount.add(principalDisbursed.getAmount());
         }
         BigDecimal loanChargeAmt = amount.multiply(loanCharge.getPercentage()).divide(BigDecimal.valueOf(100));
         cumulative = cumulative.plus(loanChargeAmt);
         return cumulative;
     }
+    
+   
+  
 
-    private Money calculateInstallmentCharge(final PrincipalInterest principalInterestForThisPeriod, int numberOfRepayments,
+	
+
+
+	
+
+	private Money calculateInstallmentCharge(final PrincipalInterest principalInterestForThisPeriod, int numberOfRepayments,
             Money cumulative, final LoanCharge loanCharge) {
         if (loanCharge.getChargeCalculation().isPercentageBased()) {
             BigDecimal amount = BigDecimal.ZERO;

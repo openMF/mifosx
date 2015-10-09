@@ -123,6 +123,12 @@ public class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_INTEREST.getValue().longValue(),
                         ChargeCalculationType.PERCENT_OF_INTEREST.getCode(), "% Interest");
             break;
+
+            case PERCENT_OF_OUTSTANDING_PRINCIPAL:
+            	optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_OUTSTANDING_PRINCIPAL.getValue().longValue(),
+            			ChargeCalculationType.PERCENT_OF_OUTSTANDING_PRINCIPAL.getCode(), "% Loan Outstanding Principal");
+            	break;
+            	
             case PERCENT_OF_DISBURSEMENT_AMOUNT:
             	optionData = new EnumOptionData(ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue().longValue(),
             	        ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getCode(), "% Disbursement Amount");

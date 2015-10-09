@@ -14,6 +14,7 @@ import javax.persistence.Embeddable;
 
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
+import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
 
 /**
  * Encapsulates all the summary details of a {@link Loan}.
@@ -199,7 +200,8 @@ public final class LoanSummary {
         this.totalPrincipalRepaid = summaryWrapper.calculateTotalPrincipalRepaid(repaymentScheduleInstallments, currency).getAmount();
         this.totalPrincipalWrittenOff = summaryWrapper.calculateTotalPrincipalWrittenOff(repaymentScheduleInstallments, currency)
                 .getAmount();
-
+        
+        
         this.totalPrincipalOutstanding = principal.minus(this.totalPrincipalRepaid).minus(this.totalPrincipalWrittenOff).getAmount();
 
         final Money totalInterestCharged = summaryWrapper.calculateTotalInterestCharged(repaymentScheduleInstallments, currency);
@@ -272,7 +274,9 @@ public final class LoanSummary {
         this.totalOutstanding = totalOutstanding.getAmount();
     }
 
-    public BigDecimal getTotalPrincipalDisbursed() {
+    
+
+	public BigDecimal getTotalPrincipalDisbursed() {
         return this.totalPrincipalDisbursed;
     }
 
@@ -322,4 +326,6 @@ public final class LoanSummary {
     public BigDecimal getTotalPenaltyChargesWaived() {
         return this.totalPenaltyChargesWaived;
     }
+
+
 }

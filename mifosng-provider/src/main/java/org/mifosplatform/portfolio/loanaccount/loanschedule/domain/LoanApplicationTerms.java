@@ -56,6 +56,8 @@ public final class LoanApplicationTerms {
     private BigDecimal interestRatePerPeriod;
     private final PeriodFrequencyType interestRatePeriodFrequencyType;
     private BigDecimal annualNominalInterestRate;
+    private BigDecimal flatInterestRatePerPeriod;
+    private BigDecimal annualFlatInterestRate;
     private final InterestCalculationPeriodMethod interestCalculationPeriodMethod;
 
     private Money principal;
@@ -156,6 +158,7 @@ public final class LoanApplicationTerms {
             final PeriodFrequencyType repaymentPeriodFrequencyType, Integer nthDay, DayOfWeekType weekDayType,
             final AmortizationMethod amortizationMethod, final InterestMethod interestMethod, final BigDecimal interestRatePerPeriod,
             final PeriodFrequencyType interestRatePeriodFrequencyType, final BigDecimal annualNominalInterestRate,
+            final BigDecimal flatInterestRatePerPeriod,final BigDecimal annualFlatInterestRate,
             final InterestCalculationPeriodMethod interestCalculationPeriodMethod, final Money principalMoney,
             final LocalDate expectedDisbursementDate, final LocalDate repaymentsStartingFromDate,
             final LocalDate calculatedRepaymentsStartingFromDate, final Integer graceOnPrincipalPayment,
@@ -174,7 +177,7 @@ public final class LoanApplicationTerms {
         final InterestRecalculationCompoundingMethod interestRecalculationCompoundingMethod = null;
         return new LoanApplicationTerms(currency, loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments, repaymentEvery,
                 repaymentPeriodFrequencyType, nthDay, weekDayType, amortizationMethod, interestMethod, interestRatePerPeriod,
-                interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod, principalMoney,
+                interestRatePeriodFrequencyType, annualNominalInterestRate,flatInterestRatePerPeriod,annualFlatInterestRate, interestCalculationPeriodMethod, principalMoney,
                 expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate, graceOnPrincipalPayment,
                 graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsTolerance, multiDisburseLoan, emiAmount,
                 disbursementDatas, maxOutstandingBalance, emiAmountVariations, graceOnArrearsAgeing, daysInMonthType, daysInYearType,
@@ -228,8 +231,11 @@ public final class LoanApplicationTerms {
         final BigDecimal interestRatePerPeriod = loanProductRelatedDetail.getNominalInterestRatePerPeriod();
         final PeriodFrequencyType interestRatePeriodFrequencyType = loanProductRelatedDetail.getInterestPeriodFrequencyType();
         final BigDecimal annualNominalInterestRate = loanProductRelatedDetail.getAnnualNominalInterestRate();
+        final BigDecimal flatInterestRatePerPeriod = loanProductRelatedDetail.getFlatInterestRatePerPeriod();
+        final BigDecimal annualFlatInterestRate = loanProductRelatedDetail.getAnnualFlatInterestRate();
         final InterestCalculationPeriodMethod interestCalculationPeriodMethod = loanProductRelatedDetail
                 .getInterestCalculationPeriodMethod();
+        
         final Money principalMoney = loanProductRelatedDetail.getPrincipal();
 
         //
@@ -243,7 +249,7 @@ public final class LoanApplicationTerms {
         final boolean isInterestRecalculationEnabled = loanProductRelatedDetail.isInterestRecalculationEnabled();
         return new LoanApplicationTerms(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments,
                 repaymentEvery, repaymentPeriodFrequencyType, nthDay.getValue(), dayOfWeek, amortizationMethod, interestMethod,
-                interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod,
+                interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate,flatInterestRatePerPeriod,annualFlatInterestRate, interestCalculationPeriodMethod,
                 principalMoney, expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate,
                 graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsTolerance,
                 multiDisburseLoan, emiAmount, disbursementDatas, maxOutstandingBalance, emiAmountVariations,
@@ -273,6 +279,8 @@ public final class LoanApplicationTerms {
         final BigDecimal interestRatePerPeriod = loanProductRelatedDetail.getNominalInterestRatePerPeriod();
         final PeriodFrequencyType interestRatePeriodFrequencyType = loanProductRelatedDetail.getInterestPeriodFrequencyType();
         final BigDecimal annualNominalInterestRate = loanProductRelatedDetail.getAnnualNominalInterestRate();
+        final BigDecimal flatInterestRatePerPeriod = loanProductRelatedDetail.getFlatInterestRatePerPeriod();
+        final BigDecimal annualFlatInterestRate = loanProductRelatedDetail.getAnnualFlatInterestRate();
         final InterestCalculationPeriodMethod interestCalculationPeriodMethod = loanProductRelatedDetail
                 .getInterestCalculationPeriodMethod();
         final Money principalMoney = loanProductRelatedDetail.getPrincipal();
@@ -295,7 +303,7 @@ public final class LoanApplicationTerms {
         final Calendar loanCalendar = null;
         return new LoanApplicationTerms(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments,
                 repaymentEvery, repaymentPeriodFrequencyType, null, null, amortizationMethod, interestMethod, interestRatePerPeriod,
-                interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod, principalMoney,
+                interestRatePeriodFrequencyType, annualNominalInterestRate, flatInterestRatePerPeriod,annualFlatInterestRate,interestCalculationPeriodMethod, principalMoney,
                 expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate, graceOnPrincipalPayment,
                 graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsTolerance, multiDisburseLoan, emiAmount,
                 disbursementDatas, maxOutstandingBalance, emiAmountVariations, loanProductRelatedDetail.getGraceOnDueDate(),
@@ -311,7 +319,7 @@ public final class LoanApplicationTerms {
                 applicationTerms.loanTermPeriodFrequencyType, applicationTerms.numberOfRepayments, repaymentEvery,
                 repaymentPeriodFrequencyType, null, null, applicationTerms.amortizationMethod, applicationTerms.interestMethod,
                 applicationTerms.interestRatePerPeriod, applicationTerms.interestRatePeriodFrequencyType,
-                applicationTerms.annualNominalInterestRate, applicationTerms.interestCalculationPeriodMethod, applicationTerms.principal,
+                applicationTerms.annualNominalInterestRate,applicationTerms.flatInterestRatePerPeriod,applicationTerms.annualFlatInterestRate, applicationTerms.interestCalculationPeriodMethod, applicationTerms.principal,
                 applicationTerms.expectedDisbursementDate, applicationTerms.repaymentsStartingFromDate,
                 applicationTerms.calculatedRepaymentsStartingFromDate, applicationTerms.principalGrace,
                 applicationTerms.interestPaymentGrace, applicationTerms.interestChargingGrace, applicationTerms.interestChargedFromDate,
@@ -330,7 +338,8 @@ public final class LoanApplicationTerms {
             final PeriodFrequencyType loanTermPeriodFrequencyType, final Integer numberOfRepayments, final Integer repaymentEvery,
             final PeriodFrequencyType repaymentPeriodFrequencyType, final Integer nthDay, final DayOfWeekType weekDayType,
             final AmortizationMethod amortizationMethod, final InterestMethod interestMethod, final BigDecimal interestRatePerPeriod,
-            final PeriodFrequencyType interestRatePeriodFrequencyType, final BigDecimal annualNominalInterestRate,
+            final PeriodFrequencyType interestRatePeriodFrequencyType, final BigDecimal annualNominalInterestRate,final BigDecimal flatInterestRatePerPeriod,
+            final BigDecimal annualFlatInterestRate,
             final InterestCalculationPeriodMethod interestCalculationPeriodMethod, final Money principal,
             final LocalDate expectedDisbursementDate, final LocalDate repaymentsStartingFromDate,
             final LocalDate calculatedRepaymentsStartingFromDate, final Integer principalGrace, final Integer interestPaymentGrace,
@@ -359,6 +368,8 @@ public final class LoanApplicationTerms {
         this.interestRatePerPeriod = interestRatePerPeriod;
         this.interestRatePeriodFrequencyType = interestRatePeriodFrequencyType;
         this.annualNominalInterestRate = annualNominalInterestRate;
+        this.flatInterestRatePerPeriod = flatInterestRatePerPeriod;
+        this.annualFlatInterestRate = annualFlatInterestRate;
         this.interestCalculationPeriodMethod = interestCalculationPeriodMethod;
 
         this.principal = principal;
@@ -979,7 +990,7 @@ public final class LoanApplicationTerms {
                 this.currency.getCurrencyInMultiplesOf());
 
         return LoanProductRelatedDetail.createFrom(currency, this.principal.getAmount(), this.interestRatePerPeriod,
-                this.interestRatePeriodFrequencyType, this.annualNominalInterestRate, this.interestMethod,
+                this.interestRatePeriodFrequencyType, this.annualNominalInterestRate,this.flatInterestRatePerPeriod,this.annualFlatInterestRate, this.interestMethod,
                 this.interestCalculationPeriodMethod, this.repaymentEvery, this.repaymentPeriodFrequencyType, this.numberOfRepayments,
                 this.principalGrace, this.interestPaymentGrace, this.interestChargingGrace, this.amortizationMethod,
                 this.inArrearsTolerance.getAmount(), this.graceOnArrearsAgeing, this.daysInMonthType.getValue(),

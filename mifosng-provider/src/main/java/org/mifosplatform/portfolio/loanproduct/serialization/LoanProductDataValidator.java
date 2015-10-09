@@ -51,7 +51,7 @@ public final class LoanProductDataValidator {
     private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("locale", "dateFormat", "name", "description", "fundId",
             "currencyCode", "digitsAfterDecimal", "inMultiplesOf", "principal", "minPrincipal", "maxPrincipal", "repaymentEvery",
             "numberOfRepayments", "minNumberOfRepayments", "maxNumberOfRepayments", "repaymentFrequencyType", "interestRatePerPeriod",
-            "minInterestRatePerPeriod", "maxInterestRatePerPeriod", "interestRateFrequencyType", "amortizationType", "interestType",
+            "minInterestRatePerPeriod", "maxInterestRatePerPeriod", "interestRateFrequencyType","flatInterestRatePerPeriod","amortizationType", "interestType",
             "interestCalculationPeriodType", "inArrearsTolerance", "transactionProcessingStrategyId", "graceOnPrincipalPayment",
             "graceOnInterestPayment", "graceOnInterestCharged", "charges", "accountingRule", "includeInBorrowerCycle", "startDate",
             "closeDate", "externalId", LOAN_PRODUCT_ACCOUNTING_PARAMS.FEES_RECEIVABLE.getValue(),
@@ -251,6 +251,8 @@ public final class LoanProductDataValidator {
             baseDataValidator.reset().parameter("interestRatePerPeriod").value(interestRatePerPeriod)
                     .notLessThanMin(minInterestRatePerPeriod);
         }
+        final BigDecimal flatInterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("flatInterestRatePerPeriod", element);
+        baseDataValidator.reset().parameter("flatInterestRatePerPeriod").value(flatInterestRatePerPeriod).notNull().zeroOrPositiveAmount();
 
         final Integer interestRateFrequencyType = this.fromApiJsonHelper.extractIntegerNamed("interestRateFrequencyType", element,
                 Locale.getDefault());
@@ -768,6 +770,10 @@ public final class LoanProductDataValidator {
             final BigDecimal interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("interestRatePerPeriod",
                     element);
             baseDataValidator.reset().parameter("interestRatePerPeriod").value(interestRatePerPeriod).notNull().zeroOrPositiveAmount();
+        }
+        if(this.fromApiJsonHelper.parameterExists("flatInterestRatePerPeriod", element)){
+        	final BigDecimal flatInterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("flatInterestRatePerPeriod", element);
+        	baseDataValidator.reset().parameter("flatInterestRatePerPeriod").value(flatInterestRatePerPeriod).notNull().zeroOrPositiveAmount();
         }
 
         final String minNumberOfRepaymentsParameterName = "minNumberOfRepayments";

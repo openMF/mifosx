@@ -56,7 +56,7 @@ import org.springframework.stereotype.Component;
 public class GuarantorsApiResource {
 
     private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "loanId", "clientRelationshipType",
-            "guarantorType", "firstname", "lastname", "entityId", "externalId", "officeName", "joinedDate", "addressLine1", "addressLine2",
+            "guarantorType","gncbType", "firstname", "lastname", "entityId", "externalId", "officeName", "joinedDate", "addressLine1", "addressLine2",
             "city", "state", "zip", "country", "mobileNumber", "housePhoneNumber", "comment", "dob", "guarantorTypeOptions",
             "allowedClientRelationshipTypes"));
 
@@ -98,8 +98,11 @@ public class GuarantorsApiResource {
         final List<EnumOptionData> guarantorTypeOptions = GuarantorEnumerations.guarantorType(GuarantorType.values());
         final Collection<CodeValueData> allowedClientRelationshipTypes = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode(GuarantorConstants.GUARANTOR_RELATIONSHIP_CODE_NAME);
+        final Collection<CodeValueData> allowedGncbTypes = this.codeValueReadPlatformService
+        		.retrieveCodeValuesByCode(GuarantorConstants.GNCB_RELATIONSHIP_CODE_NAME);
+        
         final Collection<PortfolioAccountData> accountLinkingOptions = null;
-        final GuarantorData guarantorData = GuarantorData.template(guarantorTypeOptions, allowedClientRelationshipTypes,
+        final GuarantorData guarantorData = GuarantorData.template(guarantorTypeOptions, allowedClientRelationshipTypes, allowedGncbTypes,
                 accountLinkingOptions);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
@@ -133,9 +136,11 @@ public class GuarantorsApiResource {
         if (settings.isTemplate()) {
             final Collection<CodeValueData> allowedClientRelationshipTypes = this.codeValueReadPlatformService
                     .retrieveCodeValuesByCode(GuarantorConstants.GUARANTOR_RELATIONSHIP_CODE_NAME);
+            final Collection<CodeValueData> allowedGncbTypes = this.codeValueReadPlatformService 
+            		.retrieveCodeValuesByCode(GuarantorConstants.GNCB_RELATIONSHIP_CODE_NAME);
             final List<EnumOptionData> guarantorTypeOptions = GuarantorEnumerations.guarantorType(GuarantorType.values());
             final Collection<PortfolioAccountData> accountLinkingOptions = null;
-            guarantorData = GuarantorData.templateOnTop(guarantorData, guarantorTypeOptions, allowedClientRelationshipTypes,
+            guarantorData = GuarantorData.templateOnTop(guarantorData, guarantorTypeOptions, allowedClientRelationshipTypes, allowedGncbTypes,
                     accountLinkingOptions);
         }
 
@@ -195,7 +200,7 @@ public class GuarantorsApiResource {
         if (this.loanReadPlatformService.isGuaranteeRequired(loanId)) {
             accountLinkingOptions = this.portfolioAccountReadPlatformService.retrieveAllForLookup(portfolioAccountDTO);
         }
-        final GuarantorData guarantorData = GuarantorData.template(null, null, accountLinkingOptions);
+        final GuarantorData guarantorData = GuarantorData.template(null, null,null, accountLinkingOptions);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.apiJsonSerializerService.serialize(settings, guarantorData, AccountTransfersApiConstants.RESPONSE_DATA_PARAMETERS);
     }

@@ -180,6 +180,10 @@ public class LoanProduct extends AbstractPersistable<Long> {
         final BigDecimal minInterestRatePerPeriod = command.bigDecimalValueOfParameterNamed("minInterestRatePerPeriod");
         final BigDecimal maxInterestRatePerPeriod = command.bigDecimalValueOfParameterNamed("maxInterestRatePerPeriod");
         final BigDecimal annualInterestRate = aprCalculator.calculateFrom(interestFrequencyType, interestRatePerPeriod);
+        
+        final BigDecimal flatInterestRatePerPeriod = command.bigDecimalValueOfParameterNamed("flatInterestRatePerPeriod");
+        final BigDecimal annualFlatInterestRate =aprCalculator.calculateFrom(interestFrequencyType, flatInterestRatePerPeriod);
+        
 
         final Integer repaymentEvery = command.integerValueOfParameterNamed("repaymentEvery");
         final Integer numberOfRepayments = command.integerValueOfParameterNamed("numberOfRepayments");
@@ -264,7 +268,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
         return new LoanProduct(fund, loanTransactionProcessingStrategy, name, shortName, description, currency, principal, minPrincipal,
                 maxPrincipal, interestRatePerPeriod, minInterestRatePerPeriod, maxInterestRatePerPeriod, interestFrequencyType,
-                annualInterestRate, interestMethod, interestCalculationPeriodMethod, repaymentEvery, repaymentFrequencyType,
+                annualInterestRate,flatInterestRatePerPeriod,annualFlatInterestRate, interestMethod, interestCalculationPeriodMethod, repaymentEvery, repaymentFrequencyType,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, graceOnPrincipalPayment, graceOnInterestPayment,
                 graceOnInterestCharged, amortizationMethod, inArrearsTolerance, productCharges, accountingRuleType, includeInBorrowerCycle,
                 startDate, closeDate, externalId, useBorrowerCycle, loanProductBorrowerCycleVariations, multiDisburseLoan, maxTrancheCount,
@@ -482,7 +486,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final BigDecimal defaultMinPrincipal, final BigDecimal defaultMaxPrincipal,
             final BigDecimal defaultNominalInterestRatePerPeriod, final BigDecimal defaultMinNominalInterestRatePerPeriod,
             final BigDecimal defaultMaxNominalInterestRatePerPeriod, final PeriodFrequencyType interestPeriodFrequencyType,
-            final BigDecimal defaultAnnualNominalInterestRate, final InterestMethod interestMethod,
+            final BigDecimal defaultAnnualNominalInterestRate,final BigDecimal defaultFlatInterestRatePerPeriod,final BigDecimal defaultAnnualFlatInterestRate, final InterestMethod interestMethod,
             final InterestCalculationPeriodMethod interestCalculationPeriodMethod, final Integer repayEvery,
             final PeriodFrequencyType repaymentFrequencyType, final Integer defaultNumberOfInstallments,
             final Integer defaultMinNumberOfInstallments, final Integer defaultMaxNumberOfInstallments,
@@ -514,7 +518,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
         }
 
         this.loanProductRelatedDetail = new LoanProductRelatedDetail(currency, defaultPrincipal, defaultNominalInterestRatePerPeriod,
-                interestPeriodFrequencyType, defaultAnnualNominalInterestRate, interestMethod, interestCalculationPeriodMethod, repayEvery,
+                interestPeriodFrequencyType, defaultAnnualNominalInterestRate, defaultFlatInterestRatePerPeriod,defaultAnnualFlatInterestRate,interestMethod, interestCalculationPeriodMethod, repayEvery,
                 repaymentFrequencyType, defaultNumberOfInstallments, graceOnPrincipalPayment, graceOnInterestPayment,
                 graceOnInterestCharged, amortizationMethod, inArrearsTolerance, graceOnArrearsAgeing, daysInMonthType.getValue(),
                 daysInYearType.getValue(), isInterestRecalculationEnabled);

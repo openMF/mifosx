@@ -11,6 +11,7 @@ import java.util.Set;
 import org.joda.time.LocalDate;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
+import org.pentaho.reporting.libraries.base.util.Empty;
 import org.springframework.stereotype.Component;
 
 /**
@@ -102,10 +103,12 @@ public final class LoanSummaryWrapper {
         for (final LoanRepaymentScheduleInstallment installment : repaymentScheduleInstallments) {
             total = total.plus(installment.getFeeChargesCharged(currency));
         }
-        return total;
+        return total; 
     }
 
-    public Money calculateTotalFeeChargesRepaid(final List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments,
+
+
+	public Money calculateTotalFeeChargesRepaid(final List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments,
             final MonetaryCurrency currency) {
         Money total = Money.zero(currency);
         for (final LoanRepaymentScheduleInstallment installment : repaymentScheduleInstallments) {

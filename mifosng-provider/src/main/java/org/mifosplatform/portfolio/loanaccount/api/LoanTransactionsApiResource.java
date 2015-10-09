@@ -36,6 +36,8 @@ import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionData;
 import org.mifosplatform.portfolio.loanaccount.service.LoanReadPlatformService;
+import org.mifosplatform.portfolio.paymenttowhom.data.PaymentToWhomData;
+import org.mifosplatform.portfolio.paymenttowhom.service.PaymentToWhomReadPaltformService;
 import org.mifosplatform.portfolio.paymenttype.data.PaymentTypeData;
 import org.mifosplatform.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,19 +60,21 @@ public class LoanTransactionsApiResource {
     private final DefaultToApiJsonSerializer<LoanTransactionData> toApiJsonSerializer;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
+    private final PaymentToWhomReadPaltformService paymentToWhomReadPaltformService;
 
     @Autowired
     public LoanTransactionsApiResource(final PlatformSecurityContext context, final LoanReadPlatformService loanReadPlatformService,
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final DefaultToApiJsonSerializer<LoanTransactionData> toApiJsonSerializer,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-            PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
+            PaymentTypeReadPlatformService paymentTypeReadPlatformService, PaymentToWhomReadPaltformService paymentToWhomReadPaltformService) {
         this.context = context;
         this.loanReadPlatformService = loanReadPlatformService;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.paymentTypeReadPlatformService = paymentTypeReadPlatformService;
+        this.paymentToWhomReadPaltformService = paymentToWhomReadPaltformService;
     }
 
     private boolean is(final String commandParam, final String commandValue) {
@@ -99,9 +103,9 @@ public class LoanTransactionsApiResource {
         } else if (is(commandParam, "close")) {
             transactionData = this.loanReadPlatformService.retrieveNewClosureDetails();
         } else if (is(commandParam, "disburse")) {
-            transactionData = this.loanReadPlatformService.retrieveDisbursalTemplate(loanId, true);
+            transactionData = this.loanReadPlatformService.retrieveDisbursalTemplate(loanId, true, true);
         } else if (is(commandParam, "disburseToSavings")) {
-            transactionData = this.loanReadPlatformService.retrieveDisbursalTemplate(loanId, false);
+            transactionData = this.loanReadPlatformService.retrieveDisbursalTemplate(loanId, false, false);
         } else if (is(commandParam, "recoverypayment")) {
             transactionData = this.loanReadPlatformService.retrieveRecoveryPaymentTemplate(loanId);
         } else if (is(commandParam, "prepayLoan")) {
@@ -115,7 +119,7 @@ public class LoanTransactionsApiResource {
         } else if (is(commandParam, "refundbycash")) {
             transactionData = this.loanReadPlatformService.retrieveRefundByCashTemplate(loanId);
         } else if (is(commandParam, "refundbytransfer")) {
-            transactionData = this.loanReadPlatformService.retrieveDisbursalTemplate(loanId, true);
+            transactionData = this.loanReadPlatformService.retrieveDisbursalTemplate(loanId, true, false);
         } else {
             throw new UnrecognizedQueryParamException("command", commandParam);
         }
@@ -137,7 +141,8 @@ public class LoanTransactionsApiResource {
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         if (settings.isTemplate()) {
             final Collection<PaymentTypeData> paymentTypeOptions = this.paymentTypeReadPlatformService.retrieveAllPaymentTypes();
-            transactionData = LoanTransactionData.templateOnTop(transactionData, paymentTypeOptions);
+            final Collection<PaymentToWhomData> paymentToWhomOptions = this.paymentToWhomReadPaltformService.retrieveAllPaymentToWhom();
+            transactionData = LoanTransactionData.templateOnTop(transactionData, paymentTypeOptions,paymentToWhomOptions);
         }
 
         return this.toApiJsonSerializer.serialize(settings, transactionData, this.RESPONSE_DATA_PARAMETERS);

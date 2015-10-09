@@ -118,6 +118,13 @@ public class GuarantorWritePlatformServiceJpaRepositoryIImpl implements Guaranto
                 clientRelationshipType = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
                         GuarantorConstants.GUARANTOR_RELATIONSHIP_CODE_NAME, clientRelationshipId);
             }
+            
+            final Long gnbcId = guarantorCommand.getGncbTypeId();
+            CodeValue gnbcType = null;
+            if (gnbcId != null){
+            	gnbcType = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
+            			GuarantorConstants.GNCB_RELATIONSHIP_CODE_NAME,gnbcId);
+            }
 
             final Long entityId = guarantorCommand.getEntityId();
             final Integer guarantorTypeId = guarantorCommand.getGuarantorTypeId();
@@ -145,7 +152,7 @@ public class GuarantorWritePlatformServiceJpaRepositoryIImpl implements Guaranto
             }
 
             if (guarantor == null) {
-                guarantor = Guarantor.fromJson(loan, clientRelationshipType, command, guarantorFundingDetails);
+                guarantor = Guarantor.fromJson(loan, clientRelationshipType,gnbcType, command, guarantorFundingDetails);
             } else {
                 guarantor.addFundingDetails(guarantorFundingDetails);
             }
@@ -188,6 +195,17 @@ public class GuarantorWritePlatformServiceJpaRepositoryIImpl implements Guaranto
                             GuarantorConstants.GUARANTOR_RELATIONSHIP_CODE_NAME, clientRelationshipId);
                 }
                 guarantorForUpdate.updateClientRelationshipType(clientRelationshipType);
+            }
+            
+            if(changesOnly.containsKey(GUARANTOR_JSON_INPUT_PARAMS.GNCB_TYPE_ID.getValue())){
+            	final Long gnbcId = guarantorCommand.getGncbTypeId();
+            	CodeValue gnbcType = null;
+            	if(gnbcId != null){
+            		gnbcType = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(
+            				GuarantorConstants.GNCB_RELATIONSHIP_CODE_NAME, gnbcId);
+            	}
+            	guarantorForUpdate.updateGnbcType(gnbcType);
+            	
             }
 
             final List<Guarantor> existGuarantorList = this.guarantorRepository.findByLoan(loan);

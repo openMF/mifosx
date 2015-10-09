@@ -41,6 +41,10 @@ public class Guarantor extends AbstractPersistable<Long> {
     @ManyToOne
     @JoinColumn(name = "client_reln_cv_id", nullable = false)
     private CodeValue clientRelationshipType;
+    
+    @ManyToOne
+    @JoinColumn(name = "gnbc_type_cv_id", nullable = false)
+    private CodeValue gnbcType;
 
     @Column(name = "type_enum", nullable = false)
     private Integer gurantorType;
@@ -73,13 +77,13 @@ public class Guarantor extends AbstractPersistable<Long> {
     @Column(name = "country", length = 50)
     private String country;
 
-    @Column(name = "zip", length = 20)
+    @Column(name = "zip", length = 6)
     private String zip;
 
-    @Column(name = "house_phone_number", length = 20)
+    @Column(name = "house_phone_number", length = 10)
     private String housePhoneNumber;
 
-    @Column(name = "mobile_number", length = 20)
+    @Column(name = "mobile_number", length = 10)
     private String mobilePhoneNumber;
 
     @Column(name = "comment", length = 500)
@@ -96,13 +100,14 @@ public class Guarantor extends AbstractPersistable<Long> {
 
     }
 
-    private Guarantor(final Loan loan, final CodeValue clientRelationshipType, final Integer gurantorType, final Long entityId,
+    private Guarantor(final Loan loan, final CodeValue clientRelationshipType,final CodeValue gnbcType, final Integer gurantorType, final Long entityId,
             final String firstname, final String lastname, final Date dateOfBirth, final String addressLine1, final String addressLine2,
             final String city, final String state, final String country, final String zip, final String housePhoneNumber,
             final String mobilePhoneNumber, final String comment, final boolean active,
             final List<GuarantorFundingDetails> guarantorFundDetails) {
         this.loan = loan;
         this.clientRelationshipType = clientRelationshipType;
+        this.gnbcType = gnbcType;
         this.gurantorType = gurantorType;
         this.entityId = entityId;
         this.firstname = StringUtils.defaultIfEmpty(firstname, null);
@@ -121,7 +126,7 @@ public class Guarantor extends AbstractPersistable<Long> {
         this.guarantorFundDetails.addAll(guarantorFundDetails);
     }
 
-    public static Guarantor fromJson(final Loan loan, final CodeValue clientRelationshipType, final JsonCommand command,
+    public static Guarantor fromJson(final Loan loan, final CodeValue clientRelationshipType, final CodeValue gnbcType, final JsonCommand command,
             final List<GuarantorFundingDetails> fundingDetails) {
         final Integer gurantorType = command.integerValueSansLocaleOfParameterNamed(GUARANTOR_JSON_INPUT_PARAMS.GUARANTOR_TYPE_ID
                 .getValue());
@@ -141,11 +146,11 @@ public class Guarantor extends AbstractPersistable<Long> {
             final String mobilePhoneNumber = command.stringValueOfParameterNamed(GUARANTOR_JSON_INPUT_PARAMS.MOBILE_NUMBER.getValue());
             final String comment = command.stringValueOfParameterNamed(GUARANTOR_JSON_INPUT_PARAMS.COMMENT.getValue());
 
-            return new Guarantor(loan, clientRelationshipType, gurantorType, entityId, firstname, lastname, dateOfBirth, addressLine1,
+            return new Guarantor(loan, clientRelationshipType,gnbcType, gurantorType, entityId, firstname, lastname, dateOfBirth, addressLine1,
                     addressLine2, city, state, country, zip, housePhoneNumber, mobilePhoneNumber, comment, active, fundingDetails);
         }
 
-        return new Guarantor(loan, clientRelationshipType, gurantorType, entityId, null, null, null, null, null, null, null, null, null,
+        return new Guarantor(loan, clientRelationshipType,gnbcType, gurantorType, entityId, null, null, null, null, null, null, null, null, null,
                 null, null, null, active, fundingDetails);
 
     }
@@ -155,6 +160,7 @@ public class Guarantor extends AbstractPersistable<Long> {
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
 
         handlePropertyUpdate(command, actualChanges, GUARANTOR_JSON_INPUT_PARAMS.CLIENT_RELATIONSHIP_TYPE_ID.getValue(), 0, true);
+        handlePropertyUpdate(command, actualChanges, GUARANTOR_JSON_INPUT_PARAMS.GNCB_TYPE_ID.getValue(), 0 , true);
 
         if (isExternalGuarantor()) {
             handlePropertyUpdate(command, actualChanges, GUARANTOR_JSON_INPUT_PARAMS.FIRSTNAME.getValue(), this.firstname);
@@ -276,6 +282,14 @@ public class Guarantor extends AbstractPersistable<Long> {
 
     public void updateClientRelationshipType(final CodeValue clientRelationshipType) {
         this.clientRelationshipType = clientRelationshipType;
+    }
+    
+    public CodeValue getGnbcType(){
+    	return this.gnbcType;
+    	
+    }
+    public void updateGnbcType(final CodeValue gnbcType){
+    	this.gnbcType = gnbcType;
     }
 
     private void updateExistingEntityToNull() {

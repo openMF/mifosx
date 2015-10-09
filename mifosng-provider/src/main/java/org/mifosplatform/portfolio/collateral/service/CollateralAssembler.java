@@ -55,16 +55,28 @@ public class CollateralAssembler {
                     final Long id = this.fromApiJsonHelper.extractLongNamed("id", collateralItemElement);
                     final Long collateralTypeId = this.fromApiJsonHelper.extractLongNamed("type", collateralItemElement);
                     final CodeValue collateralType = this.codeValueRepository.findOneWithNotFoundDetection(collateralTypeId);
+                    final Long goldfineTypeId = this.fromApiJsonHelper.extractLongNamed("goldfine", collateralItemElement);
+                    final CodeValue goldfineType = this.codeValueRepository.findOneWithNotFoundDetection(goldfineTypeId);
+                    final Long jewelleryTypeId = this.fromApiJsonHelper.extractLongNamed("jewellery", collateralItemElement);
+                    final CodeValue jewelleryType = this.codeValueRepository.findOneWithNotFoundDetection(jewelleryTypeId);
+                    final Long maketwoTypeId = this.fromApiJsonHelper.extractLongNamed("maketwo", collateralItemElement);
+                    final CodeValue maketwoType = this.codeValueRepository.findOneWithNotFoundDetection(maketwoTypeId);
                     final String description = this.fromApiJsonHelper.extractStringNamed("description", collateralItemElement);
                     final BigDecimal value = this.fromApiJsonHelper.extractBigDecimalNamed("value", collateralItemElement, locale);
+                    final BigDecimal actualcost = this.fromApiJsonHelper.extractBigDecimalNamed("actualcost", collateralItemElement, locale);
+                    final BigDecimal gross = this.fromApiJsonHelper.extractBigDecimalNamed("gross", collateralItemElement, locale);
+                    final BigDecimal impurity = this.fromApiJsonHelper.extractBigDecimalNamed("impurity", collateralItemElement, locale);
+                    final BigDecimal net = this.fromApiJsonHelper.extractBigDecimalNamed("net", collateralItemElement, locale);
+                    final BigDecimal stone = this.fromApiJsonHelper.extractBigDecimalNamed("stone", collateralItemElement, locale);
+                    final BigDecimal jewelcount = this.fromApiJsonHelper.extractBigDecimalNamed("jewelcount", collateralItemElement, locale);
 
                     if (id == null) {
-                        collateralItems.add(LoanCollateral.from(collateralType, value, description));
+                        collateralItems.add(LoanCollateral.from(collateralType,goldfineType,jewelleryType,maketwoType, value,actualcost,gross,impurity,net,stone,jewelcount, description));
                     } else {
                         final LoanCollateral loanCollateralItem = this.loanCollateralRepository.findOne(id);
                         if (loanCollateralItem == null) { throw new CollateralNotFoundException(id); }
 
-                        loanCollateralItem.assembleFrom(collateralType, value, description);
+                        loanCollateralItem.assembleFrom(collateralType,goldfineType,jewelleryType,maketwoType, value,actualcost,gross,impurity,net,stone,jewelcount, description);
 
                         collateralItems.add(loanCollateralItem);
                     }

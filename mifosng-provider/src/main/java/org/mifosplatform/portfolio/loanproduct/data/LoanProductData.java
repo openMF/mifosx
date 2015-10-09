@@ -67,6 +67,8 @@ public class LoanProductData {
     private final BigDecimal maxInterestRatePerPeriod;
     private final EnumOptionData interestRateFrequencyType;
     private final BigDecimal annualInterestRate;
+    private final BigDecimal flatInterestRatePerPeriod;
+    private final BigDecimal annualFlatInterestRate;
 
     // settings
     private final EnumOptionData amortizationType;
@@ -165,6 +167,8 @@ public class LoanProductData {
         final BigDecimal minInterestRatePerPeriod = null;
         final BigDecimal maxInterestRatePerPeriod = null;
         final BigDecimal annualInterestRate = null;
+        final BigDecimal flatInterestRatePerPeriod = null;
+        final BigDecimal annualFlatInterestRate = null;
         final EnumOptionData repaymentFrequencyType = null;
         final EnumOptionData interestRateFrequencyType = null;
         final EnumOptionData amortizationType = null;
@@ -209,7 +213,7 @@ public class LoanProductData {
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
-                minInterestRatePerPeriod, maxInterestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType,
+                minInterestRatePerPeriod, maxInterestRatePerPeriod, annualInterestRate,flatInterestRatePerPeriod,annualFlatInterestRate, repaymentFrequencyType, interestRateFrequencyType,
                 amortizationType, interestType, interestCalculationPeriodType, fundId, fundName, transactionProcessingStrategyId,
                 transactionProcessingStrategyName, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, charges,
                 accountingType, includeInBorrowerCycle, useBorrowerCycle, startDate, closeDate, status, externalId, principalVariations,
@@ -236,6 +240,9 @@ public class LoanProductData {
         final BigDecimal minInterestRatePerPeriod = null;
         final BigDecimal maxInterestRatePerPeriod = null;
         final BigDecimal annualInterestRate = null;
+        final BigDecimal flatInterestRatePerPeriod = null;
+        final BigDecimal annualFlatInterestRate = null;
+
         final EnumOptionData repaymentFrequencyType = null;
         final EnumOptionData interestRateFrequencyType = null;
         final EnumOptionData amortizationType = null;
@@ -282,7 +289,7 @@ public class LoanProductData {
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
-                minInterestRatePerPeriod, maxInterestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType,
+                minInterestRatePerPeriod, maxInterestRatePerPeriod, annualInterestRate,flatInterestRatePerPeriod,annualFlatInterestRate, repaymentFrequencyType, interestRateFrequencyType,
                 amortizationType, interestType, interestCalculationPeriodType, fundId, fundName, transactionProcessingStrategyId,
                 transactionProcessingStrategyName, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, charges,
                 accountingType, includeInBorrowerCycle, useBorrowerCycle, startDate, closeDate, status, externalId, principalVariations,
@@ -313,6 +320,8 @@ public class LoanProductData {
         final BigDecimal minInterestRatePerPeriod = null;
         final BigDecimal maxInterestRatePerPeriod = null;
         final BigDecimal annualInterestRate = null;
+        final BigDecimal flatInterestRatePerPeriod = null;
+        final BigDecimal annualFlatInterestRate = null;
         final EnumOptionData repaymentFrequencyType = LoanEnumerations.repaymentFrequencyType(PeriodFrequencyType.MONTHS);
         final EnumOptionData interestRateFrequencyType = LoanEnumerations.interestRateFrequencyType(PeriodFrequencyType.MONTHS);
         final EnumOptionData amortizationType = LoanEnumerations.amortizationType(AmortizationMethod.EQUAL_INSTALLMENTS);
@@ -362,7 +371,7 @@ public class LoanProductData {
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
-                minInterestRatePerPeriod, maxInterestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType,
+                minInterestRatePerPeriod, maxInterestRatePerPeriod, annualInterestRate,flatInterestRatePerPeriod,annualFlatInterestRate, repaymentFrequencyType, interestRateFrequencyType,
                 amortizationType, interestType, interestCalculationPeriodType, fundId, fundName, transactionProcessingStrategyId,
                 transactionProcessingStrategyName, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, charges,
                 accountingType, includeInBorrowerCycle, useBorrowerCycle, startDate, closeDate, status, externalId,
@@ -390,7 +399,8 @@ public class LoanProductData {
             final BigDecimal principal, final BigDecimal minPrincipal, final BigDecimal maxPrincipal, final BigDecimal tolerance,
             final Integer numberOfRepayments, final Integer minNumberOfRepayments, final Integer maxNumberOfRepayments,
             final Integer repaymentEvery, final BigDecimal interestRatePerPeriod, final BigDecimal minInterestRatePerPeriod,
-            final BigDecimal maxInterestRatePerPeriod, final BigDecimal annualInterestRate, final EnumOptionData repaymentFrequencyType,
+            final BigDecimal maxInterestRatePerPeriod, final BigDecimal annualInterestRate,final BigDecimal flatInterestRatePerPeriod,
+            final BigDecimal annualFlatInterestRate,final EnumOptionData repaymentFrequencyType,
             final EnumOptionData interestRateFrequencyType, final EnumOptionData amortizationType, final EnumOptionData interestType,
             final EnumOptionData interestCalculationPeriodType, final Long fundId, final String fundName,
             final Long transactionProcessingStrategyId, final String transactionProcessingStrategyName,
@@ -427,6 +437,8 @@ public class LoanProductData {
         this.minInterestRatePerPeriod = minInterestRatePerPeriod;
         this.maxInterestRatePerPeriod = maxInterestRatePerPeriod;
         this.annualInterestRate = annualInterestRate;
+        this.flatInterestRatePerPeriod = flatInterestRatePerPeriod;
+        this.annualFlatInterestRate = annualFlatInterestRate;
         this.repaymentFrequencyType = repaymentFrequencyType;
         this.interestRateFrequencyType = interestRateFrequencyType;
         this.amortizationType = amortizationType;
@@ -525,6 +537,8 @@ public class LoanProductData {
         this.minInterestRatePerPeriod = productData.minInterestRatePerPeriod;
         this.maxInterestRatePerPeriod = productData.maxInterestRatePerPeriod;
         this.annualInterestRate = productData.annualInterestRate;
+        this.flatInterestRatePerPeriod = productData.flatInterestRatePerPeriod;
+        this.annualFlatInterestRate = productData.annualFlatInterestRate;
         this.repaymentFrequencyType = productData.repaymentFrequencyType;
         this.interestRateFrequencyType = productData.interestRateFrequencyType;
         this.amortizationType = productData.amortizationType;
@@ -697,6 +711,10 @@ public class LoanProductData {
     public BigDecimal getAnnualInterestRate() {
         return this.annualInterestRate;
     }
+
+    public BigDecimal getFlatInterestRatePerPeriod() {return this.flatInterestRatePerPeriod; }
+
+    public BigDecimal getAnuualflatInterestRate(){return this.annualFlatInterestRate;}
 
     public EnumOptionData getRepaymentFrequencyType() {
         return this.repaymentFrequencyType;

@@ -16,9 +16,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import net.sf.ehcache.transaction.xa.commands.Command;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.mifosplatform.commands.domain.CommandProcessingResultType;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandProcessingService;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
@@ -39,14 +41,18 @@ import org.mifosplatform.organisation.office.exception.OfficeNotFoundException;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepositoryWrapper;
 import org.mifosplatform.portfolio.client.api.ClientApiConstants;
+import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.data.ClientDataValidator;
 import org.mifosplatform.portfolio.client.domain.AccountNumberGenerator;
 import org.mifosplatform.portfolio.client.domain.Client;
+import org.mifosplatform.portfolio.client.domain.ClientAddress;
+import org.mifosplatform.portfolio.client.domain.ClientIdentifier;
 import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
 import org.mifosplatform.portfolio.client.domain.ClientStatus;
 import org.mifosplatform.portfolio.client.exception.ClientActiveForUpdateException;
 import org.mifosplatform.portfolio.client.exception.ClientHasNoStaffException;
 import org.mifosplatform.portfolio.client.exception.ClientMustBePendingToBeDeletedException;
+import org.mifosplatform.portfolio.client.exception.InvalidClientActivateException;
 import org.mifosplatform.portfolio.client.exception.InvalidClientSavingProductException;
 import org.mifosplatform.portfolio.client.exception.InvalidClientStateTransitionException;
 import org.mifosplatform.portfolio.group.domain.Group;
@@ -178,7 +184,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final AppUser currentUser = this.context.authenticatedUser();
 
             this.fromApiJsonDeserializer.validateForCreate(command.json());
-
+            
+            
             final Long officeId = command.longValueOfParameterNamed(ClientApiConstants.officeIdParamName);
 
             final Office clientOffice = this.officeRepository.findOne(officeId);
@@ -191,7 +198,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 clientParentGroup = this.groupRepository.findOne(groupId);
                 if (clientParentGroup == null) { throw new GroupNotFoundException(groupId); }
             }
-
+           
+           
+            
             Staff staff = null;
             final Long staffId = command.longValueOfParameterNamed(ClientApiConstants.staffIdParamName);
             if (staffId != null) {
@@ -203,7 +212,29 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             if (genderId != null) {
                 gender = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.GENDER, genderId);
             }
+            
+            CodeValue marital = null;
+            final Long maritalId = command.longValueOfParameterNamed(ClientApiConstants.maritalIdParamName);
+            if (maritalId != null) {
+            	marital = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.MARITAL, maritalId);
+            	
+            }
+            CodeValue religion = null;
+            final Long religionId = command.longValueOfParameterNamed(ClientApiConstants.religionIdParamName);
+            if (religionId != null){
+            	religion = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.RELIGION, religionId);
+            }
 
+            CodeValue dependent = null;
+            final Long dependentId = command.longValueOfParameterNamed(ClientApiConstants.dependentIdParamName);
+            if (dependentId != null){
+            	dependent = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.DEPENDENT, dependentId);
+            }
+            CodeValue education = null;
+            final Long educationId = command.longValueOfParameterNamed(ClientApiConstants.educationIdParamName);
+            if (educationId != null){
+            	education = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.EDUCATION, educationId);
+            }
             CodeValue clientType = null;
             final Long clientTypeId = command.longValueOfParameterNamed(ClientApiConstants.clientTypeIdParamName);
             if (clientTypeId != null) {
@@ -226,7 +257,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
             }
 
-            final Client newClient = Client.createNew(currentUser, clientOffice, clientParentGroup, staff, savingsProduct, gender,
+            final Client newClient = Client.createNew(currentUser, clientOffice, clientParentGroup, staff, savingsProduct, gender,marital,religion,dependent,education,
                     clientType, clientClassification, command);
             boolean rollbackTransaction = false;
             if (newClient.isActive()) {
@@ -266,7 +297,11 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         }
     }
 
-    @Transactional
+   
+
+	
+
+	@Transactional
     @Override
     public CommandProcessingResult updateClient(final Long clientId, final JsonCommand command) {
 
@@ -291,8 +326,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 clientForUpdate.updateStaff(newStaff);
             }
 
-            if (changes.containsKey(ClientApiConstants.genderIdParamName)) {
 
+            if (changes.containsKey(ClientApiConstants.genderIdParamName)) {
                 final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.genderIdParamName);
                 CodeValue gender = null;
                 if (newValue != null) {
@@ -300,7 +335,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 }
                 clientForUpdate.updateGender(gender);
             }
-
+            
             if (changes.containsKey(ClientApiConstants.savingsProductIdParamName)) {
                 if (clientForUpdate.isActive()) { throw new ClientActiveForUpdateException(clientId,
                         ClientApiConstants.savingsProductIdParamName); }
@@ -313,13 +348,38 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 clientForUpdate.updateSavingsProduct(savingsProduct);
             }
 
-            if (changes.containsKey(ClientApiConstants.genderIdParamName)) {
-                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.genderIdParamName);
-                CodeValue newCodeVal = null;
+            
+            if (changes.containsKey(ClientApiConstants.maritalIdParamName)) {
+                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.maritalIdParamName);
+                CodeValue marital = null;
                 if (newValue != null) {
-                    newCodeVal = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.GENDER, newValue);
+                    marital = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.MARITAL, newValue);
                 }
-                clientForUpdate.updateGender(newCodeVal);
+                clientForUpdate.updateMarital(marital);
+            }
+            if (changes.containsKey(ClientApiConstants.religionIdParamName)) {
+                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.religionIdParamName);
+                CodeValue religion = null;
+                if (newValue != null) {
+                    religion = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.RELIGION, newValue);
+                }
+                clientForUpdate.updateReligion(religion);
+            }
+            if (changes.containsKey(ClientApiConstants.dependentIdParamName)) {
+                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.dependentIdParamName);
+                CodeValue dependent = null;
+                if (newValue != null) {
+                    dependent = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.DEPENDENT, newValue);
+                }
+                clientForUpdate.updateDependent(dependent);
+            }
+            if (changes.containsKey(ClientApiConstants.educationIdParamName)) {
+                final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.educationIdParamName);
+                CodeValue education = null;
+                if (newValue != null) {
+                	education = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.EDUCATION, newValue);
+                }
+                clientForUpdate.updateEducation(education);
             }
 
             if (changes.containsKey(ClientApiConstants.clientTypeIdParamName)) {
@@ -364,16 +424,22 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     public CommandProcessingResult activateClient(final Long clientId, final JsonCommand command) {
         try {
             this.fromApiJsonDeserializer.validateActivation(command);
-
             final Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
             validateParentGroupRulesBeforeClientActivation(client);
+            final String otp = command.stringValueOfParameterNamed("code");
+            validateOtpDataBeforeClientActivation(client,otp);
+            validateClientDataBeforeClientActivation(client);
+
+
+
 
             final Locale locale = command.extractLocale();
             final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
             final LocalDate activationDate = command.localDateValueOfParameterNamed("activationDate");
+            final String code = command.stringValueOfParameterNamed("code");
 
             final AppUser currentUser = this.context.authenticatedUser();
-            client.activate(currentUser, fmt, activationDate);
+            client.activate(currentUser, fmt, activationDate,code);
             CommandProcessingResult result = openSavingsAccount(client, fmt);
             this.clientRepository.saveAndFlush(client);
 
@@ -602,6 +668,25 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                         maxNumberOfClients); }
             }
         }
+    }
+    
+    private void validateClientDataBeforeClientActivation(Client client){
+    	if(client.getImage() == null){
+    		
+    		String defaultUserMessage = "client photo/image should be there before activation";
+            throw new InvalidClientActivateException("photo.client.account", "should.be.there.before.activation", defaultUserMessage, client.getImage()
+                   );
+    	}
+    }
+
+    private void validateOtpDataBeforeClientActivation(Client client,final String code){
+
+        if (!client.getOtpCode().equals(code)){
+
+            String defaultUserMessage = "client otp validation failed";
+            throw new InvalidClientActivateException("client.otp.validation.failed", "valid.otp.required.before.activation" , defaultUserMessage, code);
+        }
+
     }
 
     @Override

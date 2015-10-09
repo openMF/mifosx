@@ -48,4 +48,8 @@ public interface LoanProductMinimumRepaymentScheduleRelatedDetail {
     AmortizationMethod getAmortizationMethod();
     
     Integer getGraceOnDueDate();
+
+	BigDecimal getFlatInterestRatePerPeriod();
+
+	BigDecimal getAnnualFlatInterestRate();
 }

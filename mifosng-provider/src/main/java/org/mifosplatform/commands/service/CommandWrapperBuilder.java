@@ -8,6 +8,7 @@ package org.mifosplatform.commands.service;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.infrastructure.accountnumberformat.service.AccountNumberFormatConstants;
 import org.mifosplatform.portfolio.client.api.ClientApiConstants;
+import org.mifosplatform.portfolio.paymenttowhom.api.PaymentToWhomApiResourceConstants;
 import org.mifosplatform.portfolio.paymenttype.api.PaymentTypeApiResourceConstants;
 import org.mifosplatform.portfolio.savings.DepositsApiConstants;
 import org.mifosplatform.useradministration.api.PasswordPreferencesApiConstants;
@@ -184,6 +185,22 @@ public class CommandWrapperBuilder {
         this.href = "/staff/" + staffId;
         return this;
     }
+
+    public CommandWrapperBuilder createDsa(){
+        this.actionName = "CREATE";
+        this.entityName = "DSA";
+        this.entityId = null;
+        this.href = "/dsa/template";
+        return this;
+    }
+    public CommandWrapperBuilder updateDsa(final Long dsaId){
+        this.actionName = "UPDATE";
+        this.entityName = "DSA";
+        this.entityId = dsaId;
+        this.href = "/dsa/" + dsaId;
+        return this;
+    }
+
 
     public CommandWrapperBuilder createGuarantor(final Long loanId) {
         this.actionName = "CREATE";
@@ -405,6 +422,31 @@ public class CommandWrapperBuilder {
         this.entityId = clientIdentifierId;
         this.clientId = clientId;
         this.href = "/clients/" + clientId + "/identifiers/" + clientIdentifierId;
+        return this;
+    }
+
+    public CommandWrapperBuilder createClientAddress(final Long clientId){
+        this.actionName = "CREATE";
+        this.entityName = "CLIENTADDRESS";
+        this.entityId = null;
+        this.clientId = clientId;
+        this.href = "/clients/"+ clientId + "/addresses/template";
+        return this;
+    }
+    public CommandWrapperBuilder updateClientAddress(final Long clientId, final Long clientAddressId){
+        this.actionName = "UPDATE";
+        this.entityName = "CLIENTADDRESS";
+        this.entityId = clientAddressId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "/addresses/" + clientAddressId;
+        return this;
+    }
+    public CommandWrapperBuilder deleteClientAddress(final Long clientId, final Long clientAddressId){
+        this.actionName = "DELETE";
+        this.entityName = "CLIENTADDRESS";
+        this.entityId = clientAddressId;
+        this.clientId = clientId;
+        this.href = "/clients/" + clientId + "/addresses" + clientAddressId;
         return this;
     }
 
@@ -2396,6 +2438,31 @@ public class CommandWrapperBuilder {
         this.href = "/" + PaymentTypeApiResourceConstants.RESOURCE_NAME + paymentTypeId;
         return this;
     }
+
+    public CommandWrapperBuilder createPaymentToWhom(){
+        this.actionName = "CREATE";
+        this.entityName = PaymentToWhomApiResourceConstants.ENTITY_NAME;
+        this.entityName = PaymentToWhomApiResourceConstants.ENTITY_NAME;
+        this.entityId = null;
+        this.href = "/" + PaymentToWhomApiResourceConstants.RESOURCE_NAME;
+        return this;
+    }
+    public CommandWrapperBuilder updatePaymentToWhom(final Long paymentToWhomId){
+        this.actionName = "UPDATE";
+        this.entityName = PaymentToWhomApiResourceConstants.ENTITY_NAME;
+        this.entityId = paymentToWhomId;
+        this.href = "/" + PaymentToWhomApiResourceConstants.RESOURCE_NAME + paymentToWhomId;
+        return this;
+    }
+    public CommandWrapperBuilder deletePaymentToWhom(final Long paymentToWhomId){
+        this.actionName = "DELETE";
+        this.entityName = "PAYMENTTOWHOM";
+        this.entityId = paymentToWhomId;
+        this.href = "/" + PaymentToWhomApiResourceConstants.RESOURCE_NAME + paymentToWhomId;
+        return this;
+
+    }
+
 
     public CommandWrapperBuilder updateExternalServiceProperties(final String externalServiceName) {
         this.actionName = "UPDATE";

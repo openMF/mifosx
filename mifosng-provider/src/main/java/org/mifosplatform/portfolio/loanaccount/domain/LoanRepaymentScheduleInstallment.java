@@ -278,6 +278,10 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
         return getPrincipalOutstanding(currency).plus(getInterestOutstanding(currency)).plus(getFeeChargesOutstanding(currency))
                 .plus(getPenaltyChargesOutstanding(currency));
     }
+    public Money getTotalPrincipalOutstanding(final MonetaryCurrency currency){
+    	return getPrincipalCompleted(currency);
+    			
+    }
 
     public void updateLoan(final Loan loan) {
         this.loan = loan;

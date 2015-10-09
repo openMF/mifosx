@@ -24,6 +24,10 @@ public class GuarantorCommand {
 
     /*** Fields for capturing relationship of Guarantor with customer **/
     private final Long clientRelationshipTypeId;
+    
+    /** Fields for capturing type of GNCB with customer **/
+    private final Long gncbTypeId;
+    
 
     /*** Fields for current customers serving as guarantors **/
     private final Integer guarantorTypeId;
@@ -45,12 +49,13 @@ public class GuarantorCommand {
     private final Long savingsId;
     private final BigDecimal amount;
 
-    public GuarantorCommand(final Long clientRelationshipTypeId, final Integer guarantorTypeId, final Long entityId,
+    public GuarantorCommand(final Long clientRelationshipTypeId,final Long gncbTypeId, final Integer guarantorTypeId, final Long entityId,
             final String firstname, final String lastname, final String addressLine1, final String addressLine2, final String city,
             final String state, final String zip, final String country, final String mobileNumber, final String housePhoneNumber,
             final String comment, final LocalDate dob, final Long savingsId, final BigDecimal amount) {
 
         this.clientRelationshipTypeId = clientRelationshipTypeId;
+        this.gncbTypeId = gncbTypeId;
 
         /*** Fields for current entities serving as guarantors **/
         this.guarantorTypeId = guarantorTypeId;
@@ -89,6 +94,8 @@ public class GuarantorCommand {
 
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.CLIENT_RELATIONSHIP_TYPE_ID.getValue())
                 .value(this.clientRelationshipTypeId).ignoreIfNull().integerGreaterThanZero();
+        baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.GNCB_TYPE_ID.getValue())
+        		.value(this.gncbTypeId).ignoreIfNull().integerGreaterThanZero();
 
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.GUARANTOR_TYPE_ID.getValue()).value(this.guarantorTypeId).notNull()
                 .inMinMaxRange(GuarantorType.getMinValue(), GuarantorType.getMaxValue());
@@ -109,6 +116,8 @@ public class GuarantorCommand {
                     .notExceedingLengthOf(50);
             baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.LASTNAME.getValue()).value(this.lastname).notBlank()
                     .notExceedingLengthOf(50);
+            baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.ZIP.getValue()).value(this.zip).notBlank().notExceedingLengthOf(6)
+            		.integerGreaterThanZero();
             validateNonMandatoryFieldsForMaxLength(baseDataValidator);
         }
 
@@ -123,6 +132,9 @@ public class GuarantorCommand {
 
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.CLIENT_RELATIONSHIP_TYPE_ID.getValue())
                 .value(this.clientRelationshipTypeId).ignoreIfNull().integerGreaterThanZero();
+        baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.GUARANTOR_TYPE_ID.getValue()).value(this.guarantorTypeId).notNull()
+        .inMinMaxRange(GuarantorType.getMinValue(), GuarantorType.getMaxValue());
+
 
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.GUARANTOR_TYPE_ID.getValue()).value(this.guarantorTypeId)
                 .ignoreIfNull().inMinMaxRange(GuarantorType.getMinValue(), GuarantorType.getMaxValue());
@@ -147,7 +159,8 @@ public class GuarantorCommand {
                     .notExceedingLengthOf(50);
             baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.LASTNAME.getValue()).value(this.lastname).ignoreIfNull()
                     .notExceedingLengthOf(50);
-
+            baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.ZIP.getValue()).value(this.zip).notBlank()
+    		.integerGreaterThanZero().notExceedingLengthOf(6);
             validateNonMandatoryFieldsForMaxLength(baseDataValidator);
         }
         baseDataValidator.reset().anyOfNotNull(this.entityId, this.addressLine1, this.addressLine2, this.city, this.comment, this.country,
@@ -167,17 +180,17 @@ public class GuarantorCommand {
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.ADDRESS_LINE_2.getValue()).value(this.addressLine2).ignoreIfNull()
                 .notExceedingLengthOf(500);
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.CITY.getValue()).value(this.city).ignoreIfNull()
-                .notExceedingLengthOf(50);
+                .notExceedingLengthOf(100);
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.STATE.getValue()).value(this.state).ignoreIfNull()
                 .notExceedingLengthOf(50);
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.ZIP.getValue()).value(this.zip).ignoreIfNull()
-                .notExceedingLengthOf(50);
+                .notExceedingLengthOf(6).integerGreaterThanZero();
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.COUNTRY.getValue()).value(this.country).ignoreIfNull()
                 .notExceedingLengthOf(50);
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.MOBILE_NUMBER.getValue()).value(this.mobileNumber).ignoreIfNull()
-                .notExceedingLengthOf(20).validatePhoneNumber();
+                .notExceedingLengthOf(10).validatePhoneNumber();
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.PHONE_NUMBER.getValue()).value(this.housePhoneNumber)
-                .ignoreIfNull().notExceedingLengthOf(20).validatePhoneNumber();
+                .ignoreIfNull().notExceedingLengthOf(10).validatePhoneNumber();
         baseDataValidator.reset().parameter(GUARANTOR_JSON_INPUT_PARAMS.COMMENT.getValue()).value(this.comment).ignoreIfNull()
                 .notExceedingLengthOf(500);
     }
@@ -193,6 +206,9 @@ public class GuarantorCommand {
 
     public Long getClientRelationshipTypeId() {
         return this.clientRelationshipTypeId;
+    }
+    public Long getGncbTypeId(){
+    	return this.gncbTypeId;
     }
 
     public Long getEntityId() {
