@@ -249,9 +249,7 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
     @Override
 	public Object[] hasAssociatedItems(final Long staffId){
         ArrayList<String> params = new ArrayList<String>();        
-        
-        
-
+                
         String sql =  "select c.display_name as c, g.display_name as g,l.loan_officer_id as l, s.field_officer_id as s, min(f.id)"+
         			  " from m_staff f "+
         			  " left outer join m_client c on f.id = c.staff_id  AND c.status_enum < "+ ClientStatus.CLOSED.getValue() +
@@ -276,20 +274,7 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
        			if (map.get("s")  != null) {
        				params.add("savings account");
        			}
-       		}
-		
-        	/*
-        	if (result.length() > 0 && result.substring(0, 1).equals("1"))
-        	   params.add("group");
-           	if (result.length() > 1 && result.substring(1, 2).equals("1"))
-           		params.add("client");
-           	if (result.length() > 2 && result.substring(2, 3).equals("1"))
-           		params.add("loan");
-           	if (result.length() > 3 && result.substring(3, 4).equals("1"))
-           		params.add("savings account");
-           		*/
-
-        	   
+       		}		
         }
         return params.toArray();
         
