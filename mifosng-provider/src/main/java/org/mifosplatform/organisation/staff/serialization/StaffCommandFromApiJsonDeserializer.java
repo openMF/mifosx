@@ -146,8 +146,8 @@ public final class StaffCommandFromApiJsonDeserializer {
             final Boolean activeFlag = this.fromApiJsonHelper.extractBooleanNamed("isActive", element);
             //Need to add here check to see if any clients, group, account and loans are assigned to this staff if staff is being set to inactive --LJB
             final Boolean forceStatus = this.fromApiJsonHelper.extractBooleanNamed("forceStatus", element);
-            if ((activeFlag == false && forceStatus == null) || 
-                (activeFlag == false && forceStatus != true)) {           
+            if ((!activeFlag && forceStatus == null) || 
+                (!activeFlag && forceStatus)) {           
             	 Object[] result = staffReadPlatformService.hasAssociatedItems(staffId);
             	
             	if (result != null && result.length > 0) {

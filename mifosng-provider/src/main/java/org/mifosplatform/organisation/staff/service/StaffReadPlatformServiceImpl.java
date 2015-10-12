@@ -9,6 +9,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
@@ -248,13 +250,35 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
 	public Object[] hasAssociatedItems(final Long staffId){
         ArrayList<String> params = new ArrayList<String>();        
         
-        String sql =   "SELECT concat((SELECT IF (EXISTS(SELECT 1 FROM m_group where staff_id = " + staffId + "),'1','0'))," +
-                                     "(SELECT if (EXISTS(select 1 FROM m_client where staff_id  = " + staffId + " AND status_enum    < " + ClientStatus.CLOSED.getValue()           + "),'1','0')), " +
-                                     "(SELECT if (EXISTS(select 1 FROM m_loan   where loan_officer_id  = " + staffId + " AND loan_status_id < " + LoanStatus.WITHDRAWN_BY_CLIENT.getValue()+ "),'1','0')),  " +
-                                     "(SELECT if (EXISTS(select 1 FROM m_savings_account where field_officer_id  = " + staffId + " AND status_enum< " + SavingsAccountStatusType.WITHDRAWN_BY_APPLICANT.getValue() + "),'1','0')))";
-               
-        String result = this.jdbcTemplate.queryForObject(sql, String.class);
+        
+
+        String sql =  "select c.display_name as c, g.display_name as g,l.loan_officer_id as l, s.field_officer_id as s, min(f.id)"+
+        			  " from m_staff f "+
+        			  " left outer join m_client c on f.id = c.staff_id  AND c.status_enum < "+ ClientStatus.CLOSED.getValue() +
+        			  " left outer join m_group g on f.id = g.staff_id " +
+                      " left outer join m_loan l on f.id = l.loan_officer_id and l.loan_status_id < " +  LoanStatus.WITHDRAWN_BY_CLIENT.getValue() +
+                      " left outer join m_savings_account s on c.staff_id = s.field_officer_id and s.status_enum < "+ SavingsAccountStatusType.WITHDRAWN_BY_APPLICANT.getValue() +
+                      " where  f.id  =  " + staffId;
+        
+       
+        List<Map<String, Object>> result =  this.jdbcTemplate.queryForList(sql);
         if (result != null) {
+       		for (Map<String, Object> map : result) {
+       			if (map.get("c") != null) {
+       				params.add("client");
+       			}
+       			if (map.get("g") != null) {
+       				params.add("group");
+       			}
+       			if (map.get("l")  != null) {
+       				params.add("loan");
+       			}
+       			if (map.get("s")  != null) {
+       				params.add("savings account");
+       			}
+       		}
+		
+        	/*
         	if (result.length() > 0 && result.substring(0, 1).equals("1"))
         	   params.add("group");
            	if (result.length() > 1 && result.substring(1, 2).equals("1"))
@@ -263,6 +287,7 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
            		params.add("loan");
            	if (result.length() > 3 && result.substring(3, 4).equals("1"))
            		params.add("savings account");
+           		*/
 
         	   
         }
