@@ -295,7 +295,11 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
         // is the transaction Id valid
         final List<JournalEntry> journalEntries = this.glJournalEntryRepository.findUnReversedManualJournalEntriesByTransactionId(command
                 .getTransactionId());
-        String reversalComment = command.stringValueOfParameterNamed("comments");
+        String reversalComment = null;
+        
+        if (command.hasParameter(JournalEntryJsonInputParams.COMMENTS.getValue())) {
+            reversalComment = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.COMMENTS.getValue());
+        }
 
         if (journalEntries.size() <= 1) { throw new JournalEntriesNotFoundException(command.getTransactionId()); }
         final String reversalTransactionId = revertJournalEntry(journalEntries, reversalComment);
