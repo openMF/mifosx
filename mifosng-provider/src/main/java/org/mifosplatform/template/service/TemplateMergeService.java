@@ -53,6 +53,9 @@ public class TemplateMergeService {
     }
 
     public String compile(final Template template, final Map<String, Object> scopes) throws MalformedURLException, IOException {
+        final String auth = ThreadLocalContextUtil.getAuthToken();
+        setAuthToken(auth);
+    // It was not taking any authToken while on the loanScreen Reports 
         this.scopes = scopes;
         this.scopes.put("static", new TemplateFunctions());
 
@@ -124,7 +127,8 @@ public class TemplateMergeService {
         try {
             connection = (HttpURLConnection) new URL(url).openConnection();
             if (this.authToken != null) {
-                connection.setRequestProperty("Authorization", "Basic " + this.authToken);
+                connection.setRequestProperty("Authorization", "Bearer " + this.authToken);
+                //Oauth is not basic you can check with HTTP OAUTH DOCS
             }
             TrustModifier.relaxHostChecking(connection);
 
