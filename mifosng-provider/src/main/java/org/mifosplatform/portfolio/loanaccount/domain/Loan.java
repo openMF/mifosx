@@ -1498,6 +1498,7 @@ public class Loan extends AbstractPersistable<Long> {
         for (final LoanCharge loanCharge : charges) {
             recalculateLoanCharge(loanCharge, penaltyWaitPeriod);
         }
+        updateSummaryWithTotalFeeChargesDueAtDisbursement(deriveSumTotalOfChargesDueAtDisbursement());
     }
 
     public boolean isInterestRecalculationEnabledForProduct() {
