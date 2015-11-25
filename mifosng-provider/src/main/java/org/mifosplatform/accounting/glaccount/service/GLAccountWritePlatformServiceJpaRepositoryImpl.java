@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.accounting.glaccount.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -73,15 +74,18 @@ public class GLAccountWritePlatformServiceJpaRepositoryImpl implements GLAccount
             }
 
             CodeValue glAccountTagType = null;
-            final Long tagId = command.longValueOfParameterNamed(GLAccountJsonInputParams.TAGID.getValue());
+            final String[] tags = command.arrayValueOfParameterNamed("tagId");
             final Long type = command.longValueOfParameterNamed(GLAccountJsonInputParams.TYPE.getValue());
             final GLAccountType accountType = GLAccountType.fromInt(type.intValue());
 
-            if (tagId != null) {
+            List<CodeValue> glTags = new ArrayList<CodeValue>();
+            if (tags != null) for (String tag : tags) {
+                long tagId = Long.parseLong(tag);
                 glAccountTagType = retrieveTagId(tagId, accountType);
+                glTags.add(glAccountTagType);
             }
 
-            final GLAccount glAccount = GLAccount.fromJson(parentGLAccount, command, glAccountTagType);
+            final GLAccount glAccount = GLAccount.fromJson(parentGLAccount, command, glTags);
 
             this.glAccountRepository.saveAndFlush(glAccount);
 
@@ -117,14 +121,20 @@ public class GLAccountWritePlatformServiceJpaRepositoryImpl implements GLAccount
                 glAccount.updateParentAccount(parentAccount);
             }
 
-            if (changesOnly.containsKey(GLAccountJsonInputParams.TAGID.getValue())) {
-                final Long tagIdLongValue = command.longValueOfParameterNamed(GLAccountJsonInputParams.TAGID.getValue());
+            String[] tagId = null;
+
+            if (command.parameterExists(GLAccountJsonInputParams.TAGID.getValue())) {
+                tagId = command.arrayValueOfParameterNamed("tagId");
                 final GLAccountType accountType = GLAccountType.fromInt(glAccount.getType());
                 CodeValue tagID = null;
-                if (tagIdLongValue != null) {
-                    tagID = retrieveTagId(tagIdLongValue, accountType);
+                List<CodeValue> glTag = new ArrayList<CodeValue>();
+                if (tagId != null) for (String tag : tagId) {
+                    long tagid = Long.parseLong(tag);
+                    tagID = retrieveTagId(tagid, accountType);
+                    glTag.add(tagID);
                 }
-                glAccount.updateTagId(tagID);
+                glAccount.updateTagId(glTag);
+                changesOnly.put(GLAccountJsonInputParams.TAGID.getValue(), tagId);
             }
 
             /**
