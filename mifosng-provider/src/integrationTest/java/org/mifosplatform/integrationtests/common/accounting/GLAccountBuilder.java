@@ -32,7 +32,6 @@ public class GLAccountBuilder {
     private static String accountUsage = ACCOUNT_USAGE_DETAIL;
     private static String manualEntriesAllowed = MANUAL_ENTRIES_ALLOW;
     private static String description = "DEFAULT_DESCRIPTION";
-
     public String build() {
         final HashMap<String, String> map = new HashMap<>();
         map.put("name", GLAccountBuilder.name);

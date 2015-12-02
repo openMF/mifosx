@@ -32073,51 +32073,142 @@ Request Body:
 GET https://DomainName/api/v1/glaccounts
                     </code>
                     <code class="method-response">
-[
-    {
-        "id": 16,
-        "name": "Cash",
-	"parentId": 1,
-        "glCode": "100001",
-        "disabled": false,
-        "manualEntriesAllowed": true,
-        "type": {
-            "id": 1,
-            "code": "accountType.asset",
-            "value": "ASSET"
-        },
-        "usage": {
-            "id": 1,
-            "code": "accountUsage.detail",
-            "value": "DETAIL"
-        },
-        "description": "Desc",
-	"nameDecorated": "....Cash",
-	"tagId": {
-	  "id": 10,
-	  "name": "asset tag"
-	},
-        "organizationRunningBalance": 118437,
+[ 
+ {
+    "id": 1,
+    "name": "Fund Source",
+    "glCode": "GL-01",
+    "disabled": false,
+    "manualEntriesAllowed": true,
+    "type": {
+      "id": 1,
+      "code": "accountType.asset",
+      "value": "ASSET"
     },
-    {
-        "id": 15,
-        "name": "Fund Source For Loan",
-        "glCode": "100002",
-        "disabled": false,
-        "manualEntriesAllowed": true,
-        "type": {
-            "id": 1,
-            "code": "accountType.asset",
-            "value": "ASSET"
-        },
-        "usage": {
-            "id": 1,
-            "code": "accountUsage.detail",
-            "value": "DETAIL"
-        },
-        "description": "Desc",
-        "organizationRunningBalance": 118437,
-    }
+    "usage": {
+      "id": 1,
+      "code": "accountUsage.detail",
+      "value": "DETAIL"
+    },
+    "nameDecorated": "Fund Source",
+    "tagId": [
+      {
+        "id": 13,
+        "name": "Cash in Hand"
+      },
+      {
+        "id": 14,
+        "name": "Asset Test Tag"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Fund Source For Loan",
+    "glCode": "GL-02",
+    "disabled": false,
+    "manualEntriesAllowed": true,
+    "type": {
+      "id": 1,
+      "code": "accountType.asset",
+      "value": "ASSET"
+    },
+    "usage": {
+      "id": 1,
+      "code": "accountUsage.detail",
+      "value": "DETAIL"
+    },
+    "description": "GL Account with two tags.",
+    "nameDecorated": "Fund Source For Loan",
+    "tagId": [
+      {
+        "id": 13,
+        "name": "Cash in Hand"
+      },
+      {
+        "id": 18,
+        "name": "Asset Tag"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "GL-Account-3",
+    "glCode": "GL-03",
+    "disabled": false,
+    "manualEntriesAllowed": true,
+    "type": {
+      "id": 1,
+      "code": "accountType.asset",
+      "value": "ASSET"
+    },
+    "usage": {
+      "id": 1,
+      "code": "accountUsage.detail",
+      "value": "DETAIL"
+    },
+    "description": "GL Account with two tags.",
+    "nameDecorated": "GL-Account-3",
+    "tagId": [
+      {
+        "id": 13,
+        "name": "Cash in Hand"
+      },
+      {
+        "id": 18,
+        "name": "Asset Tag"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Cash at Bangalore",
+    "glCode": "100017",
+    "disabled": false,
+    "manualEntriesAllowed": true,
+    "type": {
+      "id": 1,
+      "code": "accountType.asset",
+      "value": "ASSET"
+    },
+    "usage": {
+      "id": 1,
+      "code": "accountUsage.detail",
+      "value": "DETAIL"
+    },
+    "description": "Cash at Bangalore Branch",
+    "nameDecorated": "Cash at Bangalore",
+    "tagId": [
+      {
+        "id": 13,
+        "name": "Cash in Hand"
+      },
+      {
+        "id": 18,
+        "name": "Asset Tag"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Cash at Hydrabad",
+    "glCode": "100018",
+    "disabled": false,
+    "manualEntriesAllowed": true,
+    "type": {
+      "id": 1,
+      "code": "accountType.asset",
+      "value": "ASSET"
+    },
+    "usage": {
+      "id": 1,
+      "code": "accountUsage.detail",
+      "value": "DETAIL"
+    },
+    "description": "Cash at Hydrabad Branch",
+    "nameDecorated": "Cash at Hydrabad",
+    "tagId": []
+  }
 ]
                     </code>
                 </div>
@@ -32155,209 +32246,107 @@ GET https://DomainName/api/v1/glaccounts/template?type=1
                     </code>
                     <code class="method-response">
 {
-    "disabled": false,
-    "manualEntriesAllowed": true,
-    "type": {
-        "id": 1,
-        "code": "accountType.asset",
-        "value": "ASSET"
-    },
-    "usage": {
-        "id": 1,
-        "code": "accountUsage.detail",
-        "value": "DETAIL"
-    },
-    "accountTypeOptions": [
-        {
-            "id": 1,
-            "code": "accountType.asset",
-            "value": "ASSET"
-        },
-        {
-            "id": 2,
-            "code": "accountType.liability",
-            "value": "LIABILITY"
-        },
-        {
-            "id": 3,
-            "code": "accountType.equity",
-            "value": "EQUITY"
-        },
-        {
-            "id": 4,
-            "code": "accountType.income",
-            "value": "INCOME"
-        },
-        {
-            "id": 5,
-            "code": "accountType.expense",
-            "value": "EXPENSE"
-        }
-    ],
-    "usageOptions": [
-        {
-            "id": 1,
-            "code": "accountUsage.detail",
-            "value": "DETAIL"
-        },
-        {
-            "id": 2,
-            "code": "accountUsage.header",
-            "value": "HEADER"
-        }
-    ],
-  "assetHeaderAccountOptions": [
+  "disabled": false,
+  "manualEntriesAllowed": true,
+  "type": {
+    "id": 1,
+    "code": "accountType.asset",
+    "value": "ASSET"
+  },
+  "usage": {
+    "id": 1,
+    "code": "accountUsage.detail",
+    "value": "DETAIL"
+  },
+  "accountTypeOptions": [
     {
       "id": 1,
-      "name": "Two wheeler loan",
-      "glCode": "10001",
-      "disabled": false,
-      "manualEntriesAllowed": true,
-      "type": {
-        "id": 1,
-        "code": "accountType.asset",
-        "value": "ASSET"
-      },
-      "usage": {
-        "id": 2,
-        "code": "accountUsage.header",
-        "value": "HEADER"
-      },
-      "nameDecorated": "Two wheeler loan",
-      "tagId": {
-        "id": 10,
-        "name": "asset tag"
-      }
+      "code": "accountType.asset",
+      "value": "ASSET"
     },
     {
       "id": 2,
-      "name": "VEHICLE LOAN",
-      "parentId": 1,
-      "glCode": "10002",
-      "disabled": false,
-      "manualEntriesAllowed": true,
-      "type": {
-        "id": 1,
-        "code": "accountType.asset",
-        "value": "ASSET"
-      },
-      "usage": {
-        "id": 2,
-        "code": "accountUsage.header",
-        "value": "HEADER"
-      },
-      "nameDecorated": "....VEHICLE LOAN",
-      "tagId": {
-        "id": 10,
-        "name": "asset tag"
-      }
+      "code": "accountType.liability",
+      "value": "LIABILITY"
+    },
+    {
+      "id": 3,
+      "code": "accountType.equity",
+      "value": "EQUITY"
+    },
+    {
+      "id": 4,
+      "code": "accountType.income",
+      "value": "INCOME"
+    },
+    {
+      "id": 5,
+      "code": "accountType.expense",
+      "value": "EXPENSE"
     }
   ],
-  "liabilityHeaderAccountOptions": [
+  "usageOptions": [
     {
-      "id": 15,
-      "name": "liabilitieschild",
-      "glCode": "ltchild",
-      "disabled": false,
-      "manualEntriesAllowed": true,
-      "type": {
-        "id": 2,
-        "code": "accountType.liability",
-        "value": "LIABILITY"
-      },
-      "usage": {
-        "id": 2,
-        "code": "accountUsage.header",
-        "value": "HEADER"
-      },
-      "nameDecorated": "liabilitieschild",
-      "tagId": {
-        "id": 11,
-        "name": "liability tag"
-      }
-    }
-  ],
-  "equityHeaderAccountOptions": [
+      "id": 1,
+      "code": "accountUsage.detail",
+      "value": "DETAIL"
+    },
     {
-      "id": 13,
-      "name": "testajax",
-      "glCode": "12345678",
-      "disabled": false,
-      "manualEntriesAllowed": true,
-      "type": {
-        "id": 3,
-        "code": "accountType.equity",
-        "value": "EQUITY"
-      },
-      "usage": {
-        "id": 2,
-        "code": "accountUsage.header",
-        "value": "HEADER"
-      },
-      "nameDecorated": "testajax",
-      "tagId": {
-        "id": 12,
-        "name": "Equity tag"
-      }
-    }
-  ],
-  "expenseHeaderAccountOptions": [
-    {
-      "id": 8,
-      "name": "Salary",
-      "glCode": "450098",
-      "disabled": false,
-      "manualEntriesAllowed": true,
-      "type": {
-        "id": 5,
-        "code": "accountType.expense",
-        "value": "EXPENSE"
-      },
-      "usage": {
-        "id": 2,
-        "code": "accountUsage.header",
-        "value": "HEADER"
-      },
-      "nameDecorated": "Salary",
-      "tagId": {
-        "id": 14,
-        "name": "Expenses Tag"
-      }
+      "id": 2,
+      "code": "accountUsage.header",
+      "value": "HEADER"
     }
   ],
   "allowedAssetsTagOptions": [
     {
-      "id": 10,
-      "name": "asset tag",
-      "position": 0
+      "id": 13,
+      "name": "Cash in Hand",
+      "position": 1,
+      "description": "Cash in and in Asset"
+    },
+    {
+      "id": 14,
+      "name": "Asset Test Tag",
+      "position": 2,
+      "description": "Asset"
+    },
+    {
+      "id": 18,
+      "name": "Asset Tag",
+      "position": 3,
+      "description": "Asset Tag"
     }
   ],
   "allowedLiabilitiesTagOptions": [
     {
-      "id": 11,
-      "name": "liability tag",
-      "position": 0
+      "id": 21,
+      "name": "Liability Tag",
+      "position": 1,
+      "description": "Liability Tag"
     }
   ],
   "allowedEquityTagOptions": [
     {
-      "id": 12,
-      "name": "Equity tag",
-      "position": 0
+      "id": 19,
+      "name": "Equity Tag",
+      "position": 1,
+      "description": "Equity Tag"
     }
   ],
   "allowedIncomeTagOptions": [
     {
-      "id": 13,
+      "id": 20,
       "name": "Income Tag",
-      "position": 0
+      "position": 1,
+      "description": "Income Tag"
     }
   ],
   "allowedExpensesTagOptions": [
     {
-      "id": 14,
-      "name": "Expenses Tag",
-      "position": 0
+      "id": 15,
+      "name": "Expense Sample Tag",
+      "position": 1,
+      "description": "Expense"
     }
   ]
 }
@@ -32389,23 +32378,33 @@ GET https://DomainName/api/v1/glaccounts/{glaccountsId}
                     </code>
                     <code class="method-response">
 {
+  "id": 5,
+  "name": "Cash at Bangalore",
+  "glCode": "100017",
+  "disabled": false,
+  "manualEntriesAllowed": true,
+  "type": {
     "id": 1,
-    "name": "Cash",
-    "glCode": "100001",
-    "disabled": false,
-    "manualEntriesAllowed": true,
-    "type": {
-        "id": 1,
-        "code": "accountType.asset1",
-        "value": "ASSET"
+    "code": "accountType.asset",
+    "value": "ASSET"
+  },
+  "usage": {
+    "id": 1,
+    "code": "accountUsage.detail",
+    "value": "DETAIL"
+  },
+  "description": "Cash at Bangalore Branch",
+  "nameDecorated": "Cash at Bangalore",
+  "tagId": [
+    {
+      "id": 13,
+      "name": "Cash in Hand"
     },
-    "usage": {
-        "id": 1,
-        "code": "accountUsage.detail",
-        "value": "DETAIL"
-    },
-    "description": "Desc",
-    "organizationRunningBalance": 118437,
+    {
+      "id": 18,
+      "name": "Asset Tag"
+    }
+  ]
 }
                     </code>
                 </div>
@@ -32439,19 +32438,18 @@ POST glaccounts
 Content-Type: application/json
 Request Body:
 {
-    "name": "Cash at Bangalore",
-    "glCode": "100017",
-    "manualEntriesAllowed": true,
-    "type": 1,
-    "tagId": "10",
-    "parentId": "18",
-    "usage": 1,
-    "description": "Cash at Bangalore Branch"
+         "manualEntriesAllowed":true,
+	 "type":1,
+	 "usage":1,
+	 "glCode":"GL-02",
+	 "name":"Fund Source For Loan",
+	 "tagId":["13","18"],
+	 "description":"GL Account with two tags."
 }
                     </code>
                     <code class="method-response">
 {
-    "resourceId": 22
+    "resourceId": 4
 }
                     </code>
                 </div>
@@ -32483,6 +32481,26 @@ Request Body:
 }
                     </code>
                 </div>
+				
+				<div class="method-example">
+				   <code class="method-request">
+PUT glaccounts/5
+Content-Type: application/json
+Request Body:
+{
+    "name": "Cash at Bangalore Rural",
+    "tagId":  [18]  
+ }				   </code>
+                 <code class="method-response">
+{
+  "resourceId": 5,
+  "changes": {
+    "name": "Cash at Bangalore Rural",
+    "tagId": ["18"]
+  }
+}				 
+			</code>
+</div>			
                 <div class="method-example">
                     <code class="method-request">
 PUT glaccounts/1
@@ -32517,14 +32535,13 @@ Request Body:
 DELETE https://DomainName/api/v1/glaccounts/{glaccountId}
                     </code>
                     <code class="method-request">
-DELETE glaccounts/1
+DELETE glaccounts/5
 Content-Type: application/json
 No Request Body:
                     </code>
                     <code class="method-response">
 {
-    "resourceId": 1,
-    "changes": {}
+    "resourceId": 5
 }
                     </code>
                 </div>
