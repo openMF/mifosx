@@ -17,6 +17,7 @@ import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnHeaderData;
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnValueData;
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetRowData;
+import org.mifosplatform.infrastructure.dataqueries.data.ResultsetVisibilityCriteriaData;
 import org.mifosplatform.infrastructure.dataqueries.exception.DatatableNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -189,16 +190,25 @@ public class GenericDataServiceImpl implements GenericDataService {
 
         columnDefinitions.beforeFirst();
         while (columnDefinitions.next()) {
-            final String columnName = columnDefinitions.getString("COLUMN_NAME");
+            String columnName = columnDefinitions.getString("COLUMN_NAME");
             final String isNullable = columnDefinitions.getString("IS_NULLABLE");
             final String isPrimaryKey = columnDefinitions.getString("COLUMN_KEY");
             final String columnType = columnDefinitions.getString("DATA_TYPE");
             final Long columnLength = columnDefinitions.getLong("CHARACTER_MAXIMUM_LENGTH");
-
+            String displayName = null;
+            Integer dependsOn = null;
+            Long orderPosition = null;
+            Boolean visible = null;
+            Boolean mandatoryIfVisible = null;
+            Integer watchColumn = null;
+            Integer codeValueId = null;
+ 
             final boolean columnNullable = "YES".equalsIgnoreCase(isNullable);
             final boolean columnIsPrimaryKey = "PRI".equalsIgnoreCase(isPrimaryKey);
 
             List<ResultsetColumnValueData> columnValues = new ArrayList<>();
+            List<ResultsetVisibilityCriteriaData> visibilityCriteria = new ArrayList<>();
+            List<ResultsetColumnValueData> visibilityCriteriaValues = new ArrayList<>();
             String codeName = null;
             if ("varchar".equalsIgnoreCase(columnType)) {
 
@@ -227,9 +237,36 @@ public class GenericDataServiceImpl implements GenericDataService {
                 columnValues = retreiveColumnValues(codeId);
 
             }
+          	String metaDataColumnName = null;
+          	String tempColumnName = null;
+         	final SqlRowSet rsValues = retriveXRegisteredMetadata(datatable);
+         	if(columnName.contains("_cd")){
+         		tempColumnName = columnName.substring(columnName.lastIndexOf("_")+1,columnName.length());
+         	}else{
+         		tempColumnName = columnName;
+         	}
+        	
+        	while(rsValues.next()) {
+        		metaDataColumnName = rsValues.getString("columnName");
+        		if(tempColumnName != null && tempColumnName.equalsIgnoreCase(metaDataColumnName)){
+        			displayName = rsValues.getString("displayName");
+        			dependsOn = rsValues.getInt("dependsOn");
+        			orderPosition = rsValues.getLong("orderPosition");
+        			visible = rsValues.getBoolean("visible");
+        			watchColumn = rsValues.getInt("watchColumn");
+        			codeValueId = rsValues.getInt("codeValueId");
+        			if(watchColumn > 0 && codeValueId > 0){
+         				visibilityCriteriaValues = retreiveColumnValuesByCodeValueId(codeValueId);
+        				String watchColumnName = retreiveWatchColumnName(watchColumn);
+            			visibilityCriteria.add(new ResultsetVisibilityCriteriaData(watchColumnName,visibilityCriteriaValues));
+        			}
+        			mandatoryIfVisible = rsValues.getBoolean("mandatoryIfVisible");
+        		}
+        		
+        	}
 
             final ResultsetColumnHeaderData rsch = ResultsetColumnHeaderData.detailed(columnName, columnType, columnLength, columnNullable,
-                    columnIsPrimaryKey, columnValues, codeName);
+                    columnIsPrimaryKey, columnValues, codeName, displayName, dependsOn, orderPosition, visible, mandatoryIfVisible, visibilityCriteria);
 
             columnHeaders.add(rsch);
         }
@@ -237,15 +274,36 @@ public class GenericDataServiceImpl implements GenericDataService {
         return columnHeaders;
     }
 
-    /*
+    private String retreiveWatchColumnName(Integer watchColumn) {
+		
+    	 String watchColumnName = null;
+    	 final String sql = "SELECT xrtm.column_name as columnName FROM x_registered_table_metadata xrtm WHERE xrtm.id = "+watchColumn+"";
+    	 final SqlRowSet rsValues = this.jdbcTemplate.queryForRowSet(sql);
+    	 
+         while (rsValues.next()) {
+             watchColumnName = rsValues.getString("columnName");
+         }
+         return watchColumnName;
+	}
+
+	private SqlRowSet retriveXRegisteredMetadata(String datatable) {
+    	final String sql = "select m.column_name columnName, m.display_name displayName, m.associate_with dependsOn, m.order_position orderPosition, m.visible visible," +
+    			"m.mandatory_if_visible mandatoryIfVisible, r.watch_column watchColumn,v.code_value_id codeValueId from x_registered_table x inner join x_registered_table_metadata m on m.register_table_id = x.id " +
+    			"left join x_registered_table_display_rules r on r.x_register_table_metadata_id = m.id left join x_registered_table_display_rules_value v on v.x_registered_table_display_rules_id = r.id " +
+    			" where x.registered_table_name = '"+datatable+"'";
+        final SqlRowSet rsValues = this.jdbcTemplate.queryForRowSet(sql);
+		return rsValues;
+	}
+
+	/*
      * Candidate for using caching there to get allowed 'column values' from
      * code/codevalue tables
      */
     private List<ResultsetColumnValueData> retreiveColumnValues(final String codeName) {
 
         final List<ResultsetColumnValueData> columnValues = new ArrayList<>();
-
-        final String sql = "select v.id, v.code_score, v.code_value from m_code m " + " join m_code_value v on v.code_id = m.id "
+   
+        final String sql = "select v.id, v.code_score, v.code_value, v.parent_id from m_code m " + " join m_code_value v on v.code_id = m.id "
                 + " where m.code_name = '" + codeName + "' order by v.order_position, v.id";
 
         final SqlRowSet rsValues = this.jdbcTemplate.queryForRowSet(sql);
@@ -255,8 +313,8 @@ public class GenericDataServiceImpl implements GenericDataService {
             final Integer id = rsValues.getInt("id");
             final String codeValue = rsValues.getString("code_value");
             final Integer score = rsValues.getInt("code_score");
-
-            columnValues.add(new ResultsetColumnValueData(id, codeValue, score));
+            final Integer parentId = rsValues.getInt("parent_id");
+            columnValues.add(new ResultsetColumnValueData(id, codeValue, score, parentId));
         }
 
         return columnValues;
@@ -279,7 +337,25 @@ public class GenericDataServiceImpl implements GenericDataService {
 
         return columnValues;
     }
+    
+    private List<ResultsetColumnValueData> retreiveColumnValuesByCodeValueId(final Integer codeValueId) {
 
+        final List<ResultsetColumnValueData> columnValues = new ArrayList<>();
+        if (codeValueId != null) {
+            final String sql = "select v.id, v.code_value from m_code_value v where v.id =" + codeValueId
+                    + " order by v.order_position, v.id";
+            final SqlRowSet rsValues = this.jdbcTemplate.queryForRowSet(sql);
+            rsValues.beforeFirst();
+            while (rsValues.next()) {
+                final Integer id = rsValues.getInt("id");
+                final String codeValue = rsValues.getString("code_value");
+                columnValues.add(new ResultsetColumnValueData(id, codeValue));
+            }
+        }
+
+        return columnValues;
+    }
+    
     private SqlRowSet getDatatableMetaData(final String datatable) {
 
         final String sql = "select COLUMN_NAME, IS_NULLABLE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, COLUMN_KEY"
