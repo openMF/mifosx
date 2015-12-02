@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.infrastructure.dataqueries.service;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
@@ -15,12 +16,16 @@ import javax.ws.rs.core.StreamingOutput;
 import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
 import org.mifosplatform.infrastructure.dataqueries.data.ReportData;
 import org.mifosplatform.infrastructure.dataqueries.data.ReportParameterData;
+import org.mifosplatform.useradministration.domain.AppUser;
 
 public interface ReadReportingService {
 
     StreamingOutput retrieveReportCSV(String name, String type, Map<String, String> extractedQueryParams);
 
     GenericResultsetData retrieveGenericResultset(String name, String type, Map<String, String> extractedQueryParams);
+	
+    //needed for smsCampaign jobs where securityContext is null
+    GenericResultsetData retrieveGenericResultSetForSmsCampaign(String name, String type, Map<String, String> extractedQueryParams);
 
     Response processPentahoRequest(String reportName, String outputType, Map<String, String> queryParams, Locale locale);
 
@@ -33,4 +38,6 @@ public interface ReadReportingService {
     Collection<ReportParameterData> getAllowedParameters();
 
     ReportData retrieveReport(final Long id);
+	ByteArrayOutputStream generatePentahoReportAsOutputStream(String reportName, String outputTypeParam,
+            Map<String, String> queryParams, Locale locale, AppUser runReportAsUser, StringBuilder errorLog);
 }
