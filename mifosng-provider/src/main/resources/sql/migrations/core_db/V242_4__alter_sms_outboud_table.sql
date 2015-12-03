@@ -1,0 +1,1 @@
+ALTER TABLE `sms_messages_outbound` CHANGE `message` `message` TEXT not null;

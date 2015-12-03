@@ -4,6 +4,9 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package org.mifosplatform.commands.domain;
+import org.mifosplatform.portfolio.creditcheck.CreditCheckConstants;
+import org.mifosplatform.infrastructure.reportmailingjob.ReportMailingJobConstants;
+import org.mifosplatform.portfolio.loanaccount.api.LoanApiConstants;
 
 import org.mifosplatform.useradministration.api.PasswordPreferencesApiConstants;
 
@@ -305,5 +308,40 @@ public class CommandWrapper {
     public boolean addAndDeleteDisbursementDetails() {
         return this.actionName.equalsIgnoreCase("UPDATE") && this.entityName.equalsIgnoreCase("DISBURSEMENTDETAIL")
                 && this.entityId == null;
+    }
+    
+    public boolean isCreditCheckResource() {
+        return this.entityName.equalsIgnoreCase(CreditCheckConstants.CREDIT_CHECK_ENTITY_NAME);
+    }
+    
+    public boolean isLoanCreditCheckResource() {
+        return this.entityName.equalsIgnoreCase(LoanApiConstants.LOAN_CREDIT_CHECK_ENTITY_NAME);
+    }
+
+    public boolean isDeactivate() {
+        return this.actionName.equalsIgnoreCase("DEACTIVATE");
+    }
+
+    public boolean isSmsResource() {
+        return this.entityName.equalsIgnoreCase("SMS");
+    }
+
+    public boolean isSmsCampaignResource() {
+        return this.entityName.equals("SMS_CAMPAIGN");
+    }
+	
+    public boolean isSmsCampaignActivation() {
+        return this.actionName.equalsIgnoreCase("ACTIVATE") && this.entityName.equalsIgnoreCase("SMS_CAMPAIGN");
+    }
+
+    public boolean isSmsCampaignClosure() {
+        return this.actionName.equalsIgnoreCase("CLOSE") && this.entityName.equalsIgnoreCase("SMS_CAMPAIGN");
+    }
+    public boolean isSmsCampaignReactivation(){
+        return this.actionName.equals("REACTIVATE") && this.entityName.equalsIgnoreCase("SMS_CAMPAIGN");
+    }
+
+    public boolean isReportMailingJobResource() {
+        return this.entityName.equalsIgnoreCase(ReportMailingJobConstants.REPORT_MAILING_JOB_ENTITY_NAME);
     }
 }

@@ -23,6 +23,7 @@ import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidation
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.portfolio.client.api.ClientApiConstants;
 import org.mifosplatform.portfolio.group.api.GroupingTypesApiConstants;
+import org.mifosplatform.portfolio.group.exception.InvalidEmailAdressException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -64,6 +65,8 @@ public final class GroupingTypesDataValidator {
 
         final String name = this.fromApiJsonHelper.extractStringNamed(GroupingTypesApiConstants.nameParamName, element);
         baseDataValidator.reset().parameter(GroupingTypesApiConstants.nameParamName).value(name).notNull().notExceedingLengthOf(100);
+        
+       
 
         if (this.fromApiJsonHelper.parameterExists(GroupingTypesApiConstants.externalIdParamName, element)) {
             final String externalId = this.fromApiJsonHelper.extractStringNamed(GroupingTypesApiConstants.externalIdParamName, element);
@@ -105,6 +108,13 @@ public final class GroupingTypesDataValidator {
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
+    
+    public boolean isValidEmailAddress(String email) {
+        String ePattern = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$";
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile(ePattern);
+        java.util.regex.Matcher m = p.matcher(email);
+        return m.matches();
+ }
 
     public void validateForCreateCenterGroup(final JsonCommand command) {
 
@@ -187,6 +197,13 @@ public final class GroupingTypesDataValidator {
 
         final String name = this.fromApiJsonHelper.extractStringNamed(GroupingTypesApiConstants.nameParamName, element);
         baseDataValidator.reset().parameter(GroupingTypesApiConstants.nameParamName).value(name).notNull().notExceedingLengthOf(100);
+        
+        final String mobileNo = this.fromApiJsonHelper.extractStringNamed(GroupingTypesApiConstants.mobileNoParamName,element);
+        baseDataValidator.reset().parameter(GroupingTypesApiConstants.mobileNoParamName).value(mobileNo).notNull().notExceedingLengthOf(10);
+        
+        final String emailId = this.fromApiJsonHelper.extractStringNamed(GroupingTypesApiConstants.emailIdParamName,element);
+        if(!this.isValidEmailAddress(emailId))
+        	throw new InvalidEmailAdressException(emailId);
 
         if (this.fromApiJsonHelper.parameterExists(GroupingTypesApiConstants.externalIdParamName, element)) {
             final String externalId = this.fromApiJsonHelper.extractStringNamed(GroupingTypesApiConstants.externalIdParamName, element);

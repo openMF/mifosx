@@ -16,44 +16,31 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
 public class TemplateMapper extends AbstractPersistable<Long> {
 
     @Column(name = "mapperorder")
-    private int mapperorder;
+    private int mapperOrder;
 
     @Column(name = "mapperkey")
-    private String mapperkey;
+    private String mapperKey;
 
     @Column(name = "mappervalue")
-    private String mappervalue;
+    private String mapperValue;
 
     protected TemplateMapper() {}
 
-    public TemplateMapper(final int mapperorder, final String mapperkey, final String mappervalue) {
-        this.mapperorder = mapperorder;
-        this.mapperkey = mapperkey;
-        this.mappervalue = mappervalue;
+    public TemplateMapper(final int mapperOrder, final String mapperKey, final String mapperValue) {
+        this.mapperOrder = mapperOrder;
+        this.mapperKey = mapperKey;
+        this.mapperValue = mapperValue;
     }
 
-    public String getMapperkey() {
-        return this.mapperkey;
+    public int getMapperOrder() {
+        return mapperOrder;
     }
 
-    public int getMapperorder() {
-        return this.mapperorder;
+    public String getMapperKey() {
+        return mapperKey;
     }
 
-    public void setMapperorder(final int mapperorder) {
-        this.mapperorder = mapperorder;
+    public String getMapperValue() {
+        return mapperValue;
     }
-
-    public void setMapperkey(final String mapperkey) {
-        this.mapperkey = mapperkey;
-    }
-
-    public String getMappervalue() {
-        return this.mappervalue;
-    }
-
-    public void setMappervalue(final String mappervalue) {
-        this.mappervalue = mappervalue;
-    }
-
 }

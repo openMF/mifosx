@@ -397,4 +397,17 @@ public final class SearchParameters {
     public boolean isCategoryIdPassed() {
         return this.categoryId != null && this.categoryId != 0 ;
     }
+    
+    /** 
+     * creates an instance of the SearchParameters from a request for the report mailing job run history
+     * 
+     * @return SearchParameters object
+     **/
+    public static SearchParameters fromReportMailingJobRunHistory(final Integer offset, 
+            final Integer limit, final String orderBy, final String sortOrder) {
+        final Integer maxLimitAllowed = getCheckedLimit(limit);
+		
+        return new SearchParameters(null, null, null, null, null, null, null, offset, maxLimitAllowed, orderBy,
+                sortOrder, null, null, null, null, null);
+    }
 }
