@@ -133,6 +133,8 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             final String accountNo = command.stringValueOfParameterNamed(GroupingTypesApiConstants.accountNoParamName);
             final String name = command.stringValueOfParameterNamed(GroupingTypesApiConstants.nameParamName);
             final String externalId = command.stringValueOfParameterNamed(GroupingTypesApiConstants.externalIdParamName);
+			final String mobileNo = "+256".concat(command.stringValueOfParameterNamed(GroupingTypesApiConstants.mobileNoParamName));
+			final String emailId = command.stringValueOfParameterNamed(GroupingTypesApiConstants.emailIdParamName);
 
             final AppUser currentUser = this.context.authenticatedUser();
             Long officeId = null;
@@ -172,7 +174,7 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
                 submittedOnDate = command.localDateValueOfParameterNamed(GroupingTypesApiConstants.submittedOnDateParamName);
             }
 
-            final Group newGroup = Group.newGroup(groupOffice, staff, parentGroup, groupLevel, name, externalId, active, activationDate,
+            final Group newGroup = Group.newGroup(groupOffice, staff, parentGroup, groupLevel, name, externalId, active, activationDate, mobileNo, emailId,
                     clientMembers, groupMembers, submittedOnDate, currentUser, accountNo);
 
             boolean rollbackTransaction = false;

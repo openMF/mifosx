@@ -104,6 +104,7 @@ public class TemplatesApiResource {
         return this.toApiJsonSerializer.serialize(settings, templates, this.RESPONSE_TEMPLATES_DATA_PARAMETERS);
     }
 
+
     @GET
     @Path("template")
     public String template(@Context final UriInfo uriInfo) {
@@ -121,7 +122,6 @@ public class TemplatesApiResource {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createTemplate().withJson(apiRequestBodyAsJson).build();
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-
         return this.toApiJsonSerializer.serialize(result);
     }
 
@@ -148,6 +148,7 @@ public class TemplatesApiResource {
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.templateDataApiJsonSerializer.serialize(settings, template, this.RESPONSE_TEMPLATE_DATA_PARAMETERS);
     }
+
 
     @PUT
     @Path("{templateId}")
@@ -197,4 +198,13 @@ public class TemplatesApiResource {
         parametersMap.putAll(result);
         return this.templateMergeService.compile(template, parametersMap);
     }
+
+
+    @POST
+    @Path("/sms/{templateId}")
+    public String generateSmsTemplate(@PathParam("templateId") final Long templateId, @Context final UriInfo uriInfo,
+                               final String apiRequestBodyAsJson) {
+              return null;
+    }
+
 }

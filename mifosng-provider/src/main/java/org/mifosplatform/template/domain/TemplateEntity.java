@@ -12,9 +12,9 @@ import com.google.gson.annotations.SerializedName;
 @JsonSerialize(using = TemplateEntitySerializer.class)
 public enum TemplateEntity {
 
-    @SerializedName("client")
-    CLIENT(0, "client"), @SerializedName("loan")
-    LOAN(1, "loan");
+    @SerializedName("client") CLIENT(0, "client"),
+    @SerializedName("loan") LOAN(1, "loan"),
+    @SerializedName("runreports") RUNREPORT(2,"runreports");
 
     private int id;
     private String name;

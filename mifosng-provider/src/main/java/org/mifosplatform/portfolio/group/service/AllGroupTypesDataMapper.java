@@ -28,6 +28,7 @@ public final class AllGroupTypesDataMapper implements RowMapper<GroupGeneralData
         sqlBuilder.append("g.id as id, g.account_no as accountNumber, g.external_id as externalId, g.display_name as name, ");
         sqlBuilder.append("g.office_id as officeId, o.name as officeName, ");
         sqlBuilder.append("g.parent_id as centerId, pg.display_name as centerName, ");
+		sqlBuilder.append("g.mobile_no as mobileNo, g.email_Id as emailId,");
         sqlBuilder.append("g.staff_id as staffId, s.display_name as staffName, ");
         sqlBuilder.append("g.status_enum as statusEnum, g.activation_date as activationDate, ");
         sqlBuilder.append("g.closedon_date as closedOnDate, ");
@@ -73,6 +74,8 @@ public final class AllGroupTypesDataMapper implements RowMapper<GroupGeneralData
         final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
         final EnumOptionData status = ClientEnumerations.status(statusEnum);
         final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
+		final String mobileNo =rs.getString("mobileNo").substring(3);
+		final String emailId=rs.getString("emailId");
 
         final Long officeId = JdbcSupport.getLong(rs, "officeId");
         final String officeName = rs.getString("officeName");
@@ -101,7 +104,7 @@ public final class AllGroupTypesDataMapper implements RowMapper<GroupGeneralData
                 submittedByLastname, activationDate, activatedByUsername, activatedByFirstname, activatedByLastname, closedOnDate,
                 closedByUsername, closedByFirstname, closedByLastname);
 
-        return GroupGeneralData.instance(id, accountNo, name, externalId, status, activationDate, officeId, officeName, centerId, centerName, staffId,
+        return GroupGeneralData.instance(id, accountNo, name, externalId, status, activationDate, mobileNo, emailId, officeId, officeName, centerId, centerName, staffId,
                 staffName, hierarchy, groupLevel, timeline);
     }
 }

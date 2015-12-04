@@ -191,6 +191,36 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         return result;
     }
 
+    @Override
+    public GenericResultsetData retrieveGenericResultSetForSmsCampaign(final String name, final String type, final Map<String, String> queryParams){
+        final long startTime = System.currentTimeMillis();
+        logger.info("STARTING REPORT: " + name + "   Type: " + type);
+
+        final String sql = sqlToRunForSmsCampaign(name, type, queryParams);
+
+        final GenericResultsetData result = this.genericDataService.fillGenericResultSet(sql);
+
+        final long elapsed = System.currentTimeMillis() - startTime;
+        logger.info("FINISHING Report/Request Name: " + name + " - " + type + "     Elapsed Time: " + elapsed);
+        return result;
+
+    }
+
+    private String  sqlToRunForSmsCampaign(final String name, final String type, final Map<String, String> queryParams) {
+        String sql = getSql(name, type);
+
+        final Set<String> keys = queryParams.keySet();
+        for (final String key : keys) {
+            final String pValue = queryParams.get(key);
+            // logger.info("(" + key + " : " + pValue + ")");
+            sql = this.genericDataService.replace(sql, key, pValue);
+        }
+
+        sql = this.genericDataService.wrapSQL(sql);
+
+        return sql;
+    }
+	
     private String getSQLtoRun(final String name, final String type, final Map<String, String> queryParams) {
 
         String sql = getSql(name, type);
@@ -202,13 +232,17 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             sql = this.genericDataService.replace(sql, key, pValue);
         }
 
-        final AppUser currentUser = this.context.authenticatedUser();
-        // Allows sql query to restrict data by office hierarchy if required
-        sql = this.genericDataService.replace(sql, "${currentUserHierarchy}", currentUser.getOffice().getHierarchy());
-        // Allows sql query to restrict data by current user Id if required
-        // (typically used to return report lists containing only reports
-        // permitted to be run by the user
-        sql = this.genericDataService.replace(sql, "${currentUserId}", currentUser.getId().toString());
+        // this method is used by Jobs so get authenticated user without throwing exception
+        final AppUser currentUser = this.context.getAuthenticatedUserIfPresent();
+        
+        if (currentUser != null) {
+            // Allows sql query to restrict data by office hierarchy if required
+            sql = this.genericDataService.replace(sql, "${currentUserHierarchy}", currentUser.getOffice().getHierarchy());
+            // Allows sql query to restrict data by current user Id if required
+            // (typically used to return report lists containing only reports
+            // permitted to be run by the user
+            sql = this.genericDataService.replace(sql, "${currentUserId}", currentUser.getId().toString());
+        }
 
         sql = this.genericDataService.wrapSQL(sql);
 
@@ -243,80 +277,44 @@ public class ReadReportingServiceImpl implements ReadReportingService {
     @Override
     public Response processPentahoRequest(final String reportName, final String outputTypeParam, final Map<String, String> queryParams,
             final Locale locale) {
-
+        final AppUser currentUser = this.context.authenticatedUser();
+        final StringBuilder errorLog = new StringBuilder();
+        final ByteArrayOutputStream baos = this.generatePentahoReportAsOutputStream(reportName, outputTypeParam, queryParams, locale, 
+                currentUser, errorLog);
+        
         String outputType = "HTML";
         if (StringUtils.isNotBlank(outputTypeParam)) {
             outputType = outputTypeParam;
         }
+        
+        if ("PDF".equalsIgnoreCase(outputType)) {
+            return Response.ok().entity(baos.toByteArray()).type("application/pdf").build();
+        }
 
-        if (!(outputType.equalsIgnoreCase("HTML") || outputType.equalsIgnoreCase("PDF") || outputType.equalsIgnoreCase("XLS")
-                || outputType.equalsIgnoreCase("XLSX") || outputType.equalsIgnoreCase("CSV"))) { throw new PlatformDataIntegrityException(
-                "error.msg.invalid.outputType", "No matching Output Type: " + outputType); }
+        if ("XLS".equalsIgnoreCase(outputType)) {
+            return Response.ok().entity(baos.toByteArray()).type("application/vnd.ms-excel")
+                    .header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".xls").build();
+        }
 
-        if (this.noPentaho) { throw new PlatformDataIntegrityException("error.msg.no.pentaho", "Pentaho is not enabled",
-                "Pentaho is not enabled"); }
+        if ("XLSX".equalsIgnoreCase(outputType)) {
+            return Response.ok().entity(baos.toByteArray()).type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    .header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".xlsx").build();
+        }
 
-        final String reportPath = FileSystemContentRepository.MIFOSX_BASE_DIR + File.separator + "pentahoReports" + File.separator
-                + reportName + ".prpt";
-        logger.info("Report path: " + reportPath);
+        if ("CSV".equalsIgnoreCase(outputType)) {
+            return Response.ok().entity(baos.toByteArray()).type("application/x-msdownload")
+                    .header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".csv").build();
+        }
 
-        // load report definition
-        final ResourceManager manager = new ResourceManager();
-        manager.registerDefaults();
-        Resource res;
-
-        try {
-            res = manager.createDirectly(reportPath, MasterReport.class);
-            final MasterReport masterReport = (MasterReport) res.getResource();
-            final DefaultReportEnvironment reportEnvironment = (DefaultReportEnvironment) masterReport.getReportEnvironment();
-            if (locale != null) {
-                reportEnvironment.setLocale(locale);
-            }
-            addParametersToReport(masterReport, queryParams);
-
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-            if ("PDF".equalsIgnoreCase(outputType)) {
-                PdfReportUtil.createPDF(masterReport, baos);
-                return Response.ok().entity(baos.toByteArray()).type("application/pdf").build();
-            }
-
-            if ("XLS".equalsIgnoreCase(outputType)) {
-                ExcelReportUtil.createXLS(masterReport, baos);
-                return Response.ok().entity(baos.toByteArray()).type("application/vnd.ms-excel")
-                        .header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".xls").build();
-            }
-
-            if ("XLSX".equalsIgnoreCase(outputType)) {
-                ExcelReportUtil.createXLSX(masterReport, baos);
-                return Response.ok().entity(baos.toByteArray()).type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                        .header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".xlsx").build();
-            }
-
-            if ("CSV".equalsIgnoreCase(outputType)) {
-                CSVReportUtil.createCSV(masterReport, baos, "UTF-8");
-                return Response.ok().entity(baos.toByteArray()).type("text/csv")
-                        .header("Content-Disposition", "attachment;filename=" + reportName.replaceAll(" ", "") + ".csv").build();
-            }
-
-            if ("HTML".equalsIgnoreCase(outputType)) {
-                HtmlReportUtil.createStreamHTML(masterReport, baos);
-                return Response.ok().entity(baos.toByteArray()).type("text/html").build();
-            }
-        } catch (final ResourceException e) {
-            throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
-        } catch (final ReportProcessingException e) {
-            throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
-        } catch (final IOException e) {
-            throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
+        if ("HTML".equalsIgnoreCase(outputType)) {
+            return Response.ok().entity(baos.toByteArray()).type("text/html").build();
         }
 
         throw new PlatformDataIntegrityException("error.msg.invalid.outputType", "No matching Output Type: " + outputType);
     }
 
-    private void addParametersToReport(final MasterReport report, final Map<String, String> queryParams) {
-
-        final AppUser currentUser = this.context.authenticatedUser();
+    private void addParametersToReport(final MasterReport report, final Map<String, String> queryParams, 
+            final AppUser runReportAsUser, final StringBuilder errorLog) {
 
         try {
 
@@ -332,7 +330,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
              */
             for (final ParameterDefinitionEntry paramDefEntry : paramsDefinition.getParameterDefinitions()) {
                 final String paramName = paramDefEntry.getName();
-                if (!((paramName.equals("tenantUrl")) || (paramName.equals("userhierarchy") || (paramName.equals("username")) || (paramName
+                if (!( (paramName.equals("tenantdb")) ||  (paramName.equals("tenantUrl")) || (paramName.equals("userhierarchy") || (paramName.equals("username")) || (paramName
                         .equals("password") || (paramName.equals("userid")))))) {
                     logger.info("paramName:" + paramName);
                     final String pValue = queryParams.get(paramName);
@@ -360,16 +358,21 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             // data scoping
             final Connection connection = this.dataSource.getConnection();
             String tenantUrl;
+			String tenantdb;
             try {
                 tenantUrl = connection.getMetaData().getURL();
+				tenantdb = connection.getCatalog();
             } finally {
                 connection.close();
             }
-            final String userhierarchy = currentUser.getOffice().getHierarchy();
+            final String userhierarchy = runReportAsUser.getOffice().getHierarchy();
             logger.info("db URL:" + tenantUrl + "      userhierarchy:" + userhierarchy);
+			logger.info("db name:" + tenantdb + "      userhierarchy:" + userhierarchy);
+			
+			rptParamValues.put("tenantdb", tenantdb);
             rptParamValues.put("userhierarchy", userhierarchy);
 
-            final Long userid = currentUser.getId();
+            final Long userid = runReportAsUser.getId();
             logger.info("db URL:" + tenantUrl + "      userid:" + userid);
             rptParamValues.put("userid", userid);
 
@@ -380,7 +383,9 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             rptParamValues.put("username", tenantConnection.getSchemaUsername());
             rptParamValues.put("password", tenantConnection.getSchemaPassword());
         } catch (final Exception e) {
-            logger.error("error.msg.reporting.error:" + e.getMessage());
+            logger.error("error.msg.reporting.error:" + e.getMessage(), e.getMessage());
+            errorLog.append("ReadReportingServiceImpl.addParametersToReport method threw an Exception: "
+                    + "Invalid or missing report parameter(s) - " + e.getMessage() + " ---------- ");
             throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
         }
     }
@@ -631,6 +636,86 @@ public class ReadReportingServiceImpl implements ReadReportingService {
 
             return new ReportParameterData(id, null, null, parameterName);
         }
+    }
+
+    @Override
+    public ByteArrayOutputStream generatePentahoReportAsOutputStream(final String reportName, final String outputTypeParam, final Map<String, String> queryParams,
+            final Locale locale, final AppUser runReportAsUser, final StringBuilder errorLog) {
+        String outputType = "HTML";
+        if (StringUtils.isNotBlank(outputTypeParam)) {
+            outputType = outputTypeParam;
+        }
+
+        if (!(outputType.equalsIgnoreCase("HTML") || outputType.equalsIgnoreCase("PDF") || outputType.equalsIgnoreCase("XLS") || outputType.equalsIgnoreCase("XLSX") || outputType
+                .equalsIgnoreCase("CSV"))) { throw new PlatformDataIntegrityException("error.msg.invalid.outputType",
+                "No matching Output Type: " + outputType); }
+
+        if (this.noPentaho) { throw new PlatformDataIntegrityException("error.msg.no.pentaho", "Pentaho is not enabled",
+                "Pentaho is not enabled"); }
+
+        final String reportPath = FileSystemContentRepository.MIFOSX_BASE_DIR + File.separator + "pentahoReports" + File.separator
+                + reportName + ".prpt";
+        logger.info("Report path: " + reportPath);
+
+        // load report definition
+        final ResourceManager manager = new ResourceManager();
+        manager.registerDefaults();
+        Resource res;
+
+        try {
+            res = manager.createDirectly(reportPath, MasterReport.class);
+            final MasterReport masterReport = (MasterReport) res.getResource();
+            final DefaultReportEnvironment reportEnvironment = (DefaultReportEnvironment) masterReport.getReportEnvironment();
+            
+            if (locale != null) {
+                reportEnvironment.setLocale(locale);
+            }
+            addParametersToReport(masterReport, queryParams, runReportAsUser, errorLog);
+
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            if ("PDF".equalsIgnoreCase(outputType)) {
+                PdfReportUtil.createPDF(masterReport, baos);
+                return baos;
+            }
+
+            if ("XLS".equalsIgnoreCase(outputType)) {
+                ExcelReportUtil.createXLS(masterReport, baos);
+                return baos;
+            }
+
+            if ("XLSX".equalsIgnoreCase(outputType)) {
+                ExcelReportUtil.createXLSX(masterReport, baos);
+                return baos;
+            }
+
+            if ("CSV".equalsIgnoreCase(outputType)) {
+                CSVReportUtil.createCSV(masterReport, baos, "UTF-8");
+                return baos;
+            }
+
+            if ("HTML".equalsIgnoreCase(outputType)) {
+                HtmlReportUtil.createStreamHTML(masterReport, baos);
+                return baos;
+            }
+            
+        } catch (final ResourceException e) {
+            errorLog.append("ReadReportingServiceImpl.generatePentahoReportAsOutputStream method threw a Pentaho ResourceException "
+                    + "exception: " + e.getMessage() + " ---------- ");
+            throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
+        } catch (final ReportProcessingException e) {
+            errorLog.append("ReadReportingServiceImpl.generatePentahoReportAsOutputStream method threw a Pentaho ReportProcessingException "
+                    + "exception: " + e.getMessage() + " ---------- ");
+            throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
+        } catch (final IOException e) {
+            errorLog.append("ReadReportingServiceImpl.generatePentahoReportAsOutputStream method threw an IOException "
+                    + "exception: " + e.getMessage() + " ---------- ");
+            throw new PlatformDataIntegrityException("error.msg.reporting.error", e.getMessage());
+        }
+
+        errorLog.append("ReadReportingServiceImpl.generatePentahoReportAsOutputStream method threw a PlatformDataIntegrityException "
+                + "exception: No matching Output Type: " + outputType + " ---------- ");
+        throw new PlatformDataIntegrityException("error.msg.invalid.outputType", "No matching Output Type: " + outputType);
     }
 
 }

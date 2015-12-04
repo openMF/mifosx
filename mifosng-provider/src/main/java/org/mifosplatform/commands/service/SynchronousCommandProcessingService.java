@@ -180,6 +180,43 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             } else {
                 throw new UnsupportedCommandException(wrapper.commandName());
             }
+        } else if(wrapper.isSmsCampaignResource()){
+            if(wrapper.isCreate()){
+                handler = this.applicationContext.getBean("createSmsCampaignCommandHandler",NewCommandSourceHandler.class);
+            } else if(wrapper.isUpdate()){
+                handler = this.applicationContext.getBean("updateSmsCampaignCommandHandler",NewCommandSourceHandler.class);
+            } else if(wrapper.isDelete()){
+                handler = this.applicationContext.getBean("deleteSmsCampaignCommandHandler",NewCommandSourceHandler.class);
+            }else if(wrapper.isSmsCampaignActivation()){
+                handler= this.applicationContext.getBean("activateSmsCampaignCommandHandler",NewCommandSourceHandler.class);
+            } else if (wrapper.isSmsCampaignClosure()){
+                handler= this.applicationContext.getBean("closeSmsCampaignCommandHandler",NewCommandSourceHandler.class);
+            } else if(wrapper.isSmsCampaignReactivation()){
+                handler= this.applicationContext.getBean("reactivateSmsCampaignCommandHandler",NewCommandSourceHandler.class);
+            }
+            else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
+        } else if (wrapper.isCreditCheckResource()) {
+            if (wrapper.isCreate()) {
+                handler = this.applicationContext.getBean("createCreditCheckCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdate()) {
+                handler = this.applicationContext.getBean("updateCreditCheckCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isDelete()) {
+                handler = this.applicationContext.getBean("deleteCreditCheckCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
+        } else if(wrapper.isReportMailingJobResource()) {
+            if (wrapper.isCreate()) {
+                handler = this.applicationContext.getBean("createReportMailingJobCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isUpdate()) {
+                handler = this.applicationContext.getBean("updateReportMailingJobCommandHandler", NewCommandSourceHandler.class);
+            } else if (wrapper.isDelete()) {
+                handler = this.applicationContext.getBean("deleteReportMailingJobCommandHandler", NewCommandSourceHandler.class);
+            } else {
+                throw new UnsupportedCommandException(wrapper.commandName());
+            }
         } else {
             handler = this.commandHandlerProvider.getHandler(wrapper.entityName(), wrapper.actionName());
         }

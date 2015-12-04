@@ -265,4 +265,12 @@ public final class Report extends AbstractPersistable<Long> {
 
         return false;
     }
+
+    public String getReportType() {
+        return this.reportType;
+    }
+
+    public String getReportSql() {
+        return this.reportSql;
+    }
 }

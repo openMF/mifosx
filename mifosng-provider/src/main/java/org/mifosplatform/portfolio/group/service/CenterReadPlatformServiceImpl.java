@@ -282,6 +282,8 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
             final Integer statusEnum = JdbcSupport.getInteger(rs, "statusEnum");
             final EnumOptionData status = ClientEnumerations.status(statusEnum);
             final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
+			final String mobileNo=rs.getString("mobileNo");
+			final String emailId=rs.getString("emailId");
 
             final Long officeId = rs.getLong("officeId");
             final String officeName = rs.getString("officeName");
@@ -308,7 +310,7 @@ public class CenterReadPlatformServiceImpl implements CenterReadPlatformService 
                     submittedByLastname, activationDate, activatedByUsername, activatedByFirstname, activatedByLastname, closedOnDate,
                     closedByUsername, closedByFirstname, closedByLastname);
 
-            return GroupGeneralData.instance(id, accountNo, name, externalId, status, activationDate, officeId, officeName, null, null, staffId,
+            return GroupGeneralData.instance(id, accountNo, name, externalId, status, activationDate, mobileNo, emailId, officeId, officeName, null, null, staffId,
                     staffName, hierarchy, groupLevel, timeline);
         }
     }
