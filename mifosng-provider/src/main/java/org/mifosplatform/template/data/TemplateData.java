@@ -29,13 +29,21 @@ public class TemplateData {
         this.types = getTypes();
     }
 
+    private TemplateData(){
+        this.template = null;
+        this.entities = getEntites();
+        this.types    = getTypes();
+    }
+
+
     public static TemplateData template(final Template template) {
         return new TemplateData(template);
     }
 
-    public static TemplateData template() {
-        return new TemplateData(null);
+    public static TemplateData template(){
+        return new TemplateData();
     }
+
 
     private List<Map<String, Object>> getEntites() {
         final List<Map<String, Object>> l = new ArrayList<>();

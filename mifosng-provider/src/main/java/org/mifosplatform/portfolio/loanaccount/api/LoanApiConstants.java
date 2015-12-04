@@ -5,6 +5,10 @@
  */
 package org.mifosplatform.portfolio.loanaccount.api;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 public interface LoanApiConstants {
 
     public static final String emiAmountParameterName = "fixedEmiAmount";
@@ -51,5 +55,20 @@ public interface LoanApiConstants {
 	
     public static final String isFloatingInterestRate = "isFloatingInterestRate";
 	public static final String interestRateDifferential = "interestRateDifferential";
-
+   
+   // loan credit check related constants
+    public static final String LOAN_CREDIT_CHECK_ENTITY_NAME = "LOANCREDITCHECK";
+    public static final String ID_PARAM_NAME = "id";
+    public static final String CREDIT_CHECK_ID_PARAM_NAME = "creditCheckId";
+    public static final String lOAN_ID_PARAM_NAME = "loanId";
+    public static final String EXPECTED_RESULT_PARAM_NAME = "expectedResult";
+    public static final String ACTUAL_RESULT_PARAM_NAME = "actualResult";
+    public static final String SEVERITY_LEVEL_PARAM_NAME = "severityLevel";
+    public static final String MESSAGE_PARAM_NAME = "message";
+    public static final String IS_ACTIVE_PARAM_NAME = "isActive";
+    public static final String CREDIT_CHECK_DATA_OPTIONS_PARAM_NAME = "creditCheckDataOptions";
+    public static final String TIMELINE_PARAM_NAME = "timeline";
+    public static final Set<String> LOAN_CREDIT_CHECK_RESPONSE_DATA = new HashSet<>(Arrays.asList(ID_PARAM_NAME, CREDIT_CHECK_ID_PARAM_NAME, 
+            lOAN_ID_PARAM_NAME, EXPECTED_RESULT_PARAM_NAME, ACTUAL_RESULT_PARAM_NAME, SEVERITY_LEVEL_PARAM_NAME, MESSAGE_PARAM_NAME, 
+            IS_ACTIVE_PARAM_NAME, CREDIT_CHECK_DATA_OPTIONS_PARAM_NAME, TIMELINE_PARAM_NAME));
 }

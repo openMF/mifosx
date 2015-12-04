@@ -24,6 +24,8 @@ import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.portfolio.charge.data.ChargeData;
 import org.mifosplatform.portfolio.charge.service.ChargeReadPlatformService;
 import org.mifosplatform.portfolio.common.service.CommonEnumerations;
+import org.mifosplatform.portfolio.creditcheck.data.CreditCheckData;
+import org.mifosplatform.portfolio.creditcheck.service.CreditCheckReadPlatformService;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductBorrowerCycleVariationData;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductGuaranteeData;
@@ -44,15 +46,18 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
     private final JdbcTemplate jdbcTemplate;
     private final ChargeReadPlatformService chargeReadPlatformService;
     private final MifosEntityAccessUtil mifosEntityAccessUtil;
+	private final CreditCheckReadPlatformService creditCheckReadPlatformService;
 
     @Autowired
     public LoanProductReadPlatformServiceImpl(final PlatformSecurityContext context,
             final ChargeReadPlatformService chargeReadPlatformService, final RoutingDataSource dataSource,
-            final MifosEntityAccessUtil mifosEntityAccessUtil) {
+            final MifosEntityAccessUtil mifosEntityAccessUtil,
+			final CreditCheckReadPlatformService creditCheckReadPlatformService) {
         this.context = context;
         this.chargeReadPlatformService = chargeReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.mifosEntityAccessUtil = mifosEntityAccessUtil;
+		this.creditCheckReadPlatformService = creditCheckReadPlatformService;
     }
 
     @Override
@@ -61,7 +66,8 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
         try {
             final Collection<ChargeData> charges = this.chargeReadPlatformService.retrieveLoanProductCharges(loanProductId);
             final Collection<LoanProductBorrowerCycleVariationData> borrowerCycleVariationDatas = retrieveLoanProductBorrowerCycleVariations(loanProductId);
-            final LoanProductMapper rm = new LoanProductMapper(charges, borrowerCycleVariationDatas);
+            final Collection<CreditCheckData> creditChecks = this.creditCheckReadPlatformService.retrieveLoanProductCreditChecks(loanProductId);
+            final LoanProductMapper rm = new LoanProductMapper(charges, borrowerCycleVariationDatas, creditChecks);
             final String sql = "select " + rm.loanProductSchema() + " where lp.id = ?";
 
             return this.jdbcTemplate.queryForObject(sql, rm, new Object[] { loanProductId });
@@ -83,7 +89,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
 
         this.context.authenticatedUser();
 
-        final LoanProductMapper rm = new LoanProductMapper(null, null);
+        final LoanProductMapper rm = new LoanProductMapper(null, null, null);
 
         String sql = "select " + rm.loanProductSchema();
 
@@ -157,11 +163,14 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
         private final Collection<ChargeData> charges;
 
         private final Collection<LoanProductBorrowerCycleVariationData> borrowerCycleVariationDatas;
-
+		private final Collection<CreditCheckData> creditChecks;
+		
         public LoanProductMapper(final Collection<ChargeData> charges,
-                final Collection<LoanProductBorrowerCycleVariationData> borrowerCycleVariationDatas) {
+                final Collection<LoanProductBorrowerCycleVariationData> borrowerCycleVariationDatas,
+				final Collection<CreditCheckData> creditChecks) {
             this.charges = charges;
             this.borrowerCycleVariationDatas = borrowerCycleVariationDatas;
+			this.creditChecks = creditChecks;
         }
 
         public String loanProductSchema() {
@@ -398,7 +407,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     principalThresholdForLastInstallment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount,
                     installmentAmountInMultiplesOf, allowAttributeOverrides, isLinkedToFloatingInterestRates, floatingRateId,
                     floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate, 
-                    maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed);
+                    maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, this.creditChecks);
         }
     }
 
@@ -467,7 +476,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
     public Collection<LoanProductData> retrieveAllLoanProductsForCurrency(String currencyCode) {
         this.context.authenticatedUser();
 
-        final LoanProductMapper rm = new LoanProductMapper(null, null);
+        final LoanProductMapper rm = new LoanProductMapper(null, null, null);
 
         String sql = "select " + rm.loanProductSchema() + " where lp.currency_code='" + currencyCode + "'";
 

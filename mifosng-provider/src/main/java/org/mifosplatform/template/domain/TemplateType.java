@@ -12,12 +12,11 @@ import com.google.gson.annotations.SerializedName;
 @JsonSerialize(using = TemplateTypeSerializer.class)
 public enum TemplateType {
 
-    @SerializedName("Document")
-    DOCUMENT(0, "Document"), @SerializedName("SMS")
-    SMS(2, "SMS");
+    @SerializedName("Document") DOCUMENT(0, "Document"),
+    @SerializedName("SMS") SMS(1,"SMS");
 
     /**
-     * @SerializedName("E-Mail") EMAIL(1, "E-Mail")
+     * @SerializedName("E-Mail") EMAIL(2, "E-Mail"),
      */
     private int id;
     private String name;
