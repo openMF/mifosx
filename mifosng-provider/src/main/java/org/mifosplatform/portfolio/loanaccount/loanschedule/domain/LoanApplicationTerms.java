@@ -885,7 +885,12 @@ public final class LoanApplicationTerms {
 
         final BigDecimal periodicInterestRate = periodicInterestRate(calculator, mc, daysInPeriod, this.daysInMonthType,
                 this.daysInYearType);
-        interestDue = outstandingBalance.multiplyRetainScale(periodicInterestRate, mc.getRoundingMode());
+        
+        if(this.interestCalculationPeriodMethod == InterestCalculationPeriodMethod.DAILY) {
+        	interestDue = outstandingBalance.multipliedBy(daysInPeriod).multipliedBy(periodicInterestRate).dividedBy(this.daysInYearType.getValue(), mc.getRoundingMode());
+        } else {
+        	interestDue = outstandingBalance.multiplyRetainScale(periodicInterestRate, mc.getRoundingMode());
+        }
 
         return interestDue;
     }
