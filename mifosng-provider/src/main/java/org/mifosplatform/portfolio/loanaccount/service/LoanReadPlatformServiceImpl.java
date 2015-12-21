@@ -331,7 +331,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
         final ClientData clientAccount = this.clientReadPlatformService.retrieveOne(clientId);
         final LocalDate expectedDisbursementDate = DateUtils.getLocalDateOfTenant();
-        LoanAccountData loanTemplateDetails = LoanAccountData.clientDefaults(clientAccount.id(), clientAccount.displayName(),
+        LoanAccountData loanTemplateDetails = LoanAccountData.clientDefaults(clientAccount.id(), clientAccount.accountNo(), clientAccount.displayName(),
                 clientAccount.officeId(), expectedDisbursementDate);
 
         if (productId != null) {
@@ -561,9 +561,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " lp.is_linked_to_floating_interest_rates as isLoanProductLinkedToFloatingRate, "
                     + " lp.allow_multiple_disbursals as multiDisburseLoan,"
                     + " lp.can_define_fixed_emi_amount as canDefineInstallmentAmount,"
-                    + " c.id as clientId, c.display_name as clientName, c.office_id as clientOfficeId,"
+                    + " c.id as clientId, c.account_no as clientAccountNo, c.display_name as clientName, c.office_id as clientOfficeId,"
                     + " g.id as groupId, g.account_no as groupAccountNo, g.display_name as groupName,"
-                    + " g.office_id as groupOfficeId, g.staff_id As groupStaffId , g.parent_id as groupParentId, "
+                    + " g.office_id as groupOfficeId, g.staff_id As groupStaffId , g.parent_id as groupParentId, (select mg.display_name from m_group mg where mg.id = g.parent_id) as centerName, "
                     + " g.hierarchy As groupHierarchy , g.level_id as groupLevel, g.external_id As groupExternalId, "
                     + " g.status_enum as statusEnum, g.activation_date as activationDate, "
                     + " l.submittedon_date as submittedOnDate, sbu.username as submittedByUsername, sbu.firstname as submittedByFirstname, sbu.lastname as submittedByLastname,"
@@ -667,6 +667,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final String externalId = rs.getString("externalId");
 
             final Long clientId = JdbcSupport.getLong(rs, "clientId");
+            final String clientAccountNo = rs.getString("clientAccountNo");
             final Long clientOfficeId = JdbcSupport.getLong(rs, "clientOfficeId");
             final String clientName = rs.getString("clientName");
 
@@ -677,6 +678,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final Long groupOfficeId = JdbcSupport.getLong(rs, "groupOfficeId");
             final Long groupStaffId = JdbcSupport.getLong(rs, "groupStaffId");
             final Long groupParentId = JdbcSupport.getLong(rs, "groupParentId");
+            final String centerName = rs.getString("centerName");
             final String groupHierarchy = rs.getString("groupHierarchy");
             final String groupLevel = rs.getString("groupLevel");
 
@@ -862,7 +864,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 final EnumOptionData groupStatus = ClientEnumerations.status(groupStatusEnum);
                 final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
                 groupData = GroupGeneralData.instance(groupId, groupAccountNo, groupName, groupExternalId, groupStatus, activationDate,
-                        groupOfficeId, null, groupParentId, null, groupStaffId, null, groupHierarchy, groupLevel, null);
+                        groupOfficeId, null, groupParentId, centerName, groupStaffId, null, groupHierarchy, groupLevel, null);
             }
 
             final Integer loanCounter = JdbcSupport.getInteger(rs, "loanCounter");
@@ -905,8 +907,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                         rescheduleStrategyType, calendarData, restFrequencyType, restFrequencyInterval, restFrequencyDate,
                         compoundingCalendarData, compoundingFrequencyType, compoundingInterval, compoundingFrequencyDate);
             }
-
-            return LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientName, clientOfficeId, groupData,
+            return LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientAccountNo, clientName, clientOfficeId, groupData,
                     loanType, loanProductId, loanProductName, loanProductDescription, isLoanProductLinkedToFloatingRate, fundId, fundName, loanPurposeId, loanPurposeName,
                     loanOfficerId, loanOfficerName, currencyData, proposedPrincipal, principal, approvedPrincipal, totalOverpaid,
                     inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments, repaymentEvery, repaymentFrequencyType,
@@ -1404,7 +1405,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final ClientData clientAccount = this.clientReadPlatformService.retrieveOne(clientId);
         final LocalDate expectedDisbursementDate = DateUtils.getLocalDateOfTenant();
 
-        return LoanAccountData.clientDefaults(clientAccount.id(), clientAccount.displayName(), clientAccount.officeId(),
+        return LoanAccountData.clientDefaults(clientAccount.id(), clientAccount.accountNo(), clientAccount.displayName(), clientAccount.officeId(),
                 expectedDisbursementDate);
     }
 
