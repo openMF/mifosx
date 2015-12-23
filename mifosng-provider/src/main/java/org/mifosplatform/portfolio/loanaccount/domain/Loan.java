@@ -98,6 +98,7 @@ import org.mifosplatform.portfolio.loanaccount.exception.LoanOfficerAssignmentDa
 import org.mifosplatform.portfolio.loanaccount.exception.LoanOfficerAssignmentException;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanOfficerUnassignmentDateException;
 import org.mifosplatform.portfolio.loanaccount.exception.MultiDisbursementDataRequiredException;
+import org.mifosplatform.portfolio.loanaccount.exception.UndoLastTrancheDisbursementException;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.data.LoanScheduleDTO;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.AprCalculator;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanApplicationTerms;
@@ -105,6 +106,7 @@ import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleG
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelPeriod;
+import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 import org.mifosplatform.portfolio.loanproduct.LoanProductConstants;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
@@ -4512,6 +4514,10 @@ public class Loan extends AbstractPersistable<Long> {
                         action = "refund";
                         postfix = "cannot.be.made.before.client.transfer.date";
                     break;
+                    case LOAN_DISBURSAL_UNDOLAST:
+                    	errorMessage = "Cannot undo a last disbursal in another branch";
+                        action = "disbursal";
+                        postfix = "cannot.be.undone.before.client.transfer.date";
                     default:
                     break;
                 }
@@ -4551,10 +4557,22 @@ public class Loan extends AbstractPersistable<Long> {
         }
     }
 
-    private LocalDate getLastUserTransactionDate() {
+    public LocalDate getLastUserTransactionDate() {
         LocalDate currentTransactionDate = getDisbursementDate();
         for (final LoanTransaction previousTransaction : this.loanTransactions) {
             if (!(previousTransaction.isReversed() || previousTransaction.isAccrual())) {
+                if (currentTransactionDate.isBefore(previousTransaction.getTransactionDate())) {
+                    currentTransactionDate = previousTransaction.getTransactionDate();
+                }
+            }
+        }
+        return currentTransactionDate;
+    }
+    
+    public LocalDate getLastTransactionDate() {
+        LocalDate currentTransactionDate = getDisbursementDate();
+        for (final LoanTransaction previousTransaction : this.loanTransactions) {
+            if (!(previousTransaction.isReversed() || previousTransaction.isAccrual() || previousTransaction.isWaiver())) {
                 if (currentTransactionDate.isBefore(previousTransaction.getTransactionDate())) {
                     currentTransactionDate = previousTransaction.getTransactionDate();
                 }
@@ -4733,6 +4751,13 @@ public class Loan extends AbstractPersistable<Long> {
                     dataValidationErrors.add(error);
                 }
             break;
+            case LOAN_DISBURSAL_UNDOLAST: 
+	            if (!isOpen()) {
+	                final String defaultUserMessage = "Loan Undo last disbursal is not allowed. Loan Account is not active.";
+	                final ApiParameterError error = ApiParameterError.generalError("error.msg.loan.undo.last.disbursal.account.is.not.active",
+	                        defaultUserMessage);
+	                dataValidationErrors.add(error);
+	            }
             default:
             break;
         }
@@ -5545,6 +5570,75 @@ public class Loan extends AbstractPersistable<Long> {
             trancheCharges.add(new LoanTrancheCharge(charge, this));
         }
     }
+    
+    public List<LoanTransaction> undoLastDisbursal(ScheduleGeneratorDTO scheduleGeneratorDTO, List<Long> existingTransactionIds,
+			List<Long> existingReversedTransactionIds, AppUser currentUser, Map<String, Object> changes, Loan loan) {
+
+
+		validateAccountStatus(LoanEvent.LOAN_DISBURSAL_UNDOLAST);
+
+        List<LoanTransaction> reversedTransactions = new ArrayList<>();
+        validateActivityNotBeforeClientOrGroupTransferDate(LoanEvent.LOAN_DISBURSAL_UNDOLAST, getDisbursementDate());
+        LocalDate actualDisbursementDate = null;
+    	LocalDate lastTransactionDate = getDisbursementDate();
+    	List<LoanTransaction> loanTransactions = retreiveListOfTransactionsExcludeAccruals();
+    	Collections.reverse(loanTransactions);
+    	for (final LoanTransaction previousTransaction : loanTransactions) {
+            if (!(previousTransaction.isWaiver())) {
+                if (lastTransactionDate.isBefore(previousTransaction.getTransactionDate())) {
+                	if(previousTransaction.isRepayment()){
+                		throw new UndoLastTrancheDisbursementException(previousTransaction.getId()); }
+                	}
+                lastTransactionDate = previousTransaction.getTransactionDate();
+                break;
+            }
+        }
+        actualDisbursementDate = lastTransactionDate;
+        updateLoanToLastDisbursalState(actualDisbursementDate);
+        reversedTransactions = reverseExistingTransactionsTillLastDisbursal(actualDisbursementDate);
+        loan.recalculateScheduleFromLastTransaction(scheduleGeneratorDTO,
+                existingTransactionIds, existingReversedTransactionIds, currentUser);
+        changes.put("undolastdisbursal","true");
+        existingTransactionIds.addAll(findExistingTransactionIds());
+        existingReversedTransactionIds.addAll(findExistingReversedTransactionIds());
+        updateLoanSummaryDerivedFields();
+
+        return reversedTransactions;
+	}
+	
+	public List<LoanTransaction> reverseExistingTransactionsTillLastDisbursal(LocalDate actualDisbursementDate) {
+		final List<LoanTransaction> reversedTransactions = new ArrayList<>();
+	   for (final LoanTransaction transaction : this.loanTransactions) {
+    		if((actualDisbursementDate.equals(transaction.getTransactionDate()) || actualDisbursementDate.isBefore(transaction.getTransactionDate()))
+    				&& transaction.isNotRepayment()){
+    			reversedTransactions.add(transaction);
+        		transaction.reverse();
+        	}
+        }
+	   return reversedTransactions;
+	}
+
+	private void updateLoanToLastDisbursalState(LocalDate actualDisbursementDate) {
+	  
+		for (final LoanCharge charge : charges()) {
+			if (charge.isOverdueInstallmentCharge()) {
+				charge.setActive(false);
+			} else if (charge.isDueAtDisbursement() && actualDisbursementDate.equals(new LocalDate
+						(charge.getTrancheDisbursementCharge().getloanDisbursementDetails().actualDisbursementDate()))) {
+				charge.resetToOriginal(loanCurrency());
+			}
+		}
+		for (final LoanDisbursementDetails details : this.disbursementDetails) {
+			if (actualDisbursementDate.equals(new LocalDate(details.actualDisbursementDate()))) {
+				this.loanRepaymentScheduleDetail.setPrincipal(getDisbursedAmount().subtract(details.principal()));
+				details.updateActualDisbursementDate(null);
+			}
+		}
+		this.loanTermVariations.clear();
+		final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
+		wrapper.reprocess(getCurrency(), actualDisbursementDate, this.repaymentScheduleInstallments, charges());
+		updateLoanSummaryDerivedFields();
+	}
 
     public Boolean getIsFloatingInterestRate() {
         return this.isFloatingInterestRate;
