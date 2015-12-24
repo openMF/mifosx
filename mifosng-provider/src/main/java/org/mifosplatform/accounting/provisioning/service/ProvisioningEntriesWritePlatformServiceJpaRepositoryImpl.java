@@ -142,9 +142,14 @@ public class ProvisioningEntriesWritePlatformServiceJpaRepositoryImpl implements
     @Override
     @CronTarget(jobName = JobName.GENERATE_LOANLOSS_PROVISIONING)
     public void generateLoanLossProvisioningAmount() {
-        Date currentDate = new Date();
+        Date currentDate  = LocalDate.now().toDate() ;
         boolean addJournalEntries = true;
         try {
+            Collection<ProvisioningCriteriaData> criteriaCollection = this.provisioningCriteriaReadPlatformService.retrieveAllProvisioningCriterias() ; 
+            if(criteriaCollection == null || criteriaCollection.size() == 0){
+                return ;
+                //FIXME: Do we need to throw NoProvisioningCriteriaDefinitionFound()?
+            }
             createProvsioningEntry(currentDate, addJournalEntries);
         } catch (ProvisioningEntryAlreadyCreatedException peace) {} catch (DataIntegrityViolationException dive) {}
     }
