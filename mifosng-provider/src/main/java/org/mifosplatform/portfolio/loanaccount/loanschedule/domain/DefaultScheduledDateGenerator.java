@@ -18,18 +18,21 @@ import org.mifosplatform.portfolio.calendar.service.CalendarUtils;
 import org.mifosplatform.portfolio.common.domain.DayOfWeekType;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 import org.mifosplatform.portfolio.loanaccount.data.HolidayDetailDTO;
+import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
+import java.util.List;
 
 public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
 
     @Override
-    public LocalDate getLastRepaymentDate(final LoanApplicationTerms loanApplicationTerms, final HolidayDetailDTO holidayDetailDTO) {
+    public LocalDate getLastRepaymentDate(final LoanApplicationTerms loanApplicationTerms, final HolidayDetailDTO holidayDetailDTO,
+    		List<LoanRescheduleRequest> loanRescheduleRequests) {
 
         final int numberOfRepayments = loanApplicationTerms.getNumberOfRepayments();
 
         LocalDate lastRepaymentDate = loanApplicationTerms.getExpectedDisbursementDate();
         boolean isFirstRepayment = true;
         for (int repaymentPeriod = 1; repaymentPeriod <= numberOfRepayments; repaymentPeriod++) {
-            lastRepaymentDate = generateNextRepaymentDate(lastRepaymentDate, loanApplicationTerms, isFirstRepayment, holidayDetailDTO);
+            lastRepaymentDate = generateNextRepaymentDate(lastRepaymentDate, loanApplicationTerms, isFirstRepayment, holidayDetailDTO, loanRescheduleRequests);
             isFirstRepayment = false;
         }
         lastRepaymentDate = adjustRepaymentDate(lastRepaymentDate, loanApplicationTerms, holidayDetailDTO);
@@ -38,8 +41,9 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
 
     @Override
     public LocalDate generateNextRepaymentDate(final LocalDate lastRepaymentDate, final LoanApplicationTerms loanApplicationTerms,
-            boolean isFirstRepayment, final HolidayDetailDTO holidayDetailDTO) {
-        final LocalDate firstRepaymentPeriodDate = loanApplicationTerms.getCalculatedRepaymentsStartingFromLocalDate();
+            boolean isFirstRepayment, final HolidayDetailDTO holidayDetailDTO, List<LoanRescheduleRequest> loanRescheduleRequests) {
+		LocalDate firstRepaymentPeriodDate = null;
+    	firstRepaymentPeriodDate = loanApplicationTerms.getCalculatedRepaymentsStartingFromLocalDate();
         LocalDate dueRepaymentPeriodDate = null;
         if (isFirstRepayment && firstRepaymentPeriodDate != null) {
             dueRepaymentPeriodDate = firstRepaymentPeriodDate;
@@ -63,6 +67,14 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
                         holidayDetailDTO.getWorkingDays());
             }
         }
+		if (loanRescheduleRequests != null) { 
+	        for (LoanRescheduleRequest loanRescheduleRequest : loanRescheduleRequests) {
+		        if (dueRepaymentPeriodDate.equals(loanRescheduleRequest.getRescheduleFromDate())) {
+		        	dueRepaymentPeriodDate = loanRescheduleRequest.getAdjustedDueDate();
+		        }
+	        }
+       }
+		
         return dueRepaymentPeriodDate;
     }
 
@@ -211,12 +223,13 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
 
     @Override
     public LocalDate generateNextScheduleDateStartingFromDisburseDate(LocalDate lastRepaymentDate,
-            LoanApplicationTerms loanApplicationTerms, final HolidayDetailDTO holidayDetailDTO) {
+            LoanApplicationTerms loanApplicationTerms, final HolidayDetailDTO holidayDetailDTO,
+            List<LoanRescheduleRequest> loanRescheduleRequests) {
 
         LocalDate generatedDate = loanApplicationTerms.getExpectedDisbursementDate();
         boolean isFirstRepayment = true;
         while (!generatedDate.isAfter(lastRepaymentDate)) {
-            generatedDate = generateNextRepaymentDate(generatedDate, loanApplicationTerms, isFirstRepayment, holidayDetailDTO);
+            generatedDate = generateNextRepaymentDate(generatedDate, loanApplicationTerms, isFirstRepayment, holidayDetailDTO, loanRescheduleRequests);
             isFirstRepayment = false;
         }
         generatedDate = adjustRepaymentDate(generatedDate, loanApplicationTerms, holidayDetailDTO);

@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -22,6 +23,7 @@ import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.accounting.journalentry.service.JournalEntryWritePlatformService;
+import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
@@ -145,6 +147,7 @@ import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleM
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelPeriod;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.ScheduledDateGenerator;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryWritePlatformService;
+import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 import org.mifosplatform.portfolio.loanaccount.serialization.LoanApplicationCommandFromApiJsonHelper;
 import org.mifosplatform.portfolio.loanaccount.serialization.LoanEventApiJsonValidator;
 import org.mifosplatform.portfolio.loanaccount.serialization.LoanUpdateCommandFromApiJsonDeserializer;
@@ -290,6 +293,29 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
         checkClientOrGroupActive(loan);
+        
+        final LocalDate nextRepaymentDate = command.localDateValueOfParameterNamed("nextRepaymentDate");
+        final Date adjustRepaymentDate = command.DateValueOfParameterNamed("adjustRepaymentDate");
+        this.loanEventApiJsonValidator.validateRescheduledRepaymentDate(nextRepaymentDate, adjustRepaymentDate);
+        Date rescheduleFromDate = null;
+        Integer rescheduleFromInstallment = null;
+        Integer graceOnPrincipal = null;
+        Integer graceOnInterest = null;
+        Integer extraTerms = null;
+        BigDecimal interestRate = null;
+        Boolean recalculateInterest = false;
+        CodeValue rescheduleReasonCodeValue = null;
+        if(adjustRepaymentDate != null && !adjustRepaymentDate.equals("")){
+        	LoanRepaymentScheduleInstallment installment = loan.getRepaymentScheduleInstallment(nextRepaymentDate);
+            rescheduleFromInstallment = installment.getInstallmentNumber();
+            rescheduleFromDate = nextRepaymentDate.toDate();
+        	final LoanRescheduleRequest loanRescheduleRequest = LoanRescheduleRequest.instance(loan, LoanStatus.APPROVED.getValue(), rescheduleFromInstallment, 
+        			graceOnPrincipal, graceOnInterest, rescheduleFromDate, adjustRepaymentDate, extraTerms, recalculateInterest, interestRate, rescheduleReasonCodeValue, 
+        			null, DateUtils.getDateOfTenant(), currentUser, null, null, null, null);
+
+            
+        	loan.loanRescheduleRequests().add(loanRescheduleRequest);
+        }
 
         // check for product mix validations
         checkForProductMixRestrictions(loan);
@@ -318,6 +344,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         // Recalculate first repayment date based in actual disbursement date.
         final LocalDate actualDisbursementDate = command.localDateValueOfParameterNamed("actualDisbursementDate");
+        if(loan.getActualDisbursalDate() == null){
+        	loan.setInterestChargedFromDate(actualDisbursementDate.toDate());
+        }
         final LocalDate calculatedRepaymentsStartingFromDate = this.loanAccountDomainService.getCalculatedRepaymentsStartingFromDate(
                 actualDisbursementDate, loan, calendarInstance);
         final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();

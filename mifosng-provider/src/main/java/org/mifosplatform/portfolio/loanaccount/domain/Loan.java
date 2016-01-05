@@ -105,6 +105,7 @@ import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleG
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelPeriod;
+import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 import org.mifosplatform.portfolio.loanproduct.LoanProductConstants;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
@@ -311,6 +312,13 @@ public class Loan extends AbstractPersistable<Long> {
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true)
     private final List<LoanTransaction> loanTransactions = new ArrayList<>();
+
+    // see
+    // http://stackoverflow.com/questions/4334970/hibernate-cannot-simultaneously-fetch-multiple-bags
+    @OrderBy(value = "rescheduleFromDate, id")
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true)
+    private final List<LoanRescheduleRequest> loanRescheduleRequests = new ArrayList<>();
 
     @Embedded
     private LoanSummary summary;
@@ -2604,7 +2612,7 @@ public class Loan extends AbstractPersistable<Long> {
                 rescheduleStrategyMethod, getApprovedPrincipal(), annualNominalInterestRate, loanTermVariations);
 
         final LoanScheduleModel loanSchedule = loanScheduleGenerator.generate(mc, loanApplicationTerms, charges(),
-                scheduleGeneratorDTO.getHolidayDetailDTO());
+                scheduleGeneratorDTO.getHolidayDetailDTO(), loanRescheduleRequests);
         return loanSchedule;
     }
 
@@ -2756,6 +2764,7 @@ public class Loan extends AbstractPersistable<Long> {
                     details.updateActualDisbursementDate(null);
                 }
             }
+            this.loanRescheduleRequests.clear();
             boolean isEmiAmountChanged = this.loanTermVariations.size() > 0;
             updateLoanToPreDisbursalState();
             if (isScheduleRegenerateRequired || isDisbursedAmountChanged || isEmiAmountChanged
@@ -3255,6 +3264,28 @@ public class Loan extends AbstractPersistable<Long> {
         }
 
         return possibleNextRepaymentDate;
+    }
+    
+    /*
+	* get the next repayment date for rescheduling at the time of disbursement
+	*/
+    public LocalDate getNextPossibleRepaymentDateForRescheduling(){
+    	Set<LoanDisbursementDetails> loanDisbursementDetails = this.disbursementDetails;
+    	LocalDate nextRepaymentDate = new LocalDate();
+    	for(LoanDisbursementDetails loanDisbursementDetail : loanDisbursementDetails){
+    		if(loanDisbursementDetail.actualDisbursementDate() == null){
+    			for (final LoanRepaymentScheduleInstallment installment : this.repaymentScheduleInstallments) {
+		            if (installment.getDueDate().isEqual(loanDisbursementDetail.expectedDisbursementDateAsLocalDate()) || 
+		            		installment.getDueDate().isAfter(loanDisbursementDetail.expectedDisbursementDateAsLocalDate()) 
+		            		&& installment.isNotFullyPaidOff()) {
+		            	nextRepaymentDate = installment.getDueDate();
+		                break;
+		            }   
+		        }
+			 break;
+    		}
+    	}
+		return nextRepaymentDate;
     }
 
     public LoanRepaymentScheduleInstallment possibleNextRepaymentInstallment() {
@@ -4587,6 +4618,10 @@ public class Loan extends AbstractPersistable<Long> {
         }
         return loanCharges;
     }
+	
+	public List<LoanRescheduleRequest> loanRescheduleRequests() {
+        return this.loanRescheduleRequests;
+    }
 
     public Set<LoanTrancheCharge> trancheCharges() {
         Set<LoanTrancheCharge> loanCharges = new HashSet<>();
@@ -4991,7 +5026,7 @@ public class Loan extends AbstractPersistable<Long> {
 
         return loanScheduleGenerator.rescheduleNextInstallments(mc, loanApplicationTerms, charges(), generatorDTO.getHolidayDetailDTO(),
                 retreiveListOfTransactionsPostDisbursementExcludeAccruals(), loanRepaymentScheduleTransactionProcessor,
-                repaymentScheduleInstallments, generatorDTO.getRecalculateFrom());
+                repaymentScheduleInstallments, generatorDTO.getRecalculateFrom(), this.loanRescheduleRequests);
     }
 
     public LoanApplicationTerms constructLoanApplicationTerms(final ApplicationCurrency applicationCurrency,
@@ -5072,7 +5107,7 @@ public class Loan extends AbstractPersistable<Long> {
                     .determineProcessor(this.transactionProcessingStrategy);
             installment = loanScheduleGenerator.calculatePrepaymentAmount(getCurrency(), onDate, loanApplicationTerms, mc, charges(),
                     holidayDetailDTO, retreiveListOfTransactionsPostDisbursementExcludeAccruals(),
-                    loanRepaymentScheduleTransactionProcessor);
+                    loanRepaymentScheduleTransactionProcessor, this.loanRescheduleRequests);
         } else {
             installment = this.getTotalOutstandingOnLoan();
         }
@@ -5549,6 +5584,14 @@ public class Loan extends AbstractPersistable<Long> {
         if (!trancheCharges.contains(charge)) {
             trancheCharges.add(new LoanTrancheCharge(charge, this));
         }
+    }
+    
+    public void setInterestChargedFromDate(Date interestChargedFromDate) {
+        this.interestChargedFromDate = interestChargedFromDate;
+    }
+
+    public Date getActualDisbursalDate() {
+        return this.actualDisbursementDate;
     }
 
     public Boolean getIsFloatingInterestRate() {
