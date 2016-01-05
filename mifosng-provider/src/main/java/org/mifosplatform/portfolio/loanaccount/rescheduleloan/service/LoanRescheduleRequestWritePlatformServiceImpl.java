@@ -323,7 +323,7 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
                 FloatingRateDTO floatingRateDTO = constructFloatingRateDTO(loan);
                 LoanRescheduleModel loanRescheduleModel = new DefaultLoanReschedulerFactory().reschedule(mathContext, interestMethod,
                         loanRescheduleRequest, applicationCurrency, holidayDetailDTO, restCalendarInstance, compoundingCalendarInstance,
-                        loanCalendar, floatingRateDTO);
+                        loanCalendar, floatingRateDTO, loan.loanRescheduleRequests());
 
                 final Collection<LoanRescheduleModelRepaymentPeriod> periods = loanRescheduleModel.getPeriods();
                 List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments = loan.getRepaymentScheduleInstallments();

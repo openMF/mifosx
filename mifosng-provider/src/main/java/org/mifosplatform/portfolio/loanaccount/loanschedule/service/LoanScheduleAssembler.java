@@ -86,6 +86,7 @@ import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleG
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.mifosplatform.portfolio.loanaccount.serialization.VariableLoanScheduleFromApiJsonValidator;
+import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 import org.mifosplatform.portfolio.loanaccount.service.LoanChargeAssembler;
 import org.mifosplatform.portfolio.loanaccount.service.LoanUtilService;
 import org.mifosplatform.portfolio.loanproduct.LoanProductConstants;
@@ -129,6 +130,7 @@ public class LoanScheduleAssembler {
     private final CalendarInstanceRepository calendarInstanceRepository;
     private final PlatformSecurityContext context;
     private final LoanUtilService loanUtilService;
+
 
     @Autowired
     public LoanScheduleAssembler(final FromJsonHelper fromApiJsonHelper, final LoanProductRepository loanProductRepository,
@@ -238,6 +240,9 @@ public class LoanScheduleAssembler {
             validateRepaymentFrequencyIsSameAsMeetingFrequency(meetingPeriodFrequency.getValue(), repaymentFrequencyType,
                     CalendarUtils.getInterval(calendar.getRecurrence()), repaymentEvery);
         }
+        
+        
+       
 
         /*
          * If user has not passed the first repayments date then then derive the
@@ -519,13 +524,14 @@ public class LoanScheduleAssembler {
 
         HolidayDetailDTO detailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
 
-        return loanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges, detailDTO);
+        return loanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges, detailDTO, null); //TODO: Binny: Check if null can be passed blindly
     }
 
     public LoanScheduleModel assembleForInterestRecalculation(final LoanApplicationTerms loanApplicationTerms, final Long officeId,
             List<LoanTransaction> transactions, final Set<LoanCharge> loanCharges,
             final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor,
-            final List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments, final LocalDate rescheduleFrom) {
+            final List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments, final LocalDate rescheduleFrom,
+			List<LoanRescheduleRequest> loanRescheduleRequests) {
         final RoundingMode roundingMode = MoneyHelper.getRoundingMode();
         final MathContext mc = new MathContext(8, roundingMode);
         final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
@@ -537,13 +543,14 @@ public class LoanScheduleAssembler {
         final LoanScheduleGenerator loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
         HolidayDetailDTO detailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
         return loanScheduleGenerator.rescheduleNextInstallments(mc, loanApplicationTerms, loanCharges, detailDTO, transactions,
-                loanRepaymentScheduleTransactionProcessor, repaymentScheduleInstallments, rescheduleFrom).getLoanScheduleModel();
+                loanRepaymentScheduleTransactionProcessor, repaymentScheduleInstallments, rescheduleFrom, loanRescheduleRequests).getLoanScheduleModel();
     }
 
     public LoanRepaymentScheduleInstallment calculatePrepaymentAmount(MonetaryCurrency currency, LocalDate onDate,
             LoanApplicationTerms loanApplicationTerms, final Set<LoanCharge> loanCharges, final Long officeId,
             List<LoanTransaction> loanTransactions,
-            final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor) {
+            final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor,
+			List<LoanRescheduleRequest> loanRescheduleRequests) {
         final LoanScheduleGenerator loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
         final RoundingMode roundingMode = MoneyHelper.getRoundingMode();
         final MathContext mc = new MathContext(8, roundingMode);
@@ -555,7 +562,7 @@ public class LoanScheduleAssembler {
         HolidayDetailDTO holidayDetailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
 
         return loanScheduleGenerator.calculatePrepaymentAmount(currency, onDate, loanApplicationTerms, mc, loanCharges, holidayDetailDTO,
-                loanTransactions, loanRepaymentScheduleTransactionProcessor);
+                loanTransactions, loanRepaymentScheduleTransactionProcessor, loanRescheduleRequests);
 
     }
 

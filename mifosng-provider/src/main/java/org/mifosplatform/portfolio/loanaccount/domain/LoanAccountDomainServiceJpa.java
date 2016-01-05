@@ -198,7 +198,7 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
             final CalendarInstance calendarInstance = this.calendarInstanceRepository.findCalendarInstaneByEntityId(loan.getId(),
                     CalendarEntityType.LOANS.getValue());
             calculatedRepaymentsStartingFromDate = getCalculatedRepaymentsStartingFromDate(loan.getDisbursementDate(), loan,
-                    calendarInstance);
+                    calendarInstance);     
 
 			if(!isHolidayValidationDone){
             	isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();

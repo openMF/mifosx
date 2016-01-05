@@ -111,7 +111,7 @@ public class LoanReschedulePreviewPlatformServiceImpl implements LoanRescheduleP
         final FloatingRateDTO floatingRateDTO = constructFloatingRateDTO(loan);
         LoanRescheduleModel loanRescheduleModel = new DefaultLoanReschedulerFactory().reschedule(mathContext, interestMethod,
                 loanRescheduleRequest, applicationCurrency, holidayDetailDTO, restCalendarInstance, compoundingCalendarInstance,
-                loanCalendar, floatingRateDTO);
+                loanCalendar, floatingRateDTO, loan.loanRescheduleRequests());
         LoanRescheduleModel loanRescheduleModelWithOldPeriods = LoanRescheduleModel.createWithSchedulehistory(loanRescheduleModel,
                 oldPeriods);
         return loanRescheduleModelWithOldPeriods;

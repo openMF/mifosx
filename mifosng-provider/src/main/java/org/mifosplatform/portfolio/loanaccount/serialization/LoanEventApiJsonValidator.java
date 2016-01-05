@@ -9,6 +9,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -28,6 +29,7 @@ import org.mifosplatform.portfolio.calendar.exception.NotValidRecurringDateExcep
 import org.mifosplatform.portfolio.calendar.service.CalendarUtils;
 import org.mifosplatform.portfolio.loanaccount.api.LoanApiConstants;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanDisbursementDetails;
+import org.mifosplatform.portfolio.loanaccount.exception.LoanRescheduleRepaymentDateException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -61,11 +63,11 @@ public final class LoanEventApiJsonValidator {
 
         if (isAccountTransfer) {
             disbursementParameters = new HashSet<>(Arrays.asList("actualDisbursementDate", "externalId", "note", "locale",
-                    "dateFormat", LoanApiConstants.principalDisbursedParameterName, LoanApiConstants.emiAmountParameterName));
+                    "dateFormat", "nextRepaymentDate", "adjustRepaymentDate", LoanApiConstants.principalDisbursedParameterName, LoanApiConstants.emiAmountParameterName));
         } else {
             disbursementParameters = new HashSet<>(Arrays.asList("actualDisbursementDate", "externalId", "note", "locale",
                     "dateFormat", "paymentTypeId", "accountNumber", "checkNumber", "routingCode", "receiptNumber", "bankNumber",
-                    LoanApiConstants.principalDisbursedParameterName, LoanApiConstants.emiAmountParameterName));
+                    "nextRepaymentDate", "adjustRepaymentDate", LoanApiConstants.principalDisbursedParameterName, LoanApiConstants.emiAmountParameterName));
         }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
@@ -432,5 +434,17 @@ public final class LoanEventApiJsonValidator {
         validatePaymentDetails(baseDataValidator, element);
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
+    
+    public void validateRescheduledRepaymentDate(LocalDate nextRepaymentDate, Date adjustRepaymentDate) {
+    	String defaultUserMessage = "";
+    	if(adjustRepaymentDate != null){
+    	final LocalDate newRescheduledRepaymentDate = new LocalDate(adjustRepaymentDate);
+	    	if(newRescheduledRepaymentDate.isEqual(nextRepaymentDate) || newRescheduledRepaymentDate.isBefore(nextRepaymentDate)){
+	    	  defaultUserMessage = "rescheduledRepaymentDate cannot be before the nextRepaymentDate.";
+	    	           throw new LoanRescheduleRepaymentDateException("rescheduled.repayment.date.cannot.be.before.the.next.repayment.date", defaultUserMessage,
+	    	            adjustRepaymentDate.toString(), nextRepaymentDate.toString());
+	       }
+       }
+    }	
 
 }
