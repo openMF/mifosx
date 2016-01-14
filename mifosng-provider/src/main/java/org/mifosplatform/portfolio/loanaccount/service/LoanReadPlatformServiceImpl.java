@@ -522,7 +522,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final BigDecimal unrecognizedIncomePortion = null;
         return new LoanTransactionData(null, null, null, transactionType, null, null, loan.getExpectedDisbursedOnLocalDateForTemplate(),
                 loan.getDisburseAmountForTemplate(), null, null, null, null, null, unrecognizedIncomePortion, paymentOptions, null, null,
-                loan.retriveLastEmiAmount(), outstandingLoanBalance, false);
+                loan.retriveLastEmiAmount(), outstandingLoanBalance, false, loan.getNextPossibleRepaymentDateForRescheduling());
 
     }
 
