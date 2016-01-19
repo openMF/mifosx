@@ -424,6 +424,7 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
     @Override
     public void recalculateAccruals(Loan loan) {
         LocalDate accruedTill = loan.getAccruedTill();
+        LocalDate accruedFrom = loan.getAccruedFrom();
         if (!loan.isPeriodicAccrualAccountingEnabledOnLoanProduct() || !loan.repaymentScheduleDetail().isInterestRecalculationEnabled()
                 || accruedTill == null || loan.isNpa() || !loan.status().isActive()) { return; }
         Collection<LoanScheduleAccrualData> loanScheduleAccrualDatas = new ArrayList<>();
@@ -441,7 +442,7 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
         Set<LoanCharge> loanCharges = loan.charges();
 
         for (LoanRepaymentScheduleInstallment installment : installments) {
-            if (!accruedTill.isBefore(installment.getDueDate())
+            if (accruedFrom.isBefore(installment.getDueDate()) && !accruedTill.isBefore(installment.getDueDate())
                     || (accruedTill.isAfter(installment.getFromDate()) && !accruedTill.isAfter(installment.getDueDate()))) {
                 BigDecimal dueDateFeeIncome = BigDecimal.ZERO;
                 BigDecimal dueDatePenaltyIncome = BigDecimal.ZERO;
