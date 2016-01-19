@@ -376,6 +376,10 @@ public class Loan extends AbstractPersistable<Long> {
 
     @Column(name = "interest_rate_differential", scale = 6, precision = 19, nullable = true)
     private BigDecimal interestRateDifferential;
+    
+    @Temporal(TemporalType.DATE)
+    @Column(name = "accrued_from")
+    private Date accruedFrom;
 
     public static Loan newIndividualLoanApplication(final String accountNo, final Client client, final Integer loanType,
             final LoanProduct loanProduct, final Fund fund, final Staff officer, final CodeValue loanPurpose,
@@ -5655,5 +5659,14 @@ public class Loan extends AbstractPersistable<Long> {
      	}
  		return nextRepaymentDate;
      }
+
+
+	public LocalDate getAccruedFrom() {
+		LocalDate accruedFrom = null;
+		if (this.accruedFrom != null) {
+			accruedFrom = new LocalDate(this.accruedFrom);
+		}
+		return accruedFrom;
+	}
 
 }
