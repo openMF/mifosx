@@ -487,8 +487,8 @@ public class Charge extends AbstractPersistable<Long> {
 
         }
 
-        if (this.penalty && ChargeTimeType.fromInt(this.chargeTimeType)
-                .isTimeOfDisbursement()) { throw new ChargeDueAtDisbursementCannotBePenaltyException(this.name); }
+        if (this.penalty && (ChargeTimeType.fromInt(this.chargeTimeType)
+                .isTimeOfDisbursement() || ChargeTimeType.fromInt(this.chargeTimeType).isTrancheDisbursement())) { throw new ChargeDueAtDisbursementCannotBePenaltyException(this.name); }
         if (!penalty
                 && ChargeTimeType.fromInt(this.chargeTimeType).isOverdueInstallment()) { throw new ChargeMustBePenaltyException(name); }
 
