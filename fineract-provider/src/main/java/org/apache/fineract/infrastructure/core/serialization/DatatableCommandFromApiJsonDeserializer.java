@@ -56,7 +56,7 @@ public class DatatableCommandFromApiJsonDeserializer {
     private final Set<String> supportedParametersForAddColumns = new HashSet<>(Arrays.asList("name", "type", "length", "mandatory",
             "after", "code"));
     private final Set<String> supportedParametersForChangeColumns = new HashSet<>(Arrays.asList("name", "newName", "length",
-            "mandatory", "after", "code", "newCode"));
+            "mandatory", "after", "code", "newCode", "originalName", "type"));
     private final Set<String> supportedParametersForDropColumns = new HashSet<>(Arrays.asList("name"));
     private final Object[] supportedColumnTypes = { "string", "number", "boolean", "decimal", "date", "datetime", "text", "dropdown" };
     private final Object[] supportedApptableNames = { "m_loan", "m_savings_account", "m_client", "m_group", "m_center", "m_office",
