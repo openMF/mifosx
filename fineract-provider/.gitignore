@@ -6,6 +6,9 @@ repos
 .project
 .settings
 .gradle
+.idea
+*.iml
+*.ipr
 *.log
 !gradle/wrapper/gradle-wrapper.jar
 /gradle
