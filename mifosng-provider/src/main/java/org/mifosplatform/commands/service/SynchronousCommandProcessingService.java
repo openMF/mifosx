@@ -48,7 +48,6 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             final CommandSourceRepository commandSourceRepository, final ConfigurationDomainService configurationDomainService,
             final CommandHandlerProvider commandHandlerProvider) {
         this.context = context;
-        this.context = context;
         this.applicationContext = applicationContext;
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.toApiResultJsonSerializer = toApiResultJsonSerializer;
