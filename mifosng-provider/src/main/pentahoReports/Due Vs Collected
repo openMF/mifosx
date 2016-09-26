@@ -1,0 +1,39 @@
+SELECT 
+		prod.id pid, 
+		prod.short_name product,
+		o.name office,
+		center.staff_id staff_id,
+		st.display_name staff,
+		center.id center_id,
+		center.display_name center_name, 
+		grp.id group_id, 
+		grp.display_name group_name,
+		gc.client_id client_id, 
+		m_client.display_name client_name, 
+		loan.id loan_id,
+		curDue.id,
+		arrDue.id,
+		if( curDue.obligations_met_on_date is null, ( curDue.principal_amount - ifnull(curDue.principal_completed_derived,0) ), curDue.principal_amount) As P,
+		if( curDue.obligations_met_on_date is null, ( curDue.interest_amount - ifnull(curDue.interest_completed_derived,0)), curDue.interest_completed_derived) As I, 
+		if( curDue.obligations_met_on_date = null, ( curDue.fee_charges_amount - ifnull(curDue.fee_charges_completed_derived,0)), curDue.fee_charges_amount) As F,
+		SUM(ifnull(arrDue.principal_amount,0) - ifnull(arrDue.principal_completed_derived,0)) As P_arrears,
+		SUM(ifnull(arrDue.interest_amount,0) - ifnull(arrDue.interest_completed_derived,0)) As I_arrears,
+		SUM(ifnull(arrDue.fee_charges_amount,0) - ifnull(arrDue.fee_charges_completed_derived,0)) As F_arrears,
+		SUM(ifnull(txn.amount,0)) As Txn_Amt,
+		SUM(ifnull(txn.principal_portion_derived,0)) Txn_P,
+		SUM(ifnull(txn.interest_portion_derived,0)) Txn_I,
+		SUM(ifnull(txn.fee_charges_portion_derived,0)) Txn_F,
+		SUM(ifnull(txn.penalty_charges_portion_derived,0)) Txn_Penal,
+		SUM(ifnull(txn.overpayment_portion_derived,0)) Txn_OverPayment
+	FROM `m_group` center
+	INNER JOIN m_office o on o.id=center.office_id
+	LEFT OUTER JOIN m_staff st on st.id=center.staff_id
+	INNER JOIN `m_group` grp on center.id = grp.parent_id AND center.office_id = ${Branch} AND center.level_id = 1
+	INNER JOIN `m_group_client` gc on grp.id = gc.group_id
+	INNER JOIN `m_client` m_client on gc.client_id = m_client.id
+	INNER JOIN `m_loan` loan on gc.client_id = loan.client_id AND loan.loan_status_id in (300, 600, 700)
+	INNER JOIN `m_product_loan` prod ON loan.product_id = prod.id
+	INNER JOIN m_loan_repayment_schedule curDue on curDue.loan_id = loan.id and curDue.duedate = ${date} AND (curDue.obligations_met_on_date is null or curDue.obligations_met_on_date >= ${date} )
+	LEFT OUTER JOIN m_loan_repayment_schedule arrDue on curDue.loan_id = arrDue.id and arrDue.duedate < ${date} AND (arrDue.obligations_met_on_date is null or arrDue.obligations_met_on_date >= ${date} )
+	LEFT OUTER JOIN m_loan_transaction txn ON txn.loan_id = curDue.loan_id AND txn.transaction_date = ${date} AND NOT txn.is_reversed AND txn.transaction_type_enum in (2)	
+	GROUP BY loan.id
