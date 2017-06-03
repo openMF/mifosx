@@ -2616,4 +2616,21 @@ public class CommandWrapperBuilder {
         this.href = "/accounts/" + accountType+"/"+accountId;
         return this;
     }
+    public CommandWrapperBuilder disableAdHoc(Long adHocId) {
+        this.actionName = "DISABLE";
+        this.entityName = "ADHOC";
+        this.entityId = adHocId;
+        this.href = "/adhoc/" + adHocId + "/disbales";
+        this.json = "{}";
+        return this;
+    }
+
+    public CommandWrapperBuilder enableAdHoc(Long adHocId) {
+        this.actionName = "ENABLE";
+        this.entityName = "ADHOC";
+        this.entityId = adHocId;
+        this.href = "/adhoc/" + adHocId + "/enable";
+        this.json = "{}";
+        return this;
+    }
 }
