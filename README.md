@@ -1,3 +1,10 @@
+**THIS REPOSITORY IS HISTORICAL AND NO LONGER ACTIVELY MAINTAINED.  SEE HERE FOR CURRENT MIFOS / APACHE FINERACT:**
+
+* Mifos X = Fineract: https://github.com/apache/fineract/ This is the same code as this repo
+* Fineract CN = https://cwiki.apache.org/confluence/display/FINERACT
+* Fineract CN Getting Started = https://github.com/apache/fineract-cn-demo-server 
+
+
 Apache Fineract: A Platform for Microfinance
 ======
 
